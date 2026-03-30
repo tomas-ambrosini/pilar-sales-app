@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Plus, Edit2, Trash2, Box, PenTool, Layers, Calculator, UploadCloud, RefreshCw, Component, Check } from 'lucide-react';
+import { Plus, Edit2, Trash2, Box, PenTool, Layers, Calculator, UploadCloud, RefreshCw, Component, Check, Search, Filter } from 'lucide-react';
 import Modal from '../components/Modal';
 
 export default function CatalogEditor() {
@@ -9,6 +9,10 @@ export default function CatalogEditor() {
   const [laborRates, setLaborRates] = useState([]);
   const [margins, setMargins] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Search & Filter State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterValue, setFilterValue] = useState('All');
 
   // Forms State
   const [isEquipModalOpen, setIsEquipModalOpen] = useState(false);
@@ -44,6 +48,12 @@ export default function CatalogEditor() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSearchTerm('');
+    setFilterValue('All');
   };
 
   // --- Equipment Handlers ---
@@ -161,7 +171,29 @@ export default function CatalogEditor() {
 
   if (loading) return <div className="page-container flex justify-center items-center"><span className="text-slate-400 flex items-center gap-2"><RefreshCw className="animate-spin"/> Syncing Live Catalog...</span></div>;
 
+  // --- Derived State & Filters ---
   const uniqueBrands = [...new Set(equipment.map(e => e.brand).filter(Boolean))];
+  const uniqueLaborCategories = [...new Set(laborRates.map(l => l.category).filter(Boolean))];
+
+  const filteredEquipment = equipment.filter(item => {
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = searchTerm === '' || 
+      item.brand?.toLowerCase().includes(searchLower) ||
+      item.series?.toLowerCase().includes(searchLower) ||
+      item.condenser_model?.toLowerCase().includes(searchLower) ||
+      item.ahu_model?.toLowerCase().includes(searchLower);
+    const matchesFilter = filterValue === 'All' || item.brand === filterValue;
+    return matchesSearch && matchesFilter;
+  });
+
+  const filteredLabor = laborRates.filter(labor => {
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = searchTerm === '' ||
+      labor.item_name?.toLowerCase().includes(searchLower) ||
+      labor.category?.toLowerCase().includes(searchLower);
+    const matchesFilter = filterValue === 'All' || labor.category === filterValue;
+    return matchesSearch && matchesFilter;
+  });
 
   return (
     <div className="page-container fade-in">
@@ -182,16 +214,47 @@ export default function CatalogEditor() {
       </header>
 
       {/* Primary Module Navigation Tabs */}
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-lg w-max mb-6">
-        <button onClick={() => setActiveTab('equipment')} className={`px-4 py-2 font-semibold text-sm rounded-md transition-fast flex items-center gap-2 ${activeTab === 'equipment' ? 'bg-white shadow-sm text-primary-700' : 'text-slate-500 hover:text-slate-700'}`}>
-          <Box size={16} /> Central Equipment Database
+      <div className="flex gap-1 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm w-max mb-6">
+        <button onClick={() => handleTabChange('equipment')} className={`px-5 py-2.5 font-bold text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'equipment' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>
+          <Box size={16} className={activeTab === 'equipment' ? 'text-primary-300' : ''} /> Central Equipment Database
         </button>
-        <button onClick={() => setActiveTab('labor')} className={`px-4 py-2 font-semibold text-sm rounded-md transition-fast flex items-center gap-2 ${activeTab === 'labor' ? 'bg-white shadow-sm text-primary-700' : 'text-slate-500 hover:text-slate-700'}`}>
-          <PenTool size={16} /> Add-ons & Labor Rates
+        <button onClick={() => handleTabChange('labor')} className={`px-5 py-2.5 font-bold text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'labor' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>
+          <PenTool size={16} className={activeTab === 'labor' ? 'text-primary-300' : ''} /> Add-ons & Labor Rates
         </button>
       </div>
 
-      <div className="glass-panel overflow-hidden border border-slate-200 shadow-sm">
+      {/* Sleek Toolbar for Search and Filtering */}
+      <div className="flex justify-between items-center mb-6 gap-4 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+         <div className="relative flex-1 max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+               <Search size={18} className="text-slate-400" />
+            </div>
+            <input 
+               type="text" 
+               className="block w-full pl-10 pr-3 py-2 border-none rounded-lg bg-slate-50 focus:bg-primary-50 focus:ring-2 focus:ring-primary-500 focus:outline-none sm:text-sm font-medium transition-colors" 
+               placeholder={activeTab === 'equipment' ? "Search brand, series, or model codes..." : "Search services, materials, or subcontractors..."} 
+               value={searchTerm}
+               onChange={(e) => setSearchTerm(e.target.value)}
+            />
+         </div>
+         <div className="flex items-center gap-2">
+            <Filter size={18} className="text-slate-400" />
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider hidden sm:inline-block">Filter:</span>
+            <select 
+               className="border-none bg-slate-50 focus:ring-2 focus:ring-primary-500 rounded-lg py-2 pl-3 pr-8 text-sm font-bold text-slate-700 outline-none cursor-pointer"
+               value={filterValue}
+               onChange={(e) => setFilterValue(e.target.value)}
+            >
+               <option value="All">All {activeTab === 'equipment' ? 'Brands' : 'Categories'}</option>
+               {activeTab === 'equipment' 
+                 ? uniqueBrands.map(b => <option key={b} value={b}>{b}</option>)
+                 : uniqueLaborCategories.map(c => <option key={c} value={c}>{c}</option>)
+               }
+            </select>
+         </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
          {activeTab === 'equipment' && (
             <div className="w-full overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
@@ -207,46 +270,51 @@ export default function CatalogEditor() {
                   </tr>
                 </thead>
                 <tbody>
-                   {equipment.length === 0 ? (
-                      <tr><td colSpan="7" className="p-8 text-center text-slate-500 font-medium tracking-wide">No equipment SKUs found. Add a system above.</td></tr>
+                   {filteredEquipment.length === 0 ? (
+                      <tr><td colSpan="7" className="p-12 text-center">
+                         <Box size={40} className="text-slate-200 mx-auto mb-3" />
+                         <span className="text-slate-500 font-medium tracking-wide">No equipment SKUs found matching your criteria.</span>
+                      </td></tr>
                    ) : (
-                      equipment.map(item => (
-                         <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
-                           <td className="p-3 text-center">
+                      filteredEquipment.map(item => (
+                         <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 hover:shadow-inner transition-colors group">
+                           <td className="p-4 text-center relative">
                               {item.image_url ? (
-                                 <img src={item.image_url} alt="SKU" className="w-10 h-10 object-contain rounded bg-white border border-slate-200 mx-auto group-hover:scale-110 transition-transform"/>
+                                 <img src={item.image_url} alt="SKU" className="w-12 h-12 object-contain rounded-lg bg-white border border-slate-200 mx-auto group-hover:scale-110 transition-transform shadow-sm"/>
                               ) : (
-                                 <div className="w-10 h-10 bg-slate-100 border border-slate-200 text-slate-300 rounded mx-auto flex items-center justify-center">
-                                    <Component size={18} />
+                                 <div className="w-12 h-12 bg-slate-50 border border-slate-200 text-slate-300 rounded-lg mx-auto flex items-center justify-center shadow-sm relative overflow-hidden">
+                                    <Component size={20} className="z-10" />
+                                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent to-slate-100 opacity-50"></div>
                                  </div>
                               )}
                            </td>
-                           <td className="p-3">
-                              <div className="font-bold text-slate-800">{item.brand}</div>
+                           <td className="p-4">
+                              <div className="font-black text-slate-800 tracking-tight text-base mb-0.5">{item.brand}</div>
                               <div className="text-xs text-slate-500 font-mono tracking-wide">{item.series} Series</div>
                            </td>
-                           <td className="p-3">
+                           <td className="p-4">
                               <div className="flex gap-2 text-xs">
-                                 <span className="bg-primary-50 text-primary-700 px-2 py-0.5 rounded font-bold">{item.tons} Ton</span>
-                                 <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-bold border border-slate-200">{item.seer} SEER</span>
+                                 <span className="bg-primary-50 text-primary-700 px-2.5 py-1 rounded-md font-bold border border-primary-100 shadow-sm">{item.tons} Ton</span>
+                                 <span className="bg-white text-slate-600 px-2.5 py-1 rounded-md font-bold border border-slate-200 shadow-sm">{item.seer} SEER</span>
                               </div>
                            </td>
-                           <td className="p-3 text-xs text-slate-500 font-mono">
-                              <div className="mb-0.5 truncate max-w-[150px]" title={`Condenser: ${item.condenser_model}`}>{item.condenser_model || '-'}</div>
-                              <div className="truncate max-w-[150px]" title={`Air Handler: ${item.ahu_model}`}>{item.ahu_model || '-'}</div>
+                           <td className="p-4 text-xs text-slate-500 font-mono">
+                              <div className="mb-1 bg-slate-100 px-2 py-0.5 rounded truncate max-w-[160px] inline-block shadow-sm" title={`Condenser: ${item.condenser_model}`}>{item.condenser_model || '-'}</div>
+                              <br/>
+                              <div className="bg-slate-100 px-2 py-0.5 rounded truncate max-w-[160px] inline-block shadow-sm" title={`Air Handler: ${item.ahu_model}`}>{item.ahu_model || '-'}</div>
                            </td>
-                           <td className="p-3 text-right font-bold text-danger-600">
+                           <td className="p-4 text-right font-black text-danger-600 text-base">
                               ${item.system_cost?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                            </td>
-                           <td className="p-3 text-right">
-                              <span className="font-bold text-success-700 bg-success-50 px-3 py-1 rounded border border-success-200 inline-block">
-                                 ${item.retail_price?.toLocaleString(undefined, { minimumFractionDigits: 0 })}
+                           <td className="p-4 text-right">
+                              <span className="font-black text-white bg-success-600 shadow-md px-3.5 py-1.5 rounded-full inline-block text-[13px] tracking-wide">
+                                 ${item.retail_price?.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                               </span>
                            </td>
-                           <td className="p-3 text-center">
+                           <td className="p-4 text-center">
                               <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                 <button className="text-slate-400 hover:text-primary-600 transition-fast" onClick={() => { setActiveEquip(item); setIsEquipModalOpen(true); }}><Edit2 size={16} /></button>
-                                 <button className="text-slate-400 hover:text-danger hover:bg-red-50 p-1 rounded transition-fast" onClick={() => handleDeleteEquip(item.id)}><Trash2 size={16} /></button>
+                                 <button className="bg-white border border-slate-200 p-1.5 rounded-md text-slate-400 hover:text-primary-600 hover:border-primary-200 shadow-sm transform hover:scale-105 transition-all" onClick={() => { setActiveEquip(item); setIsEquipModalOpen(true); }}><Edit2 size={16} /></button>
+                                 <button className="bg-white border border-slate-200 p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-danger-50 hover:border-danger-200 shadow-sm transform hover:scale-105 transition-all" onClick={() => handleDeleteEquip(item.id)}><Trash2 size={16} /></button>
                               </div>
                            </td>
                          </tr>
@@ -269,24 +337,27 @@ export default function CatalogEditor() {
                   </tr>
                 </thead>
                 <tbody>
-                   {laborRates.length === 0 ? (
-                      <tr><td colSpan="4" className="p-8 text-center text-slate-500 font-medium tracking-wide">No labor rates or subcontractors configured yet.</td></tr>
+                   {filteredLabor.length === 0 ? (
+                      <tr><td colSpan="4" className="p-12 text-center">
+                         <PenTool size={40} className="text-slate-200 mx-auto mb-3" />
+                         <span className="text-slate-500 font-medium tracking-wide">No labor rates or subcontractors found matching your criteria.</span>
+                      </td></tr>
                    ) : (
-                      laborRates.map(labor => (
+                      filteredLabor.map(labor => (
                          <tr key={labor.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                            <td className="p-4">
-                              <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1 flex items-center w-max rounded uppercase tracking-wider border border-slate-200">
+                              <span className="bg-white shadow-sm text-slate-600 text-[10px] font-black px-2.5 py-1.5 flex items-center w-max rounded-md uppercase tracking-widest border border-slate-200">
                                  {labor.category}
                               </span>
                            </td>
-                           <td className="p-4 font-semibold text-slate-800">{labor.item_name}</td>
-                           <td className="p-4 text-right font-bold font-mono text-slate-700">
+                           <td className="p-4 font-black text-slate-800 text-base tracking-tight">{labor.item_name}</td>
+                           <td className="p-4 text-right font-black font-mono text-slate-700 text-base">
                               ${labor.cost?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                            </td>
                            <td className="p-4 text-center">
                               <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                 <button className="text-slate-400 hover:text-primary-600 transition-fast" onClick={() => { setActiveLabor(labor); setIsLaborModalOpen(true); }}><Edit2 size={16} /></button>
-                                 <button className="text-slate-400 hover:text-danger hover:bg-red-50 p-1 rounded transition-fast" onClick={() => handleDeleteLabor(labor.id)}><Trash2 size={16} /></button>
+                                 <button className="bg-white border border-slate-200 p-1.5 rounded-md text-slate-400 hover:text-primary-600 hover:border-primary-200 shadow-sm transform hover:scale-105 transition-all" onClick={() => { setActiveLabor(labor); setIsLaborModalOpen(true); }}><Edit2 size={16} /></button>
+                                 <button className="bg-white border border-slate-200 p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-danger-50 hover:border-danger-200 shadow-sm transform hover:scale-105 transition-all" onClick={() => handleDeleteLabor(labor.id)}><Trash2 size={16} /></button>
                               </div>
                            </td>
                          </tr>
@@ -338,11 +409,11 @@ export default function CatalogEditor() {
                      {activeEquip.image_url ? <img src={activeEquip.image_url} className="w-full h-full object-cover" alt="Preview"/> : <UploadCloud className="text-slate-300"/>}
                   </div>
                   <div className="flex-1 overflow-hidden">
-                     <label className="btn-secondary text-xs px-3 py-1.5 cursor-pointer hover:bg-white transition-colors block w-max">
+                     <label className="btn-secondary text-xs px-3 py-1.5 cursor-pointer hover:bg-white transition-colors block w-max shadow-sm border border-slate-200">
                         {uploadingImage ? 'Uploading securely...' : 'Upload Image URL (.png, .jpg)'}
                         <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage}/>
                      </label>
-                     <p className="text-[9px] text-slate-400 mt-1 pl-1 font-mono break-all truncate">{activeEquip.image_url || 'No secure asset attached.'}</p>
+                     <p className="text-[9px] text-slate-400 mt-1.5 pl-1 font-mono break-all truncate">{activeEquip.image_url || 'No secure asset attached.'}</p>
                   </div>
                </div>
             </div>
@@ -358,22 +429,22 @@ export default function CatalogEditor() {
                <div className="grid grid-cols-2 gap-4 bg-white p-3 border border-slate-200 rounded-md shadow-sm">
                   <div>
                     <label className="text-[10px] font-bold text-danger-500 uppercase tracking-widest block mb-1">Company Base Cost</label>
-                    <input type="number" step="0.01" className="w-full p-2 rounded bg-danger-50 border border-danger-100 font-mono font-black text-danger-700" value={activeEquip.system_cost} onChange={e => setActiveEquip({...activeEquip, system_cost: e.target.value})} required/>
+                    <input type="number" step="0.01" className="w-full p-2.5 rounded bg-danger-50 border border-danger-100 font-mono font-black text-danger-700 shadow-inner" value={activeEquip.system_cost} onChange={e => setActiveEquip({...activeEquip, system_cost: e.target.value})} required/>
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-success-600 uppercase tracking-widest block mb-1">Minimum Retail Baseline</label>
-                    <input type="number" step="0.01" className="w-full p-2 rounded bg-success-50 border border-success-200 font-mono font-black text-success-700 shadow-inner" value={activeEquip.retail_price} onChange={e => setActiveEquip({...activeEquip, retail_price: e.target.value})}/>
+                    <input type="number" step="0.01" className="w-full p-2.5 rounded bg-success-50 border border-success-200 font-mono font-black text-white bg-success-600 shadow-md transform scale-105" value={activeEquip.retail_price} onChange={e => setActiveEquip({...activeEquip, retail_price: e.target.value})}/>
                   </div>
                   
-                  <div className="col-span-2 mt-2 input-field bg-slate-50 border border-slate-200 p-2 rounded flex flex-col">
+                  <div className="col-span-2 mt-2 input-field bg-slate-50 border border-slate-200 p-2.5 rounded flex flex-col shadow-inner">
                      <span className="text-[9px] font-bold text-slate-400 mb-1 uppercase tracking-widest">Pricing Strategy Array Script</span>
                      <input type="text" className="w-full text-slate-600 font-mono text-[11px] bg-transparent outline-none" value={formulaStr} onChange={e => setFormulaStr(e.target.value)}/>
                   </div>
                </div>
                
                <div className="flex gap-3 justify-end mt-5">
-                  <button type="button" className="btn-secondary" onClick={() => setIsEquipModalOpen(false)}>Discard Edits</button>
-                  <button type="submit" className="btn-primary shadow-md">Complete Setup</button>
+                  <button type="button" className="btn-secondary font-bold" onClick={() => setIsEquipModalOpen(false)}>Discard Edits</button>
+                  <button type="submit" className="btn-primary shadow-lg font-bold group">Complete Setup <Check size={16} className="text-white opacity-50 group-hover:opacity-100 transition-opacity ml-1 inline-block"/></button>
                </div>
             </div>
          </form>
@@ -382,11 +453,11 @@ export default function CatalogEditor() {
       {/* SUBCONTRACTOR & LABOR MODAL COMPONENT */}
       <Modal isOpen={isLaborModalOpen} onClose={() => setIsLaborModalOpen(false)} title={activeLabor?.id ? "Edit System Add-on" : "Create Technical Add-on Matrix"}>
          <form className="modal-form" onSubmit={handleSaveLabor}>
-            <div className="bg-slate-50 p-4 border border-slate-200 rounded-lg shadow-inner mb-6 space-y-4">
+            <div className="bg-slate-50 p-5 border border-slate-200 rounded-lg shadow-inner mb-6 space-y-5">
                
                <div className="form-group mb-0">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Tax Categorization Protocol</label>
-                  <select className="input-field w-full font-bold text-sm bg-white shadow-sm border-slate-300" value={activeLabor.category} onChange={e => setActiveLabor({...activeLabor, category: e.target.value})} required>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Tax Categorization Protocol</label>
+                  <select className="input-field w-full font-bold text-sm bg-white shadow-sm border-slate-300 py-3" value={activeLabor.category} onChange={e => setActiveLabor({...activeLabor, category: e.target.value})} required>
                      <option value="Labor">Tax Exempt Structural Labor</option>
                      <option value="Install">Tax Exempt Install Components</option>
                      <option value="Subcontract">3rd Party Subcontractor Payout</option>
@@ -398,21 +469,21 @@ export default function CatalogEditor() {
                </div>
                
                <div className="form-group mb-0">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Customer/Tech Visible Array Name</label>
-                  <input className="input-field w-full font-semibold border-slate-300" value={activeLabor.item_name} onChange={e => setActiveLabor({...activeLabor, item_name: e.target.value})} placeholder="e.g. Crane Overhead Extraction" required/>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Customer/Tech Visible Array Name</label>
+                  <input className="input-field w-full font-bold text-base border-slate-300 py-3 shadow-sm" value={activeLabor.item_name} onChange={e => setActiveLabor({...activeLabor, item_name: e.target.value})} placeholder="e.g. Crane Overhead Extraction" required/>
                </div>
                
                <div className="form-group mb-0 relative">
-                  <label className="text-[10px] font-black text-danger-600 uppercase tracking-widest block mb-1">Internal Floor Cost Injection ($)</label>
-                  <input type="number" step="0.01" className="input-field w-full border-danger-300 text-danger-700 font-mono font-black shadow-inner bg-danger-50 text-xl pl-6 py-3" value={activeLabor.cost} onChange={e => setActiveLabor({...activeLabor, cost: e.target.value})} required/>
-                  <span className="absolute left-3 top-[30px] font-black text-danger-400 text-xl">$</span>
-                  <p className="text-[9px] text-danger-500/80 mt-1.5 font-bold tracking-wide uppercase">DANGER: This cost is completely invisible, and natively offset to the customer total mapped to targeted margin arrays.</p>
+                  <label className="text-[10px] font-black text-danger-600 uppercase tracking-widest block mb-1.5">Internal Floor Cost Injection ($)</label>
+                  <input type="number" step="0.01" className="input-field w-full border-danger-300 text-danger-700 font-mono font-black shadow-inner bg-danger-50 text-2xl pl-8 py-4 rounded-lg" value={activeLabor.cost} onChange={e => setActiveLabor({...activeLabor, cost: e.target.value})} required/>
+                  <span className="absolute left-3 top-[37px] font-black text-danger-400 text-2xl">$</span>
+                  <p className="text-[9px] text-danger-500/80 mt-2 font-bold tracking-wide uppercase">DANGER: This cost is completely invisible, and natively offset to the customer total mapped to targeted margin arrays.</p>
                </div>
             </div>
             
             <div className="modal-actions pt-2 border-t border-slate-100">
-               <button type="button" className="btn-secondary" onClick={() => setIsLaborModalOpen(false)}>Discard Override</button>
-               <button type="submit" className="btn-primary shadow-md px-8 group flex items-center gap-2">Deploy Live <Check size={16} className="text-white opacity-50 group-hover:opacity-100 transition-opacity"/></button>
+               <button type="button" className="btn-secondary font-bold" onClick={() => setIsLaborModalOpen(false)}>Discard Override</button>
+               <button type="submit" className="btn-primary shadow-lg font-bold px-8 group flex items-center gap-2">Deploy Live <Check size={16} className="text-white opacity-50 group-hover:opacity-100 transition-opacity"/></button>
             </div>
          </form>
       </Modal>
