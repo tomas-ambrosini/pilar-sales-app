@@ -63,3 +63,42 @@ export const calculateTierPrice = (rawEquipCost, tierType, margins) => {
   const salesPrice = costWithReserve / (1 - targetMargin);
   return Math.round(salesPrice);
 };
+
+/**
+ * Phase 12: Service Manager Margin X-Ray Evaluator.
+ * Determines true net margin, whether a deal dipped below PAR, and flags it.
+ * @param {number} soldPrice 
+ * @param {number} retailPrice (PAR is 85% of this)
+ * @param {number} totalHardCost (Raw Equipment + System calculated Labor/Materials, excluding reserve)
+ * @param {number} computedCommission
+ * @returns {object} { netMarginPercent, netMarginDollars, isBelowPAR, isFlagged }
+ */
+export const evaluateDealHealth = (soldPrice, retailPrice, totalHardCost, computedCommission) => {
+  if (!soldPrice || !retailPrice || !totalHardCost) {
+      return { 
+          netMarginPercent: 0, 
+          netMarginDollars: 0, 
+          isBelowPAR: false, 
+          isFlagged: false 
+      };
+  }
+
+  // True Net Margin dollars
+  const netMarginDollars = soldPrice - totalHardCost - computedCommission;
+  const netMarginPercent = netMarginDollars / soldPrice;
+  
+  // PAR check
+  const discountRatio = soldPrice / retailPrice;
+  const isBelowPAR = discountRatio < 0.85;
+
+  // Global Hard Constraint -> Less than 35% True Margin triggers a flag for Service Managers.
+  // Less than PAR also triggers a flag because salesperson took a hit/penalty.
+  const isFlagged = isBelowPAR || (netMarginPercent < 0.35);
+
+  return {
+      netMarginPercent,
+      netMarginDollars,
+      isBelowPAR,
+      isFlagged
+  };
+};
