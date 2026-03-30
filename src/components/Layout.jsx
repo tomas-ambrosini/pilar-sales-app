@@ -54,7 +54,7 @@ export default function Layout() {
       <aside className="sidebar">
         <div className="sidebar-brand">
           <div className="brand-logo" style={{ background: 'var(--color-primary-900)' }}>P</div>
-          <span className="brand-text text-gradient">Pilar Home</span>
+          <span className="brand-text text-gradient">Pilar Home v12.0</span>
         </div>
         <nav className="sidebar-nav">
           {navGroups.map((group, idx) => (
@@ -80,7 +80,7 @@ export default function Layout() {
         <header className="top-bar glass-panel">
           <div className="mobile-header">
             <div className="brand-logo" style={{ background: 'var(--color-primary-900)' }}>P</div>
-            <span className="brand-text text-gradient">Pilar Home</span>
+            <span className="brand-text text-gradient">Pilar Home v12.0</span>
           </div>
           <div className="desktop-header-title">
             <span className="company-tag">Home Division</span>
