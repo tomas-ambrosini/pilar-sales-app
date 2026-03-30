@@ -8,14 +8,11 @@ import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
 
 const PIPELINE_STAGES = [
-  { id: 'New Lead', title: 'New Lead', color: '#94a3b8' },
-  { id: 'Contact Attempted', title: 'Contact Attempted', color: '#fcd34d' },
+  { id: 'New Lead', title: 'Incoming Leads', color: '#94a3b8' },
   { id: 'Site Survey Scheduled', title: 'Survey Scheduled', color: '#c084fc' },
   { id: 'Proposal Building', title: 'Building Quote', color: '#60a5fa' },
   { id: 'Proposal Sent', title: 'Proposal Sent', color: '#38bdf8' },
-  { id: 'Deal Won', title: 'Deal Won / Setup', color: '#34d399' },
-  { id: 'Job Completed', title: 'Job Completed', color: '#10b981' },
-  { id: 'Lost', title: 'Lost Deal', color: '#ef4444' }
+  { id: 'Deal Won', title: 'Deal Won / Setup', color: '#34d399' }
 ];
 
 const initialPipeline = PIPELINE_STAGES.reduce((acc, stage) => {
@@ -131,8 +128,12 @@ export default function SalesPipeline() {
             assigned_crew_id: opp.assigned_crew_id
           };
           
-          if (sortedMap[opp.status]) {
+          if (opp.status === 'Contact Attempted') {
+             sortedMap['New Lead'].push(jobCard);
+          } else if (sortedMap[opp.status]) {
              sortedMap[opp.status].push(jobCard);
+          } else if (opp.status === 'Lost' || opp.status === 'Job Completed') {
+             // Do nothing for Kanban view
           } else {
              // Fallback if status doesn't match enum
              sortedMap['New Lead'].push(jobCard);
@@ -257,6 +258,12 @@ export default function SalesPipeline() {
       }
   };
 
+  const handleMarkContacted = async (e, jobId) => {
+    e.stopPropagation();
+    const { error } = await supabase.from('opportunities').update({ status: 'Contact Attempted' }).eq('id', jobId);
+    if (!error) fetchOpportunities();
+  };
+
   const handleCreateLead = async (e) => {
     e.preventDefault();
     if (!newLeadForm.household_id) return alert('Select a customer first.');
@@ -294,7 +301,7 @@ export default function SalesPipeline() {
   };
 
   const Column = ({ title, columnId, color, jobs }) => (
-    <div className="pipeline-col bg-slate-50/80 shadow-sm border border-slate-200/60 rounded-lg" style={{ padding: '0.4rem', flex: '1 1 120px', minWidth: '120px', borderTop: `3px solid ${color}`, display: 'flex', flexDirection: 'column' }}>
+    <div className="pipeline-col bg-slate-50/80 shadow-sm border border-slate-200/60 rounded-lg" style={{ padding: '0.4rem', flex: '0 0 320px', minWidth: '320px', borderTop: `3px solid ${color}`, display: 'flex', flexDirection: 'column' }}>
       <div className="flex justify-between items-center mb-2 px-1">
         <h3 className="font-bold text-slate-700 text-[10px] uppercase tracking-tighter truncate leading-tight mr-1" title={title}>{title}</h3>
         <span className="badge shrink-0 font-bold" style={{ background: 'var(--color-slate-200)', color: 'var(--color-slate-600)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.65rem' }}>
@@ -322,14 +329,29 @@ export default function SalesPipeline() {
                     onClick={() => { setActiveJob(job); setActiveTab('details'); }}
                   >
                     <div className="flex justify-between items-start mb-1 gap-1">
-                       <span className="font-bold text-slate-800 text-[10px] leading-tight break-words">{job.customerName}</span>
-                       <span className={`shrink-0 text-[8px] px-1 py-0.5 rounded font-black uppercase ${job.urgency === 'High' ? 'bg-red-100 text-red-700' : job.urgency === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>{job.urgency === 'High' ? 'HOT' : job.urgency}</span>
+                       <span className="font-bold text-slate-800 text-xs leading-tight break-words">{job.customerName}</span>
+                       <span className={`shrink-0 text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider ${job.urgency === 'High' ? 'bg-red-100 text-red-700' : job.urgency === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                           {job.urgency === 'High' ? 'HOT' : job.urgency}
+                       </span>
                     </div>
-                    <div className="text-[9px] text-slate-500 flex items-center gap-1 mb-1 truncate">
-                      <MapPin size={9} className="shrink-0" /> <span className="truncate">{job.address}</span>
+                    <div className="text-[10px] text-slate-500 flex items-center gap-1.5 mb-2 truncate">
+                      <MapPin size={10} className="shrink-0 text-slate-400" /> <span className="truncate">{job.address}</span>
                     </div>
                     {job.issue && (
-                       <div className="text-[9px] text-slate-400 truncate border-t border-slate-50 pt-1 mt-1">"{job.issue}"</div>
+                       <div className="text-[10px] text-slate-500 truncate border-t border-slate-100 pt-1 mt-1 font-medium">"{job.issue}"</div>
+                    )}
+                    
+                    {/* New Lead Column Specific Actions */}
+                    {columnId === 'New Lead' && (
+                       <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
+                          {job.status === 'Contact Attempted' ? (
+                             <span className="text-[9px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-1.5 py-0.5 rounded-sm uppercase tracking-wide">Contacted</span>
+                          ) : (
+                             <button onClick={(e) => handleMarkContacted(e, job.id)} className="text-[9px] font-bold text-primary-600 hover:text-primary-800 hover:bg-primary-50 px-1.5 py-0.5 rounded transition-colors uppercase tracking-wide flex items-center gap-1">
+                                Mark Contacted
+                             </button>
+                          )}
+                       </div>
                     )}
                   </div>
                 )}
@@ -532,9 +554,14 @@ export default function SalesPipeline() {
                               <button onClick={handleDeleteJob} className="text-red-500 hover:text-red-700 hover:bg-red-50 text-xs font-bold py-2 px-3 rounded flex items-center gap-1 transition-colors">
                                  <Trash2 size={14} /> Delete Deal
                               </button>
-                              <button onClick={() => setIsEditingJob(true)} className="btn-secondary text-xs flex items-center gap-1">
-                                 <Edit3 size={14} /> Quick Edit
-                              </button>
+                              <div className="flex gap-2">
+                                 <button onClick={() => { setPendingLostDeal(activeJob.id); setIsLostModalOpen(true); setActiveJob(null); }} className="btn-secondary bg-slate-100 border-none text-slate-500 hover:text-slate-800 hover:bg-slate-200 text-xs flex items-center gap-1">
+                                    Mark as Lost
+                                 </button>
+                                 <button onClick={() => setIsEditingJob(true)} className="btn-secondary text-xs flex items-center gap-1">
+                                    <Edit3 size={14} /> Quick Edit
+                                 </button>
+                              </div>
                            </div>
                         </>
                      )}
