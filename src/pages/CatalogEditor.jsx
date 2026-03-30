@@ -280,7 +280,7 @@ export default function CatalogEditor() {
                          <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 hover:shadow-inner transition-colors group">
                            <td className="p-4 text-center relative">
                               {item.image_url ? (
-                                 <img src={item.image_url} alt="SKU" className="w-12 h-12 object-contain rounded-lg bg-white border border-slate-200 mx-auto group-hover:scale-110 transition-transform shadow-sm"/>
+                                 <img src={item.image_url} alt="SKU" onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100/f8fafc/cbd5e1?text=Img+Error'; }} className="w-12 h-12 object-contain rounded-lg bg-white border border-slate-200 mx-auto group-hover:scale-110 transition-transform shadow-sm"/>
                               ) : (
                                  <div className="w-12 h-12 bg-slate-50 border border-slate-200 text-slate-300 rounded-lg mx-auto flex items-center justify-center shadow-sm relative overflow-hidden">
                                     <Component size={20} className="z-10" />
@@ -407,7 +407,7 @@ export default function CatalogEditor() {
                <div className="bg-slate-50 p-3 rounded-md border border-slate-200 flex flex-col gap-4">
                   <div className="flex items-center gap-4">
                      <div className="w-14 h-14 bg-white border border-slate-200 rounded flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
-                        {activeEquip.image_url ? <img src={activeEquip.image_url} className="w-full h-full object-cover" alt="Preview"/> : <UploadCloud className="text-slate-300"/>}
+                        {activeEquip.image_url ? <img src={activeEquip.image_url} onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100/f8fafc/cbd5e1?text=Img+Error'; }} className="w-full h-full object-cover" alt="Preview"/> : <UploadCloud className="text-slate-300"/>}
                      </div>
                      <div className="flex-1 overflow-hidden">
                         <label className="btn-secondary text-xs px-3 py-1.5 cursor-pointer hover:bg-white transition-colors block w-max shadow-sm border border-slate-200">
