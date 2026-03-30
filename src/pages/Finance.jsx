@@ -5,7 +5,7 @@ import './Proposals.css';
 
 export default function Finance() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [margins, setMargins] = useState({ gross_margin: 0.40, service_reserve: 0.05 });
+  const [margins, setMargins] = useState({ good_margin: 0.35, better_margin: 0.40, best_margin: 0.45, service_reserve: 0.05, sales_tax: 0.07 });
   
   useEffect(() => {
     fetchMargins();
@@ -116,18 +116,42 @@ export default function Finance() {
               <p className="text-slate-500 text-sm mb-8">Update the baseline logic math used across all sales proposals and catalog generation. These variables natively control retail prices.</p>
               
               <div className="flex justify-between items-center mb-4 bg-white p-4 rounded-lg border border-slate-100 shadow-sm">
-                 <span className="font-semibold text-slate-700">Gross Margin Target</span>
+                 <span className="font-semibold text-slate-700">Good Tier Target Margin</span>
                  <div className="flex items-center gap-2">
-                   <input type="number" step="0.01" className="border-b-2 border-primary-500 focus:outline-none p-1 w-20 text-right font-bold text-primary-700 bg-transparent text-lg" value={margins.gross_margin} onChange={e => setMargins({...margins, gross_margin: parseFloat(e.target.value)})} />
-                   <span className="font-bold text-slate-400">%</span>
+                   <input type="number" step="0.01" className="border-b-2 border-primary-500 focus:outline-none p-1 w-20 text-right font-bold text-primary-700 bg-transparent text-lg" value={margins.good_margin || 0.35} onChange={e => setMargins({...margins, good_margin: parseFloat(e.target.value)})} />
+                   <span className="font-bold text-slate-400"> (ex: 0.35)</span>
+                 </div>
+              </div>
+
+              <div className="flex justify-between items-center mb-4 bg-white p-4 rounded-lg border border-slate-100 shadow-sm">
+                 <span className="font-semibold text-slate-700">Better Tier Target Margin</span>
+                 <div className="flex items-center gap-2">
+                   <input type="number" step="0.01" className="border-b-2 border-primary-500 focus:outline-none p-1 w-20 text-right font-bold text-primary-700 bg-transparent text-lg" value={margins.better_margin || 0.40} onChange={e => setMargins({...margins, better_margin: parseFloat(e.target.value)})} />
+                   <span className="font-bold text-slate-400"> (ex: 0.40)</span>
+                 </div>
+              </div>
+
+              <div className="flex justify-between items-center mb-4 bg-white p-4 rounded-lg border border-slate-100 shadow-sm">
+                 <span className="font-semibold text-slate-700">Best Tier Target Margin</span>
+                 <div className="flex items-center gap-2">
+                   <input type="number" step="0.01" className="border-b-2 border-primary-500 focus:outline-none p-1 w-20 text-right font-bold text-primary-700 bg-transparent text-lg" value={margins.best_margin || 0.45} onChange={e => setMargins({...margins, best_margin: parseFloat(e.target.value)})} />
+                   <span className="font-bold text-slate-400"> (ex: 0.45)</span>
                  </div>
               </div>
               
-              <div className="flex justify-between items-center mb-8 bg-white p-4 rounded-lg border border-slate-100 shadow-sm">
-                 <span className="font-semibold text-slate-700">Service Reserve</span>
+              <div className="flex justify-between items-center mb-4 bg-white p-4 rounded-lg border border-slate-100 shadow-sm">
+                 <span className="font-semibold text-slate-700">Service Reserve Injection</span>
                  <div className="flex items-center gap-2">
-                   <input type="number" step="0.01" className="border-b-2 border-primary-500 focus:outline-none p-1 w-20 text-right font-bold text-primary-700 bg-transparent text-lg" value={margins.service_reserve} onChange={e => setMargins({...margins, service_reserve: parseFloat(e.target.value)})} />
-                   <span className="font-bold text-slate-400">%</span>
+                   <input type="number" step="0.01" className="border-b-2 border-primary-500 focus:outline-none p-1 w-20 text-right font-bold text-primary-700 bg-transparent text-lg" value={margins.service_reserve || 0.05} onChange={e => setMargins({...margins, service_reserve: parseFloat(e.target.value)})} />
+                   <span className="font-bold text-slate-400"> (ex: 0.05)</span>
+                 </div>
+              </div>
+
+              <div className="flex justify-between items-center mb-8 bg-white p-4 rounded-lg border border-slate-100 shadow-sm">
+                 <span className="font-semibold text-slate-700">State Sales Tax</span>
+                 <div className="flex items-center gap-2">
+                   <input type="number" step="0.01" className="border-b-2 border-primary-500 focus:outline-none p-1 w-20 text-right font-bold text-primary-700 bg-transparent text-lg" value={margins.sales_tax || 0.07} onChange={e => setMargins({...margins, sales_tax: parseFloat(e.target.value)})} />
+                   <span className="font-bold text-slate-400"> (ex: 0.07)</span>
                  </div>
               </div>
               
