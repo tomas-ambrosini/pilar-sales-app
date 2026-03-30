@@ -1,0 +1,598 @@
+import React, { useState } from 'react';
+import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
+import { Search, Plus, Phone, Mail, MapPin, ChevronRight, User as UserIcon, Calendar, FileText, Edit2, Trash2, Tag, Clock } from 'lucide-react';
+import Modal from '../components/Modal';
+import './Customers.css';
+import { useCustomers } from '../context/CustomerContext';
+import { useProposals } from '../context/ProposalContext';
+import ProposalViewerModal from '../components/ProposalViewerModal';
+
+function CustomerList() {
+  const navigate = useNavigate();
+  const { customers, addCustomer } = useCustomers();
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    address: '',
+    tags: ''
+  });
+
+  const handleInputChange = (e) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleCloseModal = () => {
+    setFormData({ firstName: '', lastName: '', email: '', phone: '', address: '' });
+    setIsAddCustomerOpen(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const result = await addCustomer({
+      name: `${formData.firstName} ${formData.lastName}`.trim(),
+      email: formData.email,
+      phone: formData.phone,
+      address: formData.address,
+      tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+    });
+
+    if (result && !result.success) {
+        if (result.message) {
+            alert(result.message);
+        } else {
+            console.error(result.error);
+            alert("An error occurred while creating the customer.");
+        }
+        return;
+    }
+
+    handleCloseModal();
+  };
+
+  return (
+    <div className="page-container customers-page">
+      <header className="page-header">
+        <div>
+          <h1 className="page-title">Customer Directory</h1>
+          <p className="page-subtitle">Centralized database for all customer contacts.</p>
+        </div>
+        <button className="primary-action-btn" onClick={() => setIsAddCustomerOpen(true)}>
+          <Plus size={18} />
+          <span className="hide-mobile">Add Customer</span>
+        </button>
+      </header>
+
+      <div className="search-bar-container glass-panel">
+        <Search className="search-icon" size={20} />
+        <input 
+          type="text" 
+          placeholder="Search by name, address, or phone..." 
+          className="search-input" 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      <div className="customers-list">
+        {customers
+         .filter(c => {
+             const sq = searchQuery.toLowerCase();
+             return (
+                 (c.name && c.name.toLowerCase().includes(sq)) || 
+                 (c.address && c.address.toLowerCase().includes(sq)) || 
+                 (c.phone && c.phone.includes(sq)) ||
+                 (c.email && c.email.toLowerCase().includes(sq))
+             );
+         })
+         .sort((a,b) => a.name.localeCompare(b.name))
+         .map(customer => (
+          <div
+            key={customer.id}
+            className="customer-card glass-panel"
+            onClick={() => navigate(`/customers/${customer.id}`)}
+          >
+            <div className="customer-avatar">
+              {customer.name.charAt(0)}
+            </div>
+            <div className="customer-info" style={{ flex: 1 }}>
+              <h3 className="customer-name">{customer.name}</h3>
+              <div className="customer-meta">
+                <MapPin size={14} />
+                <span>{customer.address}</span>
+              </div>
+            </div>
+            <ChevronRight size={20} className="chevron-icon" />
+          </div>
+        ))}
+      </div>
+
+      <Modal
+        isOpen={isAddCustomerOpen}
+        onClose={handleCloseModal}
+        title="Add New Customer"
+      >
+        <form className="modal-form" onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="firstName">First Name</label>
+            <input type="text" id="firstName" placeholder="Enter first name" value={formData.firstName} onChange={handleInputChange} required />
+          </div>
+          <div className="form-group">
+            <label htmlFor="lastName">Last Name</label>
+            <input type="text" id="lastName" placeholder="Enter last name" value={formData.lastName} onChange={handleInputChange} required />
+          </div>
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input type="email" id="email" placeholder="email@example.com" value={formData.email} onChange={handleInputChange} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="phone">Phone Number</label>
+            <input type="tel" id="phone" placeholder="(555) 555-5555" value={formData.phone} onChange={handleInputChange} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="address">Address</label>
+            <input type="text" id="address" placeholder="123 Main St" value={formData.address} onChange={handleInputChange} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="tags">Tags (comma separated)</label>
+            <input type="text" id="tags" placeholder="Residential, VIP" value={formData.tags} onChange={handleInputChange} />
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn-secondary" onClick={handleCloseModal}>
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary">
+              Save Customer
+            </button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+}
+
+function PropertyDetailsCard({ location, index }) {
+   const { updatePropertyDetails } = useCustomers();
+   const [isEditing, setIsEditing] = useState(false);
+   const [formData, setFormData] = useState({
+       year_built: location.property_details?.year_built || '',
+       sq_footage: location.property_details?.sq_footage || '',
+       current_system: location.property_details?.current_system || '',
+       system_type: location.property_details?.system_type || '',
+       tenant_name: location.property_details?.tenant_name || '',
+       tenant_phone: location.property_details?.tenant_phone || ''
+   });
+
+   const handleSave = () => {
+       updatePropertyDetails(location.id, formData);
+       setIsEditing(false);
+   };
+
+   return (
+        <section className="detail-card glass-panel" style={{ marginBottom: '1rem' }}>
+          <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
+             <h2 className="card-title mb-0 flex items-center gap-2"><MapPin size={16} className="text-primary-500"/> Property {index}: <span className="text-slate-600 text-sm font-normal truncate">{location.street_address} {location.city && `, ${location.city}`}</span></h2>
+             {isEditing ? (
+                 <div className="flex gap-2">
+                    <button className="text-xs font-bold text-slate-500 hover:text-slate-700" onClick={() => setIsEditing(false)}>Cancel</button>
+                    <button className="text-xs font-bold text-primary-600 hover:text-primary-700 bg-primary-50 px-2 py-1 rounded" onClick={handleSave}>Save Specs</button>
+                 </div>
+             ) : (
+                <button className="text-xs font-bold text-slate-400 hover:text-primary-500 flex items-center gap-1" onClick={() => setIsEditing(true)}>
+                   <Edit2 size={12}/> Edit Specs
+                </button>
+             )}
+          </div>
+          
+          {isEditing ? (
+             <div className="grid grid-cols-2 gap-4">
+               <div className="form-group mb-0">
+                  <label className="text-xs">Year Built</label>
+                  <input type="text" className="w-full border p-1 rounded mt-1" value={formData.year_built} onChange={e => setFormData({...formData, year_built: e.target.value})} placeholder="e.g. 1995" />
+               </div>
+               <div className="form-group mb-0">
+                  <label className="text-xs">Sq Footage</label>
+                  <input type="text" className="w-full border p-1 rounded mt-1" value={formData.sq_footage} onChange={e => setFormData({...formData, sq_footage: e.target.value})} placeholder="e.g. 2500" />
+               </div>
+               <div className="form-group mb-0">
+                  <label className="text-xs">Current System</label>
+                  <input type="text" className="w-full border p-1 rounded mt-1" value={formData.current_system} onChange={e => setFormData({...formData, current_system: e.target.value})} placeholder="e.g. Carrier 3-Ton" />
+               </div>
+               <div className="form-group mb-0">
+                  <label className="text-xs">System Type</label>
+                  <input type="text" className="w-full border p-1 rounded mt-1" value={formData.system_type} onChange={e => setFormData({...formData, system_type: e.target.value})} placeholder="e.g. Split Gas" />
+               </div>
+               
+               {!location.is_primary_residence && (
+                  <>
+                    <div className="form-group mb-0">
+                       <label className="text-xs text-primary-600 font-bold">Tenant/Admin Name</label>
+                       <input type="text" className="w-full border border-primary-100 bg-primary-50 p-1 rounded mt-1" value={formData.tenant_name} onChange={e => setFormData({...formData, tenant_name: e.target.value})} placeholder="e.g. John Smith" />
+                    </div>
+                    <div className="form-group mb-0">
+                       <label className="text-xs text-primary-600 font-bold">Tenant/Admin Phone</label>
+                       <input type="tel" className="w-full border border-primary-100 bg-primary-50 p-1 rounded mt-1" value={formData.tenant_phone} onChange={e => setFormData({...formData, tenant_phone: e.target.value})} placeholder="(555) 555-5555" />
+                    </div>
+                  </>
+               )}
+             </div>
+          ) : (
+             <>
+               <div className="info-grid relative mb-2">
+                 <div className="info-group">
+                   <label>Year Built</label>
+                   <p>{location.property_details?.year_built || 'Unknown'}</p>
+                 </div>
+                 <div className="info-group">
+                   <label>Sq Footage</label>
+                   <p>{location.property_details?.sq_footage || 'Unknown'}</p>
+                 </div>
+                 <div className="info-group">
+                   <label>Current System</label>
+                   <p>{location.property_details?.current_system || 'Unknown'}</p>
+                 </div>
+                 <div className="info-group">
+                   <label>System Type</label>
+                   <p>{location.property_details?.system_type || 'Unknown'}</p>
+                 </div>
+               </div>
+
+               {!location.is_primary_residence && (location.property_details?.tenant_name || location.property_details?.tenant_phone) && (
+                  <div className="mt-4 p-3 bg-slate-50 border border-slate-100 rounded-lg flex items-center gap-3 w-full">
+                     <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 flex-shrink-0">
+                        <UserIcon size={16}/>
+                     </div>
+                     <div>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-0.5" style={{ marginBottom: '2px' }}>Site Contact / Tenant</p>
+                        <p className="font-semibold text-slate-800 text-sm m-0" style={{ marginBottom: 0 }}>
+                           {location.property_details?.tenant_name || 'No Name Provided'}
+                        </p>
+                        {location.property_details?.tenant_phone && (
+                           <p className="text-xs text-slate-500 m-0 mt-0.5 flex items-center gap-1" style={{ marginTop: '2px' }}>
+                              <Phone size={10} /> {location.property_details?.tenant_phone}
+                           </p>
+                        )}
+                     </div>
+                  </div>
+               )}
+             </>
+          )}
+        </section>
+   );
+}
+
+function CustomerDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { customers, updateCustomer, deleteCustomer, addPropertyToCustomer } = useCustomers();
+  const { proposals } = useProposals();
+  
+  const [activeQuickAction, setActiveQuickAction] = useState(null);
+  const [isCreateProposalOpen, setIsCreateProposalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isAddPropertyOpen, setIsAddPropertyOpen] = useState(false);
+  const [newPropertyAddress, setNewPropertyAddress] = useState('');
+  const [viewingProposal, setViewingProposal] = useState(null);
+  
+  const customer = customers.find(c => c.id.toString() === id.toString());
+  
+  const primaryLocations = (customer?.locations || []).filter(loc => loc.is_primary_residence);
+  const managedLocations = (customer?.locations || []).filter(loc => !loc.is_primary_residence);
+  
+  // Cross-pollinate data
+  const customerProposals = proposals?.filter(p => p.customer?.trim().toLowerCase() === customer?.name?.trim().toLowerCase()) || [];
+
+  if (!customer) {
+    return <div className="page-container flex-center"><h3>Customer Not Found or Deleted</h3><button className="primary-action-btn mt-4" onClick={() => navigate('/customers')}>Go Back</button></div>;
+  }
+
+  const [editFormData, setEditFormData] = useState({
+    name: customer.name,
+    email: customer.email,
+    phone: customer.phone,
+    address: customer.address,
+    tags: customer.tags ? customer.tags.join(', ') : ''
+  });
+
+  const handleEditChange = (e) => {
+    const { id, value } = e.target;
+    setEditFormData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    const updatedCustomer = {
+      ...editFormData,
+      tags: editFormData.tags ? editFormData.tags.split(',').map(t => t.trim()).filter(Boolean) : []
+    };
+    updateCustomer(customer.id, updatedCustomer);
+    setIsEditModalOpen(false);
+  };
+
+    const handleAddProperty = async (e) => {
+      e.preventDefault();
+      if (!newPropertyAddress) return;
+      await addPropertyToCustomer(customer.id, newPropertyAddress);
+      setIsAddPropertyOpen(false);
+      setNewPropertyAddress('');
+    };
+
+    const handleDelete = () => {
+      deleteCustomer(customer.id);
+      navigate('/customers');
+    };
+
+  return (
+    <div className="page-container customer-detail">
+      <button className="back-btn" onClick={() => navigate('/customers')}>
+        <ChevronRight size={18} className="icon-flip" /> Back to Customers
+      </button>
+
+      <div className="detail-header glass-panel">
+        <div className="detail-header-main">
+          <div className="detail-avatar large">
+            {customer.name.charAt(0)}
+          </div>
+          <div>
+            <h1 className="detail-name">{customer.name}</h1>
+            <div className="customer-tags" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+              {customer.tags && customer.tags.map(tag => (
+                <span key={tag} className="inline-block rounded-full font-semibold bg-slate-100 text-slate-600 px-2 py-1 text-xs">{tag}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="contact-actions">
+          <button className="icon-btn outline" onClick={() => setIsEditModalOpen(true)} title="Edit Customer"><Edit2 size={18} /></button>
+          <button className="icon-btn outline" onClick={() => setActiveQuickAction('Call Customer')} title="Call Customer"><Phone size={18} /></button>
+          <button className="icon-btn outline" onClick={() => setActiveQuickAction('Email Customer')} title="Email Customer"><Mail size={18} /></button>
+          <button className="icon-btn outline" style={{color: 'var(--color-danger)', borderColor: 'var(--color-danger)'}} onClick={() => setIsDeleteModalOpen(true)} title="Delete Contact"><Trash2 size={18} /></button>
+        </div>
+      </div>
+
+      <div className="detail-content-grid">
+        <section className="detail-card glass-panel">
+          <h2 className="card-title">Contact Information</h2>
+          <div className="info-list">
+            <div className="info-item">
+              <MapPin size={16} className="text-slate-400" />
+              <span>{customer.address}</span>
+            </div>
+            <div className="info-item">
+              <Phone size={16} className="text-slate-400" />
+              <span>{customer.phone}</span>
+            </div>
+            <div className="info-item">
+              <Mail size={16} className="text-slate-400" />
+              <span>{customer.email}</span>
+            </div>
+          </div>
+        </section>
+
+        <div className="locations-wrapper" style={{ gridColumn: '1 / -1' }}>
+           {/* Primary Residence Section */}
+           {primaryLocations.length > 0 && (
+             <div className="mb-6">
+                 <div className="flex justify-between items-center w-full mb-3">
+                    <h2 className="card-title text-slate-800 m-0">Primary Residence</h2>
+                 </div>
+                 {primaryLocations.map((loc, index) => (
+                     <PropertyDetailsCard key={loc.id} location={loc} index={index + 1} />
+                 ))}
+             </div>
+           )}
+
+           {/* Managed Properties Section */}
+           <div>
+                 <div className="flex justify-between items-center w-full mb-3">
+                    <h2 className="card-title text-slate-800 m-0">Managed Properties</h2>
+                    <button onClick={() => setIsAddPropertyOpen(true)} className="btn-secondary text-xs flex items-center gap-1">
+                        <Plus size={14} /> Add Property
+                    </button>
+                 </div>
+                 {managedLocations.length > 0 ? (
+                     managedLocations.map((loc, index) => (
+                         <PropertyDetailsCard key={loc.id} location={loc} index={primaryLocations.length + index + 1} />
+                     ))
+                 ) : (
+                     <div className="detail-card glass-panel flex-center p-6"><p className="text-slate-500 font-medium text-sm">No managed properties recorded.</p></div>
+                 )}
+           </div>
+        </div>
+
+        <section className="detail-card glass-panel full-width">
+          <div className="card-header-row">
+            <h2 className="card-title">Proposals & Quotes</h2>
+            <button className="text-btn text-primary" onClick={() => setIsCreateProposalOpen(true)}>Create New</button>
+          </div>
+          
+          {customerProposals.length > 0 ? (
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+               {customerProposals.map(prop => (
+                 <div key={prop.id} className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col justify-between" onClick={() => setViewingProposal(prop)}>
+                    <div className="flex justify-between items-start mb-2">
+                       <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">{prop.id}</span>
+                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${prop.status === 'Approved' ? 'bg-success-100 text-success-800' : prop.status === 'Sent' ? 'bg-secondary-100 text-secondary-800' : 'bg-slate-100 text-slate-600'}`}>{prop.status}</span>
+                    </div>
+                    <div className="text-lg font-bold text-slate-800 mb-1">${(prop.amount || 0).toLocaleString()}</div>
+                    <div className="flex items-center gap-1 text-xs text-slate-400">
+                       <Clock size={12}/> {prop.date}
+                    </div>
+                 </div>
+               ))}
+            </div>
+          ) : (
+             <div className="empty-state">
+                <FileText size={32} className="text-slate-300" />
+                <p>No proposals generated yet.</p>
+             </div>
+          )}
+        </section>
+      </div>
+
+      <Modal
+        isOpen={isCreateProposalOpen}
+        onClose={() => setIsCreateProposalOpen(false)}
+        title="Create New Proposal"
+      >
+        <div className="modal-form" style={{ textAlign: 'center', padding: '1rem 0' }}>
+          <p style={{ color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
+            The Proposal Generator for <strong>{customer.name}</strong> will open the Proposal Wizard.
+          </p>
+          <div className="modal-actions" style={{ justifyContent: 'center', gap: '1rem' }}>
+            <button className="btn-secondary" onClick={() => setIsCreateProposalOpen(false)}>
+              Cancel
+            </button>
+            <button className="btn-primary" onClick={() => navigate('/proposals')}>
+              Go to Wizard
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={activeQuickAction !== null}
+        onClose={() => setActiveQuickAction(null)}
+        title={activeQuickAction}
+      >
+        <div className="modal-form" style={{ textAlign: 'center', padding: '1rem 0' }}>
+          {activeQuickAction === 'Call Customer' && (
+            <p style={{ color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
+              Initiating call to <strong>{customer.phone}</strong> for <strong>{customer.name}</strong>.
+            </p>
+          )}
+          {activeQuickAction === 'Email Customer' && (
+            <p style={{ color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
+              Opening email client to send email to <strong>{customer.email}</strong> for <strong>{customer.name}</strong>.
+            </p>
+          )}
+          <div className="modal-actions" style={{ justifyContent: 'center', gap: '1rem' }}>
+            <button className="btn-secondary" onClick={() => setActiveQuickAction(null)}>
+              Close
+            </button>
+            {activeQuickAction === 'Call Customer' && (
+              <a href={`tel:${customer.phone}`} className="btn-primary">
+                Call Now
+              </a>
+            )}
+            {activeQuickAction === 'Email Customer' && (
+              <a href={`mailto:${customer.email}`} className="btn-primary">
+                Send Email
+              </a>
+            )}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Edit Customer Details"
+      >
+        <form className="modal-form" onSubmit={handleEditSubmit}>
+          <div className="form-group">
+            <label htmlFor="name">Full Name</label>
+            <input type="text" id="name" value={editFormData.name} onChange={handleEditChange} required />
+          </div>
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input type="email" id="email" value={editFormData.email} onChange={handleEditChange} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="phone">Phone Number</label>
+            <input type="tel" id="phone" value={editFormData.phone} onChange={handleEditChange} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="address">Address</label>
+            <input type="text" id="address" value={editFormData.address} onChange={handleEditChange} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="tags">Tags (comma separated)</label>
+            <input type="text" id="tags" value={editFormData.tags} onChange={handleEditChange} />
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn-secondary" onClick={() => setIsEditModalOpen(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary">
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Delete Customer"
+      >
+        <div className="modal-form" style={{ textAlign: 'center', padding: '1rem 0' }}>
+          <p style={{ color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
+            Are you sure you want to delete <strong>{customer.name}</strong>? This action cannot be undone.
+          </p>
+          <div className="modal-actions" style={{ justifyContent: 'center', gap: '1rem' }}>
+            <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>
+              Cancel
+            </button>
+            <button className="btn-primary" style={{ background: 'var(--color-danger)' }} onClick={handleDelete}>
+              Delete Contact
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Add Property Modal */}
+      <Modal
+         isOpen={isAddPropertyOpen}
+         onClose={() => setIsAddPropertyOpen(false)}
+         title={`Add Property to ${customer.name}`}
+      >
+         <form className="modal-form" onSubmit={handleAddProperty}>
+            <p className="text-sm text-slate-500 mb-4">
+               Attach a new physical property location to this customer account.
+            </p>
+            <div className="form-group">
+               <label htmlFor="propAddress">Property Street Address</label>
+               <input 
+                  type="text" 
+                  id="propAddress" 
+                  value={newPropertyAddress} 
+                  onChange={e => setNewPropertyAddress(e.target.value)} 
+                  placeholder="e.g. 100 Main St"
+                  required 
+               />
+            </div>
+            <div className="modal-actions mt-6">
+               <button type="button" className="btn-secondary" onClick={() => setIsAddPropertyOpen(false)}>Cancel</button>
+               <button type="submit" className="btn-primary">Add Property</button>
+            </div>
+         </form>
+      </Modal>
+
+      {/* Viewer Modal Instance */}
+      <ProposalViewerModal 
+          isOpen={!!viewingProposal} 
+          onClose={() => setViewingProposal(null)} 
+          proposal={viewingProposal} 
+      />
+    </div>
+  );
+}
+
+export default function Customers() {
+  return (
+    <Routes>
+      <Route path="/" element={<CustomerList />} />
+      <Route path="/:id" element={<CustomerDetail />} />
+    </Routes>
+  );
+}
