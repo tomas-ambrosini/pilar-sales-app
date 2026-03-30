@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import CommandMenu from './CommandMenu';
-import { LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Megaphone, DollarSign, Settings, Bell, LogOut, Search } from 'lucide-react';
+import { LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Megaphone, DollarSign, Settings, Bell, LogOut, Search, Truck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Modal from './Modal';
 import './Layout.css';
@@ -33,6 +33,7 @@ const navGroups = [
   {
     title: 'Operations & IT',
     items: [
+      { path: '/dispatch', label: 'Dispatch Hub', icon: Truck },
       { path: '/operations', label: 'Operations', icon: Settings }
     ]
   }

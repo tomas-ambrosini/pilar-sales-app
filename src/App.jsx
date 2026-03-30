@@ -9,6 +9,7 @@ import Marketing from './pages/Marketing';
 import Finance from './pages/Finance';
 import Operations from './pages/Operations';
 import SalesPipeline from './pages/SalesPipeline';
+import DispatchHub from './pages/DispatchHub';
 import Login from './pages/Login';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CustomerProvider } from './context/CustomerContext';
@@ -31,6 +32,7 @@ function ProtectedRoutes() {
         <Route path="catalog/*" element={<Catalog />} />
         <Route path="proposals/*" element={<Proposals />} />
         <Route path="sales-pipeline/*" element={<SalesPipeline />} />
+        <Route path="dispatch/*" element={<DispatchHub />} />
         <Route path="marketing/*" element={<Marketing />} />
         <Route path="finance/*" element={<Finance />} />
         <Route path="operations/*" element={<Operations />} />
