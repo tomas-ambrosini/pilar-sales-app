@@ -35,8 +35,8 @@ export default function CatalogEditor() {
     setLoading(true);
     try {
       const [equipRes, laborRes, marginRes] = await Promise.all([
-        supabase.from('equipment_catalog').select('*').order('brand').order('series').order('tons'),
-        supabase.from('labor_rates').select('*').order('category').order('item_name'),
+        supabase.from('equipment_catalog').select('*').order('brand').order('series').order('tons').order('id'),
+        supabase.from('labor_rates').select('*').order('category').order('item_name').order('id'),
         supabase.from('margin_settings').select('*').eq('id', 1).single()
       ]);
       
@@ -404,16 +404,22 @@ export default function CatalogEditor() {
 
             <div className="border-t border-slate-100 my-4 pt-4 px-1">
                <h4 className="text-xs font-bold text-slate-400 mb-2 flex items-center gap-1.5 uppercase tracking-wide"><Layers size={14}/> Marketing Assets</h4>
-               <div className="bg-slate-50 p-3 rounded-md border border-slate-200 flex items-center gap-4">
-                  <div className="w-14 h-14 bg-white border border-slate-200 rounded flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
-                     {activeEquip.image_url ? <img src={activeEquip.image_url} className="w-full h-full object-cover" alt="Preview"/> : <UploadCloud className="text-slate-300"/>}
+               <div className="bg-slate-50 p-3 rounded-md border border-slate-200 flex flex-col gap-4">
+                  <div className="flex items-center gap-4">
+                     <div className="w-14 h-14 bg-white border border-slate-200 rounded flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+                        {activeEquip.image_url ? <img src={activeEquip.image_url} className="w-full h-full object-cover" alt="Preview"/> : <UploadCloud className="text-slate-300"/>}
+                     </div>
+                     <div className="flex-1 overflow-hidden">
+                        <label className="btn-secondary text-xs px-3 py-1.5 cursor-pointer hover:bg-white transition-colors block w-max shadow-sm border border-slate-200">
+                           {uploadingImage ? 'Uploading securely...' : 'Upload Image URL (.png, .jpg)'}
+                           <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage}/>
+                        </label>
+                        <p className="text-[9px] text-slate-400 mt-1.5 pl-1 font-mono break-all truncate">{activeEquip.image_url || 'No secure asset attached.'}</p>
+                     </div>
                   </div>
-                  <div className="flex-1 overflow-hidden">
-                     <label className="btn-secondary text-xs px-3 py-1.5 cursor-pointer hover:bg-white transition-colors block w-max shadow-sm border border-slate-200">
-                        {uploadingImage ? 'Uploading securely...' : 'Upload Image URL (.png, .jpg)'}
-                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage}/>
-                     </label>
-                     <p className="text-[9px] text-slate-400 mt-1.5 pl-1 font-mono break-all truncate">{activeEquip.image_url || 'No secure asset attached.'}</p>
+                  <div className="border-t border-slate-200 pt-3 mt-1">
+                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Or Paste Direct URL (If No Cloud Bucket Configured)</label>
+                     <input placeholder="https://example.com/ac.png" className="input-field w-full text-slate-600 font-mono text-xs bg-white border-slate-300 shadow-inner" value={activeEquip.image_url || ''} onChange={e => setActiveEquip({...activeEquip, image_url: e.target.value})} />
                   </div>
                </div>
             </div>
