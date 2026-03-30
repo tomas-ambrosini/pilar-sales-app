@@ -555,14 +555,9 @@ export default function SalesPipeline() {
                               <button onClick={handleDeleteJob} className="text-red-500 hover:text-red-700 hover:bg-red-50 text-xs font-bold py-2 px-3 rounded flex items-center gap-1 transition-colors">
                                  <Trash2 size={14} /> Delete Deal
                               </button>
-                              <div className="flex gap-2">
-                                 <button onClick={() => { setPendingLostDeal(activeJob.id); setIsLostModalOpen(true); setActiveJob(null); }} className="btn-secondary bg-slate-100 border-none text-slate-500 hover:text-slate-800 hover:bg-slate-200 text-xs flex items-center gap-1">
-                                    Mark as Lost
-                                 </button>
-                                 <button onClick={() => setIsEditingJob(true)} className="btn-secondary text-xs flex items-center gap-1">
-                                    <Edit3 size={14} /> Quick Edit
-                                 </button>
-                              </div>
+                              <button onClick={() => setIsEditingJob(true)} className="btn-secondary text-xs flex items-center gap-1">
+                                 <Edit3 size={14} /> Quick Edit
+                              </button>
                            </div>
                         </>
                      )}
