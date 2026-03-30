@@ -12,7 +12,8 @@ const PIPELINE_STAGES = [
   { id: 'Site Survey Scheduled', title: 'Survey Scheduled', color: '#c084fc' },
   { id: 'Proposal Building', title: 'Building Quote', color: '#60a5fa' },
   { id: 'Proposal Sent', title: 'Proposal Sent', color: '#38bdf8' },
-  { id: 'Deal Won', title: 'Deal Won / Setup', color: '#34d399' }
+  { id: 'Deal Won', title: 'Deal Won / Setup', color: '#34d399' },
+  { id: 'Lost', title: 'Lost Deal', color: '#ef4444' }
 ];
 
 const initialPipeline = PIPELINE_STAGES.reduce((acc, stage) => {
@@ -132,7 +133,7 @@ export default function SalesPipeline() {
              sortedMap['New Lead'].push(jobCard);
           } else if (sortedMap[opp.status]) {
              sortedMap[opp.status].push(jobCard);
-          } else if (opp.status === 'Lost' || opp.status === 'Job Completed') {
+          } else if (opp.status === 'Job Completed') {
              // Do nothing for Kanban view
           } else {
              // Fallback if status doesn't match enum
