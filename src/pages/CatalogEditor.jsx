@@ -260,7 +260,7 @@ export default function CatalogEditor() {
               <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 leading-tight">
-                    <th className="p-4 font-semibold w-16 text-center">Image</th>
+
                     <th className="p-4 font-semibold">Brand & Series</th>
                     <th className="p-4 font-semibold">Tonnage / SEER</th>
                     <th className="p-4 font-semibold">Models (Condenser / Air Handler)</th>
@@ -271,23 +271,14 @@ export default function CatalogEditor() {
                 </thead>
                 <tbody>
                    {filteredEquipment.length === 0 ? (
-                      <tr><td colSpan="7" className="p-12 text-center">
+                      <tr><td colSpan="6" className="p-12 text-center">
                          <Box size={40} className="text-slate-200 mx-auto mb-3" />
                          <span className="text-slate-500 font-medium tracking-wide">No equipment SKUs found matching your criteria.</span>
                       </td></tr>
                    ) : (
                       filteredEquipment.map(item => (
                          <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 hover:shadow-inner transition-colors group">
-                           <td className="p-4 text-center relative">
-                              {item.image_url ? (
-                                 <img src={item.image_url} alt="SKU" onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100/f8fafc/cbd5e1?text=Img+Error'; }} className="w-12 h-12 object-contain rounded-lg bg-white border border-slate-200 mx-auto group-hover:scale-110 transition-transform shadow-sm"/>
-                              ) : (
-                                 <div className="w-12 h-12 bg-slate-50 border border-slate-200 text-slate-300 rounded-lg mx-auto flex items-center justify-center shadow-sm relative overflow-hidden">
-                                    <Component size={20} className="z-10" />
-                                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent to-slate-100 opacity-50"></div>
-                                 </div>
-                              )}
-                           </td>
+
                            <td className="p-4">
                               <div className="font-black text-slate-800 tracking-tight text-base mb-0.5">{item.brand}</div>
                               <div className="text-xs text-slate-500 font-mono tracking-wide">{item.series} Series</div>
@@ -402,27 +393,7 @@ export default function CatalogEditor() {
                </div>
             </div>
 
-            <div className="border-t border-slate-100 my-4 pt-4 px-1">
-               <h4 className="text-xs font-bold text-slate-400 mb-2 flex items-center gap-1.5 uppercase tracking-wide"><Layers size={14}/> Marketing Assets</h4>
-               <div className="bg-slate-50 p-3 rounded-md border border-slate-200 flex flex-col gap-4">
-                  <div className="flex items-center gap-4">
-                     <div className="w-14 h-14 bg-white border border-slate-200 rounded flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
-                        {activeEquip.image_url ? <img src={activeEquip.image_url} onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100/f8fafc/cbd5e1?text=Img+Error'; }} className="w-full h-full object-cover" alt="Preview"/> : <UploadCloud className="text-slate-300"/>}
-                     </div>
-                     <div className="flex-1 overflow-hidden">
-                        <label className="btn-secondary text-xs px-3 py-1.5 cursor-pointer hover:bg-white transition-colors block w-max shadow-sm border border-slate-200">
-                           {uploadingImage ? 'Uploading securely...' : 'Upload Image URL (.png, .jpg)'}
-                           <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage}/>
-                        </label>
-                        <p className="text-[9px] text-slate-400 mt-1.5 pl-1 font-mono break-all truncate">{activeEquip.image_url || 'No secure asset attached.'}</p>
-                     </div>
-                  </div>
-                  <div className="border-t border-slate-200 pt-3 mt-1">
-                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Or Paste Direct URL (If No Cloud Bucket Configured)</label>
-                     <input placeholder="https://example.com/ac.png" className="input-field w-full text-slate-600 font-mono text-xs bg-white border-slate-300 shadow-inner" value={activeEquip.image_url || ''} onChange={e => setActiveEquip({...activeEquip, image_url: e.target.value})} />
-                  </div>
-               </div>
-            </div>
+
 
             <div className="border-t border-slate-100 mt-4 pt-4 bg-[#F8FAFC] p-4 rounded-b-lg -mx-6 -mb-6">
                <div className="flex justify-between items-center mb-4">
