@@ -301,7 +301,7 @@ export default function SalesPipeline() {
   };
 
   const Column = ({ title, columnId, color, jobs }) => (
-    <div className="pipeline-col bg-slate-50/80 shadow-sm border border-slate-200/60 rounded-lg" style={{ padding: '0.4rem', flex: '0 0 320px', minWidth: '320px', borderTop: `3px solid ${color}`, display: 'flex', flexDirection: 'column' }}>
+    <div className="pipeline-col bg-slate-50/80 shadow-sm border border-slate-200/60 rounded-lg" style={{ padding: '0.4rem', flex: '1 1 0', minWidth: '160px', borderTop: `3px solid ${color}`, display: 'flex', flexDirection: 'column' }}>
       <div className="flex justify-between items-center mb-2 px-1">
         <h3 className="font-bold text-slate-700 text-[10px] uppercase tracking-tighter truncate leading-tight mr-1" title={title}>{title}</h3>
         <span className="badge shrink-0 font-bold" style={{ background: 'var(--color-slate-200)', color: 'var(--color-slate-600)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.65rem' }}>
