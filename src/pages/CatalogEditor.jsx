@@ -303,18 +303,18 @@ export default function CatalogEditor() {
                               <br/>
                               <div className="bg-slate-100 px-2 py-0.5 rounded truncate max-w-[160px] inline-block shadow-sm" title={`Air Handler: ${item.ahu_model}`}>{item.ahu_model || '-'}</div>
                            </td>
-                           <td className="p-4 text-right font-black text-danger-600 text-base">
+                           <td className="p-4 text-right font-black text-red-600 text-base">
                               ${item.system_cost?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                            </td>
                            <td className="p-4 text-right">
-                              <span className="font-black text-white bg-success-600 shadow-md px-3.5 py-1.5 rounded-full inline-block text-[13px] tracking-wide">
+                              <span className="font-black text-white bg-emerald-600 shadow-md px-3.5 py-1.5 rounded-full inline-block text-[13px] tracking-wide">
                                  ${item.retail_price?.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                               </span>
                            </td>
                            <td className="p-4 text-center">
                               <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                  <button className="bg-white border border-slate-200 p-1.5 rounded-md text-slate-400 hover:text-primary-600 hover:border-primary-200 shadow-sm transform hover:scale-105 transition-all" onClick={() => { setActiveEquip(item); setIsEquipModalOpen(true); }}><Edit2 size={16} /></button>
-                                 <button className="bg-white border border-slate-200 p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-danger-50 hover:border-danger-200 shadow-sm transform hover:scale-105 transition-all" onClick={() => handleDeleteEquip(item.id)}><Trash2 size={16} /></button>
+                                 <button className="bg-white border border-slate-200 p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-red-50 hover:border-red-200 shadow-sm transform hover:scale-105 transition-all" onClick={() => handleDeleteEquip(item.id)}><Trash2 size={16} /></button>
                               </div>
                            </td>
                          </tr>
@@ -357,7 +357,7 @@ export default function CatalogEditor() {
                            <td className="p-4 text-center">
                               <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                  <button className="bg-white border border-slate-200 p-1.5 rounded-md text-slate-400 hover:text-primary-600 hover:border-primary-200 shadow-sm transform hover:scale-105 transition-all" onClick={() => { setActiveLabor(labor); setIsLaborModalOpen(true); }}><Edit2 size={16} /></button>
-                                 <button className="bg-white border border-slate-200 p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-danger-50 hover:border-danger-200 shadow-sm transform hover:scale-105 transition-all" onClick={() => handleDeleteLabor(labor.id)}><Trash2 size={16} /></button>
+                                 <button className="bg-white border border-slate-200 p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-red-50 hover:border-red-200 shadow-sm transform hover:scale-105 transition-all" onClick={() => handleDeleteLabor(labor.id)}><Trash2 size={16} /></button>
                               </div>
                            </td>
                          </tr>
@@ -428,12 +428,12 @@ export default function CatalogEditor() {
                
                <div className="grid grid-cols-2 gap-4 bg-white p-3 border border-slate-200 rounded-md shadow-sm">
                   <div>
-                    <label className="text-[10px] font-bold text-danger-500 uppercase tracking-widest block mb-1">Company Base Cost</label>
-                    <input type="number" step="0.01" className="w-full p-2.5 rounded bg-danger-50 border border-danger-100 font-mono font-black text-danger-700 shadow-inner" value={activeEquip.system_cost} onChange={e => setActiveEquip({...activeEquip, system_cost: e.target.value})} required/>
+                    <label className="text-[10px] font-bold text-red-500 uppercase tracking-widest block mb-1">Company Base Cost</label>
+                    <input type="number" step="0.01" className="w-full p-2.5 rounded bg-red-50 border border-red-100 font-mono font-black text-red-700 shadow-inner" value={activeEquip.system_cost} onChange={e => setActiveEquip({...activeEquip, system_cost: e.target.value})} required/>
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-success-600 uppercase tracking-widest block mb-1">Minimum Retail Baseline</label>
-                    <input type="number" step="0.01" className="w-full p-2.5 rounded bg-success-50 border border-success-200 font-mono font-black text-white bg-success-600 shadow-md transform scale-105" value={activeEquip.retail_price} onChange={e => setActiveEquip({...activeEquip, retail_price: e.target.value})}/>
+                    <label className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block mb-1">Minimum Retail Baseline</label>
+                    <input type="number" step="0.01" className="w-full p-2.5 rounded bg-emerald-50 border border-emerald-200 font-mono font-black text-white bg-emerald-600 shadow-md transform scale-105" value={activeEquip.retail_price} onChange={e => setActiveEquip({...activeEquip, retail_price: e.target.value})}/>
                   </div>
                   
                   <div className="col-span-2 mt-2 input-field bg-slate-50 border border-slate-200 p-2.5 rounded flex flex-col shadow-inner">
@@ -474,10 +474,10 @@ export default function CatalogEditor() {
                </div>
                
                <div className="form-group mb-0 relative">
-                  <label className="text-[10px] font-black text-danger-600 uppercase tracking-widest block mb-1.5">Internal Floor Cost Injection ($)</label>
-                  <input type="number" step="0.01" className="input-field w-full border-danger-300 text-danger-700 font-mono font-black shadow-inner bg-danger-50 text-2xl pl-8 py-4 rounded-lg" value={activeLabor.cost} onChange={e => setActiveLabor({...activeLabor, cost: e.target.value})} required/>
-                  <span className="absolute left-3 top-[37px] font-black text-danger-400 text-2xl">$</span>
-                  <p className="text-[9px] text-danger-500/80 mt-2 font-bold tracking-wide uppercase">DANGER: This cost is completely invisible, and natively offset to the customer total mapped to targeted margin arrays.</p>
+                  <label className="text-[10px] font-black text-red-600 uppercase tracking-widest block mb-1.5">Internal Floor Cost Injection ($)</label>
+                  <input type="number" step="0.01" className="input-field w-full border-red-300 text-red-700 font-mono font-black shadow-inner bg-red-50 text-2xl pl-8 py-4 rounded-lg" value={activeLabor.cost} onChange={e => setActiveLabor({...activeLabor, cost: e.target.value})} required/>
+                  <span className="absolute left-3 top-[37px] font-black text-red-400 text-2xl">$</span>
+                  <p className="text-[9px] text-red-500/80 mt-2 font-bold tracking-wide uppercase">DANGER: This cost is completely invisible, and natively offset to the customer total mapped to targeted margin arrays.</p>
                </div>
             </div>
             
