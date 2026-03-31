@@ -5,9 +5,12 @@ import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
 import { Check, Image as ImageIcon, Layers, Tag, DollarSign, Calculator, AlertTriangle, ArrowRight, ArrowLeft, Save, Clock, RefreshCcw } from 'lucide-react';
 
-export default function ProposalWizard({ onComplete, addProposal }) {
+export default function ProposalWizard({ onComplete, addProposal, updateProposal, editModeData }) {
+  const isEditing = typeof editModeData === 'object' && editModeData !== null;
+  const editingId = isEditing ? editModeData.id : null;
+  
   const hasDraft = typeof window !== 'undefined' && !!localStorage.getItem('pilar_wizard_draft');
-  const [step, setStep] = useState(hasDraft ? 0 : 1);
+  const [step, setStep] = useState(isEditing ? 7 : (hasDraft ? 0 : 1));
   const { customers } = useCustomers();
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedLocationId, setSelectedLocationId] = useState('');
@@ -186,23 +189,35 @@ export default function ProposalWizard({ onComplete, addProposal }) {
       }
     };
 
-    if (targetHouseholdId) {
+    const wizardState = { step: 7, selectedCustomerId, selectedLocationId, survey, photos, tonnageFilter, selectedTiers, addons, discounts };
+
+    if (isEditing) {
+       const oppId = editModeData.proposal_data?.associated_opportunity_id;
+       const linkedProposalData = { ...finalProposalData, associated_opportunity_id: oppId, wizard_state: wizardState };
+       
+       updateProposal(editingId, { amount: finalAmount, proposal_data: linkedProposalData });
+       
+       // Force update the Pipeline row to match new pricing/tiers
+       if (oppId) {
+          supabase.from('opportunities').update({ proposal_data: linkedProposalData }).eq('id', oppId).then();
+       }
+    } else if (targetHouseholdId) {
        const { data: oppData, error: oppError } = await supabase.from('opportunities').insert({
            household_id: targetHouseholdId,
            status: 'Proposal Sent', urgency_level: 'Medium',
            issue_description: `Auto-generated Digital Proposal with 3 Tiers for ${propAddressString}.`,
            site_survey_data: { ...survey, photos: photos, property_id: selectedProp?.id, property_address: propAddressString },
-           proposal_data: finalProposalData
+           proposal_data: { ...finalProposalData, wizard_state: wizardState }
        }).select().single();
        
        if (oppError) console.error("Failed to insert Opportunity into Pipeline:", oppError);
        
        const finalOppId = oppData ? oppData.id : null;
-       const linkedProposalData = { ...finalProposalData, associated_opportunity_id: finalOppId };
+       const linkedProposalData = { ...finalProposalData, associated_opportunity_id: finalOppId, wizard_state: wizardState };
        
        addProposal({ customer: customerName, amount: finalAmount, proposal_data: linkedProposalData });
     } else {
-       addProposal({ customer: customerName, amount: finalAmount, proposal_data: finalProposalData });
+       addProposal({ customer: customerName, amount: finalAmount, proposal_data: { ...finalProposalData, wizard_state: wizardState } });
     }
     localStorage.removeItem('pilar_wizard_draft');
     onComplete();
@@ -218,8 +233,11 @@ export default function ProposalWizard({ onComplete, addProposal }) {
       <div className="glass-panel" style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
         <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
           <div className="flex flex-col">
-            <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2"><Calculator className="text-primary-600"/> Estimate & Proposal Generator</h2>
-            {step > 0 && <button className="text-[10px] font-bold text-slate-400 hover:text-primary-600 transition flex items-center gap-1 mt-1 w-max" onClick={onComplete} title="Your progress is automatically saved"><Save size={12}/> Save Draft & Exit</button>}
+            <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+               <Calculator className="text-primary-600"/> 
+               {isEditing ? `Editing Proposal: ${editingId}` : 'Estimate & Proposal Generator'}
+            </h2>
+            {step > 0 && <button className="text-[10px] font-bold text-slate-400 hover:text-primary-600 transition flex items-center gap-1 mt-1 w-max" onClick={onComplete} title="Your progress is automatically saved"><Save size={12}/> {isEditing ? 'Discard Edits & Exit' : 'Save Draft & Exit'}</button>}
           </div>
           <div className="flex gap-1.5">
              {[1,2,3,4,5,6,7].map(num => (
@@ -613,7 +631,9 @@ export default function ProposalWizard({ onComplete, addProposal }) {
              
              <div className="flex justify-center gap-4">
                 <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(6)}><ArrowLeft size={16}/> Modify Margins</button>
-                <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-lg font-black tracking-wide flex items-center gap-2 shadow-xl hover:scale-105 transition-transform" onClick={generateProposal}>GENERATE DIGITAL PROPOSAL</button>
+                <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-lg font-black tracking-wide flex items-center gap-2 shadow-xl hover:scale-105 transition-transform" onClick={generateProposal}>
+                   {isEditing ? 'OVERWRITE & UPDATE PROPOSAL' : 'GENERATE DIGITAL PROPOSAL'}
+                </button>
              </div>
           </div>
         )}

@@ -19,7 +19,7 @@ export default function Proposals() {
   const [editForm, setEditForm] = useState({ customer: '', amount: '', status: '' });
   
   if (loading) return <div className="page-container flex-center"><h3>Loading Proposals...</h3></div>;
-  if (showWizard) return <ProposalWizard onComplete={() => setShowWizard(false)} addProposal={addProposal} />;
+  if (showWizard) return <ProposalWizard onComplete={() => setShowWizard(false)} addProposal={addProposal} updateProposal={updateProposal} editModeData={showWizard} />;
 
   const handleEditOpen = (proposal) => {
     setEditingProposal(proposal);
@@ -34,6 +34,16 @@ export default function Proposals() {
        status: editForm.status
     });
     setEditingProposal(null);
+  };
+
+  const handleReopenInWizard = () => {
+     if (editingProposal?.proposal_data?.wizard_state) {
+        localStorage.setItem('pilar_wizard_draft', JSON.stringify(editingProposal.proposal_data.wizard_state));
+     } else {
+        localStorage.removeItem('pilar_wizard_draft');
+     }
+     setShowWizard(editingProposal);
+     setEditingProposal(null);
   };
 
   const handleDeleteConfirm = () => {
@@ -110,9 +120,17 @@ export default function Proposals() {
               <option value="Declined">Declined (Lost Deal)</option>
             </select>
           </div>
-          <div className="modal-actions mt-6">
-            <button type="button" className="btn-secondary" onClick={() => setEditingProposal(null)}>Cancel</button>
-            <button type="submit" className="btn-primary">Update Status</button>
+          <div className="modal-actions mt-6 flex-col">
+            <div className="flex w-full gap-4">
+              <button type="button" className="btn-secondary flex-1" onClick={() => setEditingProposal(null)}>Cancel</button>
+              <button type="submit" className="btn-primary flex-1">Update Status</button>
+            </div>
+            <div className="w-full mt-4 pt-4 border-t border-slate-200">
+               <p className="text-xs text-slate-500 mb-2 font-bold uppercase tracking-wider">Modify Equipment</p>
+               <button type="button" onClick={handleReopenInWizard} className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-lg transition text-sm flex items-center justify-center gap-2 shadow-sm">
+                 <Edit2 size={16}/> Reconfigure Quote in Wizard
+               </button>
+            </div>
           </div>
         </form>
       </Modal>
