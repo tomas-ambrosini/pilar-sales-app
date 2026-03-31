@@ -58,17 +58,21 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   useEffect(() => {
     if (hasPreloadedData) {
         const draft = editModeData?.proposal_data?.wizard_state;
-        if (draft) {
+        if (draft && Object.keys(draft).length > 0) {
             try {
                if (draft.selectedCustomerId) setSelectedCustomerId(draft.selectedCustomerId);
                if (draft.selectedLocationId) setSelectedLocationId(draft.selectedLocationId);
                if (draft.survey) setSurvey(draft.survey);
-               if (draft.photos) setPhotos(draft.photos);
+               if (draft.photos) setPhotos({...photos, ...draft.photos});
                if (draft.tonnageFilter) setTonnageFilter(draft.tonnageFilter);
                if (draft.selectedTiers) setSelectedTiers(draft.selectedTiers);
                if (draft.addons) setAddons(draft.addons);
-               if (draft.discounts) setDiscounts(draft.discounts);
+               if (draft.discounts) setDiscounts({best: 0, better: 0, good: 0, ...draft.discounts});
             } catch(e) {}
+        } else {
+            // Failsafe: Proposal exists but lacked Wizard 2.0 state (Legacy or corrupted data)
+            // Force user to start from scratch.
+            setStep(1);
         }
     }
   }, [hasPreloadedData, editModeData]);
@@ -585,9 +589,17 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                <p className="text-xs text-red-800 font-medium"><strong>Confidential Dashboard:</strong> This data reflects absolute floor costs and backend margin protections. Your base commission algorithm operates against the <span className="underline font-bold">Target System Par</span>. Providing a retail discount strictly lowers the final transaction price, not your proportional algorithmic baseline.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[ {k: 'best', l: 'Premium (BestTier)', m: margins.best_margin}, {k: 'better', l: 'Core (BetterTier)', m: margins.better_margin}, {k: 'good', l: 'Baseline (GoodTier)', m: margins.good_margin} ].map(tier => {
-                 if (!selectedTiers[tier.k]) return null;
+            {(!selectedTiers.best && !selectedTiers.better && !selectedTiers.good) ? (
+                <div className="border-2 border-dashed border-red-200 bg-red-50 p-10 text-center rounded-xl my-8">
+                   <AlertTriangle size={32} className="mx-auto text-red-400 mb-4" />
+                   <h3 className="font-bold text-red-800 text-lg mb-2">No Equipment Tiers Selected</h3>
+                   <p className="text-red-600 text-sm max-w-md mx-auto">This proposal lacks associated equipment tiers. You must navigate back to <strong>Step 4: Assign Tiers</strong> and map equipment before applying pricing controls.</p>
+                   <button className="bg-red-600 text-white font-bold py-2 px-6 rounded mt-6 mx-auto block hover:bg-red-700 transition" onClick={() => setStep(4)}>Return to Step 4</button>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[ {k: 'best', l: 'Premium (BestTier)', m: margins.best_margin}, {k: 'better', l: 'Core (BetterTier)', m: margins.better_margin}, {k: 'good', l: 'Baseline (GoodTier)', m: margins.good_margin} ].map(tier => {
+                     if (!selectedTiers[tier.k]) return null;
                  const rawEquip = selectedTiers[tier.k].system_cost || 0;
                  const floorCost = getHardCostOnly(rawEquip);
                  const absoluteTotalFloor = floorCost * (1 + (margins.service_reserve || 0.05)); // Physical floor + internal protection rule
@@ -638,6 +650,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                  );
               })}
             </div>
+            )}
 
             <div className="flex justify-between mt-10 pt-4 border-t border-slate-100">
                <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(5)}><ArrowLeft size={16}/> Back</button>
