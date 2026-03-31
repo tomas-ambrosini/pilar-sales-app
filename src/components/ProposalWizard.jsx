@@ -253,7 +253,7 @@ export default function ProposalWizard({ onComplete, addProposal }) {
                 )}
             </div>
             <div className="flex justify-end mt-8 border-t border-slate-200 pt-6">
-               <button className="btn-primary" onClick={() => { if (currentCustomer && currentCustomer.locations?.length === 1 && !selectedLocationId) setSelectedLocationId(currentCustomer.locations[0].id); setStep(2); }} disabled={!selectedCustomerId || (currentCustomer?.locations?.length > 1 && !selectedLocationId)}>Next: Digital Site Survey <ArrowRight size={16}/></button>
+               <button className="btn-primary flex items-center justify-center gap-2 w-max" onClick={() => { if (currentCustomer && currentCustomer.locations?.length === 1 && !selectedLocationId) setSelectedLocationId(currentCustomer.locations[0].id); setStep(2); }} disabled={!selectedCustomerId || (currentCustomer?.locations?.length > 1 && !selectedLocationId)}>Next: Digital Site Survey <ArrowRight size={16}/></button>
             </div>
           </div>
         )}
@@ -388,8 +388,8 @@ export default function ProposalWizard({ onComplete, addProposal }) {
                </div>
             </div>
             <div className="flex justify-between mt-8 pt-4 border-t border-slate-100">
-               <button className="btn-secondary" onClick={() => setStep(1)}><ArrowLeft size={16}/> Back</button>
-               <button className="btn-primary" onClick={() => setStep(3)}>Next: Filter Catalog <ArrowRight size={16}/></button>
+               <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(1)}><ArrowLeft size={16}/> Back</button>
+               <button className="btn-primary flex items-center justify-center gap-2 w-max" onClick={() => setStep(3)}>Next: Filter Catalog <ArrowRight size={16}/></button>
             </div>
           </div>
         )}
@@ -424,8 +424,8 @@ export default function ProposalWizard({ onComplete, addProposal }) {
                 )}
             </div>
             <div className="flex justify-between mt-8 pt-4 border-t border-slate-100">
-               <button className="btn-secondary" onClick={() => setStep(2)}><ArrowLeft size={16}/> Back</button>
-               <button className="btn-primary" onClick={() => setStep(4)} disabled={!tonnageFilter || filteredCatalog.length === 0}>Next: Assign Tiers <ArrowRight size={16}/></button>
+               <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(2)}><ArrowLeft size={16}/> Back</button>
+               <button className="btn-primary flex items-center justify-center gap-2 w-max" onClick={() => setStep(4)} disabled={!tonnageFilter || filteredCatalog.length === 0}>Next: Assign Tiers <ArrowRight size={16}/></button>
             </div>
           </div>
         )}
@@ -449,8 +449,8 @@ export default function ProposalWizard({ onComplete, addProposal }) {
             </div>
 
             <div className="flex justify-between mt-10 pt-4 border-t border-slate-100">
-               <button className="btn-secondary" onClick={() => setStep(3)}><ArrowLeft size={16}/> Back</button>
-               <button className="btn-primary" onClick={() => setStep(5)} disabled={!selectedTiers.good && !selectedTiers.better && !selectedTiers.best}>Next: Map Subcontracting <ArrowRight size={16}/></button>
+               <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(3)}><ArrowLeft size={16}/> Back</button>
+               <button className="btn-primary flex items-center justify-center gap-2 w-max" onClick={() => setStep(5)} disabled={!selectedTiers.good && !selectedTiers.better && !selectedTiers.best}>Next: Map Subcontracting <ArrowRight size={16}/></button>
             </div>
           </div>
         )}
@@ -461,7 +461,7 @@ export default function ProposalWizard({ onComplete, addProposal }) {
              <p className="text-xs text-slate-500 mb-6">Items toggled below are universally injected into every active tier in the Proposal. Select necessary logistics.</p>
 
              <div className="bg-slate-50 p-6 rounded border border-slate-200 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {laborRates.map(labor => (
+                {laborRates.filter(labor => !labor.item_name.toLowerCase().includes('slab')).map(labor => (
                   <label key={labor.id} className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-fast shadow-sm ${addons[labor.id] ? 'bg-primary-50 border-primary-200' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
                     <input type="checkbox" className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" checked={!!addons[labor.id]} onChange={() => toggleAddon(labor.id)} />
                     <div className="flex-1">
@@ -474,7 +474,7 @@ export default function ProposalWizard({ onComplete, addProposal }) {
              </div>
 
              <div className="flex justify-between mt-8 pt-4 border-t border-slate-100">
-               <button className="btn-secondary" onClick={() => setStep(4)}><ArrowLeft size={16}/> Back</button>
+               <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(4)}><ArrowLeft size={16}/> Back</button>
                <button className="btn-primary flex items-center gap-2" onClick={() => setStep(6)}><DollarSign size={16}/> View Global Margins <ArrowRight size={16}/></button>
             </div>
           </div>
@@ -543,7 +543,7 @@ export default function ProposalWizard({ onComplete, addProposal }) {
             </div>
 
             <div className="flex justify-between mt-10 pt-4 border-t border-slate-100">
-               <button className="btn-secondary" onClick={() => setStep(5)}><ArrowLeft size={16}/> Back</button>
+               <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(5)}><ArrowLeft size={16}/> Back</button>
                <button className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded font-bold flex items-center gap-2 shadow-lg" onClick={() => setStep(7)}>Finalize Transaction <ArrowRight size={16}/></button>
             </div>
           </div>
@@ -558,7 +558,7 @@ export default function ProposalWizard({ onComplete, addProposal }) {
              <p className="text-sm text-slate-500 mb-10 max-w-lg mx-auto">The digital payloads have been mathematically validated. Click below to immutably snap these 3 tiers to the database, generate the link, and fire the opportunity to the Pipeline Board.</p>
              
              <div className="flex justify-center gap-4">
-                <button className="btn-secondary" onClick={() => setStep(6)}><ArrowLeft size={16}/> Modify Margins</button>
+                <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(6)}><ArrowLeft size={16}/> Modify Margins</button>
                 <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-lg font-black tracking-wide flex items-center gap-2 shadow-xl hover:scale-105 transition-transform" onClick={generateProposal}>GENERATE DIGITAL PROPOSAL</button>
              </div>
           </div>
