@@ -95,27 +95,24 @@ export default function Proposals() {
       {/* Edit Proposal Modal */}
       <Modal isOpen={!!editingProposal} onClose={() => setEditingProposal(null)} title={`Edit Proposal ${editingProposal?.id}`}>
         <form className="modal-form" onSubmit={handleEditSubmit}>
-          <div className="form-group">
-            <label>Customer Name</label>
-            <input type="text" value={editForm.customer} onChange={e => setEditForm({...editForm, customer: e.target.value})} required />
+          <div className="bg-slate-50 border border-slate-200 rounded p-4 mb-4">
+             <p className="text-sm mb-2"><strong className="text-slate-500 uppercase text-xs">Customer Name:</strong><br/>{editForm.customer}</p>
+             <p className="text-sm"><strong className="text-slate-500 uppercase text-xs">Generated Quote Amount:</strong><br/>${parseFloat(editForm.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
           <div className="form-group">
-            <label>Amount ($)</label>
-            <input type="number" step="0.01" value={editForm.amount} onChange={e => setEditForm({...editForm, amount: e.target.value})} required />
-          </div>
-          <div className="form-group">
-            <label>Status</label>
-            <select className="input-field w-full" value={editForm.status} onChange={e => setEditForm({...editForm, status: e.target.value})}>
+            <label className="font-bold text-slate-700">Proposal Status</label>
+            <p className="text-xs text-slate-500 mb-2">Changing the status here will automatically update the corresponding Deal in the Sales Pipeline.</p>
+            <select className="input-field w-full font-semibold" value={editForm.status} onChange={e => setEditForm({...editForm, status: e.target.value})}>
               <option value="Draft">Draft</option>
               <option value="Sent">Sent</option>
-              <option value="Opened">Opened</option>
-              <option value="Approved">Approved</option>
-              <option value="Declined">Declined</option>
+              <option value="Opened">Opened (Client Viewed)</option>
+              <option value="Approved">Approved (Won Deal)</option>
+              <option value="Declined">Declined (Lost Deal)</option>
             </select>
           </div>
-          <div className="modal-actions">
+          <div className="modal-actions mt-6">
             <button type="button" className="btn-secondary" onClick={() => setEditingProposal(null)}>Cancel</button>
-            <button type="submit" className="btn-primary">Save Changes</button>
+            <button type="submit" className="btn-primary">Update Status</button>
           </div>
         </form>
       </Modal>

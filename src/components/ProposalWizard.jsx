@@ -178,17 +178,22 @@ export default function ProposalWizard({ onComplete, addProposal }) {
     };
 
     if (targetHouseholdId) {
-       const { error: oppError } = await supabase.from('opportunities').insert({
+       const { data: oppData, error: oppError } = await supabase.from('opportunities').insert({
            household_id: targetHouseholdId,
            status: 'Proposal Sent', urgency_level: 'Medium',
            issue_description: `Auto-generated Digital Proposal with 3 Tiers for ${propAddressString}.`,
            site_survey_data: { ...survey, photos: photos, property_id: selectedProp?.id, property_address: propAddressString },
            proposal_data: finalProposalData
-       });
+       }).select().single();
+       
        if (oppError) console.error("Failed to insert Opportunity into Pipeline:", oppError);
-       addProposal({ customer: customerName, amount: finalAmount, proposal_data: finalProposalData });
+       
+       const finalOppId = oppData ? oppData.id : null;
+       const linkedProposalData = { ...finalProposalData, associated_opportunity_id: finalOppId };
+       
+       addProposal({ customer: customerName, amount: finalAmount, proposal_data: linkedProposalData });
     } else {
-       addProposal({ customer: customerName, amount: finalAmount });
+       addProposal({ customer: customerName, amount: finalAmount, proposal_data: finalProposalData });
     }
     onComplete();
   };
