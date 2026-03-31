@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
 import { Phone, User, MapPin, AlertCircle, CalendarClock, ShieldAlert, CheckCircle2, Navigation, Search, MessageSquare } from 'lucide-react';
 import DispatchCalendar from '../components/DispatchCalendar';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const PIPELINE_STAGES = [
   'New Lead', 'Contact Attempted', 'Site Survey Scheduled', 
