@@ -3,10 +3,11 @@ import { computeCommission, getRetailFromBest, getFloorPrice } from '../utils/pr
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
-import { Check, Image as ImageIcon, Layers, Tag, DollarSign, Calculator, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Check, Image as ImageIcon, Layers, Tag, DollarSign, Calculator, AlertTriangle, ArrowRight, ArrowLeft, Save, Clock, RefreshCcw } from 'lucide-react';
 
 export default function ProposalWizard({ onComplete, addProposal }) {
-  const [step, setStep] = useState(1);
+  const hasDraft = typeof window !== 'undefined' && !!localStorage.getItem('pilar_wizard_draft');
+  const [step, setStep] = useState(hasDraft ? 0 : 1);
   const { customers } = useCustomers();
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedLocationId, setSelectedLocationId] = useState('');
@@ -40,6 +41,14 @@ export default function ProposalWizard({ onComplete, addProposal }) {
   const [selectedTiers, setSelectedTiers] = useState({ best: null, better: null, good: null });
   const [addons, setAddons] = useState({});
   const [discounts, setDiscounts] = useState({ best: 0, better: 0, good: 0 });
+
+  useEffect(() => {
+    if (step > 0 && dbReady) {
+      localStorage.setItem('pilar_wizard_draft', JSON.stringify({
+         step, selectedCustomerId, selectedLocationId, survey, photos, tonnageFilter, selectedTiers, addons, discounts
+      }));
+    }
+  }, [step, selectedCustomerId, selectedLocationId, survey, photos, tonnageFilter, selectedTiers, addons, discounts, dbReady]);
 
   useEffect(() => {
     async function loadBackendData() {
@@ -195,6 +204,7 @@ export default function ProposalWizard({ onComplete, addProposal }) {
     } else {
        addProposal({ customer: customerName, amount: finalAmount, proposal_data: finalProposalData });
     }
+    localStorage.removeItem('pilar_wizard_draft');
     onComplete();
   };
 
@@ -207,7 +217,10 @@ export default function ProposalWizard({ onComplete, addProposal }) {
     <div className="page-container fade-in">
       <div className="glass-panel" style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
         <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
-          <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2"><Calculator className="text-primary-600"/> Estimate & Proposal Generator</h2>
+          <div className="flex flex-col">
+            <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2"><Calculator className="text-primary-600"/> Estimate & Proposal Generator</h2>
+            {step > 0 && <button className="text-[10px] font-bold text-slate-400 hover:text-primary-600 transition flex items-center gap-1 mt-1 w-max" onClick={onComplete} title="Your progress is automatically saved"><Save size={12}/> Save Draft & Exit</button>}
+          </div>
           <div className="flex gap-1.5">
              {[1,2,3,4,5,6,7].map(num => (
                 <div key={num} className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${step === num ? 'bg-primary-600 text-white shadow-md' : step > num ? 'bg-success text-white' : 'bg-slate-100 text-slate-400'}`}>
@@ -219,6 +232,39 @@ export default function ProposalWizard({ onComplete, addProposal }) {
 
         <AnimatePresence mode="wait">
           <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
+        {step === 0 && (
+           <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center mb-6">
+                 <Clock size={32} className="text-primary-600" />
+              </div>
+              <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Resume Unsaved Quote?</h3>
+              <p className="text-slate-500 max-w-md mb-8 leading-relaxed">We noticed you left an unfinished draft proposal. Would you like to pick up where you left off, or scrap it and start fresh?</p>
+              
+              <div className="flex gap-4">
+                 <button className="btn-secondary text-danger hover:bg-red-50 hover:border-red-200" onClick={() => {
+                     localStorage.removeItem('pilar_wizard_draft');
+                     setStep(1);
+                 }}>Scrap it & Start Fresh</button>
+                 <button className="btn-primary flex items-center gap-2" onClick={() => {
+                     const draftStr = localStorage.getItem('pilar_wizard_draft');
+                     if (draftStr) {
+                         const draft = JSON.parse(draftStr);
+                         if (draft.selectedCustomerId) setSelectedCustomerId(draft.selectedCustomerId);
+                         if (draft.selectedLocationId) setSelectedLocationId(draft.selectedLocationId);
+                         if (draft.survey) setSurvey(draft.survey);
+                         if (draft.photos) setPhotos(draft.photos);
+                         if (draft.tonnageFilter) setTonnageFilter(draft.tonnageFilter);
+                         if (draft.selectedTiers) setSelectedTiers(draft.selectedTiers);
+                         if (draft.addons) setAddons(draft.addons);
+                         if (draft.discounts) setDiscounts(draft.discounts);
+                         setStep(draft.step > 0 ? draft.step : 1);
+                     } else {
+                         setStep(1);
+                     }
+                 }}><RefreshCcw size={16}/> Resume Draft</button>
+              </div>
+           </div>
+        )}
         
         {step === 1 && (
           <div>
