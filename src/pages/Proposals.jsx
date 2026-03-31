@@ -8,6 +8,7 @@ import { Plus, Check, FileText, Edit2, Trash2, ArrowRight, CalendarClock } from 
 import Modal from '../components/Modal';
 import './Proposals.css';
 import ProposalWizard from '../components/ProposalWizard';
+import ProposalViewerModal from '../components/ProposalViewerModal';
 import ContractDocumentModal from '../components/ContractDocumentModal';
 
 export default function Proposals() {
