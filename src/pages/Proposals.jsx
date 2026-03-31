@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useProposals } from '../context/ProposalContext';
 import { useCustomers } from '../context/CustomerContext';
-import { Plus, Check, FileText, Edit2, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Plus, Check, FileText, Edit2, Trash2, ArrowRight, CalendarClock } from 'lucide-react';
 import Modal from '../components/Modal';
 import ProposalViewerModal from '../components/ProposalViewerModal';
 import './Proposals.css';
@@ -110,42 +110,68 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
         </button>
       </header>
       
-      <div className="proposals-list">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mt-6">
         {proposals.length === 0 ? (
-          <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center' }}>
-            <FileText size={48} className="text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500">No proposals found.</p>
+          <div className="col-span-full border-2 border-dashed border-slate-200 bg-white/50 backdrop-blur-sm rounded-2xl p-12 flex flex-col items-center justify-center min-h-[300px]">
+            <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-4"><FileText size={32} /></div>
+            <p className="text-slate-500 font-semibold mb-6">No proposals have been generated yet.</p>
+            <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg flex items-center gap-2 transition-all hover:scale-105" onClick={() => setShowWizard(true)}>
+              <Plus size={18} /> Build First Quote
+            </button>
           </div>
         ) : (
-          proposals.map(proposal => (
-            <div key={proposal.id} className="proposal-card glass-panel fade-in">
-              <div className="proposal-card-header">
-                <div>
-                  <h3 className="proposal-id flex items-center gap-3">
-                    {proposal.id}
-                    <div className="flex gap-2">
-                       <button className="text-slate-400 hover:text-primary-600 transition-fast" onClick={() => handleEditOpen(proposal)} title="Edit Proposal"><Edit2 size={16} /></button>
-                       <button className="text-slate-400 hover:text-danger transition-fast" onClick={() => setDeletingProposal(proposal)} title="Delete Proposal"><Trash2 size={16} /></button>
-                    </div>
-                  </h3>
-                  <div className="proposal-customer">{proposal.customer}</div>
+          proposals.map(proposal => {
+            // Dynamic Status Badge Logic
+            let badgeColors = 'bg-slate-100 text-slate-600 border-slate-200';
+            if (proposal.status === 'Sent' || proposal.status === 'Opened') badgeColors = 'bg-blue-50 text-blue-600 border-blue-200';
+            if (proposal.status === 'Approved') badgeColors = 'bg-emerald-50 text-emerald-600 border-emerald-200';
+            if (proposal.status === 'Declined' || proposal.status?.includes('Rejected')) badgeColors = 'bg-rose-50 text-rose-600 border-rose-200';
+
+            return (
+              <div key={proposal.id} className="group relative bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-1 hover:border-primary-300 transition-all duration-300 flex flex-col">
+                
+                {/* ID & Actions Top Bar */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                     <span className={`text-[9px] uppercase font-black tracking-widest px-2.5 py-1 rounded-full border ${badgeColors}`}>
+                       {proposal.status}
+                     </span>
+                     <span className="text-[10px] font-mono font-bold text-slate-400">{proposal.id}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
+                     <button className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-md transition-colors" onClick={() => handleEditOpen(proposal)} title="Edit Details"><Edit2 size={14} /></button>
+                     <button className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors" onClick={() => setDeletingProposal(proposal)} title="Delete"><Trash2 size={14} /></button>
+                  </div>
                 </div>
-                <div className="proposal-amount">${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+
+                {/* Customer Details */}
+                <div className="mb-6 flex-1">
+                  <h3 className="text-xl font-black text-slate-800 tracking-tight leading-tight mb-2 truncate">{proposal.customer}</h3>
+                  <p className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+                     <CalendarClock size={12}/> Generated: {proposal.date}
+                  </p>
+                </div>
+                
+                {/* Amount & CTA Footer */}
+                <div className="flex items-end justify-between pt-4 border-t border-slate-100">
+                  <div>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Quote Amount</p>
+                    <div className="text-2xl font-black text-slate-900 leading-none">
+                       ${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                  
+                  <button 
+                    className="flex items-center gap-1 text-sm font-bold text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 px-3 py-2 rounded-lg transition-colors border border-primary-100 shadow-sm"
+                    onClick={() => setViewingProposal(proposal)}
+                  >
+                    View <ArrowRight size={14}/>
+                  </button>
+                </div>
               </div>
-              <div className="proposal-card-footer flex items-center gap-3">
-                <span className="proposal-date">{proposal.date}</span>
-                <span className={`status-badge status-${proposal.status?.toLowerCase().replace(' ', '-')}`}>
-                  {proposal.status}
-                </span>
-                <button 
-                  className="ml-auto text-xs font-bold text-primary-600 hover:text-primary-700 underline transition-colors"
-                  onClick={() => setViewingProposal(proposal)}
-                >
-                  View Digital Quote
-                </button>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
