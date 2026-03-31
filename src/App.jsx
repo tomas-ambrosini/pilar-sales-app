@@ -15,6 +15,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { CustomerProvider } from './context/CustomerContext';
 import { CatalogProvider } from './context/CatalogContext';
 import { ProposalProvider } from './context/ProposalContext';
+import { RoleProvider } from './context/RoleContext';
 
 function ProtectedRoutes() {
   const { user } = useAuth();
@@ -47,9 +48,11 @@ function App() {
       <CustomerProvider>
         <CatalogProvider>
           <ProposalProvider>
-            <BrowserRouter>
-              <ProtectedRoutes />
-            </BrowserRouter>
+            <RoleProvider>
+              <BrowserRouter>
+                <ProtectedRoutes />
+              </BrowserRouter>
+            </RoleProvider>
           </ProposalProvider>
         </CatalogProvider>
       </CustomerProvider>

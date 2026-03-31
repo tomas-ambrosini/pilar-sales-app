@@ -1,46 +1,53 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import CommandMenu from './CommandMenu';
-import { LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Megaphone, DollarSign, Settings, Bell, LogOut, Search, Truck } from 'lucide-react';
+import { ShieldAlert, LogOut, LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Megaphone, DollarSign, Settings, Bell, Search, Truck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useRole, ROLES } from '../context/RoleContext';
 import Modal from './Modal';
+import CommandMenu from './CommandMenu';
+import RoleSwitcher from './RoleSwitcher';
 import './Layout.css';
 
 const navGroups = [
   {
     title: 'Sales & CRM',
+    allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH],
     items: [
-      { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-      { path: '/customers', label: 'Customers', icon: Users },
-      { path: '/catalog', label: 'Catalog', icon: BookOpen },
-      { path: '/proposals', label: 'Proposals', icon: FileCheck },
-      { path: '/sales-pipeline', label: 'Sales Pipeline', icon: ClipboardList }
+      { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH, ROLES.SUBCONTRACTOR] },
+      { path: '/customers', label: 'Customers', icon: Users, allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
+      { path: '/catalog', label: 'Catalog', icon: BookOpen, allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
+      { path: '/proposals', label: 'Proposals', icon: FileCheck, allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
+      { path: '/sales-pipeline', label: 'Pipeline', icon: ClipboardList, allowedRoles: [ROLES.ADMIN, ROLES.SALES] }
     ]
   },
   {
     title: 'Marketing',
+    allowedRoles: [ROLES.ADMIN],
     items: [
-      { path: '/marketing', label: 'Marketing', icon: Megaphone }
+      { path: '/marketing', label: 'Marketing', icon: Megaphone, allowedRoles: [ROLES.ADMIN] }
     ]
   },
   {
     title: 'Finance',
+    allowedRoles: [ROLES.ADMIN],
     items: [
-      { path: '/finance', label: 'Finance', icon: DollarSign }
+      { path: '/finance', label: 'Finance', icon: DollarSign, allowedRoles: [ROLES.ADMIN] }
     ]
   },
   {
-    title: 'Operations & IT',
+    title: 'Operations',
+    allowedRoles: [ROLES.ADMIN, ROLES.DISPATCH, ROLES.SUBCONTRACTOR],
     items: [
-      { path: '/dispatch', label: 'Dispatch Hub', icon: Truck },
-      { path: '/operations', label: 'Operations', icon: Settings }
+      { path: '/dispatch', label: 'Dispatch Hub', icon: Truck, allowedRoles: [ROLES.ADMIN, ROLES.DISPATCH, ROLES.SUBCONTRACTOR] },
+      { path: '/operations', label: 'Settings', icon: Settings, allowedRoles: [ROLES.ADMIN] }
     ]
   }
 ];
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  const { activeRole } = useRole();
   const location = useLocation();
   const [activeModal, setActiveModal] = useState(null);
   const [isCommandMenuOpen, setCommandMenuOpen] = useState(false);
@@ -57,21 +64,28 @@ export default function Layout() {
           <span className="brand-text text-gradient">Pilar Home</span>
         </div>
         <nav className="sidebar-nav">
-          {navGroups.map((group, idx) => (
-            <div key={idx} className="nav-group">
-              <div className="nav-group-title">{group.title}</div>
-              {group.items.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                >
-                  <item.icon className="nav-icon" size={20} />
-                  <span className="nav-label">{item.label}</span>
-                </NavLink>
-              ))}
-            </div>
-          ))}
+          {navGroups
+            .filter(group => group.allowedRoles.includes(activeRole))
+            .map((group, idx) => {
+              const visibleItems = group.items.filter(item => item.allowedRoles.includes(activeRole));
+              if (visibleItems.length === 0) return null;
+
+              return (
+                <div key={idx} className="nav-group">
+                  <div className="nav-group-title">{group.title}</div>
+                  {visibleItems.map((item) => (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                    >
+                      <item.icon className="nav-icon" size={20} />
+                      <span className="nav-label">{item.label}</span>
+                    </NavLink>
+                  ))}
+                </div>
+              );
+          })}
         </nav>
       </aside>
 
@@ -82,12 +96,13 @@ export default function Layout() {
             <div className="brand-logo" style={{ background: 'var(--color-primary-900)' }}>P</div>
             <span className="brand-text text-gradient">Pilar Home</span>
           </div>
-          <div className="desktop-header-title">
-            <span className="company-tag">Home Division</span>
+          <div className="desktop-header-title flex items-center gap-4">
+            <span className="company-tag hidden md:inline-flex">Home Division</span>
+            <RoleSwitcher />
           </div>
           <div className="top-bar-actions">
              <button
-               className="hidden md:flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-500 text-sm px-3 py-1.5 rounded-lg border border-slate-200 transition-colors mr-2 cursor-text"
+               className="hidden lg:flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-500 text-sm px-3 py-1.5 rounded-lg border border-slate-200 transition-colors mr-2 cursor-text"
                onClick={() => setCommandMenuOpen(true)}
                title="Search (Cmd+K)"
              >
@@ -127,7 +142,11 @@ export default function Layout() {
 
       {/* Bottom Nav for Mobile */}
       <nav className="bottom-nav glass-panel">
-        {navGroups.flatMap(g => g.items).slice(0, 5).map((item) => (
+        {navGroups
+          .flatMap(g => g.items)
+          .filter(item => item.allowedRoles.includes(activeRole))
+          .slice(0, 5)
+          .map((item) => (
           <NavLink
             key={item.path}
             to={item.path}

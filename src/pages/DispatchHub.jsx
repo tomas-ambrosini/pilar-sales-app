@@ -5,6 +5,7 @@ import { Phone, User, MapPin, AlertCircle, CalendarClock, ShieldAlert, CheckCirc
 import DispatchCalendar from '../components/DispatchCalendar';
 import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '../components/Modal';
+import { useRole, ROLES } from '../context/RoleContext';
 
 const PIPELINE_STAGES = [
   'New Lead', 'Contact Attempted', 'Site Survey Scheduled', 
@@ -13,6 +14,7 @@ const PIPELINE_STAGES = [
 ];
 
 export default function DispatchHub() {
+   const { activeRole } = useRole();
    const { customers, addCustomer } = useCustomers();
    const [searchPhone, setSearchPhone] = useState('');
    const [matchedCustomer, setMatchedCustomer] = useState(null);
@@ -250,19 +252,20 @@ Details: ${formData.notes}
       <div className="page-container flex flex-col h-full bg-slate-50/50">
          <header className="page-header shrink-0 pb-4">
             <div>
-               <h1 className="page-title text-2xl flex items-center gap-2"><Navigation className="text-primary-500" /> Executive Dispatch Hub</h1>
-               <p className="page-subtitle">OSC Intake Form & Live Service Routing</p>
+               <h1 className="page-title text-2xl flex items-center gap-2"><Navigation className="text-primary-500" /> {activeRole === ROLES.SUBCONTRACTOR ? 'Field Work Order Hub' : 'Executive Dispatch Hub'}</h1>
+               <p className="page-subtitle">{activeRole === ROLES.SUBCONTRACTOR ? 'View your assigned jobs and routing' : 'OSC Intake Form & Live Service Routing'}</p>
             </div>
          </header>
          
          <div className="flex flex-1 overflow-hidden gap-6 h-full pb-4 items-stretch">
             
             {/* LEFT PANEL: SMART INTAKE FORM (30%) */}
+            {activeRole !== ROLES.SUBCONTRACTOR && (
             <div className="w-[400px] shrink-0 bg-white border border-slate-200 rounded-xl shadow-lg flex flex-col h-full overflow-hidden z-10">
                {/* Premium Header */}
                <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-5 shrink-0 flex items-center justify-between shadow-md relative overflow-hidden">
                   <div className="absolute -right-4 -top-4 opacity-10 blur-[2px]"><Phone size={80} /></div>
-                  <h2 className="font-extrabold text-lg flex items-center gap-2 relative z-10"><Phone size={18} className="text-primary-400"/> Live Call Intake</h2>
+                  <h2 className="text-white font-extrabold text-lg flex items-center gap-2 relative z-10"><Phone size={18} className="text-primary-400"/> Live Call Intake</h2>
                   <span className="text-[10px] uppercase font-bold tracking-widest bg-white/10 border border-white/20 px-2 py-1.5 rounded relative z-10 shadow-sm backdrop-blur-sm">9-Step OSC</span>
                </div>
 
@@ -398,6 +401,7 @@ Details: ${formData.notes}
                   </form>
                </div>
             </div>
+            )}
 
             {/* RIGHT PANEL: SERVICE BOARD (70%) */}
             <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col h-full overflow-hidden relative">
@@ -452,7 +456,7 @@ Details: ${formData.notes}
                         <div className="relative">
                            <div className="absolute top-0 left-4 -mt-2 bg-white px-2">
                               <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                                 <MessageSquare size={12} className="text-slate-400"/> Diagnostic Log
+                                 <MessageSquare size={12} className="text-slate-400"/> {activeRole === ROLES.SUBCONTRACTOR ? 'Work Order Instructions' : 'Diagnostic Log'}
                               </h4>
                            </div>
                            <div className="bg-white border-2 border-slate-100 rounded-xl p-5 pt-6 text-sm text-slate-600 leading-relaxed max-h-[220px] overflow-auto shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] whitespace-pre-wrap">
@@ -462,10 +466,12 @@ Details: ${formData.notes}
 
                         {/* Footer Actions */}
                         <div className="flex justify-end gap-3 pt-2">
-                           <button onClick={() => setSelectedJob(null)} className="px-5 py-2.5 rounded-lg font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all text-sm">Cancel</button>
-                           <button className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-slate-900/20 transition-all text-sm">
-                              <Phone size={16}/> Dispatch Crew
-                           </button>
+                           <button onClick={() => setSelectedJob(null)} className="px-5 py-2.5 rounded-lg font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all text-sm">Close</button>
+                           {activeRole !== ROLES.SUBCONTRACTOR && (
+                              <button className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-slate-900/20 transition-all text-sm">
+                                 <Phone size={16}/> Dispatch Crew
+                              </button>
+                           )}
                         </div>
                      </div>
                   )}
