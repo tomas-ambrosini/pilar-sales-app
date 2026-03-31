@@ -248,6 +248,9 @@ export default function ProposalWizard({ onComplete, addProposal }) {
                     )}
                     <h4 className="font-bold text-slate-700 border-b pb-2 mb-2">Validate Information</h4>
                     <p className="text-sm"><strong>Name:</strong> {currentCustomer.name}</p>
+                    <p className="text-sm"><strong>Primary Address:</strong> {currentCustomer.address || 'N/A'}</p>
+                    <p className="text-sm"><strong>Phone:</strong> {currentCustomer.phone || 'N/A'}</p>
+                    <p className="text-sm"><strong>Email:</strong> {currentCustomer.email || 'N/A'}</p>
                     <p className="text-[10px] text-slate-400 mt-2">*If this is incorrect, please update the Customer Profile under the Customers tab.</p>
                   </div>
                 )}
