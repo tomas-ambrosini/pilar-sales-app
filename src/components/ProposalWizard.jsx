@@ -53,6 +53,26 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     }
   }, [step, selectedCustomerId, selectedLocationId, survey, photos, tonnageFilter, selectedTiers, addons, discounts, dbReady]);
 
+  // Handle Edit Mode Rehydration
+  useEffect(() => {
+    if (isEditing) {
+        const draftStr = localStorage.getItem('pilar_wizard_draft');
+        if (draftStr) {
+            try {
+               const draft = JSON.parse(draftStr);
+               if (draft.selectedCustomerId) setSelectedCustomerId(draft.selectedCustomerId);
+               if (draft.selectedLocationId) setSelectedLocationId(draft.selectedLocationId);
+               if (draft.survey) setSurvey(draft.survey);
+               if (draft.photos) setPhotos(draft.photos);
+               if (draft.tonnageFilter) setTonnageFilter(draft.tonnageFilter);
+               if (draft.selectedTiers) setSelectedTiers(draft.selectedTiers);
+               if (draft.addons) setAddons(draft.addons);
+               if (draft.discounts) setDiscounts(draft.discounts);
+            } catch(e) {}
+        }
+    }
+  }, [isEditing]);
+
   useEffect(() => {
     async function loadBackendData() {
       const [equip, labor, marg] = await Promise.all([
@@ -241,9 +261,14 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
           </div>
           <div className="flex gap-1.5">
              {[1,2,3,4,5,6,7].map(num => (
-                <div key={num} className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${step === num ? 'bg-primary-600 text-white shadow-md' : step > num ? 'bg-success text-white' : 'bg-slate-100 text-slate-400'}`}>
-                   {step > num ? <Check size={14}/> : num}
-                </div>
+                <button 
+                  key={num} 
+                  onClick={() => { if (isEditing) setStep(num); else if (num < step) setStep(num); }}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${step === num ? 'bg-primary-600 text-white shadow-md ring-2 ring-primary-200 cursor-pointer' : (isEditing || num < step) ? 'bg-success text-white hover:bg-emerald-600 cursor-pointer' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
+                  title={isEditing ? `Jump to Step ${num}` : ''}
+                >
+                   {(isEditing && step !== num) || num < step ? <Check size={14}/> : num}
+                </button>
              ))}
           </div>
         </div>
