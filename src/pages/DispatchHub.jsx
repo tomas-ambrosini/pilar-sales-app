@@ -258,126 +258,145 @@ Details: ${formData.notes}
          <div className="flex flex-1 overflow-hidden gap-6 h-full pb-4 items-stretch">
             
             {/* LEFT PANEL: SMART INTAKE FORM (30%) */}
-            <div className="w-[380px] shrink-0 bg-white border border-slate-200 rounded-xl shadow-lg flex flex-col h-full overflow-hidden z-10">
-               <div className="bg-slate-800 text-white p-4 shrink-0 flex items-center justify-between">
-                  <h2 className="font-bold flex items-center gap-2"><Phone size={18} /> Live Call Intake</h2>
-                  <span className="text-[10px] uppercase font-bold tracking-widest bg-slate-700 px-2 py-1 rounded">9-Step OSC</span>
+            <div className="w-[400px] shrink-0 bg-white border border-slate-200 rounded-xl shadow-lg flex flex-col h-full overflow-hidden z-10">
+               {/* Premium Header */}
+               <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-5 shrink-0 flex items-center justify-between shadow-md relative overflow-hidden">
+                  <div className="absolute -right-4 -top-4 opacity-10 blur-[2px]"><Phone size={80} /></div>
+                  <h2 className="font-extrabold text-lg flex items-center gap-2 relative z-10"><Phone size={18} className="text-primary-400"/> Live Call Intake</h2>
+                  <span className="text-[10px] uppercase font-bold tracking-widest bg-white/10 border border-white/20 px-2 py-1.5 rounded relative z-10 shadow-sm backdrop-blur-sm">9-Step OSC</span>
                </div>
 
-               <div className="p-4 bg-slate-50 border-b border-slate-200 shrink-0">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">1. Reverse Phone Lookup</label>
-                  <div className="relative">
-                     <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
-                     <input 
-                        type="tel" 
-                        placeholder="Enter caller's phone number..." 
-                        className="w-full border-2 border-primary-200 pl-10 pr-4 py-2 rounded-lg outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all font-mono text-lg"
-                        value={searchPhone}
-                        onChange={(e) => setSearchPhone(e.target.value)}
-                     />
-                  </div>
-                  <AnimatePresence>
-                     {matchedCustomer && (
-                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-2 bg-emerald-50 border border-emerald-200 rounded p-2 flex items-start gap-2">
-                           <CheckCircle2 size={16} className="text-emerald-500 mt-0.5 shrink-0" />
-                           <div className="text-xs text-emerald-800 flex-1">
-                              <strong>Match Found:</strong> {matchedCustomer.name}<br/>
-                              <span className="text-emerald-600 truncate block mt-0.5">{matchedCustomer.address}</span>
-                           </div>
-                        </motion.div>
-                     )}
-                  </AnimatePresence>
-               </div>
-
-               <form onSubmit={handleDispatchSubmit} className="flex-1 overflow-y-auto p-4 space-y-6 form-wrapper hide-scroll">
+               <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 space-y-5 hide-scroll">
                   
-                  {/* Step 1 & 2: Contact Info */}
-                  <div className="space-y-4">
-                     <div>
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1"><User size={12}/> Client Details</label>
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                           <input required type="text" placeholder="First Name" value={formData.firstName} onChange={e=>setFormData({...formData, firstName: e.target.value})} className="input-field" />
-                           <input required type="text" placeholder="Last Name" value={formData.lastName} onChange={e=>setFormData({...formData, lastName: e.target.value})} className="input-field" />
-                        </div>
-                        <input required type="tel" placeholder="Phone Number" value={formData.phone} onChange={e=>setFormData({...formData, phone: e.target.value})} className="input-field mt-2" />
+                  {/* Card 1: Reverse Phone Lookup */}
+                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative hover:border-primary-200 transition-colors">
+                     <div className="absolute -left-px top-4 bottom-4 w-1 bg-primary-500 rounded-r"></div>
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><Search size={12}/> Caller Verification</label>
+                     <div className="relative">
+                        <Search className="absolute left-3 top-3 text-primary-400" size={16} />
+                        <input 
+                           type="tel" 
+                           placeholder="Enter phone number..." 
+                           className="w-full bg-slate-50 border border-slate-200 pl-10 pr-4 py-2.5 rounded-lg outline-none focus:border-primary-500 focus:bg-white focus:ring-4 focus:ring-primary-500/10 transition-all font-mono text-sm font-bold text-slate-700 placeholder:font-normal placeholder:text-slate-400"
+                           value={searchPhone}
+                           onChange={(e) => setSearchPhone(e.target.value)}
+                        />
                      </div>
-
-                     <div>
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1"><MapPin size={12}/> Service Address</label>
-                        <input required type="text" placeholder="Full Home Address" value={formData.address} onChange={e=>setFormData({...formData, address: e.target.value})} className="input-field mt-2" />
-                     </div>
+                     <AnimatePresence>
+                        {matchedCustomer && (
+                           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-3 bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-start gap-2 shadow-sm">
+                              <CheckCircle2 size={16} className="text-emerald-500 mt-0.5 shrink-0" />
+                              <div className="text-xs text-emerald-800 flex-1 leading-relaxed">
+                                 <strong className="font-black text-emerald-900 uppercase text-[10px] tracking-wider block mb-0.5">Match Found</strong>
+                                 <span className="font-bold text-sm">{matchedCustomer.name}</span><br/>
+                                 <span className="text-emerald-600 truncate block mt-0.5">{matchedCustomer.address}</span>
+                              </div>
+                           </motion.div>
+                        )}
+                     </AnimatePresence>
                   </div>
 
-                  {/* Step 3: Issue */}
-                  <div className="border-t border-slate-100 pt-4">
-                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1"><ShieldAlert size={12}/> Primary Issue</label>
-                     <select className="input-field mt-2" value={formData.issueType} onChange={e=>setFormData({...formData, issueType: e.target.value})}>
-                        <option>No AC / System Down</option>
-                        <option>No Heat</option>
-                        <option>Water Leak / Freezing</option>
-                        <option>Strange Noise or Smell</option>
-                        <option>Routine Maintenance / Tune-up</option>
-                        <option>Thermostat Issue</option>
-                        <option>Free Estimate for Replacement</option>
-                     </select>
-                  </div>
-
-                  {/* Step 4-8: OSC Details grid */}
-                  <div className="border-t border-slate-100 pt-4 grid grid-cols-2 gap-4">
-                     <div>
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">System Age</label>
-                        <select className="input-field mt-1 text-xs" value={formData.systemAge} onChange={e=>setFormData({...formData, systemAge: e.target.value})}>
-                           <option>Unknown</option>
-                           <option>Under 5 Years</option>
-                           <option>5-10 Years</option>
-                           <option>10-15 Years</option>
-                           <option>15+ Years (Old)</option>
-                        </select>
-                     </div>
-                     <div>
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">Location</label>
-                        <select className="input-field mt-1 text-xs" value={formData.equipmentLocation} onChange={e=>setFormData({...formData, equipmentLocation: e.target.value})}>
-                           <option>Attic / Exterior</option>
-                           <option>Garage / Closet</option>
-                           <option>Roof (Package Unit)</option>
-                           <option>Basement</option>
-                        </select>
-                     </div>
-                     <div>
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">Homeowner?</label>
-                        <select className="input-field mt-1 text-xs" value={formData.isHomeowner} onChange={e=>setFormData({...formData, isHomeowner: e.target.value})}>
-                           <option>Yes (Decision Maker)</option>
-                           <option>Yes (Spouse absent)</option>
-                           <option>Renter / Tenant</option>
-                           <option>Property Manager</option>
-                        </select>
-                     </div>
-                     <div>
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">Payment Plan</label>
-                        <select className="input-field mt-1 text-xs" value={formData.paymentMethod} onChange={e=>setFormData({...formData, paymentMethod: e.target.value})}>
-                           <option>Financing Included</option>
-                           <option>Cash / Check</option>
-                           <option>Credit Card</option>
-                        </select>
-                     </div>
-                  </div>
-
-                  {/* Step 9: Notes */}
-                  <div className="border-t border-slate-100 pt-4 pb-4">
-                     <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">Access & Gate Codes (Dogs?)</label>
-                     <input type="text" placeholder="e.g. Gate code #1234, beware of dog" value={formData.gateCodeOrPets} onChange={e=>setFormData({...formData, gateCodeOrPets: e.target.value})} className="input-field text-sm" />
+                  <form onSubmit={handleDispatchSubmit} className="space-y-5">
                      
-                     <label className="text-[10px] font-bold text-slate-500 uppercase block mt-4 mb-2 flex items-center gap-1">
-                        <MessageSquare size={10} /> Caller Notes / Demeanor
-                     </label>
-                     <textarea placeholder="Summarize the issue..." required value={formData.notes} onChange={e=>setFormData({...formData, notes: e.target.value})} className="w-full border border-slate-300 rounded p-2 text-sm h-24 outline-none focus:border-primary-500"></textarea>
-                  </div>
+                     {/* Card 2: Client Profile */}
+                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><User size={12}/> Client Profile</label>
+                        <div className="space-y-3">
+                           <div className="grid grid-cols-2 gap-3">
+                              <input required type="text" placeholder="First Name" value={formData.firstName} onChange={e=>setFormData({...formData, firstName: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-500 focus:bg-white transition-colors" />
+                              <input required type="text" placeholder="Last Name" value={formData.lastName} onChange={e=>setFormData({...formData, lastName: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-500 focus:bg-white transition-colors" />
+                           </div>
+                           <input required type="tel" placeholder="Phone Number" value={formData.phone} onChange={e=>setFormData({...formData, phone: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-500 focus:bg-white transition-colors" />
+                           <div className="relative mt-2">
+                              <MapPin size={14} className="absolute left-3 top-2.5 text-slate-400" />
+                              <input required type="text" placeholder="Full Home Address" value={formData.address} onChange={e=>setFormData({...formData, address: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-sm outline-none focus:border-primary-500 focus:bg-white transition-colors" />
+                           </div>
+                        </div>
+                     </div>
 
-                  <button type="submit" disabled={loading} className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-lg shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-2">
-                     <CalendarClock size={20} />
-                     {loading ? 'Processing...' : 'Send to Dispatch Board'}
-                  </button>
-               </form>
+                     {/* Card 3: Technical Diagnostics */}
+                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                        <label className="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><ShieldAlert size={12}/> Technical Diagnostics</label>
+                        
+                        <div className="space-y-4">
+                           <div>
+                              <select className="w-full bg-rose-50 border border-rose-100 text-rose-900 font-bold rounded-lg px-3 py-2.5 text-sm outline-none focus:border-rose-400 cursor-pointer shadow-sm" value={formData.issueType} onChange={e=>setFormData({...formData, issueType: e.target.value})}>
+                                 <option>No AC / System Down</option>
+                                 <option>No Heat</option>
+                                 <option>Water Leak / Freezing</option>
+                                 <option>Strange Noise or Smell</option>
+                                 <option className="text-emerald-700 font-bold bg-emerald-50">Routine Maintenance / Tune-up</option>
+                                 <option>Thermostat Issue</option>
+                                 <option className="text-primary-700 font-bold bg-primary-50">Free Estimate for Replacement</option>
+                              </select>
+                           </div>
+
+                           <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                              <div>
+                                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1">System Age</label>
+                                 <select className="w-full bg-white border border-slate-200 rounded text-xs px-2 py-1.5 outline-none focus:border-primary-400 text-slate-700 font-medium cursor-pointer" value={formData.systemAge} onChange={e=>setFormData({...formData, systemAge: e.target.value})}>
+                                    <option>Unknown</option>
+                                    <option>Under 5 Years</option>
+                                    <option>5-10 Years</option>
+                                    <option>10-15 Years</option>
+                                    <option>15+ Years (Old)</option>
+                                 </select>
+                              </div>
+                              <div>
+                                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1">Location</label>
+                                 <select className="w-full bg-white border border-slate-200 rounded text-xs px-2 py-1.5 outline-none focus:border-primary-400 text-slate-700 font-medium cursor-pointer" value={formData.equipmentLocation} onChange={e=>setFormData({...formData, equipmentLocation: e.target.value})}>
+                                    <option>Attic / Exterior</option>
+                                    <option>Garage / Closet</option>
+                                    <option>Roof (Package Unit)</option>
+                                    <option>Basement</option>
+                                 </select>
+                              </div>
+                              <div>
+                                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1">Homeowner?</label>
+                                 <select className="w-full bg-white border border-slate-200 rounded text-xs px-2 py-1.5 outline-none focus:border-primary-400 text-slate-700 font-medium cursor-pointer" value={formData.isHomeowner} onChange={e=>setFormData({...formData, isHomeowner: e.target.value})}>
+                                    <option>Yes (Decision Maker)</option>
+                                    <option>Yes (Spouse absent)</option>
+                                    <option>Renter / Tenant</option>
+                                    <option>Property Manager</option>
+                                 </select>
+                              </div>
+                              <div>
+                                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1">Payment Plan</label>
+                                 <select className="w-full bg-white border border-slate-200 rounded text-xs px-2 py-1.5 outline-none focus:border-primary-400 text-slate-700 font-medium cursor-pointer" value={formData.paymentMethod} onChange={e=>setFormData({...formData, paymentMethod: e.target.value})}>
+                                    <option>Financing Included</option>
+                                    <option>Cash / Check</option>
+                                    <option>Credit Card</option>
+                                 </select>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* Card 4: Dispatch Notes */}
+                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><MessageSquare size={12}/> Dispatch Notes</label>
+                        
+                        <div className="space-y-3">
+                           <div>
+                              <label className="text-[9px] font-bold text-slate-500 uppercase block mb-1">Access & Gate Codes (Dogs?)</label>
+                              <input type="text" placeholder="e.g. Gate code #1234, beware of dog" value={formData.gateCodeOrPets} onChange={e=>setFormData({...formData, gateCodeOrPets: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-500 focus:bg-white transition-colors" />
+                           </div>
+                           
+                           <div>
+                              <label className="text-[9px] font-bold text-slate-500 uppercase block mb-1 flex items-center gap-1">Caller Demeanor</label>
+                              <textarea placeholder="Summarize the issue..." required value={formData.notes} onChange={e=>setFormData({...formData, notes: e.target.value})} className="w-full bg-amber-50/30 border border-slate-200 rounded-lg p-3 text-sm h-24 outline-none focus:border-amber-400 focus:bg-white transition-colors shadow-inner resize-none"></textarea>
+                           </div>
+                        </div>
+                     </div>
+
+                     <div className="sticky bottom-0 pt-2 pb-4 bg-slate-50/90 backdrop-blur-sm z-20">
+                        <button type="submit" disabled={loading} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black text-sm tracking-wide py-4 rounded-xl shadow-[0_8px_20px_-6px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_25px_-6px_rgba(0,0,0,0.4)] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 border border-slate-700">
+                           <CalendarClock size={18} className="text-primary-400"/>
+                           {loading ? 'Processing Array...' : 'CREATE DISPATCH TICKET'}
+                        </button>
+                     </div>
+                  </form>
+               </div>
             </div>
 
             {/* RIGHT PANEL: SERVICE BOARD (70%) */}
@@ -391,36 +410,62 @@ Details: ${formData.notes}
                {/* Flyout Modal */}
                <Modal isOpen={!!selectedJob} onClose={() => setSelectedJob(null)} title="Job Dispatch Details" size="md">
                   {selectedJob && (
-                     <div className="space-y-4">
-                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                           <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                              {selectedJob.customerName}
-                              {selectedJob.urgency === 'High' && <span className="bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold whitespace-nowrap overflow-hidden">🔥 High Priority</span>}
-                           </h3>
-                           <p className="text-slate-500 font-mono text-xs mb-3">Job #{selectedJob.displayId}</p>
-                           
-                           <div className="grid grid-cols-2 gap-4 mt-2">
-                              <div>
-                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Service Address</label>
-                                 <span className="text-sm font-semibold flex items-center gap-1"><MapPin size={14} className="text-primary-500"/> {selectedJob.address}</span>
-                              </div>
-                              <div>
-                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Service Window</label>
-                                 <span className="text-sm font-semibold flex items-center gap-1"><CalendarClock size={14} className="text-amber-500"/> {selectedJob.scheduled_date ? `${selectedJob.scheduled_date.toLocaleDateString ? selectedJob.scheduled_date.toLocaleDateString() : selectedJob.scheduled_date} (${selectedJob.scheduled_time_block.replace('Exact: ', '')})` : 'Unassigned'}</span>
-                              </div>
-                           </div>
-                        </div>
-
+                     <div className="space-y-6 pt-2">
+                        {/* Premium Header */}
                         <div>
-                           <h4 className="font-bold text-slate-700 border-b border-slate-200 pb-2 mb-3">Diagnostic Notes & History</h4>
-                           <div className="bg-slate-800 text-emerald-400 p-4 rounded-lg font-mono text-xs overflow-auto max-h-[250px] shadow-inner leading-relaxed whitespace-pre-wrap">
-                              {selectedJob.dispatch_notes || 'No dispatch notes recorded for this ticket.'}
+                           <div className="flex items-start justify-between mb-1">
+                              <h3 className="text-2xl font-black text-slate-800 tracking-tight">
+                                 {selectedJob.customerName}
+                              </h3>
+                              {selectedJob.urgency === 'High' && (
+                                 <span className="bg-rose-50 border border-rose-200 text-rose-600 text-[10px] px-2.5 py-1 rounded-full uppercase tracking-widest font-bold flex items-center gap-1 shadow-sm">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></div> High Priority
+                                 </span>
+                              )}
+                           </div>
+                           <p className="text-slate-400 font-mono text-xs flex items-center gap-2">
+                              System Reference <span className="text-slate-500 font-bold">#{selectedJob.displayId}</span>
+                           </p>
+                        </div>
+                        
+                        {/* Elegant Data Grid */}
+                        <div className="grid grid-cols-2 gap-4">
+                           <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 shadow-sm hover:border-primary-200 transition-colors">
+                              <label className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5 mb-1 tracking-wider uppercase">
+                                 <MapPin size={12} className="text-primary-500"/> Service Address
+                              </label>
+                              <span className="text-sm font-semibold text-slate-700 leading-tight block pr-2">
+                                 {selectedJob.address}
+                              </span>
+                           </div>
+                           <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 shadow-sm hover:border-amber-200 transition-colors">
+                              <label className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5 mb-1 tracking-wider uppercase">
+                                 <CalendarClock size={12} className="text-amber-500"/> Dispatch Window
+                              </label>
+                              <span className="text-sm font-semibold text-slate-700 leading-tight block">
+                                 {selectedJob.scheduled_date ? `${selectedJob.scheduled_date.toLocaleDateString ? selectedJob.scheduled_date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'}) : selectedJob.scheduled_date} (${selectedJob.scheduled_time_block.replace('Exact: ', '')})` : 'Queue / Unassigned'}
+                              </span>
                            </div>
                         </div>
 
-                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                           <button onClick={() => setSelectedJob(null)} className="px-4 py-2 border border-slate-300 rounded font-bold text-slate-600 hover:bg-slate-50">Close Details</button>
-                           <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded font-bold flex items-center gap-2 shadow-sm"><Phone size={14}/> Dispatch Call</button>
+                        {/* Soft Notes Container */}
+                        <div className="relative">
+                           <div className="absolute top-0 left-4 -mt-2 bg-white px-2">
+                              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                 <MessageSquare size={12} className="text-slate-400"/> Diagnostic Log
+                              </h4>
+                           </div>
+                           <div className="bg-white border-2 border-slate-100 rounded-xl p-5 pt-6 text-sm text-slate-600 leading-relaxed max-h-[220px] overflow-auto shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] whitespace-pre-wrap">
+                              {selectedJob.dispatch_notes || <span className="italic text-slate-400">No dispatch notes recorded for this ticket.</span>}
+                           </div>
+                        </div>
+
+                        {/* Footer Actions */}
+                        <div className="flex justify-end gap-3 pt-2">
+                           <button onClick={() => setSelectedJob(null)} className="px-5 py-2.5 rounded-lg font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all text-sm">Cancel</button>
+                           <button className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-slate-900/20 transition-all text-sm">
+                              <Phone size={16}/> Dispatch Crew
+                           </button>
                         </div>
                      </div>
                   )}
