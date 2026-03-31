@@ -53,8 +53,12 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick 
    };
 
    // Master State Variables
-   const allWonJobs = pipeline['Deal Won'] || [];
-   const unassignedJobs = allWonJobs.filter(j => !j.scheduled_date);
+   const allInstalls = pipeline['Deal Won'] || [];
+   const allSurveys = pipeline['Site Survey Scheduled'] || [];
+   const allNewLeads = pipeline['New Lead'] || [];
+
+   const allBoardJobs = [...allInstalls, ...allSurveys, ...allNewLeads].filter(j => !!j.scheduled_date);
+   const unassignedJobs = [...allInstalls, ...allNewLeads].filter(j => !j.scheduled_date);
 
    // Data Engine (Sliding 7-Day window)
    const days = Array.from({length: 7}).map((_, i) => {
@@ -77,7 +81,7 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick 
                onClick={() => onCardClick && onCardClick(job)}
                className={`bg-white border rounded-md p-2 cursor-grab active:cursor-grabbing hover:border-primary-400 transition-all relative overflow-hidden flex flex-col justify-between ${isMatrix ? 'w-full mb-2 h-[80px]' : 'w-64 shrink-0 mx-2'} ${snapshot.isDragging ? 'ring-2 ring-primary-500 shadow-2xl opacity-100 scale-105 rotate-2 z-[999]' : 'border-slate-200 shadow-sm hover:shadow-md'}`}
             >
-               <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: isMatrix ? '#10b981' : '#fbbf24' }}></div>
+               <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: job.status === 'Deal Won' ? '#10b981' : '#c084fc' }}></div>
                <div className="pl-1">
                   <div className="flex justify-between font-bold text-[10px] text-slate-800 mb-0.5">
                      <span className="truncate pr-1">{job.customerName}</span>
@@ -146,7 +150,7 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick 
                     {/* Droppable Day Cells for this Crew */}
                     {days.map((day, i) => {
                        const dropId = `${crew.id}::${day.isoStr}`;
-                       const cellJobs = allWonJobs.filter(j => j.scheduled_date === day.isoStr && j.assigned_crew_id === crew.id);
+                       const cellJobs = allBoardJobs.filter(j => j.scheduled_date === day.isoStr && j.assigned_crew_id === crew.id);
 
                        return (
                           <Droppable key={dropId} droppableId={dropId}>

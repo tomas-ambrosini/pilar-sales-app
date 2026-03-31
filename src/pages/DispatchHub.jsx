@@ -97,24 +97,54 @@ export default function DispatchHub() {
    };
 
    const handleScheduleJob = async (jobId, crewId, dateStr) => {
+      let originalStatus = null;
+      let newStatus = null;
+
       setPipeline(prev => {
          const newPipe = { ...prev };
-         // Find which column the job is in
+         // Find which column the job is currently in
          for (const col of Object.keys(newPipe)) {
              const jobIndex = newPipe[col].findIndex(j => j.id === jobId);
              if (jobIndex !== -1) {
+                originalStatus = newPipe[col][jobIndex].status;
                 const arr = [...newPipe[col]];
-                arr[jobIndex] = { ...arr[jobIndex], scheduled_date: dateStr, assigned_crew_id: crewId };
-                newPipe[col] = arr;
+                
+                // State Machine Logic
+                newStatus = originalStatus;
+                if (dateStr) {
+                   // Scheduling a Job
+                   if (originalStatus === 'New Lead') newStatus = 'Site Survey Scheduled';
+                } else {
+                   // Un-scheduling a Job
+                   if (originalStatus === 'Site Survey Scheduled') newStatus = 'New Lead';
+                }
+                
+                // If status changed, we must move it arrays
+                if (newStatus !== originalStatus) {
+                   const jobCard = { ...arr[jobIndex], scheduled_date: dateStr, assigned_crew_id: crewId, status: newStatus };
+                   arr.splice(jobIndex, 1); // remove from old
+                   newPipe[col] = arr;
+                   if (!newPipe[newStatus]) newPipe[newStatus] = [];
+                   newPipe[newStatus].push(jobCard); // add to new
+                } else {
+                   arr[jobIndex] = { ...arr[jobIndex], scheduled_date: dateStr, assigned_crew_id: crewId };
+                   newPipe[col] = arr;
+                }
                 break;
              }
          }
          return newPipe;
       });
  
-      await supabase.from('opportunities')
-         .update({ scheduled_date: dateStr, assigned_crew_id: crewId })
-         .eq('id', jobId);
+      // Push to Supabase
+      if (originalStatus) {
+         let dbUpdate = { scheduled_date: dateStr, assigned_crew_id: crewId };
+         
+         if (dateStr && originalStatus === 'New Lead') dbUpdate.status = 'Site Survey Scheduled';
+         if (!dateStr && originalStatus === 'Site Survey Scheduled') dbUpdate.status = 'New Lead';
+         
+         await supabase.from('opportunities').update(dbUpdate).eq('id', jobId);
+      }
    };
 
    // Smart Phone Lookup
@@ -192,7 +222,7 @@ Details: ${formData.notes}
              urgency_level: urgency,
              issue_description: `${formData.issueType} - ${formData.notes}`,
              dispatch_notes: compiledNotes,
-             status: 'Deal Won' // Forces it into the DispatchCalendar's Unassigned tray
+             status: 'New Lead' // Properly mapped to the start of the sales funnel
          });
 
          if (error) throw error;
