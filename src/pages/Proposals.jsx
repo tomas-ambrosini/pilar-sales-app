@@ -37,11 +37,6 @@ export default function Proposals() {
   };
 
   const handleReopenInWizard = () => {
-     if (editingProposal?.proposal_data?.wizard_state) {
-        localStorage.setItem('pilar_wizard_draft', JSON.stringify(editingProposal.proposal_data.wizard_state));
-     } else {
-        localStorage.removeItem('pilar_wizard_draft');
-     }
      setShowWizard(editingProposal);
      setEditingProposal(null);
   };

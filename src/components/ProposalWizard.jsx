@@ -46,20 +46,19 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const [discounts, setDiscounts] = useState({ best: 0, better: 0, good: 0 });
 
   useEffect(() => {
-    if (step > 0 && dbReady) {
+    if (step > 0 && dbReady && !isEditing) {
       localStorage.setItem('pilar_wizard_draft', JSON.stringify({
          step, selectedCustomerId, selectedLocationId, survey, photos, tonnageFilter, selectedTiers, addons, discounts
       }));
     }
-  }, [step, selectedCustomerId, selectedLocationId, survey, photos, tonnageFilter, selectedTiers, addons, discounts, dbReady]);
+  }, [step, selectedCustomerId, selectedLocationId, survey, photos, tonnageFilter, selectedTiers, addons, discounts, dbReady, isEditing]);
 
   // Handle Edit Mode Rehydration
   useEffect(() => {
     if (isEditing) {
-        const draftStr = localStorage.getItem('pilar_wizard_draft');
-        if (draftStr) {
+        const draft = editModeData?.proposal_data?.wizard_state;
+        if (draft) {
             try {
-               const draft = JSON.parse(draftStr);
                if (draft.selectedCustomerId) setSelectedCustomerId(draft.selectedCustomerId);
                if (draft.selectedLocationId) setSelectedLocationId(draft.selectedLocationId);
                if (draft.survey) setSurvey(draft.survey);
@@ -71,7 +70,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
             } catch(e) {}
         }
     }
-  }, [isEditing]);
+  }, [isEditing, editModeData]);
 
   useEffect(() => {
     async function loadBackendData() {
@@ -239,7 +238,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     } else {
        addProposal({ customer: customerName, amount: finalAmount, proposal_data: { ...finalProposalData, wizard_state: wizardState } });
     }
-    localStorage.removeItem('pilar_wizard_draft');
+    if (!isEditing) localStorage.removeItem('pilar_wizard_draft');
     onComplete();
   };
 
