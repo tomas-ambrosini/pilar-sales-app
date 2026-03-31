@@ -263,7 +263,7 @@ export default function ProposalWizard({ onComplete, addProposal }) {
             <h3 className="font-bold mb-4 text-slate-700">2. Pre-installation Site Constraints</h3>
             <div className="bg-slate-50 p-6 rounded border border-slate-200 mb-6 font-medium text-sm">
                <h4 className="text-sm font-bold border-b pb-2 mb-4 text-primary-600 uppercase">A. Current Equipment</h4>
-               <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                  <div><label className="text-[10px] uppercase font-bold text-slate-500">System Type</label><select className="input-field w-full mt-1" value={survey.systemType} onChange={e => updateSurveyAndTriggerSafetyNet('systemType', e.target.value)}><option value="">Select...</option><option>Split AC & Furnace</option><option>Heat Pump</option><option>Package Unit</option></select></div>
                  <div><label className="text-[10px] uppercase font-bold text-slate-500">Current Tonnage</label><select className="input-field w-full mt-1" value={survey.currentTonnage} onChange={e => updateSurveyAndTriggerSafetyNet('currentTonnage', e.target.value)}><option value="">Select...</option><option>1.5</option><option>2.0</option><option>2.5</option><option>3.0</option><option>3.5</option><option>4.0</option><option>5.0</option></select></div>
                  <div><label className="text-[10px] uppercase font-bold text-slate-500">Refrigerant (Triggers Flush)</label><select className="input-field w-full mt-1" value={survey.gasRefrigerant} onChange={e => updateSurveyAndTriggerSafetyNet('gasRefrigerant', e.target.value)}><option value="R410A">R-410A</option><option value="R-22">R-22</option></select></div>
