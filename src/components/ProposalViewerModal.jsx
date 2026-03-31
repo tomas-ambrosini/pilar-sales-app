@@ -2,7 +2,7 @@ import React from 'react';
 import { X, CheckCircle, Shield, Wind, Droplets, ArrowRight } from 'lucide-react';
 import Modal from './Modal';
 
-export default function ProposalViewerModal({ isOpen, onClose, proposal }) {
+export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccept }) {
   if (!proposal) return null;
 
   const { proposal_data } = proposal;
@@ -47,9 +47,18 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal }) {
           </div>
           
           <div className="mt-auto pt-4">
-             <button className={`w-full py-3 rounded font-bold transition-all ${isBest ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-md' : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300'}`}>
-                Accept {tierName} Quote
-             </button>
+             {proposal.status !== 'Approved' ? (
+                 <button 
+                    onClick={() => onAccept && onAccept(tierName, tierData, proposal)}
+                    className={`w-full py-3 rounded font-bold transition-all ${isBest ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-md' : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300'}`}
+                 >
+                    Accept {tierName} Quote
+                 </button>
+             ) : (
+                 <button disabled className={`w-full py-3 rounded font-bold transition-all ${isBest ? 'bg-slate-300 text-slate-500' : 'bg-slate-100 border-2 border-slate-200 text-slate-400'}`}>
+                    Deal Locked
+                 </button>
+             )}
           </div>
        </div>
     );

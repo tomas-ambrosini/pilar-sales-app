@@ -37,8 +37,60 @@ export default function Proposals() {
   };
 
   const handleReopenInWizard = () => {
-     setShowWizard(editingProposal);
-     setEditingProposal(null);
+     if (['Sent', 'Opened', 'Approved'].includes(editingProposal.status)) {
+        const confirmClone = window.confirm("This proposal is locked because it was already Sent or Approved. Would you like to clone this into a new V2 Draft to edit?");
+        if (confirmClone) {
+           // 1. Mark old as Rejected
+           updateProposal(editingProposal.id, { status: 'Rejected (Replaced)' });
+           
+           // 2. Force clone by stripping ID
+           const clonedData = { ...editingProposal };
+           delete clonedData.id;
+           clonedData.status = 'Draft';
+           setShowWizard(clonedData);
+           setEditingProposal(null);
+        }
+     } else {
+        setShowWizard(editingProposal);
+        setEditingProposal(null);
+     }
+  };
+
+  const handleAcceptProposal = async (tierName, tierData, proposal) => {
+     // 1. Build Work Order Payload
+     const workOrderNotes = `
+**FIELD WORK ORDER**
+Accepted Tier: ${tierName}
+Equipment: ${tierData.brand} ${tierData.series} (${tierData.tons} Ton)
+Included Add-ons / Features:
+${(tierData.features || []).map(f => `- ${f}`).join('\n')}
+
+> System Note: Proposal ${proposal.id} automatically converted to Job on ${new Date().toLocaleDateString()}.
+`.trim();
+
+     // 2. Perform DB Update on Opportunity
+     const oppId = proposal.proposal_data?.associated_opportunity_id;
+     if (oppId) {
+         try {
+             // Retrieve existing notes to not overwrite completely if we don't want to, but architecture says Work Order overwrites dispatcher notes (or appends)
+             // Let's simply overwrite with the pure operational checklist for the field crew.
+             await supabase.from('opportunities').update({
+                 status: 'Deal Won',
+                 dispatch_notes: workOrderNotes
+             }).eq('id', oppId);
+         } catch(e) {
+             console.error("Failed to sync opportunity:", e);
+         }
+     }
+
+     // 3. Update Proposal Status and Lock Amount
+     await updateProposal(proposal.id, { 
+         status: 'Approved',
+         amount: tierData.salesPrice
+     });
+
+     alert(`Proposal Approved! Deal Won for ${tierName} Tier. \n\nWork Order officially generated and pushed to the Dispatch Calendar!`);
+     setViewingProposal(null);
   };
 
   const handleDeleteConfirm = () => {
@@ -148,6 +200,7 @@ export default function Proposals() {
         isOpen={!!viewingProposal}
         onClose={() => setViewingProposal(null)}
         proposal={viewingProposal}
+        onAccept={handleAcceptProposal}
       />
     </div>
   );
