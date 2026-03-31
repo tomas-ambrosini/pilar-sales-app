@@ -4,6 +4,7 @@ import { useCustomers } from '../context/CustomerContext';
 import { Phone, User, MapPin, AlertCircle, CalendarClock, ShieldAlert, CheckCircle2, Navigation, Search, MessageSquare } from 'lucide-react';
 import DispatchCalendar from '../components/DispatchCalendar';
 import { motion, AnimatePresence } from 'framer-motion';
+import Modal from '../components/Modal';
 
 const PIPELINE_STAGES = [
   'New Lead', 'Contact Attempted', 'Site Survey Scheduled', 
@@ -16,6 +17,7 @@ export default function DispatchHub() {
    const [searchPhone, setSearchPhone] = useState('');
    const [matchedCustomer, setMatchedCustomer] = useState(null);
    const [loading, setLoading] = useState(true);
+   const [selectedJob, setSelectedJob] = useState(null);
    
    // Form State (9-Step OSC Intake)
    const [formData, setFormData] = useState({
@@ -379,11 +381,50 @@ Details: ${formData.notes}
             </div>
 
             {/* RIGHT PANEL: SERVICE BOARD (70%) */}
-            <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col h-full overflow-hidden">
+            <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col h-full overflow-hidden relative">
                <DispatchCalendar 
                   pipeline={pipeline} 
                   onScheduleJob={handleScheduleJob}
+                  onCardClick={j => setSelectedJob(j)}
                />
+               
+               {/* Flyout Modal */}
+               <Modal isOpen={!!selectedJob} onClose={() => setSelectedJob(null)} title="Job Dispatch Details" size="md">
+                  {selectedJob && (
+                     <div className="space-y-4">
+                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                           <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                              {selectedJob.customerName}
+                              {selectedJob.urgency === 'High' && <span className="bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold whitespace-nowrap overflow-hidden">🔥 High Priority</span>}
+                           </h3>
+                           <p className="text-slate-500 font-mono text-xs mb-3">Job #{selectedJob.displayId}</p>
+                           
+                           <div className="grid grid-cols-2 gap-4 mt-2">
+                              <div>
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Service Address</label>
+                                 <span className="text-sm font-semibold flex items-center gap-1"><MapPin size={14} className="text-primary-500"/> {selectedJob.address}</span>
+                              </div>
+                              <div>
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Service Window</label>
+                                 <span className="text-sm font-semibold flex items-center gap-1"><CalendarClock size={14} className="text-amber-500"/> {selectedJob.scheduled_date ? `${selectedJob.scheduled_date.toLocaleDateString ? selectedJob.scheduled_date.toLocaleDateString() : selectedJob.scheduled_date} (${selectedJob.scheduled_time_block.replace('Exact: ', '')})` : 'Unassigned'}</span>
+                              </div>
+                           </div>
+                        </div>
+
+                        <div>
+                           <h4 className="font-bold text-slate-700 border-b border-slate-200 pb-2 mb-3">Diagnostic Notes & History</h4>
+                           <div className="bg-slate-800 text-emerald-400 p-4 rounded-lg font-mono text-xs overflow-auto max-h-[250px] shadow-inner leading-relaxed whitespace-pre-wrap">
+                              {selectedJob.dispatch_notes || 'No dispatch notes recorded for this ticket.'}
+                           </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                           <button onClick={() => setSelectedJob(null)} className="px-4 py-2 border border-slate-300 rounded font-bold text-slate-600 hover:bg-slate-50">Close Details</button>
+                           <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded font-bold flex items-center gap-2 shadow-sm"><Phone size={14}/> Dispatch Call</button>
+                        </div>
+                     </div>
+                  )}
+               </Modal>
             </div>
 
          </div>
