@@ -6,11 +6,12 @@ import { useCustomers } from '../context/CustomerContext';
 import { Check, Image as ImageIcon, Layers, Tag, DollarSign, Calculator, AlertTriangle, ArrowRight, ArrowLeft, Save, Clock, RefreshCcw } from 'lucide-react';
 
 export default function ProposalWizard({ onComplete, addProposal, updateProposal, editModeData }) {
-  const isEditing = typeof editModeData === 'object' && editModeData !== null;
+  const hasPreloadedData = typeof editModeData === 'object' && editModeData !== null;
+  const isEditing = hasPreloadedData && editModeData.id != null;
   const editingId = isEditing ? editModeData.id : null;
   
   const hasDraft = typeof window !== 'undefined' && !!localStorage.getItem('pilar_wizard_draft');
-  const [step, setStep] = useState(isEditing ? 7 : (hasDraft ? 0 : 1));
+  const [step, setStep] = useState(isEditing ? 7 : (hasPreloadedData ? 1 : (hasDraft ? 0 : 1)));
   const { customers } = useCustomers();
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedLocationId, setSelectedLocationId] = useState('');
@@ -53,9 +54,9 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     }
   }, [step, selectedCustomerId, selectedLocationId, survey, photos, tonnageFilter, selectedTiers, addons, discounts, dbReady, isEditing]);
 
-  // Handle Edit Mode Rehydration
+  // Handle Edit/Clone Mode Rehydration
   useEffect(() => {
-    if (isEditing) {
+    if (hasPreloadedData) {
         const draft = editModeData?.proposal_data?.wizard_state;
         if (draft) {
             try {
@@ -70,7 +71,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
             } catch(e) {}
         }
     }
-  }, [isEditing, editModeData]);
+  }, [hasPreloadedData, editModeData]);
 
   useEffect(() => {
     async function loadBackendData() {

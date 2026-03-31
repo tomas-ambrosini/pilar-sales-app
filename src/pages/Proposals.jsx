@@ -38,18 +38,15 @@ export default function Proposals() {
 
   const handleReopenInWizard = () => {
      if (['Sent', 'Opened', 'Approved'].includes(editingProposal.status)) {
-        const confirmClone = window.confirm("This proposal is locked because it was already Sent or Approved. Would you like to clone this into a new V2 Draft to edit?");
-        if (confirmClone) {
-           // 1. Mark old as Rejected
-           updateProposal(editingProposal.id, { status: 'Rejected (Replaced)' });
-           
-           // 2. Force clone by stripping ID
-           const clonedData = { ...editingProposal };
-           delete clonedData.id;
-           clonedData.status = 'Draft';
-           setShowWizard(clonedData);
-           setEditingProposal(null);
-        }
+        // Automatically Clone to prevent state pollution on Approved deals
+        updateProposal(editingProposal.id, { status: 'Rejected (Replaced)' });
+        
+        // Force clone by stripping ID
+        const clonedData = { ...editingProposal };
+        delete clonedData.id;
+        clonedData.status = 'Draft';
+        setShowWizard(clonedData);
+        setEditingProposal(null);
      } else {
         setShowWizard(editingProposal);
         setEditingProposal(null);
@@ -201,7 +198,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
             <div className="w-full mt-4 pt-4 border-t border-slate-200">
                <p className="text-xs text-slate-500 mb-2 font-bold uppercase tracking-wider">Modify Equipment</p>
                <button type="button" onClick={handleReopenInWizard} className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-lg transition text-sm flex items-center justify-center gap-2 shadow-sm">
-                 <Edit2 size={16}/> Reconfigure Quote in Wizard
+                 <Edit2 size={16}/> {['Sent', 'Opened', 'Approved'].includes(editingProposal?.status) ? "Clone to New Revision" : "Reconfigure Quote in Wizard"}
                </button>
             </div>
           </div>
