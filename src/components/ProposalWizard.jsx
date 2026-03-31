@@ -1,0 +1,461 @@
+import React, { useState, useEffect } from 'react';
+import { computeCommission, getRetailFromBest, getFloorPrice } from '../utils/pricing';
+import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '../supabaseClient';
+import { useCustomers } from '../context/CustomerContext';
+import { Check, Image as ImageIcon, Layers, Tag, DollarSign, Calculator, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
+
+export default function ProposalWizard({ onComplete, addProposal }) {
+  const [step, setStep] = useState(1);
+  const { customers } = useCustomers();
+  const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [selectedLocationId, setSelectedLocationId] = useState('');
+  
+  // Measurement Data State
+  const [survey, setSurvey] = useState({
+    systemType: '', currentTonnage: '', gasRefrigerant: 'R410A', existingBrand: '', yearManufactured: '',
+    mainBreakerAmps: '', condenserBreaker: '', disconnectCondition: 'Pass', whipCondition: 'Pass',
+    condenserLocation: '', ahuLocation: '', ductCondition: '', condensateType: '', thermostat: '',
+    m1: '', m2: '', m3: '', m4: '', m5: '', m6: '', m7: '', m8: '', m9: '', m10: '',
+    m11: '', m12: '', m13: '', m14: '', m15: '', m16: '', m17: '',
+    m18: '', m19: '', m20: '', m21: '', m22: '', m23: '', m24: '', m25: '', m26: '', m27: ''
+  });
+  
+  // Photo State
+  const [photos, setPhotos] = useState({ 
+    condenser_wide: null, condenser_data_plate: null, indoor_unit_wide: null, indoor_data_plate: null, electrical_panel_open: null 
+  });
+  const [uploadingPhoto, setUploadingPhoto] = useState(null);
+  
+  // Live Database Arrays
+  const [catalog, setCatalog] = useState([]);
+  const [laborRates, setLaborRates] = useState([]);
+  const [margins, setMargins] = useState({ 
+     sales_tax: 0.07, service_reserve: 0.05, good_margin: 0.35, better_margin: 0.40, best_margin: 0.45 
+  });
+  const [dbReady, setDbReady] = useState(false);
+
+  // Proposal Pipeline State
+  const [tonnageFilter, setTonnageFilter] = useState('');
+  const [selectedTiers, setSelectedTiers] = useState({ best: null, better: null, good: null });
+  const [addons, setAddons] = useState({});
+  const [discounts, setDiscounts] = useState({ best: 0, better: 0, good: 0 });
+
+  useEffect(() => {
+    async function loadBackendData() {
+      const [equip, labor, marg] = await Promise.all([
+        supabase.from('equipment_catalog').select('*').order('brand'),
+        supabase.from('labor_rates').select('*').order('category'),
+        supabase.from('margin_settings').select('*').eq('id', 1).single()
+      ]);
+
+      if (equip.data) setCatalog(equip.data);
+      if (labor.data) setLaborRates(labor.data);
+      if (marg.data) setMargins(marg.data);
+      setDbReady(true);
+    }
+    loadBackendData();
+  }, []);
+
+  const handlePhotoUpload = async (field, file) => {
+    if (!file) return;
+    setUploadingPhoto(field);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${field}_${Date.now()}.${fileExt}`;
+      const folderPath = selectedCustomerId ? `${selectedCustomerId}` : 'orphan_surveys';
+      const filePath = `${folderPath}/${fileName}`;
+      const { error } = await supabase.storage.from('surveys').upload(filePath, file);
+      if (error) throw error;
+      const { data: publicUrlData } = supabase.storage.from('surveys').getPublicUrl(filePath);
+      setPhotos(prev => ({ ...prev, [field]: publicUrlData.publicUrl }));
+    } catch (err) {
+      alert("Failed to upload photo: " + err.message);
+    } finally {
+      setUploadingPhoto(null);
+    }
+  };
+
+  const toggleAddon = (laborId) => setAddons(prev => ({ ...prev, [laborId]: !prev[laborId] }));
+
+  const updateSurveyAndTriggerSafetyNet = (field, value) => {
+    setSurvey(prev => {
+      const updated = { ...prev, [field]: value };
+      const newAddons = { ...addons };
+      
+      const craneId = laborRates.find(l => l.item_name.toLowerCase().includes('crane'))?.id;
+      if (craneId) newAddons[craneId] = (updated.condenserLocation === 'Roof');
+      
+      const flushId = laborRates.find(l => l.item_name.toLowerCase().includes('flush'))?.id;
+      if (flushId) newAddons[flushId] = (updated.gasRefrigerant === 'R-22');
+
+      const discId = laborRates.find(l => l.item_name.toLowerCase().includes('disconnect'))?.id;
+      if (discId) newAddons[discId] = (updated.disconnectCondition === 'Replace Required');
+
+      const atticId = laborRates.find(l => l.item_name.toLowerCase().includes('attic'))?.id;
+      if (atticId) newAddons[atticId] = (updated.ahuLocation === 'Attic');
+
+      if (updated.condenserLocation !== 'Roof' && craneId && prev.condenserLocation === 'Roof') newAddons[craneId] = false;
+      if (updated.gasRefrigerant !== 'R-22' && flushId && prev.gasRefrigerant === 'R-22') newAddons[flushId] = false;
+      if (updated.disconnectCondition !== 'Replace Required' && discId && prev.disconnectCondition === 'Replace Required') newAddons[discId] = false;
+      if (updated.ahuLocation !== 'Attic' && atticId && prev.ahuLocation === 'Attic') newAddons[atticId] = false;
+
+      setAddons(newAddons);
+      return updated;
+    });
+  };
+
+  // The Baseline Calculation ignoring any custom discounts
+  const calculateBaselineRetail = (rawEquipCost, tierType = 'Good') => {
+    if (!rawEquipCost) return 0;
+    
+    const activeAddons = laborRates.filter(l => addons[l.id]);
+    const taxableMaterials = activeAddons.filter(l => !['Labor', 'Install', 'Subcontract', 'Permit'].includes(l.category)).reduce((s, i) => s + i.cost, 0);
+    const nontaxableLabor = activeAddons.filter(l => ['Labor', 'Install', 'Subcontract', 'Permit'].includes(l.category)).reduce((s, i) => s + i.cost, 0);
+
+    const taxRate = margins.sales_tax || 0.07;
+    const equipWithTax = (rawEquipCost + taxableMaterials) * (1 + taxRate); 
+    const totalHardCost = equipWithTax + nontaxableLabor;
+    
+    const costWithReserve = totalHardCost * (1 + (margins.service_reserve || 0.05)); 
+    
+    let targetMargin = margins.good_margin || 0.35;
+    if (tierType === 'Better') targetMargin = margins.better_margin || 0.40;
+    if (tierType === 'Best') targetMargin = margins.best_margin || 0.45;
+    
+    const salesPrice = costWithReserve / (1 - targetMargin);
+    return Math.round(salesPrice);
+  };
+
+  const getHardCostOnly = (rawEquipCost) => {
+    if (!rawEquipCost) return 0;
+    const activeAddons = laborRates.filter(l => addons[l.id]);
+    const taxableMaterials = activeAddons.filter(l => !['Labor', 'Install', 'Subcontract', 'Permit'].includes(l.category)).reduce((s, i) => s + i.cost, 0);
+    const nontaxableLabor = activeAddons.filter(l => ['Labor', 'Install', 'Subcontract', 'Permit'].includes(l.category)).reduce((s, i) => s + i.cost, 0);
+    const taxRate = margins.sales_tax || 0.07;
+    return ((rawEquipCost + taxableMaterials) * (1 + taxRate)) + nontaxableLabor;
+  };
+
+  const generateProposal = async () => {
+    // Make sure we have enough data
+    const bestBase = calculateBaselineRetail(selectedTiers.best?.system_cost, 'Best');
+    const betterBase = calculateBaselineRetail(selectedTiers.better?.system_cost, 'Better');
+    const goodBase = calculateBaselineRetail(selectedTiers.good?.system_cost, 'Good');
+
+    const finalAmount = Math.max((betterBase - discounts.better), (goodBase - discounts.good), 0);
+    const cust = customers.find(c => c.id.toString() === selectedCustomerId.toString());
+    if (!cust) return;
+
+    const customerName = cust.name;
+    const targetHouseholdId = cust.id;
+    const selectedProp = cust.locations?.find(l => l.id.toString() === selectedLocationId.toString()) || cust.locations?.[0];
+    const propAddressString = selectedProp ? `${selectedProp.street_address}${selectedProp.city ? ', ' + selectedProp.city : ''}` : 'Unknown Address';
+
+    const approximateRetailForComm = getRetailFromBest(bestBase || 0);
+
+    const finalProposalData = {
+      generatedAt: new Date().toISOString(),
+      tiers: {
+        best: selectedTiers.best ? {
+          id: selectedTiers.best.id, brand: selectedTiers.best.brand, series: selectedTiers.best.series, tons: selectedTiers.best.tons,
+          baselinePrice: bestBase, saleDiscount: discounts.best, salesPrice: (bestBase - discounts.best),
+          commission: computeCommission(bestBase, approximateRetailForComm), // Commission based on baseline
+          features: ["Variable Speed Ultra Quiet", "Highest Efficiency Ratings", "Premium 12-Year Parts Warranty", "Advanced Dehumidification Control"]
+        } : null,
+        better: selectedTiers.better ? {
+          id: selectedTiers.better.id, brand: selectedTiers.better.brand, series: selectedTiers.better.series, tons: selectedTiers.better.tons,
+          baselinePrice: betterBase, saleDiscount: discounts.better, salesPrice: (betterBase - discounts.better),
+          commission: computeCommission(betterBase, approximateRetailForComm),
+          features: ["Two-Stage Enhanced Comfort", "High Efficiency SEER2", "10-Year Parts Warranty", "Consistent Temperature Control"]
+        } : null,
+        good: selectedTiers.good ? {
+          id: selectedTiers.good.id, brand: selectedTiers.good.brand, series: selectedTiers.good.series, tons: selectedTiers.good.tons,
+          baselinePrice: goodBase, saleDiscount: discounts.good, salesPrice: (goodBase - discounts.good),
+          commission: computeCommission(goodBase, approximateRetailForComm),
+          features: ["Single-Stage Operation", "Base Efficiency Standard", "5-Year Parts Warranty", "Cost-Effective Reliable Cooling"]
+        } : null
+      }
+    };
+
+    if (targetHouseholdId) {
+       const { error: oppError } = await supabase.from('opportunities').insert({
+           household_id: targetHouseholdId,
+           status: 'Proposal Sent', urgency_level: 'Medium',
+           issue_description: `Auto-generated Digital Proposal with 3 Tiers for ${propAddressString}.`,
+           site_survey_data: { ...survey, photos: photos, property_id: selectedProp?.id, property_address: propAddressString },
+           proposal_data: finalProposalData
+       });
+       if (oppError) console.error("Failed to insert Opportunity into Pipeline:", oppError);
+       addProposal({ customer: customerName, amount: finalAmount, proposal_data: finalProposalData });
+    } else {
+       addProposal({ customer: customerName, amount: finalAmount });
+    }
+    onComplete();
+  };
+
+  if (!dbReady) return <div className="page-container flex-center"><h3>Loading Live Pricing Engines...</h3></div>;
+  const currentCustomer = selectedCustomerId ? customers.find(c => c.id.toString() === selectedCustomerId.toString()) : null;
+  const filteredCatalog = catalog.filter(c => c.tons === parseFloat(tonnageFilter));
+  const uniqueTonnages = [...new Set(catalog.map(c => c.tons).filter(Boolean))].sort();
+
+  return (
+    <div className="page-container fade-in">
+      <div className="glass-panel" style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
+        <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+          <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2"><Calculator className="text-primary-600"/> Estimate & Proposal Generator</h2>
+          <div className="flex gap-1.5">
+             {[1,2,3,4,5,6,7].map(num => (
+                <div key={num} className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${step === num ? 'bg-primary-600 text-white shadow-md' : step > num ? 'bg-success text-white' : 'bg-slate-100 text-slate-400'}`}>
+                   {step > num ? <Check size={14}/> : num}
+                </div>
+             ))}
+          </div>
+        </div>
+
+        <AnimatePresence mode="wait">
+          <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
+        
+        {step === 1 && (
+          <div>
+            <h3 className="font-bold mb-4 text-slate-700">1. Select or Create Customer Profile</h3>
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
+                <div className="flex justify-between items-end mb-2">
+                   <label className="text-xs font-bold text-slate-500 uppercase">Search Existing Clients</label>
+                   <a href="/customers" className="text-xs font-bold text-primary-600 hover:text-primary-700 underline">+ Form New Customer</a>
+                </div>
+                <select className="w-full border border-slate-300 rounded p-3 bg-white font-semibold text-slate-700 mb-6" value={selectedCustomerId} onChange={e => { setSelectedCustomerId(e.target.value); setSelectedLocationId(''); }}>
+                  <option value="">-- Choose a Customer Profile --</option>
+                  {customers.map(c => <option key={c.id} value={c.id}>{c.name} - {c.address}</option>)}
+                </select>
+                
+                {currentCustomer && (
+                  <div className="bg-white p-4 border border-slate-200 rounded shadow-sm">
+                    {currentCustomer.locations && currentCustomer.locations.length > 1 ? (
+                       <div className="mb-4 pb-4 border-b border-slate-100">
+                         <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1 mb-2">
+                            <span className="w-2 h-2 rounded-full bg-red-500"></span> Multiple Properties Found. Select Target Location:
+                         </label>
+                         <select className="w-full border-2 border-primary-500 rounded p-3 bg-primary-50 font-semibold text-primary-800" value={selectedLocationId} onChange={e => setSelectedLocationId(e.target.value)}>
+                            <option value="">-- Required: Choose specific location --</option>
+                            {currentCustomer.locations.map(loc => <option key={loc.id} value={loc.id}>{loc.is_primary_residence ? 'Primary Residence: ' : 'Managed Property: '} {loc.street_address} {loc.city && `, ${loc.city}`}</option>)}
+                         </select>
+                       </div>
+                    ) : currentCustomer.locations && currentCustomer.locations.length === 1 && (
+                       <div className="mb-4 pb-4 border-b border-slate-100 flex items-center gap-2">
+                           <Check size={16} className="text-success" />
+                           <span className="text-sm font-semibold text-slate-600">Auto-locked to sole property: {currentCustomer.locations[0].street_address}</span>
+                       </div>
+                    )}
+                    <h4 className="font-bold text-slate-700 border-b pb-2 mb-2">Validate Information</h4>
+                    <p className="text-sm"><strong>Name:</strong> {currentCustomer.name}</p>
+                    <p className="text-[10px] text-slate-400 mt-2">*If this is incorrect, please update the Customer Profile under the Customers tab.</p>
+                  </div>
+                )}
+            </div>
+            <div className="flex justify-end mt-8 border-t border-slate-200 pt-6">
+               <button className="btn-primary" onClick={() => { if (currentCustomer && currentCustomer.locations?.length === 1 && !selectedLocationId) setSelectedLocationId(currentCustomer.locations[0].id); setStep(2); }} disabled={!selectedCustomerId || (currentCustomer?.locations?.length > 1 && !selectedLocationId)}>Next: Digital Site Survey <ArrowRight size={16}/></button>
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div>
+            <h3 className="font-bold mb-4 text-slate-700">2. Pre-installation Site Constraints</h3>
+            <div className="bg-slate-50 p-6 rounded border border-slate-200 mb-6 font-medium text-sm">
+               <h4 className="text-sm font-bold border-b pb-2 mb-4 text-primary-600 uppercase">A. Current Equipment</h4>
+               <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                 <div><label className="text-[10px] uppercase font-bold text-slate-500">System Type</label><select className="input-field w-full mt-1" value={survey.systemType} onChange={e => updateSurveyAndTriggerSafetyNet('systemType', e.target.value)}><option value="">Select...</option><option>Split AC & Furnace</option><option>Heat Pump</option><option>Package Unit</option></select></div>
+                 <div><label className="text-[10px] uppercase font-bold text-slate-500">Current Tonnage</label><select className="input-field w-full mt-1" value={survey.currentTonnage} onChange={e => updateSurveyAndTriggerSafetyNet('currentTonnage', e.target.value)}><option value="">Select...</option><option>1.5</option><option>2.0</option><option>2.5</option><option>3.0</option><option>3.5</option><option>4.0</option><option>5.0</option></select></div>
+                 <div><label className="text-[10px] uppercase font-bold text-slate-500">Refrigerant (Triggers Flush)</label><select className="input-field w-full mt-1" value={survey.gasRefrigerant} onChange={e => updateSurveyAndTriggerSafetyNet('gasRefrigerant', e.target.value)}><option value="R410A">R-410A</option><option value="R-22">R-22</option></select></div>
+                 <div><label className="text-[10px] uppercase font-bold text-slate-500">Existing Brand</label><input className="input-field w-full mt-1" placeholder="e.g. Trane" value={survey.existingBrand} onChange={e => updateSurveyAndTriggerSafetyNet('existingBrand', e.target.value)} /></div>
+               </div>
+
+               <h4 className="text-sm font-bold border-b pb-2 mb-4 text-primary-600 uppercase mt-4">B. Physical Safety Constraints</h4>
+               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                 <div><label className="text-[10px] uppercase font-bold text-slate-500">Condenser Location</label><select className="input-field w-full mt-1" value={survey.condenserLocation} onChange={e => updateSurveyAndTriggerSafetyNet('condenserLocation', e.target.value)}><option value="">Select...</option><option value="Ground">Ground Level</option><option value="Roof">Roof (Triggers Crane)</option><option value="Side">Side Yard Narrow</option></select></div>
+                 <div><label className="text-[10px] uppercase font-bold text-slate-500">Air Handler Location</label><select className="input-field w-full mt-1" value={survey.ahuLocation} onChange={e => updateSurveyAndTriggerSafetyNet('ahuLocation', e.target.value)}><option value="">Select...</option><option value="Closet">Closet</option><option value="Garage">Garage</option><option value="Attic">Attic (+Labor)</option></select></div>
+                 <div><label className="text-[10px] uppercase font-bold text-slate-500">Disconnect Box</label><select className="input-field w-full mt-1" value={survey.disconnectCondition} onChange={e => updateSurveyAndTriggerSafetyNet('disconnectCondition', e.target.value)}><option value="Pass">Pass</option><option value="Replace Required">Replace Required</option></select></div>
+               </div>
+            </div>
+            <div className="flex justify-between mt-8 pt-4 border-t border-slate-100">
+               <button className="btn-secondary" onClick={() => setStep(1)}><ArrowLeft size={16}/> Back</button>
+               <button className="btn-primary" onClick={() => setStep(3)}>Next: Filter Catalog <ArrowRight size={16}/></button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div>
+            <h3 className="font-bold mb-4 text-slate-700">3. Filter Required Equipment Size</h3>
+            <div className="bg-slate-50 p-6 rounded border border-slate-200">
+                <label className="text-sm font-bold text-slate-600 mb-2 block">Specify Replacement Tonnage</label>
+                <select className="input-field w-full lg:w-1/3 text-lg font-black font-mono text-primary-700 mb-6 border-primary-300 shadow-sm" value={tonnageFilter} onChange={e => {setTonnageFilter(e.target.value); setSelectedTiers({best: null, better: null, good: null});}}>
+                   <option value="">-- Choose Tonnage --</option>
+                   {uniqueTonnages.map(t => <option key={t} value={t}>{t} Ton Systems</option>)}
+                </select>
+                
+                {tonnageFilter && (
+                   <div className="mt-4">
+                      <div className="flex items-center gap-2 border-b border-primary-100 pb-2 mb-4">
+                         <Layers className="text-primary-500" size={18}/>
+                         <h4 className="font-bold text-primary-800 uppercase tracking-widest text-sm">Matching Equipment Pool Found</h4>
+                      </div>
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                         {filteredCatalog.map(item => (
+                            <div key={item.id} className="bg-white border border-slate-100 rounded-md p-3 shadow-sm hover:shadow-md transition-shadow">
+                               <div className="font-black text-slate-800 text-sm tracking-tight">{item.brand}</div>
+                               <div className="text-[10px] text-slate-500 font-mono mb-2">{item.series}</div>
+                               <div className="bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs font-bold text-slate-600 w-max">{item.seer} SEER2</div>
+                            </div>
+                         ))}
+                      </div>
+                      {filteredCatalog.length === 0 && <p className="text-sm text-slate-500 italic mt-2">No matching systems found in the catalog for {tonnageFilter}T. Please adjust.</p>}
+                   </div>
+                )}
+            </div>
+            <div className="flex justify-between mt-8 pt-4 border-t border-slate-100">
+               <button className="btn-secondary" onClick={() => setStep(2)}><ArrowLeft size={16}/> Back</button>
+               <button className="btn-primary" onClick={() => setStep(4)} disabled={!tonnageFilter || filteredCatalog.length === 0}>Next: Assign Tiers <ArrowRight size={16}/></button>
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div>
+            <h3 className="font-bold mb-4 text-slate-700">4. Finalize Consumer Proposal Options</h3>
+            <p className="text-xs text-slate-500 mb-6">Map previously filtered {tonnageFilter}-Ton systems into the Good/Better/Best presentation model for the homeowner.</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[ {k: 'best', l: 'Premium (Best)'}, {k: 'better', l: 'Core (Better)'}, {k: 'good', l: 'Baseline (Good)'} ].map(tier => (
+                 <div key={tier.k} className="bg-white p-5 border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                    <div className={`absolute top-0 left-0 right-0 h-1.5 ${tier.k === 'best' ? 'bg-primary-500' : tier.k === 'better' ? 'bg-emerald-500' : 'bg-slate-400'}`}></div>
+                    <label className="block font-black uppercase text-slate-700 text-sm tracking-wider mb-4 mt-1">{tier.l}</label>
+                    <select className="input-field w-full text-sm font-semibold text-slate-600 bg-slate-50 focus:bg-white transition-colors" value={selectedTiers[tier.k]?.id || ''} onChange={e => setSelectedTiers({...selectedTiers, [tier.k]: filteredCatalog.find(c => c.id.toString() === e.target.value)})}>
+                       <option value="">-- Remove/Empty --</option>
+                       {filteredCatalog.map(sys => <option key={sys.id} value={sys.id}>{sys.brand} {sys.series} {sys.seer} SEER</option>)}
+                    </select>
+                 </div>
+              ))}
+            </div>
+
+            <div className="flex justify-between mt-10 pt-4 border-t border-slate-100">
+               <button className="btn-secondary" onClick={() => setStep(3)}><ArrowLeft size={16}/> Back</button>
+               <button className="btn-primary" onClick={() => setStep(5)} disabled={!selectedTiers.good && !selectedTiers.better && !selectedTiers.best}>Next: Map Subcontracting <ArrowRight size={16}/></button>
+            </div>
+          </div>
+        )}
+
+        {step === 5 && (
+          <div>
+             <h3 className="font-bold mb-2 text-slate-700">5. Global Variable Labor & Add-ons</h3>
+             <p className="text-xs text-slate-500 mb-6">Items toggled below are universally injected into every active tier in the Proposal. Select necessary logistics.</p>
+
+             <div className="bg-slate-50 p-6 rounded border border-slate-200 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {laborRates.map(labor => (
+                  <label key={labor.id} className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-fast shadow-sm ${addons[labor.id] ? 'bg-primary-50 border-primary-200' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                    <input type="checkbox" className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" checked={!!addons[labor.id]} onChange={() => toggleAddon(labor.id)} />
+                    <div className="flex-1">
+                       <span className={`block font-bold text-sm ${addons[labor.id] ? 'text-primary-800' : 'text-slate-700'}`}>{labor.item_name}</span>
+                       <span className="text-[10px] uppercase font-black tracking-wider text-slate-400">{labor.category}</span>
+                    </div>
+                    <span className="font-mono font-black text-slate-600 text-right">${labor.cost}</span>
+                  </label>
+                ))}
+             </div>
+
+             <div className="flex justify-between mt-8 pt-4 border-t border-slate-100">
+               <button className="btn-secondary" onClick={() => setStep(4)}><ArrowLeft size={16}/> Back</button>
+               <button className="btn-primary flex items-center gap-2" onClick={() => setStep(6)}><DollarSign size={16}/> View Global Margins <ArrowRight size={16}/></button>
+            </div>
+          </div>
+        )}
+
+        {step === 6 && (
+          <div>
+            <h3 className="font-bold mb-2 text-slate-800 flex items-center gap-2"><DollarSign className="text-emerald-600"/> 6. Internal Pricing Controls & Offer Discounting</h3>
+            <div className="glass-panel border-red-200 bg-red-50/20 mb-6 flex gap-3 p-4 items-start">
+               <AlertTriangle className="text-red-500 mt-1 shrink-0" size={20}/>
+               <p className="text-xs text-red-800 font-medium"><strong>Confidential Dashboard:</strong> This data reflects absolute floor costs and backend margin protections. Your base commission algorithm operates against the <span className="underline font-bold">Target System Par</span>. Providing a retail discount strictly lowers the final transaction price, not your proportional algorithmic baseline.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[ {k: 'best', l: 'Premium (BestTier)', m: margins.best_margin}, {k: 'better', l: 'Core (BetterTier)', m: margins.better_margin}, {k: 'good', l: 'Baseline (GoodTier)', m: margins.good_margin} ].map(tier => {
+                 if (!selectedTiers[tier.k]) return null;
+                 const rawEquip = selectedTiers[tier.k].system_cost || 0;
+                 const floorCost = getHardCostOnly(rawEquip);
+                 const absoluteTotalFloor = floorCost * (1 + (margins.service_reserve || 0.05)); // Physical floor + internal protection rule
+                 const baselineRetail = calculateBaselineRetail(rawEquip, tier.k.charAt(0).toUpperCase() + tier.k.slice(1));
+                 const baseComm = computeCommission(baselineRetail, getRetailFromBest(calculateBaselineRetail(selectedTiers.best?.system_cost || rawEquip, 'Best')));
+                 const discount = parseFloat(discounts[tier.k]) || 0;
+                 const finalPrice = baselineRetail - discount;
+                 
+                 // System Safeguard calculation (e.g. absolutely no lower than Floor Cost!)
+                 const isBelowFloor = finalPrice < absoluteTotalFloor;
+
+                 return (
+                 <div key={tier.k} className="bg-white border-2 border-slate-200 rounded-xl overflow-hidden shadow-md flex flex-col">
+                    <div className="bg-slate-100 py-3 px-4 border-b border-slate-200 font-bold text-sm text-center uppercase tracking-wider text-slate-600">{tier.l}</div>
+                    <div className="p-5 flex-1 flex flex-col gap-4">
+                       
+                       {/* Transparent Breakdown */}
+                       <div className="bg-slate-50 border border-slate-100 rounded p-3 text-xs space-y-1.5 font-mono">
+                          <div className="flex justify-between text-slate-500"><span>Raw System/Mat:</span><span>${rawEquip.toFixed(2)}</span></div>
+                          <div className="flex justify-between text-slate-500 border-b border-slate-200 pb-1.5"><span>V-Labor Addons:</span><span>+ ${(floorCost - rawEquip).toFixed(2)}</span></div>
+                          <div className="flex justify-between font-bold text-slate-700"><span>Hard Cost Total:</span><span>${floorCost.toFixed(2)}</span></div>
+                          <div className="flex justify-between text-slate-500 pt-1.5"><span>1st Yr Reserve:</span><span>+ {((margins.service_reserve || 0.05)*100).toFixed(1)}%</span></div>
+                          <div className="flex justify-between text-slate-500"><span>Target Markup:</span><span>/ {((1 - tier.m)*100).toFixed(1)}% Par</span></div>
+                       </div>
+
+                       {/* Target Retail Baseline */}
+                       <div className="text-center pt-2">
+                          <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1">Target Retail Baseline</label>
+                          <div className="text-2xl font-black text-slate-800">${baselineRetail.toLocaleString()}</div>
+                          <div className="text-xs font-bold text-emerald-600 mt-1">Algorithmic Commission: ${baseComm.toLocaleString()}</div>
+                       </div>
+
+                       {/* Interactive Discount Engine */}
+                       <div className="mt-auto pt-4 border-t border-slate-100 relative">
+                          <label className="text-[10px] uppercase font-bold text-primary-600 block mb-1">Apply Rep Discount ($)</label>
+                          <div className="relative mb-4">
+                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span className="text-danger-500 font-black">- $</span></div>
+                             <input type="number" step="0.01" min="0" className="input-field w-full pl-8 font-mono font-black text-danger-600 bg-red-50 border-red-200 outline-none focus:ring-2 focus:ring-red-400 hover:bg-red-100 transition-colors" value={discounts[tier.k] || ''} onChange={e => setDiscounts({...discounts, [tier.k]: parseFloat(e.target.value) || 0})} placeholder="0.00"/>
+                          </div>
+
+                          <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1 text-center">Final Presentable Price</label>
+                          <div className={`text-3xl font-black text-center ${isBelowFloor ? 'text-danger bg-red-100 animate-pulse rounded py-1' : 'text-primary-700'}`}>${finalPrice.toLocaleString()}</div>
+                          {isBelowFloor && <p className="text-[10px] font-bold text-danger mt-2 text-center">ERROR: Dropping below absolute internal hard costs (${absoluteTotalFloor.toFixed(2)}).</p>}
+                       </div>
+
+                    </div>
+                 </div>
+                 );
+              })}
+            </div>
+
+            <div className="flex justify-between mt-10 pt-4 border-t border-slate-100">
+               <button className="btn-secondary" onClick={() => setStep(5)}><ArrowLeft size={16}/> Back</button>
+               <button className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded font-bold flex items-center gap-2 shadow-lg" onClick={() => setStep(7)}>Finalize Transaction <ArrowRight size={16}/></button>
+            </div>
+          </div>
+        )}
+
+        {step === 7 && (
+          <div className="text-center py-10">
+             <div className="w-20 h-20 bg-success-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Check size={40} className="text-success-600" />
+             </div>
+             <h3 className="text-2xl font-black text-slate-800 mb-2">Proposal Mathematical Ready</h3>
+             <p className="text-sm text-slate-500 mb-10 max-w-lg mx-auto">The digital payloads have been mathematically validated. Click below to immutably snap these 3 tiers to the database, generate the link, and fire the opportunity to the Pipeline Board.</p>
+             
+             <div className="flex justify-center gap-4">
+                <button className="btn-secondary" onClick={() => setStep(6)}><ArrowLeft size={16}/> Modify Margins</button>
+                <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-lg font-black tracking-wide flex items-center gap-2 shadow-xl hover:scale-105 transition-transform" onClick={generateProposal}>GENERATE DIGITAL PROPOSAL</button>
+             </div>
+          </div>
+        )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
