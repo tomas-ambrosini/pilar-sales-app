@@ -6,19 +6,20 @@ import { useProposals } from '../context/ProposalContext';
 import { useCustomers } from '../context/CustomerContext';
 import { Plus, Check, FileText, Edit2, Trash2, ArrowRight, CalendarClock } from 'lucide-react';
 import Modal from '../components/Modal';
-import ProposalViewerModal from '../components/ProposalViewerModal';
 import './Proposals.css';
 import ProposalWizard from '../components/ProposalWizard';
+import ContractDocumentModal from '../components/ContractDocumentModal';
 
 export default function Proposals() {
   const { proposals, addProposal, updateProposal, deleteProposal, loading } = useProposals();
   const [showWizard, setShowWizard] = useState(false);
   const [viewingProposal, setViewingProposal] = useState(null);
+  const [viewingContract, setViewingContract] = useState(null);
   const [editingProposal, setEditingProposal] = useState(null);
   const [deletingProposal, setDeletingProposal] = useState(null);
   const [editForm, setEditForm] = useState({ customer: '', amount: '', status: '' });
   
-  if (loading) return <div className="page-container flex-center"><h3>Loading Proposals...</h3></div>;
+  if (loading && proposals.length === 0) return <div className="page-container flex-center"><h3>Loading Proposals...</h3></div>;
   if (showWizard) return <ProposalWizard onComplete={() => setShowWizard(false)} addProposal={addProposal} updateProposal={updateProposal} editModeData={showWizard} />;
 
   const handleEditOpen = (proposal) => {
@@ -65,29 +66,48 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
 > System Note: Proposal ${proposal.id} automatically converted to Job on ${new Date().toLocaleDateString()}.
 `.trim();
 
-     // 2. Perform DB Update on Opportunity
      const oppId = proposal.proposal_data?.associated_opportunity_id;
      if (oppId) {
          try {
-             // Retrieve existing notes to not overwrite completely if we don't want to, but architecture says Work Order overwrites dispatcher notes (or appends)
-             // Let's simply overwrite with the pure operational checklist for the field crew.
+             // 1. Update Sales Pipeline Opportunity
              await supabase.from('opportunities').update({
                  status: 'Deal Won',
                  dispatch_notes: workOrderNotes
              }).eq('id', oppId);
+
+             const { data: oppRow } = await supabase.from('opportunities').select('household_id').eq('id', oppId).single();
+             if (oppRow?.household_id) {
+                 // 3. Auto-spawn the Work Order in the Operations Database
+                 await supabase.from('work_orders').insert({
+                     opportunity_id: oppId,
+                     household_id: oppRow.household_id,
+                     status: 'Unscheduled',
+                     execution_payload: { tierName, ...tierData },
+                     dispatch_notes: workOrderNotes
+                 });
+
+                 // 4. Inject Verified Paper Trail to Customer CRM File
+                 await supabase.from('activity_logs').insert({
+                     household_id: oppRow.household_id,
+                     activity_type: 'Contract Executed',
+                     description: `Digital Contract executed for ${tierName} System. Work Order dispatched. Official contract dynamically emailed to client.`,
+                     is_pinned_alert: true
+                 });
+             }
          } catch(e) {
-             console.error("Failed to sync opportunity:", e);
+             console.error("Failed to sync structural databases:", e);
          }
      }
 
-     // 3. Update Proposal Status and Lock Amount
+     // 5. Update Proposal Status and Lock Amount
      await updateProposal(proposal.id, { 
          status: 'Approved',
          amount: tierData.salesPrice
      });
 
-     alert(`Proposal Approved! Deal Won for ${tierName} Tier. \n\nWork Order officially generated and pushed to the Dispatch Calendar!`);
+     // Jump straight from the quoting tool into the formal generated contract!
      setViewingProposal(null);
+     setViewingContract({ proposal, tierName, tierData, date: new Date().toLocaleDateString() });
   };
 
   const handleDeleteConfirm = () => {
@@ -224,6 +244,20 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
         onClose={() => setViewingProposal(null)}
         proposal={viewingProposal}
         onAccept={handleAcceptProposal}
+        onViewContract={(proposalData) => {
+           setViewingProposal(null);
+           // Build a dummy state to view past contracts natively
+           const matchedTierName = ['good', 'better', 'best'].find(t => proposalData.proposal_data?.tiers[t]?.salesPrice === proposalData.amount);
+           const matchedTierData = proposalData.proposal_data?.tiers[matchedTierName];
+           setViewingContract({ proposal: proposalData, tierName: matchedTierName?.toUpperCase(), tierData: matchedTierData, date: proposalData.date });
+        }}
+      />
+
+      {/* Verified Mock PDF Contract Modal */}
+      <ContractDocumentModal 
+        isOpen={!!viewingContract}
+        onClose={() => setViewingContract(null)}
+        contractData={viewingContract}
       />
     </div>
   );

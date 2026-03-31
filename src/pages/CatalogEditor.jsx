@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Plus, Edit2, Trash2, Box, PenTool, Layers, Calculator, UploadCloud, RefreshCw, Component, Check, Search, Filter } from 'lucide-react';
+import { Plus, Edit2, Trash2, Box, Pen, Layers, Calculator, UploadCloud, RefreshCw, Component, Check, Search, Filter } from 'lucide-react';
 import Modal from '../components/Modal';
 
 export default function CatalogEditor() {
@@ -219,7 +219,7 @@ export default function CatalogEditor() {
           <Box size={16} className={activeTab === 'equipment' ? 'text-primary-300' : ''} /> Central Equipment Database
         </button>
         <button onClick={() => handleTabChange('labor')} className={`px-5 py-2.5 font-bold text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'labor' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>
-          <PenTool size={16} className={activeTab === 'labor' ? 'text-primary-300' : ''} /> Add-ons & Labor Rates
+          <Pen size={16} className={activeTab === 'labor' ? 'text-primary-300' : ''} /> Add-ons & Labor Rates
         </button>
       </div>
 
@@ -330,7 +330,7 @@ export default function CatalogEditor() {
                 <tbody>
                    {filteredLabor.length === 0 ? (
                       <tr><td colSpan="4" className="p-12 text-center">
-                         <PenTool size={40} className="text-slate-200 mx-auto mb-3" />
+                         <Pen size={40} className="text-slate-200 mx-auto mb-3" />
                          <span className="text-slate-500 font-medium tracking-wide">No labor rates or subcontractors found matching your criteria.</span>
                       </td></tr>
                    ) : (

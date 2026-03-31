@@ -1,0 +1,47 @@
+@media print {
+  /* Hide absolutely everything else on the page during print */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Reset margins for clean paper bleed */
+  @page {
+    margin: 0;
+    size: letter portrait;
+  }
+  
+  body {
+    background-color: white !important;
+  }
+
+  /* Only show the printable contract */
+  .printable-contract, .printable-contract * {
+    visibility: visible;
+  }
+  
+  /* Position it perfectly at the top left of the physical paper */
+  .printable-contract {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Force background colors to print (Chrome/Safari specific) */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+.printable-contract {
+    /* Subtle paper texture effect for on-screen viewing */
+    background-image: 
+        radial-gradient(#ebebeb 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-color: white;
+}

@@ -51,17 +51,20 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick 
       onScheduleJob(draggableId, newCrewId, newDate);
    };
 
-   const allInstalls = pipeline['Deal Won'] || [];
+   const workOrderStatuses = ['Unscheduled', 'Scheduled', 'En Route', 'In Progress', 'Permit Pending', 'Pending Inspection', 'Failed Inspection'];
+   
+   const allInstalls = workOrderStatuses.flatMap(status => pipeline[status] || []);
+   const allLegacyInstalls = pipeline['Deal Won'] || []; // Legacy Fallback
    const allSurveys = pipeline['Site Survey Scheduled'] || [];
    const allNewLeads = pipeline['New Lead'] || [];
 
-   const allBoardJobs = [...allInstalls, ...allSurveys, ...allNewLeads].filter(j => !!j.scheduled_date);
+   const allBoardJobs = [...allInstalls, ...allLegacyInstalls, ...allSurveys, ...allNewLeads].filter(j => !!j.scheduled_date);
    
-   const allUnassigned = [...allInstalls, ...allNewLeads].filter(j => !j.scheduled_date);
+   const allUnassigned = [...allInstalls, ...allLegacyInstalls, ...allNewLeads].filter(j => !j.scheduled_date);
    const unassignedJobs = allUnassigned.filter(j => {
       if (drawerFilter === 'All') return true;
-      if (drawerFilter === 'Installs') return j.status === 'Deal Won';
-      if (drawerFilter === 'Surveys') return j.status === 'New Lead';
+      if (drawerFilter === 'Installs') return j.type === 'work_order' || j.status === 'Deal Won';
+      if (drawerFilter === 'Surveys') return j.type === 'opportunity';
       return true;
    });
 
@@ -82,11 +85,15 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick 
    });
 
    const JobCard = ({ job, index, isMatrix }) => {
-      const isInstall = job.status === 'Deal Won';
+      const isInstall = job.type === 'work_order' || job.status === 'Deal Won';
       const themeColor = isInstall ? 'emerald' : 'purple';
       const bgMap = { emerald: 'bg-emerald-500', purple: 'bg-purple-500' };
       const textMap = { emerald: 'text-emerald-700', purple: 'text-purple-700' };
       const lightBgMap = { emerald: 'bg-emerald-50 border-emerald-200', purple: 'bg-purple-50 border-purple-200' };
+
+      // Map special statuses to specific warning colors natively
+      const isWarning = ['Failed Inspection', 'Permit Pending'].includes(job.status);
+      const isProgress = ['En Route', 'In Progress'].includes(job.status);
 
       return (
          <Draggable key={job.id} draggableId={job.id} index={index}>
@@ -100,12 +107,12 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick 
                      ${isMatrix ? 'w-full mb-2 h-[105px]' : 'w-[280px] shrink-0 mx-2'} 
                      ${snapshot.isDragging 
                         ? 'ring-4 ring-primary-500/20 shadow-2xl shadow-primary-500/30 scale-[1.03] rotate-1 z-[999] border-primary-500' 
-                        : 'border-slate-200/80 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.06)] hover:shadow-lg hover:border-slate-300'}`}
+                        : isWarning ? 'border-amber-400 shadow-[0_2px_8px_-3px_rgba(251,191,36,0.5)]' : 'border-slate-200/80 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.06)] hover:shadow-lg hover:border-slate-300'}`}
                >
-                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${bgMap[themeColor]}`}></div>
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${isWarning ? 'bg-amber-400' : bgMap[themeColor]}`}></div>
                   
                   <div className="flex items-start gap-2 pl-1 mb-2">
-                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0 ${bgMap[themeColor]}`}>
+                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0 ${isWarning ? 'bg-amber-500' : bgMap[themeColor]}`}>
                         {getInitials(job.customerName)}
                      </div>
                      <div className="flex-1 min-w-0 pt-0.5">
@@ -120,9 +127,9 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick 
                   </div>
                   
                   <div className="pl-1 shrink-0 flex items-center justify-between mt-auto">
-                     <span className={`inline-flex items-center gap-1 border text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm ${lightBgMap[themeColor]} ${textMap[themeColor]}`}>
-                        <div className={`w-1.5 h-1.5 rounded-full ${bgMap[themeColor]} animate-pulse`}></div>
-                        {isInstall ? 'Installation' : 'Diagnostic Survey'}
+                     <span className={`inline-flex items-center gap-1 border text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm ${isWarning ? 'bg-amber-50 border-amber-200 text-amber-700' : lightBgMap[themeColor]} ${isWarning ? '' : textMap[themeColor]}`}>
+                        <div className={`w-1.5 h-1.5 rounded-full ${isWarning ? 'bg-amber-500' : bgMap[themeColor]} ${isProgress ? 'animate-pulse' : ''}`}></div>
+                        {job.status === 'Unscheduled' ? 'New Work Order' : job.status}
                      </span>
                   </div>
 

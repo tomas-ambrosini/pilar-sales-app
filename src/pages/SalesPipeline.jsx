@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ClipboardList, PlusCircle, Calendar, MapPin, PenTool, Activity, CheckSquare, Search, ChevronRight, FileText, Clock, File, Edit3, Trash2, ShieldCheck, Zap } from 'lucide-react';
+import { ClipboardList, PlusCircle, Calendar, MapPin, Pen, Activity, CheckSquare, Search, ChevronRight, FileText, Clock, File, Edit3, Trash2, ShieldCheck, Zap, Image as ImageIcon } from 'lucide-react';
 import Modal from '../components/Modal';
 import DispatchCalendar from '../components/DispatchCalendar';
 import { supabase } from '../supabaseClient';
@@ -40,8 +40,10 @@ export default function SalesPipeline() {
   const [editJobForm, setEditJobForm] = useState({ issue_description: '', urgency: 'Medium', status: '' });
   const [dispatchForm, setDispatchForm] = useState({ date: '', time_block: '', crew_id: '', notes: '' });
 
-  // Temporary ID holder for lost physics
+  // Temporary ID holders
   const [pendingLostDeal, setPendingLostDeal] = useState(null);
+  const [deletingJob, setDeletingJob] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
 
   useEffect(() => {
      if (activeJob) {
@@ -247,15 +249,23 @@ export default function SalesPipeline() {
   };
 
   const handleDeleteJob = async () => {
-      if (!activeJob) return;
-      if (!window.confirm(`Are you sure you want to completely delete Deal #${activeJob.displayId}? This action permanently erases the lead and cannot be undone.`)) return;
+      const jobToDelete = deletingJob;
+      if (!jobToDelete) return;
 
-      const { error } = await supabase.from('opportunities').delete().eq('id', activeJob.id);
+      // Unblock deletion by removing child work orders that reference this deal
+      await supabase.from('work_orders').delete().eq('opportunity_id', jobToDelete.id);
+
+      const { error } = await supabase.from('opportunities').delete().eq('id', jobToDelete.id);
       if (!error) {
          fetchOpportunities();
-         setActiveJob(null);
+         if (activeJob?.id === jobToDelete.id) {
+             setActiveJob(null);
+         }
+         setDeletingJob(null);
+         setDeleteError(null);
       } else {
          console.error('Error deleting job:', error);
+         setDeleteError("Failed to delete deal. Database rejected it: " + error.message);
       }
   };
 
@@ -552,7 +562,7 @@ export default function SalesPipeline() {
                            </div>
 
                            <div className="pt-6 border-t border-slate-100 flex justify-between items-center mt-6">
-                              <button onClick={handleDeleteJob} className="text-red-500 hover:text-red-700 hover:bg-red-50 text-xs font-bold py-2 px-3 rounded flex items-center gap-1 transition-colors">
+                              <button onClick={() => setDeletingJob(activeJob)} className="text-red-500 hover:text-red-700 hover:bg-red-50 text-xs font-bold py-2 px-3 rounded flex items-center gap-1 transition-colors">
                                  <Trash2 size={14} /> Delete Deal
                               </button>
                               <button onClick={() => setIsEditingJob(true)} className="btn-secondary text-xs flex items-center gap-1">
@@ -776,6 +786,24 @@ export default function SalesPipeline() {
 
             <div className="p-4 border-t border-slate-200 mt-auto shrink-0 bg-white">
                <button className="btn-secondary w-full" onClick={() => { setActiveJob(null); setActiveTab('details'); }}>Close Deal Window</button>
+            </div>
+         </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={!!deletingJob} onClose={() => { setDeletingJob(null); setDeleteError(null); }} title="Delete Pipeline Deal">
+         <div className="modal-form" style={{ textAlign: 'center', padding: '1rem 0' }}>
+            <p style={{ color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
+               Are you sure you want to completely delete Deal <strong>#{deletingJob?.displayId}</strong> for <strong>{deletingJob?.customerName}</strong>? This action permanently erases the lead and cannot be undone.
+            </p>
+            {deleteError && (
+               <div className="bg-red-50 text-red-600 border border-red-200 p-3 rounded mb-4 text-xs font-bold font-mono">
+                  {deleteError}
+               </div>
+            )}
+            <div className="modal-actions" style={{ justifyContent: 'center', gap: '1rem' }}>
+               <button className="btn-secondary" onClick={() => { setDeletingJob(null); setDeleteError(null); }}>Cancel</button>
+               <button className="btn-primary" style={{ background: 'var(--color-danger)' }} onClick={handleDeleteJob}>Delete Deal</button>
             </div>
          </div>
       </Modal>

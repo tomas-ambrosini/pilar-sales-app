@@ -2,7 +2,7 @@ import React from 'react';
 import { X, CheckCircle, Shield, Wind, Droplets, ArrowRight } from 'lucide-react';
 import Modal from './Modal';
 
-export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccept }) {
+export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccept, onViewContract }) {
   if (!proposal) return null;
 
   const { proposal_data } = proposal;
@@ -50,13 +50,16 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
              {proposal.status !== 'Approved' ? (
                  <button 
                     onClick={() => onAccept && onAccept(tierName, tierData, proposal)}
-                    className={`w-full py-3 rounded font-bold transition-all ${isBest ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-md' : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300'}`}
+                    className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${isBest ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-md' : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300'}`}
                  >
                     Accept {tierName} Quote
                  </button>
              ) : (
-                 <button disabled className={`w-full py-3 rounded font-bold transition-all ${isBest ? 'bg-slate-300 text-slate-500' : 'bg-slate-100 border-2 border-slate-200 text-slate-400'}`}>
-                    Deal Locked
+                 <button 
+                    onClick={() => onViewContract && onViewContract(proposal)} 
+                    className={`w-full py-3 rounded font-bold flex items-center justify-center gap-2 transition-all ${isBest ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl scale-105' : 'bg-emerald-50 border-2 border-emerald-200 text-emerald-700 hover:bg-emerald-100'}`}
+                 >
+                    <FileText size={16}/> View Signed Contract
                  </button>
              )}
           </div>

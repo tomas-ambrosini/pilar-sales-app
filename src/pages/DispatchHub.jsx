@@ -10,7 +10,10 @@ import { useRole, ROLES } from '../context/RoleContext';
 const PIPELINE_STAGES = [
   'New Lead', 'Contact Attempted', 'Site Survey Scheduled', 
   'Proposal Building', 'Proposal Sent', 'Deal Won', 
-  'Job Completed', 'Lost'
+  'Job Completed', 'Lost',
+  /* Work Order Specific */
+  'Unscheduled', 'Scheduled', 'En Route', 'In Progress', 
+  'Permit Pending', 'Pending Inspection', 'Failed Inspection', 'Completed', 'Closed'
 ];
 
 export default function DispatchHub() {
@@ -54,24 +57,40 @@ export default function DispatchHub() {
 
    const fetchOpportunities = async () => {
       try {
-         const { data, error } = await supabase
+         // 1. Fetch Sales Opportunities (Surveys/Leads)
+         const { data: oppData, error: oppErr } = await supabase
            .from('opportunities')
            .select(`
              id, status, urgency_level, issue_description,
              scheduled_date, scheduled_time_block, dispatch_notes, assigned_crew_id, created_at,
              households ( id, household_name, addresses!households_service_address_id_fkey ( street_address, city ) )
-           `);
-         if (error) throw error;
-   
-         if (data) {
-           const sortedMap = PIPELINE_STAGES.reduce((acc, stg) => { acc[stg] = []; return acc; }, {});
+           `)
+           .in('status', ['New Lead', 'Site Survey Scheduled', 'Deal Won']); // Deal Won included for legacy fallback
            
-           data.forEach(opp => {
+         if (oppErr) throw oppErr;
+
+         // 2. Fetch Operations Work Orders (Installs/Jobs)
+         const { data: woData, error: woErr } = await supabase
+           .from('work_orders')
+           .select(`
+             id, work_order_number, status, urgency_level, execution_payload,
+             scheduled_date, scheduled_time_block, dispatch_notes, assigned_crew_id, created_at,
+             households ( id, household_name, addresses!households_service_address_id_fkey ( street_address, city ) )
+           `);
+
+         if (woErr && woErr.code !== 'PGRST205') throw woErr; // Ignore table missing error during migration
+   
+         const sortedMap = PIPELINE_STAGES.reduce((acc, stg) => { acc[stg] = []; return acc; }, {});
+         
+         // Process Opportunities
+         if (oppData) {
+           oppData.forEach(opp => {
              const addr = opp.households?.addresses;
              const addressString = addr ? `${addr.street_address}` : 'No address';
-             
              const jobCard = {
-               id: opp.id,
+               id: `opp_${opp.id}`,
+               dbId: opp.id,
+               type: 'opportunity',
                displayId: opp.id.substring(0,8).toUpperCase(),
                status: opp.status,
                customerName: opp.households?.household_name || 'Unknown',
@@ -84,15 +103,38 @@ export default function DispatchHub() {
                dispatch_notes: opp.dispatch_notes,
                assigned_crew_id: opp.assigned_crew_id
              };
-             
-             if (sortedMap[opp.status]) {
-                sortedMap[opp.status].push(jobCard);
-             } else {
-                sortedMap['New Lead'].push(jobCard);
-             }
+             if (sortedMap[opp.status]) sortedMap[opp.status].push(jobCard);
+             else sortedMap['New Lead'].push(jobCard);
            });
-           setPipeline(sortedMap);
          }
+
+         // Process Work Orders
+         if (woData) {
+           woData.forEach(wo => {
+             const addr = wo.households?.addresses;
+             const addressString = addr ? `${addr.street_address}` : 'No address';
+             const jobCard = {
+               id: `wo_${wo.id}`,
+               dbId: wo.id,
+               type: 'work_order',
+               displayId: wo.work_order_number,
+               status: wo.status,
+               customerName: wo.households?.household_name || 'Unknown',
+               address: addressString,
+               date: new Date(wo.created_at).toLocaleDateString(),
+               urgency: wo.urgency_level,
+               issue: wo.execution_payload?.tierName ? `Install: ${wo.execution_payload.tierName}` : 'Execution Job',
+               scheduled_date: wo.scheduled_date,
+               scheduled_time_block: wo.scheduled_time_block,
+               dispatch_notes: wo.dispatch_notes,
+               assigned_crew_id: wo.assigned_crew_id
+             };
+             if (sortedMap[wo.status]) sortedMap[wo.status].push(jobCard);
+             else sortedMap['Unscheduled'].push(jobCard);
+           });
+         }
+
+         setPipeline(sortedMap);
        } catch (err) {
          console.error("Error fetching pipeline:", err);
        } finally {
@@ -100,36 +142,39 @@ export default function DispatchHub() {
        }
    };
 
-   const handleScheduleJob = async (jobId, crewId, dateStr) => {
+   const handleScheduleJob = async (draggableId, crewId, dateStr) => {
       let originalStatus = null;
       let newStatus = null;
+      let jobType = null;
+      let dbId = null;
 
       setPipeline(prev => {
          const newPipe = { ...prev };
-         // Find which column the job is currently in
          for (const col of Object.keys(newPipe)) {
-             const jobIndex = newPipe[col].findIndex(j => j.id === jobId);
+             const jobIndex = newPipe[col].findIndex(j => j.id === draggableId);
              if (jobIndex !== -1) {
                 originalStatus = newPipe[col][jobIndex].status;
+                jobType = newPipe[col][jobIndex].type;
+                dbId = newPipe[col][jobIndex].dbId;
                 const arr = [...newPipe[col]];
                 
-                // State Machine Logic
                 newStatus = originalStatus;
-                if (dateStr) {
-                   // Scheduling a Job
-                   if (originalStatus === 'New Lead') newStatus = 'Site Survey Scheduled';
-                } else {
-                   // Un-scheduling a Job
-                   if (originalStatus === 'Site Survey Scheduled') newStatus = 'New Lead';
+                
+                // State Machine Logic
+                if (jobType === 'opportunity') {
+                    if (dateStr && originalStatus === 'New Lead') newStatus = 'Site Survey Scheduled';
+                    if (!dateStr && originalStatus === 'Site Survey Scheduled') newStatus = 'New Lead';
+                } else if (jobType === 'work_order') {
+                    if (dateStr && originalStatus === 'Unscheduled') newStatus = 'Scheduled';
+                    if (!dateStr && originalStatus === 'Scheduled') newStatus = 'Unscheduled';
                 }
                 
-                // If status changed, we must move it arrays
                 if (newStatus !== originalStatus) {
                    const jobCard = { ...arr[jobIndex], scheduled_date: dateStr, assigned_crew_id: crewId, status: newStatus };
-                   arr.splice(jobIndex, 1); // remove from old
+                   arr.splice(jobIndex, 1);
                    newPipe[col] = arr;
                    if (!newPipe[newStatus]) newPipe[newStatus] = [];
-                   newPipe[newStatus].push(jobCard); // add to new
+                   newPipe[newStatus].push(jobCard);
                 } else {
                    arr[jobIndex] = { ...arr[jobIndex], scheduled_date: dateStr, assigned_crew_id: crewId };
                    newPipe[col] = arr;
@@ -141,13 +186,18 @@ export default function DispatchHub() {
       });
  
       // Push to Supabase
-      if (originalStatus) {
+      if (originalStatus && dbId && jobType) {
          let dbUpdate = { scheduled_date: dateStr, assigned_crew_id: crewId };
          
-         if (dateStr && originalStatus === 'New Lead') dbUpdate.status = 'Site Survey Scheduled';
-         if (!dateStr && originalStatus === 'Site Survey Scheduled') dbUpdate.status = 'New Lead';
-         
-         await supabase.from('opportunities').update(dbUpdate).eq('id', jobId);
+         if (jobType === 'opportunity') {
+             if (dateStr && originalStatus === 'New Lead') dbUpdate.status = 'Site Survey Scheduled';
+             if (!dateStr && originalStatus === 'Site Survey Scheduled') dbUpdate.status = 'New Lead';
+             await supabase.from('opportunities').update(dbUpdate).eq('id', dbId);
+         } else if (jobType === 'work_order') {
+             if (dateStr && originalStatus === 'Unscheduled') dbUpdate.status = 'Scheduled';
+             if (!dateStr && originalStatus === 'Scheduled') dbUpdate.status = 'Unscheduled';
+             await supabase.from('work_orders').update(dbUpdate).eq('id', dbId);
+         }
       }
    };
 
