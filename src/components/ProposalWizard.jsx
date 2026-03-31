@@ -277,6 +277,116 @@ export default function ProposalWizard({ onComplete, addProposal }) {
                  <div><label className="text-[10px] uppercase font-bold text-slate-500">Disconnect Box</label><select className="input-field w-full mt-1" value={survey.disconnectCondition} onChange={e => updateSurveyAndTriggerSafetyNet('disconnectCondition', e.target.value)}><option value="Pass">Pass</option><option value="Replace Required">Replace Required</option></select></div>
                </div>
             </div>
+            <div className="bg-white p-6 rounded border border-slate-200">
+               <h4 className="text-sm font-bold border-b pb-2 mb-4 text-primary-600 uppercase">System Measurements (1 - 27)</h4>
+               
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                 {/* Box 1: Front View */}
+                 <div className="bg-slate-50 p-4 border border-slate-200 rounded shadow-sm">
+                   <h5 className="font-black text-center text-slate-700 tracking-wider mb-4 border-b border-slate-200 pb-2">FRONT VIEW</h5>
+                   <div className="grid grid-cols-2 gap-3 text-xs">
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">1</div><input className="input-field w-full py-1 text-center" placeholder="Plenum W" value={survey.m1} onChange={e=>setSurvey({...survey, m1: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">2</div><input className="input-field w-full py-1 text-center" placeholder="AHU W" value={survey.m2} onChange={e=>setSurvey({...survey, m2: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">3</div><input className="input-field w-full py-1 text-center" placeholder="Ret Box W" value={survey.m3} onChange={e=>setSurvey({...survey, m3: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">4</div><input className="input-field w-full py-1 text-center" placeholder="L Clear" value={survey.m4} onChange={e=>setSurvey({...survey, m4: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">5</div><input className="input-field w-full py-1 text-center" placeholder="B Clear" value={survey.m5} onChange={e=>setSurvey({...survey, m5: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">6</div><input className="input-field w-full py-1 text-center" placeholder="AHU H" value={survey.m6} onChange={e=>setSurvey({...survey, m6: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">7</div><input className="input-field w-full py-1 text-center" placeholder="Top Clear" value={survey.m7} onChange={e=>setSurvey({...survey, m7: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">8</div><input className="input-field w-full py-1 text-center" placeholder="Door H" value={survey.m8} onChange={e=>setSurvey({...survey, m8: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">9</div><input className="input-field w-full py-1 text-center" placeholder="R Clear" value={survey.m9} onChange={e=>setSurvey({...survey, m9: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">10</div><input className="input-field w-full py-1 text-center" placeholder="Door W" value={survey.m10} onChange={e=>setSurvey({...survey, m10: e.target.value})}/></div>
+                   </div>
+                 </div>
+
+                 {/* Box 2: Side View */}
+                 <div className="bg-slate-50 p-4 border border-slate-200 rounded shadow-sm">
+                   <h5 className="font-black text-center text-slate-700 tracking-wider mb-4 border-b border-slate-200 pb-2">SIDE VIEW</h5>
+                   <div className="grid grid-cols-2 gap-3 text-xs">
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">11</div><input className="input-field w-full py-1 text-center" placeholder="Ceil H" value={survey.m11} onChange={e=>setSurvey({...survey, m11: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">12</div><input className="input-field w-full py-1 text-center" placeholder="Clearance" value={survey.m12} onChange={e=>setSurvey({...survey, m12: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">13</div><input className="input-field w-full py-1 text-center" placeholder="Plenum D" value={survey.m13} onChange={e=>setSurvey({...survey, m13: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">14</div><input className="input-field w-full py-1 text-center" placeholder="AHU D" value={survey.m14} onChange={e=>setSurvey({...survey, m14: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">15</div><input className="input-field w-full py-1 text-center" placeholder="Clearance" value={survey.m15} onChange={e=>setSurvey({...survey, m15: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">16</div><input className="input-field w-full py-1 text-center" placeholder="Ret Box D" value={survey.m16} onChange={e=>setSurvey({...survey, m16: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">17</div><input className="input-field w-full py-1 text-center" placeholder="Clearance" value={survey.m17} onChange={e=>setSurvey({...survey, m17: e.target.value})}/></div>
+                   </div>
+                 </div>
+
+                 {/* Box 3: Horizontal */}
+                 <div className="bg-slate-50 p-4 border border-slate-200 rounded shadow-sm">
+                   <h5 className="font-black text-center text-slate-700 tracking-wider mb-4 border-b border-slate-200 pb-2">HORIZONTAL</h5>
+                   <div className="grid grid-cols-2 gap-3 text-xs">
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">18</div><input className="input-field w-full py-1 text-center" placeholder="Access W" value={survey.m18} onChange={e=>setSurvey({...survey, m18: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">19</div><input className="input-field w-full py-1 text-center" placeholder="Access D" value={survey.m19} onChange={e=>setSurvey({...survey, m19: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">20</div><input className="input-field w-full py-1 text-center" placeholder="AHU L" value={survey.m20} onChange={e=>setSurvey({...survey, m20: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">21</div><input className="input-field w-full py-1 text-center" placeholder="AHU H" value={survey.m21} onChange={e=>setSurvey({...survey, m21: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">22</div><input className="input-field w-full py-1 text-center" placeholder="Plenum Top" value={survey.m22} onChange={e=>setSurvey({...survey, m22: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">23</div><input className="input-field w-full py-1 text-center" placeholder="Plenum End" value={survey.m23} onChange={e=>setSurvey({...survey, m23: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">24</div><input className="input-field w-full py-1 text-center" placeholder="Plenum B" value={survey.m24} onChange={e=>setSurvey({...survey, m24: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">25</div><input className="input-field w-full py-1 text-center" placeholder="Plenum C" value={survey.m25} onChange={e=>setSurvey({...survey, m25: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">26</div><input className="input-field w-full py-1 text-center" placeholder="Plenum D" value={survey.m26} onChange={e=>setSurvey({...survey, m26: e.target.value})}/></div>
+                     <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">27</div><input className="input-field w-full py-1 text-center" placeholder="Attic Pitch" value={survey.m27} onChange={e=>setSurvey({...survey, m27: e.target.value})}/></div>
+                   </div>
+                 </div>
+               </div>
+            </div>
+
+            <div className="bg-slate-50 p-6 rounded border border-slate-200 mt-6">
+               <div className="flex justify-between items-center border-b pb-2 mb-4">
+                 <h4 className="text-sm font-bold text-primary-600 uppercase">Site Photos</h4>
+                 <span className="text-xs bg-slate-200 text-slate-600 px-2 py-1 rounded font-bold">Optional for Testing</span>
+               </div>
+               <p className="text-xs text-slate-500 mb-4">Please upload visual proof of all constraints for the installation crew. These will uniquely appear in the pipeline Deal Command Center.</p>
+               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                 {[
+                   { id: 'condenser_wide', label: 'Condenser (Wide)', desc: 'Show pad & yard' },
+                   { id: 'condenser_data_plate', label: 'Condenser Plate', desc: 'Focus on model/serial' },
+                   { id: 'indoor_unit_wide', label: 'Indoor Unit (Wide)', desc: 'Show clearances' },
+                   { id: 'indoor_data_plate', label: 'Indoor Plate', desc: 'Focus on model/serial' },
+                   { id: 'electrical_panel_open', label: 'Electrical Panel', desc: 'Show breaker load' }
+                 ].map(photoObj => (
+                   <div key={photoObj.id} className="border border-slate-200 rounded p-3 bg-white text-center shadow-sm relative overflow-hidden flex flex-col justify-between">
+                     <div>
+                        <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">{photoObj.label}</label>
+                        <p className="text-[9px] text-slate-400 mb-3 leading-tight">{photoObj.desc}</p>
+                     </div>
+                     
+                     <div className="mt-auto">
+                        {uploadingPhoto === photoObj.id ? (
+                          <div className="w-full h-24 border-2 border-dashed border-slate-300 rounded flex items-center justify-center bg-slate-50">
+                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                          </div>
+                        ) : photos[photoObj.id] ? (
+                          <div className="relative group cursor-pointer inline-block w-full h-24">
+                             <img src={photos[photoObj.id]} alt="Uploaded" className="w-full h-full object-cover rounded border border-slate-200 transition-opacity group-hover:opacity-75" />
+                             <div 
+                                className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded"
+                                onClick={() => setPhotos({...photos, [photoObj.id]: null})}
+                             >
+                                <span className="text-xs text-white font-bold p-1 bg-danger rounded">Remove</span>
+                             </div>
+                          </div>
+                        ) : (
+                          <div className="w-full h-24 border-2 border-dashed border-slate-300 rounded flex flex-col items-center justify-center bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer relative group">
+                            <ImageIcon className="text-slate-400 mb-1 group-hover:text-primary-500 transition-colors" size={20} />
+                            <span className="text-[10px] text-slate-500 font-medium whitespace-nowrap">Upload Image</span>
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              onChange={(e) => {
+                                 if (e.target.files && e.target.files[0]) {
+                                    handlePhotoUpload(photoObj.id, e.target.files[0]);
+                                 }
+                              }}
+                            />
+                          </div>
+                        )}
+                     </div>
+                   </div>
+                 ))}
+               </div>
+            </div>
             <div className="flex justify-between mt-8 pt-4 border-t border-slate-100">
                <button className="btn-secondary" onClick={() => setStep(1)}><ArrowLeft size={16}/> Back</button>
                <button className="btn-primary" onClick={() => setStep(3)}>Next: Filter Catalog <ArrowRight size={16}/></button>
