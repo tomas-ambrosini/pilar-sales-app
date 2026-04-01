@@ -373,6 +373,10 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
        alert("Failed to send message over websocket: " + error.message);
     }
     setIsUploading(false);
+    
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
   };
 
   const handleDeleteMessage = async (msgId) => {
