@@ -147,3 +147,30 @@ USING (
 
 -- Add the tracking column for replies
 ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS reply_to_id UUID REFERENCES public.chat_messages(id) ON DELETE SET NULL;
+
+
+-- ==========================================
+-- PHASE 4 OVERHAUL: NOTIFICATIONS & READ RECEIPTS
+-- ==========================================
+
+-- Add the last_read_at timestamp to channel members to compute unread badges accurately
+ALTER TABLE public.channel_members ADD COLUMN IF NOT EXISTS last_read_at TIMESTAMPTZ DEFAULT NOW();
+
+-- Create an RPC to fetch unread counts natively
+CREATE OR REPLACE FUNCTION get_unread_counts(p_user_id UUID)
+RETURNS TABLE (channel_id UUID, unread_count BIGINT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    cm.channel_id,
+    COUNT(msg.id) AS unread_count
+  FROM public.channel_members cm
+  LEFT JOIN public.chat_messages msg ON msg.channel_id = cm.channel_id 
+    AND (msg.created_at > cm.last_read_at OR cm.last_read_at IS NULL)
+  WHERE cm.user_id = p_user_id
+  GROUP BY cm.channel_id;
+END;
+$$;

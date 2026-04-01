@@ -16,6 +16,10 @@ export default function MessagesDrawer({ isOpen, onClose }) {
   const [replyingToMsg, setReplyingToMsg] = useState(null);
   const messagesEndRef = useRef(null);
   const [viewState, setViewState] = useState('channels'); // 'channels', 'chat', 'create-channel', 'create-dm'
+  const [unreadCounts, setUnreadCounts] = useState({});
+  const [mentionPopup, setMentionPopup] = useState({ show: false, query: '', index: 0 });
+  const inputRef = useRef(null);
+  const activeChannelRef = useRef(activeChannelId);
   const [allUsers, setAllUsers] = useState([]);
   const [newChannelName, setNewChannelName] = useState('');
   const [newChannelIsPrivate, setNewChannelIsPrivate] = useState(false);
@@ -54,17 +58,40 @@ export default function MessagesDrawer({ isOpen, onClose }) {
         setDbError(channelError?.code === '42P01' ? 'The chat tables have not been created yet.' : channelError?.message);
       }
 
-      // Fetch All Users for DM creation
+      // Fetch All Users for DM creation & Mentions
       const { data: usersData, error: usersError } = await supabase
         .from('users')
         .select('*');
       if (!usersError && usersData) {
         setAllUsers(usersData.filter(u => u.id !== user?.id)); // exclude self
       }
+
+      // Fetch Unread Counts via RPC
+      if (user?.id) {
+        const { data: unreadData, error: unreadError } = await supabase.rpc('get_unread_counts', { p_user_id: user.id });
+        if (!unreadError && unreadData) {
+          const counts = {};
+          unreadData.forEach(row => {
+            counts[row.channel_id] = parseInt(row.unread_count);
+          });
+          setUnreadCounts(counts);
+        }
+      }
     };
     
     fetchInitialData();
   }, [isOpen, activeChannelId, user?.id]);
+
+  useEffect(() => {
+    activeChannelRef.current = activeChannelId;
+    if (activeChannelId && user?.id && isOpen) {
+       // Clear Unread exactly when selecting channel
+       setUnreadCounts(prev => ({ ...prev, [activeChannelId]: 0 }));
+       // Mark Read in DB silently
+       supabase.from('channel_members').update({ last_read_at: new Date().toISOString() })
+         .eq('channel_id', activeChannelId).eq('user_id', user.id).then();
+    }
+  }, [activeChannelId, user?.id, isOpen]);
 
   useEffect(() => {
     if (!activeChannelId || !isOpen) return;
@@ -97,38 +124,53 @@ export default function MessagesDrawer({ isOpen, onClose }) {
 
     fetchMessages();
 
-    const channelListener = supabase.channel(`public:chat_messages:channel_id=eq.${activeChannelId}`)
+    const globalChannelListener = supabase.channel(`public:chat_messages`)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `channel_id=eq.${activeChannelId}` },
+        { event: '*', schema: 'public', table: 'chat_messages' },
         async (payload) => {
           if (payload.event === 'INSERT') {
             const newMessage = payload.new;
             if (newMessage.user_id === user?.id) return; 
 
-            const { data: userData } = await supabase
-              .from('users')
-              .select('name, role')
-              .eq('id', newMessage.user_id)
-              .single();
+            // Active channel UI append
+            if (newMessage.channel_id === activeChannelRef.current) {
+              const { data: userData } = await supabase
+                .from('users')
+                .select('name, role')
+                .eq('id', newMessage.user_id)
+                .single();
 
-            if (userData) {
-              newMessage.users = userData;
+              if (userData) {
+                newMessage.users = userData;
+              }
+
+              setMessages(prev => [...prev, newMessage]);
+              scrollToBottom();
+
+              // Mark as read immediately
+              supabase.from('channel_members').update({ last_read_at: new Date().toISOString() })
+                .eq('channel_id', activeChannelRef.current).eq('user_id', user?.id).then();
+            } else {
+              // Not the active channel: Add unread badge
+              setUnreadCounts(prev => ({ ...prev, [newMessage.channel_id]: (prev[newMessage.channel_id] || 0) + 1 }));
             }
-
-            setMessages(prev => [...prev, newMessage]);
-            scrollToBottom();
+            
           } else if (payload.event === 'UPDATE') {
-             setMessages(prev => prev.map(m => m.id === payload.new.id ? { ...m, ...payload.new } : m));
+             if (payload.new.channel_id === activeChannelRef.current) {
+               setMessages(prev => prev.map(m => m.id === payload.new.id ? { ...m, ...payload.new } : m));
+             }
           } else if (payload.event === 'DELETE') {
-             setMessages(prev => prev.filter(m => m.id !== payload.old.id));
+             if (payload.old.channel_id === activeChannelRef.current) {
+               setMessages(prev => prev.filter(m => m.id !== payload.old.id));
+             }
           }
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channelListener);
+      supabase.removeChannel(globalChannelListener);
     };
   }, [activeChannelId, isOpen, user?.id]);
 
@@ -244,10 +286,90 @@ export default function MessagesDrawer({ isOpen, onClose }) {
     setReplyingToMsg(msg);
     setEditingMsgId(null);
     setInputValue('');
-    // Focus the input visually (handled naturally by component state, but could add ref)
+  };
+
+  const renderTextWithMentions = (text) => {
+    if (!text) return null;
+    const parts = text.split(/(@[A-Za-z0-9_]+)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('@')) {
+        const username = part.slice(1);
+        const isSelf = user?.name && username.toLowerCase() === user.name.replace(/\s+/g, '').toLowerCase();
+        return (
+          <span key={i} className={isSelf ? 'mention-highlight-self' : 'mention-highlight'}>
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const val = e.target.value;
+    setInputValue(val);
+    
+    // Detect if user is typing a mention
+    const cursorPos = e.target.selectionStart;
+    const textBeforeCursor = val.substring(0, cursorPos);
+    const mentionsMatch = textBeforeCursor.match(/@([A-Za-z0-9_]*)$/);
+
+    if (mentionsMatch) {
+      setMentionPopup({ show: true, query: mentionsMatch[1].toLowerCase(), index: 0 });
+    } else {
+      setMentionPopup(p => ({ ...p, show: false }));
+    }
+  };
+
+  const filteredMentions = mentionPopup.show ? allUsers.filter(u => u.name.replace(/\s+/g, '').toLowerCase().includes(mentionPopup.query) && u.id !== user?.id) : [];
+
+  const insertMention = (nameRaw) => {
+    const name = nameRaw.replace(/\s+/g, '');
+    const cursorPos = inputRef.current?.selectionStart || inputValue.length;
+    const textBefore = inputValue.substring(0, cursorPos);
+    const textAfter = inputValue.substring(cursorPos);
+    
+    const match = textBefore.match(/@([A-Za-z0-9_]*)$/);
+    if (match) {
+      const newTextBefore = textBefore.substring(0, match.index) + `@${name} `;
+      setInputValue(newTextBefore + textAfter);
+      
+      // Restore cursor position
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.selectionStart = newTextBefore.length;
+          inputRef.current.selectionEnd = newTextBefore.length;
+          inputRef.current.focus();
+        }
+      }, 0);
+    }
+    setMentionPopup(p => ({ ...p, show: false }));
   };
 
   const handleKeyDown = (e) => {
+    if (mentionPopup.show && filteredMentions.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setMentionPopup(p => ({ ...p, index: (p.index + 1) % filteredMentions.length }));
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setMentionPopup(p => ({ ...p, index: (p.index - 1 + filteredMentions.length) % filteredMentions.length }));
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        insertMention(filteredMentions[mentionPopup.index].name);
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setMentionPopup(p => ({ ...p, show: false }));
+        return;
+      }
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -384,7 +506,10 @@ export default function MessagesDrawer({ isOpen, onClose }) {
                               whileHover={{ x: 4, backgroundColor: 'var(--color-slate-100)' }}
                             >
                               {channel.is_private ? <Lock size={16} className={`mr-2 ${activeChannelId === channel.id ? 'text-primary-600' : 'text-slate-400'}`} /> : <Hash size={16} className={`mr-2 ${activeChannelId === channel.id ? 'text-primary-600' : 'text-slate-400'}`} />}
-                              {channel.name}
+                              <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">{channel.name}</span>
+                              {unreadCounts[channel.id] > 0 && activeChannelId !== channel.id && (
+                                <span className="drawer-channel-unread">{unreadCounts[channel.id]}</span>
+                              )}
                             </motion.div>
                          ))}
 
@@ -407,10 +532,13 @@ export default function MessagesDrawer({ isOpen, onClose }) {
                               transition={{ delay: (channels.length + i) * 0.05 }}
                               whileHover={{ x: 4, backgroundColor: 'var(--color-slate-100)' }}
                             >
-                              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold mr-2 shadow-sm shadow-black/10" style={{ background: getAvatarGradient(getChannelDisplayName(channel)) }}>
+                              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold mr-2 shadow-sm shadow-black/10 flex-shrink-0" style={{ background: getAvatarGradient(getChannelDisplayName(channel)) }}>
                                   {getChannelDisplayName(channel).charAt(0).toUpperCase()}
                               </div>
-                              {getChannelDisplayName(channel)}
+                              <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">{getChannelDisplayName(channel)}</span>
+                              {unreadCounts[channel.id] > 0 && activeChannelId !== channel.id && (
+                                <span className="drawer-channel-unread">{unreadCounts[channel.id]}</span>
+                              )}
                             </motion.div>
                          ))}
                      {/* --- CHANNELS LIST VIEW --- */}
@@ -508,11 +636,12 @@ export default function MessagesDrawer({ isOpen, onClose }) {
                               const prevMsg = messages[idx - 1];
                               const isOwn = msg.user_id === user?.id;
                               const isGrouped = Boolean(msg.user_id) && prevMsg && prevMsg.user_id === msg.user_id && (new Date(msg.created_at) - new Date(prevMsg.created_at)) < 300000;
+                              const isMentioned = Boolean(user?.name) && msg.content.toLowerCase().includes(`@${user.name.replace(/\s+/g, '').toLowerCase()}`);
                               
                               return (
                                 <motion.div 
                                   key={msg.id} 
-                                  className={`drawer-msg-item ${isGrouped ? 'grouped' : ''}`}
+                                  className={`drawer-msg-item ${isGrouped ? 'grouped' : ''} ${isMentioned ? 'mentioned-self' : ''}`}
                                   initial={{ opacity: 0, y: 15, scale: 0.98 }}
                                   animate={{ opacity: 1, y: 0, scale: 1 }}
                                   transition={{ type: 'spring', damping: 25, stiffness: 300 }}
@@ -549,12 +678,12 @@ export default function MessagesDrawer({ isOpen, onClose }) {
                                           {messages.find(m => m.id === msg.reply_to_id)?.users?.name || 'Unknown User'}
                                         </div>
                                         <div className="drawer-msg-quote-text truncate">
-                                          {messages.find(m => m.id === msg.reply_to_id)?.content || 'Original message was deleted'}
+                                          {renderTextWithMentions(messages.find(m => m.id === msg.reply_to_id)?.content || 'Original message was deleted')}
                                         </div>
                                       </div>
                                     )}
                                     <div className="drawer-msg-text">
-                                      {msg.content}
+                                      {renderTextWithMentions(msg.content)}
                                       {isGrouped && msg.updated_at && msg.updated_at !== msg.created_at && <span className="ml-2 text-[0.6rem] text-slate-400 italic">(edited)</span>}
                                     </div>
                                   </div>
@@ -596,12 +725,29 @@ export default function MessagesDrawer({ isOpen, onClose }) {
                               </button>
                             </div>
                           )}
+                          {mentionPopup.show && filteredMentions.length > 0 && (
+                            <div className="mention-popup">
+                              {filteredMentions.map((u, i) => (
+                                <div 
+                                  key={u.id} 
+                                  className={`mention-popup-item ${i === mentionPopup.index ? 'active' : ''}`}
+                                  onClick={() => insertMention(u.name)}
+                                >
+                                  <div className="w-5 h-5 rounded-md flex items-center justify-center text-white text-[10px]" style={{background: getAvatarGradient(u.name)}}>
+                                    {u.name.charAt(0).toUpperCase()}
+                                  </div>
+                                  <span>{u.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                           <div className={`drawer-input-wrapper ${replyingToMsg ? 'rounded-tl-none rounded-tr-none' : ''}`}>
                             <textarea 
+                              ref={inputRef}
                               className="drawer-input custom-scrollbar"
                               placeholder={replyingToMsg ? "Type a reply..." : `Message #${activeChannel?.name || '...'}`}
                               value={inputValue}
-                              onChange={(e) => setInputValue(e.target.value)}
+                              onChange={handleInputChange}
                               onKeyDown={handleKeyDown}
                             />
                             <div className="drawer-input-actions flex items-center justify-between">

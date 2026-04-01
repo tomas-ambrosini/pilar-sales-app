@@ -117,6 +117,17 @@
   color: var(--color-primary-700);
 }
 
+.drawer-channel-unread {
+  background: var(--color-red-500);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.1rem 0.4rem;
+  border-radius: 12px;
+  margin-left: auto; /* Push to right edge */
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
 /* Chat View */
 .chat-view {
   flex: 1;
@@ -289,6 +300,28 @@
   width: 100%;
 }
 
+.mention-highlight {
+  background: var(--color-primary-100);
+  color: var(--color-primary-800);
+  font-weight: 700;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+}
+
+.mention-highlight-self {
+  background: var(--color-amber-100);
+  color: var(--color-amber-900);
+  font-weight: 800;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+}
+
+/* Subtle glow for messages specifically tagging the current user */
+.drawer-msg-item.mentioned-self {
+  background: rgba(251, 191, 36, 0.1); 
+  border-left: 3px solid var(--color-amber-400);
+}
+
 .drawer-msg-actions {
   position: absolute;
   right: 1.5rem;
@@ -345,6 +378,39 @@
   border-color: var(--color-primary-400);
   box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08), 0 0 0 4px var(--color-primary-50);
   transform: translateY(-2px);
+}
+
+.mention-popup {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid var(--color-slate-200);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+  max-height: 200px;
+  overflow-y: auto;
+  width: 250px;
+  z-index: 50;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+}
+
+.mention-popup-item {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  color: var(--color-slate-700);
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mention-popup-item.active,
+.mention-popup-item:hover {
+  background: var(--color-slate-100);
 }
 
 .drawer-input {
