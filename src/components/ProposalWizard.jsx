@@ -322,27 +322,31 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                       {sys.name}
                    </button>
                 ))}
-                <button 
-                  onClick={() => {
-                     const nextId = Math.max(...systems.map(s => s.id)) + 1;
-                     setSystems([...systems, generateEmptySystem(nextId)]);
-                     setActiveSystemId(nextId);
-                  }}
-                  className="px-3 py-1.5 ml-2 text-xs font-bold text-primary-600 border border-primary-200 rounded hover:bg-primary-50 transition-colors whitespace-nowrap"
-                >
-                   + Add Unit
-                </button>
-                {systems.length > 1 && (
-                  <button 
-                    onClick={() => {
-                       const newSystems = systems.filter(s => s.id !== activeSystemId);
-                       setSystems(newSystems);
-                       setActiveSystemId(newSystems[0].id);
-                    }}
-                    className="px-3 py-1.5 ml-auto text-xs font-bold text-danger-600 border border-danger-200 rounded hover:bg-danger-50 transition-colors whitespace-nowrap"
-                  >
-                     - Remove Unit
-                  </button>
+                {step === 2 && (
+                  <>
+                    <button 
+                      onClick={() => {
+                         const nextId = Math.max(...systems.map(s => s.id)) + 1;
+                         setSystems([...systems, generateEmptySystem(nextId)]);
+                         setActiveSystemId(nextId);
+                      }}
+                      className="px-3 py-1.5 ml-2 text-xs font-bold text-primary-600 border border-primary-200 rounded hover:bg-primary-50 transition-colors whitespace-nowrap"
+                    >
+                       + Add Unit
+                    </button>
+                    {systems.length > 1 && (
+                      <button 
+                        onClick={() => {
+                           const newSystems = systems.filter(s => s.id !== activeSystemId);
+                           setSystems(newSystems);
+                           setActiveSystemId(newSystems[0].id);
+                        }}
+                        className="px-3 py-1.5 ml-auto text-xs font-bold text-danger-600 border border-danger-200 rounded hover:bg-danger-50 transition-colors whitespace-nowrap"
+                      >
+                         - Remove Unit
+                      </button>
+                    )}
+                  </>
                 )}
              </div>
           )}

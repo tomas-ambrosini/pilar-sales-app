@@ -13,6 +13,7 @@ import ContractDocumentModal from '../components/ContractDocumentModal';
 
 export default function Proposals() {
   const { proposals, addProposal, updateProposal, deleteProposal, loading } = useProposals();
+  const { customers } = useCustomers();
   const [showWizard, setShowWizard] = useState(false);
   const [viewingProposal, setViewingProposal] = useState(null);
   const [viewingContract, setViewingContract] = useState(null);
@@ -153,6 +154,11 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
               </div>
               <div className="mb-6 flex-1">
                  <h3 className="text-xl font-black text-slate-800 tracking-tight leading-tight mb-2 truncate">Unsaved Session</h3>
+                 {activeDraft.selectedCustomerId && customers && customers.length > 0 ? (
+                    <p className="text-sm font-bold text-slate-700 mb-1">
+                       Customer: <span className="text-primary-700">{customers.find(c => c.id.toString() === activeDraft.selectedCustomerId?.toString())?.name || 'Unknown'}</span>
+                    </p>
+                 ) : null}
                  <p className="text-xs font-semibold text-slate-500">Pick up right where you left off.</p>
               </div>
               <div className="flex justify-end pt-4 border-t border-primary-200/50">
