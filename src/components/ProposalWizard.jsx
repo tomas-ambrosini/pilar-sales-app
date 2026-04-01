@@ -3,16 +3,18 @@ import { computeCommission, getRetailFromBest, getFloorPrice } from '../utils/pr
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
+import { useAuth } from '../context/AuthContext';
 import { Check, Image as ImageIcon, Layers, Tag, DollarSign, Calculator, AlertTriangle, ArrowRight, ArrowLeft, Save, Clock, RefreshCcw } from 'lucide-react';
 
 export default function ProposalWizard({ onComplete, addProposal, updateProposal, editModeData }) {
   const hasPreloadedData = typeof editModeData === 'object' && editModeData !== null;
   const isEditing = hasPreloadedData && editModeData.id != null;
   const editingId = isEditing ? editModeData.id : null;
+  const isDraftLaunch = hasPreloadedData && editModeData.isDraft === true;
   
-  const hasDraft = typeof window !== 'undefined' && !!localStorage.getItem('pilar_wizard_draft');
-  const [step, setStep] = useState(isEditing ? 6 : (hasPreloadedData ? 1 : (hasDraft ? 0 : 1)));
+  const [step, setStep] = useState(isEditing ? 6 : (isDraftLaunch ? (editModeData.step > 0 ? editModeData.step : 1) : 1));
   const { customers } = useCustomers();
+  const { user } = useAuth();
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedLocationId, setSelectedLocationId] = useState('');
   
@@ -69,7 +71,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   // Handle Edit/Clone Mode Rehydration
   useEffect(() => {
     if (hasPreloadedData) {
-        const draft = editModeData?.proposal_data?.wizard_state;
+        const draft = editModeData.isDraft ? editModeData : editModeData?.proposal_data?.wizard_state;
         if (draft && Object.keys(draft).length > 0) {
             try {
                if (draft.selectedCustomerId) setSelectedCustomerId(draft.selectedCustomerId);
@@ -86,8 +88,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                if (draft.discountPercent !== undefined) setDiscountPercent(draft.discountPercent);
             } catch(e) {}
         } else {
-            // Failsafe: Proposal exists but lacked Wizard 2.0 state (Legacy or corrupted data)
-            // Force user to start from scratch.
+            // Failsafe
             setStep(1);
         }
     }
@@ -238,6 +239,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
     const finalProposalData = {
       generatedAt: new Date().toISOString(),
+      creator: user ? user.name || user.email : 'Unknown Sales Rep',
       systems: systems,
       tiers: finalTiers
     };
@@ -344,43 +346,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                 )}
              </div>
           )}
-        {step === 0 && (
-           <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center mb-6">
-                 <Clock size={32} className="text-primary-600" />
-              </div>
-              <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Resume Unsaved Quote?</h3>
-              <p className="text-slate-500 max-w-md mb-8 leading-relaxed">We noticed you left an unfinished draft proposal. Would you like to pick up where you left off, or scrap it and start fresh?</p>
-              
-              <div className="flex gap-4">
-                 <button className="btn-secondary text-danger hover:bg-red-50 hover:border-red-200" onClick={() => {
-                     localStorage.removeItem('pilar_wizard_draft');
-                     setStep(1);
-                 }}>Scrap it & Start Fresh</button>
-                 <button className="btn-primary flex items-center gap-2" onClick={() => {
-                     const draftStr = localStorage.getItem('pilar_wizard_draft');
-                     if (draftStr) {
-                         const draft = JSON.parse(draftStr);
-                         if (draft.selectedCustomerId) setSelectedCustomerId(draft.selectedCustomerId);
-                         if (draft.selectedLocationId) setSelectedLocationId(draft.selectedLocationId);
-                         if (draft.systems) {
-                             setSystems(draft.systems);
-                             setActiveSystemId(draft.systems[0].id);
-                         } else if (draft.survey) {
-                             setSystems([{
-                                 id: 1, name: "System 1", survey: draft.survey, photos: draft.photos || {}, tonnageFilter: draft.tonnageFilter || '',
-                                 selectedTiers: draft.selectedTiers || { best: null, better: null, good: null }, addons: draft.addons || {}
-                             }]);
-                         }
-                         if (draft.discountPercent !== undefined) setDiscountPercent(draft.discountPercent);
-                         setStep(draft.step > 0 ? draft.step : 1);
-                     } else {
-                         setStep(1);
-                     }
-                 }}><RefreshCcw size={16}/> Resume Draft</button>
-              </div>
-           </div>
-        )}
+
         
         {step === 1 && (
           <div>

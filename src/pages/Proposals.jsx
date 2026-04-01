@@ -19,6 +19,18 @@ export default function Proposals() {
   const [editingProposal, setEditingProposal] = useState(null);
   const [deletingProposal, setDeletingProposal] = useState(null);
   const [editForm, setEditForm] = useState({ customer: '', amount: '', status: '' });
+  const [activeDraft, setActiveDraft] = useState(null);
+
+  useEffect(() => {
+     if (!showWizard && typeof window !== 'undefined') {
+         const draftStr = localStorage.getItem('pilar_wizard_draft');
+         if (draftStr) {
+             try { setActiveDraft(JSON.parse(draftStr)); } catch(e){}
+         } else {
+             setActiveDraft(null);
+         }
+     }
+  }, [showWizard]);
   
   if (loading && proposals.length === 0) return <div className="page-container flex-center"><h3>Loading Proposals...</h3></div>;
   if (showWizard) return <ProposalWizard onComplete={() => setShowWizard(false)} addProposal={addProposal} updateProposal={updateProposal} editModeData={showWizard} />;
@@ -129,7 +141,32 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
       </header>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mt-6">
-        {proposals.length === 0 ? (
+        {activeDraft && (
+           <div className="col-span-1 border-2 border-primary-400 bg-primary-50/70 rounded-2xl p-6 shadow-md flex flex-col relative overflow-hidden group">
+              <div className="flex items-center justify-between mb-4">
+                 <div className="flex items-center gap-2">
+                    <span className="text-[9px] uppercase font-black tracking-widest px-2.5 py-1 rounded-full border bg-primary-100 text-primary-700 border-primary-300">
+                      Draft Saved
+                    </span>
+                 </div>
+                 <button onClick={() => { localStorage.removeItem('pilar_wizard_draft'); setActiveDraft(null); }} className="text-xs text-slate-400 hover:text-danger-600 font-bold transition-colors">Discard</button>
+              </div>
+              <div className="mb-6 flex-1">
+                 <h3 className="text-xl font-black text-slate-800 tracking-tight leading-tight mb-2 truncate">Unsaved Session</h3>
+                 <p className="text-xs font-semibold text-slate-500">Pick up right where you left off.</p>
+              </div>
+              <div className="flex justify-end pt-4 border-t border-primary-200/50">
+                 <button 
+                   className="flex items-center gap-2 text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-lg transition-colors shadow-sm"
+                   onClick={() => setShowWizard({ isDraft: true, ...activeDraft })}
+                 >
+                    Resume <ArrowRight size={14}/>
+                 </button>
+              </div>
+           </div>
+        )}
+        
+        {proposals.length === 0 && !activeDraft ? (
           <div className="col-span-full border-2 border-dashed border-slate-200 bg-white/50 backdrop-blur-sm rounded-2xl p-12 flex flex-col items-center justify-center min-h-[300px]">
             <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-4"><FileText size={32} /></div>
             <p className="text-slate-500 font-semibold mb-6">No proposals have been generated yet.</p>
@@ -166,9 +203,16 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                 {/* Customer Details */}
                 <div className="mb-6 flex-1">
                   <h3 className="text-xl font-black text-slate-800 tracking-tight leading-tight mb-2 truncate">{proposal.customer}</h3>
-                  <p className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
-                     <CalendarClock size={12}/> Generated: {proposal.date}
-                  </p>
+                  <div className="flex flex-col gap-1.5 mt-3">
+                     <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wider">
+                        <CalendarClock size={12}/> Generated: {proposal.date}
+                     </p>
+                     {proposal.proposal_data?.creator && (
+                        <p className="text-[10px] font-bold text-primary-700 flex items-center gap-1.5 uppercase tracking-wider bg-primary-50 w-max px-2 py-0.5 rounded outline outline-1 outline-primary-200">
+                           Rep: {proposal.proposal_data.creator}
+                        </p>
+                     )}
+                  </div>
                 </div>
                 
                 {/* Amount & CTA Footer */}
