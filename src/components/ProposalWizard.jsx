@@ -504,29 +504,10 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                    <option value="">-- Choose Tonnage --</option>
                    {uniqueTonnages.map(t => <option key={t} value={t}>{t} Ton Systems</option>)}
                 </select>
-                
-                {tonnageFilter && (
-                   <div className="mt-4">
-                      <div className="flex items-center gap-2 border-b border-primary-100 pb-2 mb-4">
-                         <Layers className="text-primary-500" size={18}/>
-                         <h4 className="font-bold text-primary-800 uppercase tracking-widest text-sm">Matching Equipment Pool Found</h4>
-                      </div>
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                         {filteredCatalog.map(item => (
-                            <div key={item.id} className="bg-white border border-slate-100 rounded-md p-3 shadow-sm hover:shadow-md transition-shadow">
-                               <div className="font-black text-slate-800 text-sm tracking-tight">{item.brand}</div>
-                               <div className="text-[10px] text-slate-500 font-mono mb-2">{item.series}</div>
-                               <div className="bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs font-bold text-slate-600 w-max">{item.seer} SEER2</div>
-                            </div>
-                         ))}
-                      </div>
-                      {filteredCatalog.length === 0 && <p className="text-sm text-slate-500 italic mt-2">No matching systems found in the catalog for {tonnageFilter}T. Please adjust.</p>}
-                   </div>
-                )}
             </div>
 
             {tonnageFilter && filteredCatalog.length > 0 && (
-              <div>
+              <div className="mb-8">
                 <h4 className="font-bold mb-4 text-slate-700 border-b pb-2">Assign Consumer Options</h4>
                 <p className="text-xs text-slate-500 mb-6">Map previously filtered {tonnageFilter}-Ton systems into the Good/Better/Best presentation model for the homeowner.</p>
                 
@@ -543,6 +524,25 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                   ))}
                 </div>
               </div>
+            )}
+
+            {tonnageFilter && (
+               <div className="bg-slate-50 p-6 rounded border border-slate-200">
+                  <div className="flex items-center gap-2 border-b border-primary-100 pb-2 mb-4">
+                     <Layers className="text-primary-500" size={18}/>
+                     <h4 className="font-bold text-primary-800 uppercase tracking-widest text-sm">Matching Equipment Pool Found</h4>
+                  </div>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                     {filteredCatalog.map(item => (
+                        <div key={item.id} className="bg-white border border-slate-100 rounded-md p-3 shadow-sm hover:shadow-md transition-shadow">
+                           <div className="font-black text-slate-800 text-sm tracking-tight">{item.brand}</div>
+                           <div className="text-[10px] text-slate-500 font-mono mb-2">{item.series}</div>
+                           <div className="bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs font-bold text-slate-600 w-max">{item.seer} SEER2</div>
+                        </div>
+                     ))}
+                  </div>
+                  {filteredCatalog.length === 0 && <p className="text-sm text-slate-500 italic mt-2">No matching systems found in the catalog for {tonnageFilter}T. Please adjust.</p>}
+               </div>
             )}
 
             <div className="flex justify-between mt-10 pt-4 border-t border-slate-100">
