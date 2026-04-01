@@ -57,6 +57,11 @@ export default function Layout() {
   const [isMessagesOpen, setMessagesOpen] = useState(false);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [forceChannelId, setForceChannelId] = useState(null);
+  const isMessagesOpenRef = useRef(isMessagesOpen);
+
+  useEffect(() => {
+    isMessagesOpenRef.current = isMessagesOpen;
+  }, [isMessagesOpen]);
 
   useEffect(() => {
     if (!user) return;
@@ -67,11 +72,11 @@ export default function Layout() {
     }
 
     // Clear notification when drawer opens
-    if (isMessagesOpen) {
+    if (isMessagesOpenRef.current) {
       setHasUnreadMessages(false);
     }
 
-    const channelListener = supabase.channel(`global_tracker_${user.id}_${Date.now()}`)
+    const channelListener = supabase.channel(`global_tracker_${user.id}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'chat_messages' },
@@ -79,8 +84,9 @@ export default function Layout() {
           if (payload.new.user_id !== user.id) {
             
             const isMentioned = Boolean(user.name) && payload.new.content.toLowerCase().includes(`@${user.name.replace(/\s+/g, '').toLowerCase()}`);
+            const currentDrawerState = isMessagesOpenRef.current;
 
-            if (!isMessagesOpen || isMentioned) {
+            if (!currentDrawerState || isMentioned) {
                const title = isMentioned ? '🔔 You were Mentioned' : 'New Pilar Message';
                
                // OS Level Notification if tab is hidden
@@ -119,7 +125,7 @@ export default function Layout() {
                );
             }
 
-            if (!isMessagesOpen) {
+            if (!currentDrawerState) {
               setHasUnreadMessages(true);
             }
           }
@@ -130,7 +136,7 @@ export default function Layout() {
     return () => {
       supabase.removeChannel(channelListener);
     };
-  }, [user, isMessagesOpen]);
+  }, [user]);
 
   const handleOpenModal = (title) => setActiveModal(title);
   const handleCloseModal = () => setActiveModal(null);
