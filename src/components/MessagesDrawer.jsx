@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User, Edit2, Trash2, Reply } from 'lucide-react';
+import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User, Edit2, Trash2, Reply, Paperclip, FileText, Loader2, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './MessagesDrawer.css';
 
@@ -23,6 +23,12 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
   const [allUsers, setAllUsers] = useState([]);
   const [newChannelName, setNewChannelName] = useState('');
   const [newChannelIsPrivate, setNewChannelIsPrivate] = useState(false);
+  
+  // Phase 5 Attachment States
+  const [attachmentFile, setAttachmentFile] = useState(null);
+  const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const hiddenFileInput = useRef(null);
 
   // Generate a deterministic gradient for an avatar based on a string (name)
   const getAvatarGradient = (name) => {
@@ -264,8 +270,33 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     }
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+         alert('File size too large (Max 10MB).');
+         return;
+      }
+      setAttachmentFile(file);
+      if (file.type.startsWith('image/')) {
+        setAttachmentPreviewUrl(URL.createObjectURL(file));
+      } else {
+        setAttachmentPreviewUrl('file'); // signal generic file
+      }
+    }
+    // Clear the input value so selecting the same file again triggers onChange
+    if (hiddenFileInput.current) hiddenFileInput.current.value = '';
+  };
+
+  const clearAttachment = () => {
+    setAttachmentFile(null);
+    if (attachmentPreviewUrl && attachmentPreviewUrl !== 'file') URL.revokeObjectURL(attachmentPreviewUrl);
+    setAttachmentPreviewUrl(null);
+    if (hiddenFileInput.current) hiddenFileInput.current.value = '';
+  };
+
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || !activeChannelId || !user) return;
+    if ((!inputValue.trim() && !attachmentFile) || !activeChannelId || !user || isUploading) return;
 
     if (editingMsgId) {
        // EDIT FLOW
@@ -283,11 +314,40 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     }
 
     // INSERT FLOW
+    setIsUploading(true);
+    let uploadedUrl = null;
+    let uploadedType = null;
+
+    if (attachmentFile) {
+        const fileExt = attachmentFile.name.split('.').pop();
+        const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+           .from('chat_attachments')
+           .upload(fileName, attachmentFile, { cacheControl: '3600', upsert: false });
+           
+        if (uploadError) {
+           console.error("Upload error", uploadError);
+           alert("Failed to upload attachment");
+           setIsUploading(false);
+           return;
+        }
+
+        const { data: publicData } = supabase.storage
+           .from('chat_attachments')
+           .getPublicUrl(fileName);
+
+        uploadedUrl = publicData.publicUrl;
+        uploadedType = attachmentFile.type;
+    }
+
     const newMsg = {
       channel_id: activeChannelId,
       user_id: user.id,
-      content: inputValue,
-      reply_to_id: replyingToMsg ? replyingToMsg.id : null
+      content: inputValue.trim(),
+      reply_to_id: replyingToMsg ? replyingToMsg.id : null,
+      attachment_url: uploadedUrl,
+      attachment_type: uploadedType
     };
 
     const optimisticMsg = {
@@ -296,13 +356,17 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
       created_at: new Date().toISOString(),
       users: { name: user.name, role: user.role }
     };
+    
     setMessages(prev => [...prev, optimisticMsg]);
     setInputValue('');
+    setMentionPopup(p => ({ ...p, show: false }));
     setReplyingToMsg(null);
+    clearAttachment();
     scrollToBottom();
 
     const { error } = await supabase.from('chat_messages').insert([newMsg]);
     if (error) console.error("Error sending message", error);
+    setIsUploading(false);
   };
 
   const handleDeleteMessage = async (msgId) => {
@@ -718,7 +782,35 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                                       </div>
                                     )}
                                     <div className="drawer-msg-text">
-                                      {renderTextWithMentions(msg.content)}
+                                      {/* Attachment Renderer */}
+                                      {msg.attachment_url && (
+                                        <div className="mt-1 mb-2 max-w-sm rounded-lg border border-slate-200 shadow-sm bg-white overflow-hidden">
+                                          {msg.attachment_type?.startsWith('image/') ? (
+                                            <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer" className="block cursor-zoom-in group relative">
+                                              <img src={msg.attachment_url} alt="Attachment" className="w-full max-h-48 object-cover" loading="lazy" />
+                                              <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                                <ImageIcon className="text-white drop-shadow-md" size={32} />
+                                              </div>
+                                            </a>
+                                          ) : (
+                                            <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 hover:bg-slate-50 transition-colors cursor-pointer text-slate-700 hover:text-primary-600">
+                                              <div className="p-2 bg-slate-100 rounded border border-slate-200 text-slate-500">
+                                                <FileText size={20} />
+                                              </div>
+                                              <div className="flex flex-col flex-1 overflow-hidden">
+                                                <span className="font-bold text-sm truncate">Attachment</span>
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Click to view/download</span>
+                                              </div>
+                                            </a>
+                                          )}
+                                        </div>
+                                      )}
+                                      
+                                      {msg.content.trim() ? (
+                                        renderTextWithMentions(msg.content)
+                                      ) : (
+                                        !msg.attachment_url && <span className="italic text-slate-400">Empty message</span>
+                                      )}
                                       {isGrouped && msg.updated_at && msg.updated_at !== msg.created_at && <span className="ml-2 text-[0.6rem] text-slate-400 italic">(edited)</span>}
                                     </div>
                                   </div>
@@ -748,9 +840,37 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                           <div ref={messagesEndRef} className="h-4" />
                         </div>
 
-                        <div className="drawer-input-area">
+                        <div className="drawer-input-area relative">
+                          <input 
+                            type="file" 
+                            ref={hiddenFileInput} 
+                            style={{ display: 'none' }} 
+                            onChange={handleFileChange}
+                            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                          />
+
+                          {/* Attachment Preview Box */}
+                          {attachmentFile && (
+                            <div className="absolute -top-[4rem] left-6 right-6 bg-white border border-slate-200 rounded-t-lg p-2 flex items-center shadow-sm z-10 transition-all animate-in slide-in-from-bottom-2 duration-200">
+                              {attachmentPreviewUrl && attachmentPreviewUrl !== 'file' ? (
+                                <img src={attachmentPreviewUrl} className="h-10 w-10 object-cover rounded shadow-sm mr-3 border border-slate-200" alt="Preview" />
+                              ) : (
+                                <div className="h-10 w-10 bg-slate-100 rounded shadow-sm mr-3 border border-slate-200 flex items-center justify-center text-slate-500">
+                                  <FileText size={20} />
+                                </div>
+                              )}
+                              <div className="flex flex-col flex-1 overflow-hidden">
+                                <span className="text-sm font-bold text-slate-700 truncate">{attachmentFile.name}</span>
+                                <span className="text-[10px] text-slate-500 font-semibold uppercase">{(attachmentFile.size / 1024 / 1024).toFixed(2)} MB</span>
+                              </div>
+                              <button className="icon-btn-minimal p-1 ml-2 bg-slate-50 hover:bg-red-50 hover:text-red-500 rounded-full" onClick={clearAttachment}>
+                                <X size={14} />
+                              </button>
+                            </div>
+                          )}
+
                           {replyingToMsg && (
-                            <div className="drawer-input-reply-banner absolute -top-8 left-6 right-6 bg-slate-100 border border-slate-200 border-b-0 rounded-t-lg px-3 py-1.5 flex justify-between items-center shadow-sm">
+                            <div className={`drawer-input-reply-banner absolute ${attachmentFile ? '-top-[6.5rem]' : '-top-8'} left-6 right-6 bg-slate-100 border border-slate-200 border-b-0 rounded-t-lg px-3 py-1.5 flex justify-between items-center shadow-sm z-0 transition-all`}>
                               <span className="text-xs font-semibold text-slate-600 truncate">
                                 <Reply size={12} className="inline mr-1" />
                                 Replying to <span className="font-bold">{replyingToMsg.users?.name || 'Unknown User'}</span>
@@ -776,7 +896,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                               ))}
                             </div>
                           )}
-                          <div className={`drawer-input-wrapper ${replyingToMsg ? 'rounded-tl-none rounded-tr-none' : ''}`}>
+                          <div className={`drawer-input-wrapper ${replyingToMsg || attachmentFile ? 'rounded-tl-none rounded-tr-none' : ''}`}>
                             <textarea 
                               ref={inputRef}
                               className="drawer-input custom-scrollbar"
@@ -784,28 +904,39 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                               value={inputValue}
                               onChange={handleInputChange}
                               onKeyDown={handleKeyDown}
+                              disabled={isUploading}
                             />
                             <div className="drawer-input-actions flex items-center justify-between">
-                              <div className="drawer-input-hints w-full">
+                              <div className="drawer-input-hints w-full flex items-center pr-2">
+                                {!editingMsgId && (
+                                  <button 
+                                    className="p-1.5 mr-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-md transition-colors disabled:opacity-50"
+                                    onClick={() => hiddenFileInput.current?.click()}
+                                    title="Attach Image or File"
+                                    disabled={isUploading}
+                                  >
+                                    <Paperclip size={16} strokeWidth={2.5} />
+                                  </button>
+                                )}
                                 {editingMsgId ? (
                                    <div className="flex items-center justify-between w-full">
                                       <span className="text-primary-600 font-bold ml-1">Editing message...</span>
                                       <button className="text-xs hover:underline cursor-pointer" onClick={() => { setEditingMsgId(null); setInputValue(''); }}>Cancel</button>
                                    </div>
                                 ) : (
-                                   <>
+                                   <div className="flex-1 opacity-60">
                                      <span className="kbd-hint">↵</span> to send  <span className="kbd-hint mx-2">⇧ ↵</span> for new line
-                                   </>
+                                   </div>
                                 )}
                               </div>
                               <motion.button 
-                                className="drawer-send-btn ml-3 shadow-md"
+                                className="drawer-send-btn ml-2 shadow-md flex-shrink-0"
                                 onClick={handleSendMessage}
-                                disabled={!inputValue.trim()}
-                                whileHover={inputValue.trim() ? { scale: 1.05 } : {}}
-                                whileTap={inputValue.trim() ? { scale: 0.95 } : {}}
+                                disabled={(!inputValue.trim() && !attachmentFile) || isUploading}
+                                whileHover={(inputValue.trim() || attachmentFile) && !isUploading ? { scale: 1.05 } : {}}
+                                whileTap={(inputValue.trim() || attachmentFile) && !isUploading ? { scale: 0.95 } : {}}
                               >
-                                <Send size={15} strokeWidth={2.5} />
+                                {isUploading ? <Loader2 size={15} strokeWidth={2.5} className="animate-spin" /> : <Send size={15} strokeWidth={2.5} />}
                               </motion.button>
                             </div>
                           </div>
