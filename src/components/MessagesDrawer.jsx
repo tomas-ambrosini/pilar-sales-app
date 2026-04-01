@@ -53,6 +53,18 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
           const general = channelData.find(c => c.name === 'general');
           setActiveChannelId(general ? general.id : channelData[0].id);
         }
+
+        if (user?.id) {
+          // Ensure user exists physically in channel_members for public channels so Unread Notifications trigger properly
+          const publicChannelsRaw = channelData.filter(c => !c.is_private).map(c => ({
+            channel_id: c.id,
+            user_id: user.id
+          }));
+          if (publicChannelsRaw.length > 0) {
+            await supabase.from('channel_members').upsert(publicChannelsRaw, { onConflict: 'channel_id,user_id', ignoreDuplicates: true });
+          }
+        }
+
       } else if (channelError) {
         console.error("Error fetching channels", channelError);
         setDbError(channelError?.code === '42P01' ? 'The chat tables have not been created yet.' : channelError?.message);
@@ -88,8 +100,11 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
        // Clear Unread exactly when selecting channel
        setUnreadCounts(prev => ({ ...prev, [activeChannelId]: 0 }));
        // Mark Read in DB silently
-       supabase.from('channel_members').update({ last_read_at: new Date().toISOString() })
-         .eq('channel_id', activeChannelId).eq('user_id', user.id).then();
+       supabase.from('channel_members').upsert({ 
+         channel_id: activeChannelId, 
+         user_id: user.id,
+         last_read_at: new Date().toISOString() 
+       }, { onConflict: 'channel_id,user_id' }).then();
     }
   }, [activeChannelId, user?.id, isOpen]);
 
@@ -149,8 +164,11 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
               scrollToBottom();
 
               // Mark as read immediately
-              supabase.from('channel_members').update({ last_read_at: new Date().toISOString() })
-                .eq('channel_id', activeChannelRef.current).eq('user_id', user?.id).then();
+               supabase.from('channel_members').upsert({ 
+                 channel_id: activeChannelRef.current, 
+                 user_id: user.id,
+                 last_read_at: new Date().toISOString() 
+               }, { onConflict: 'channel_id,user_id' }).then();
             } else {
               // Not the active channel: Add unread badge
               setUnreadCounts(prev => ({ ...prev, [newMessage.channel_id]: (prev[newMessage.channel_id] || 0) + 1 }));
