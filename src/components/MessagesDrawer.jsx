@@ -153,6 +153,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
         'postgres_changes',
         { event: '*', schema: 'public', table: 'chat_messages' },
         async (payload) => {
+          console.log("🔥 REALTIME WEBSOCKET PAYLOAD RECEIVED 🔥", payload);
           if (payload.event === 'INSERT') {
             const newMessage = payload.new;
             if (newMessage.user_id === user?.id) return; 
