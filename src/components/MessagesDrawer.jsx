@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { Send, Hash, MessageSquare, X, ArrowLeft } from 'lucide-react';
+import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './MessagesDrawer.css';
 
@@ -13,7 +13,10 @@ export default function MessagesDrawer({ isOpen, onClose }) {
   const [inputValue, setInputValue] = useState('');
   const [dbError, setDbError] = useState(null);
   const messagesEndRef = useRef(null);
-  const [viewState, setViewState] = useState('channels'); 
+  const [viewState, setViewState] = useState('channels'); // 'channels', 'chat', 'create-channel', 'create-dm'
+  const [allUsers, setAllUsers] = useState([]);
+  const [newChannelName, setNewChannelName] = useState('');
+  const [newChannelIsPrivate, setNewChannelIsPrivate] = useState(false);
 
   // Generate a deterministic gradient for an avatar based on a string (name)
   const getAvatarGradient = (name) => {
@@ -29,38 +32,37 @@ export default function MessagesDrawer({ isOpen, onClose }) {
   };
 
   useEffect(() => {
-    if (!isOpen) return; 
+    if (!isOpen) return;
 
-    const fetchChannels = async () => {
-      const { data, error } = await supabase
+    const fetchInitialData = async () => {
+      // Fetch Channels
+      const { data: channelData, error: channelError } = await supabase
         .from('chat_channels')
         .select('*')
         .order('name');
       
-      if (!error && data) {
-        setChannels(data);
-        const general = data.find(c => c.name === 'general');
-        if (general) {
-          setActiveChannelId(general.id);
-          setViewState('chat');
-        } else if (data.length > 0) {
-          setActiveChannelId(data[0].id);
-          setViewState('chat');
+      if (!channelError && channelData) {
+        setChannels(channelData);
+        if (!activeChannelId && channelData.length > 0) {
+          const general = channelData.find(c => c.name === 'general');
+          setActiveChannelId(general ? general.id : channelData[0].id);
         }
-      } else {
-        console.error("Error fetching channels", error);
-        if (error?.code === '42P01') {
-          setDbError('The chat tables have not been created in Supabase yet.');
-        } else {
-          setDbError(error?.message || 'Failed to connect to the database.');
-        }
+      } else if (channelError) {
+        console.error("Error fetching channels", channelError);
+        setDbError(channelError?.code === '42P01' ? 'The chat tables have not been created yet.' : channelError?.message);
+      }
+
+      // Fetch All Users for DM creation
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('*');
+      if (!usersError && usersData) {
+        setAllUsers(usersData.filter(u => u.id !== user?.id)); // exclude self
       }
     };
     
-    if (channels.length === 0) {
-       fetchChannels();
-    }
-  }, [isOpen]);
+    fetchInitialData();
+  }, [isOpen, activeChannelId, user?.id]);
 
   useEffect(() => {
     if (!activeChannelId || !isOpen) return;
@@ -127,6 +129,55 @@ export default function MessagesDrawer({ isOpen, onClose }) {
     }, 150);
   };
 
+  const handleCreateChannel = async () => {
+    if (!newChannelName.trim()) return;
+    const { data, error } = await supabase.from('chat_channels').insert([{
+      name: newChannelName.toLowerCase().replace(/\s+/g, '-'),
+      is_private: newChannelIsPrivate
+    }]).select();
+
+    if (!error && data) {
+      if (newChannelIsPrivate) {
+        await supabase.from('channel_members').insert([
+          { channel_id: data[0].id, user_id: user.id }
+        ]);
+      }
+      setChannels(prev => [...prev, data[0]]);
+      setActiveChannelId(data[0].id);
+      setViewState('chat');
+      setNewChannelName('');
+    }
+  };
+
+  const handleStartDM = async (targetUser) => {
+    const sortedIds = [user.id, targetUser.id].sort();
+    const dmName = `dm_${sortedIds[0]}_${sortedIds[1]}`;
+
+    // Check if exists
+    let existingChannel = channels.find(c => c.name === dmName);
+    
+    if (!existingChannel) {
+      const { data, error } = await supabase.from('chat_channels').insert([{
+        name: dmName,
+        is_private: true
+      }]).select();
+
+      if (!error && data) {
+        await supabase.from('channel_members').insert([
+          { channel_id: data[0].id, user_id: user.id },
+          { channel_id: data[0].id, user_id: targetUser.id }
+        ]);
+        existingChannel = data[0];
+        setChannels(prev => [...prev, existingChannel]);
+      }
+    }
+
+    if (existingChannel) {
+      setActiveChannelId(existingChannel.id);
+      setViewState('chat');
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !activeChannelId || !user) return;
 
@@ -171,6 +222,17 @@ export default function MessagesDrawer({ isOpen, onClose }) {
 
   const activeChannel = channels.find(c => c.id === activeChannelId);
 
+  // Helper to format channel names (decode DM names if needed)
+  const getChannelDisplayName = (channel) => {
+    if (channel.name.startsWith('dm_')) {
+      const ids = channel.name.replace('dm_', '').split('_');
+      const targetId = ids.find(id => id !== user?.id);
+      const targetUser = allUsers.find(u => u.id === targetId);
+      return targetUser ? targetUser.name : 'Unknown User';
+    }
+    return channel.name;
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -213,8 +275,22 @@ export default function MessagesDrawer({ isOpen, onClose }) {
                         </motion.button>
                         <div className="drawer-channel-title">
                            <Hash size={18} className="text-slate-400" />
-                           {activeChannel ? activeChannel.name : 'Loading...'}
+                           {activeChannel ? (activeChannel.is_private ? getChannelDisplayName(activeChannel) : activeChannel.name) : 'Loading...'}
                         </div>
+                     </div>
+                  ) : viewState === 'create-channel' ? (
+                     <div className="flex items-center gap-3">
+                        <motion.button className="icon-btn-minimal" onClick={() => setViewState('channels')}>
+                           <ArrowLeft size={18} strokeWidth={2.5} />
+                        </motion.button>
+                        <div className="drawer-channel-title">New Channel</div>
+                     </div>
+                  ) : viewState === 'create-dm' ? (
+                     <div className="flex items-center gap-3">
+                        <motion.button className="icon-btn-minimal" onClick={() => setViewState('channels')}>
+                           <ArrowLeft size={18} strokeWidth={2.5} />
+                        </motion.button>
+                        <div className="drawer-channel-title">New Direct Message</div>
                      </div>
                   ) : (
                      <div className="drawer-title">Pilar <span className="text-primary-600">Comms</span></div>
@@ -242,8 +318,13 @@ export default function MessagesDrawer({ isOpen, onClose }) {
                         exit={{ opacity: 0, x: -20 }}
                         transition={{ duration: 0.2 }}
                       >
-                         <div className="drawer-section-title">Channels</div>
-                         {channels.map((channel, i) => (
+                         <div className="drawer-section-title flex items-center justify-between mt-2">
+                            <span>Public Channels</span>
+                            <button className="icon-btn-minimal p-1" onClick={() => setViewState('create-channel')} title="New Channel">
+                              <Plus size={14} />
+                            </button>
+                         </div>
+                         {channels.filter(c => !c.name.startsWith('dm_')).map((channel, i) => (
                             <motion.div 
                               key={channel.id} 
                               className={`drawer-list-item ${activeChannelId === channel.id ? 'active' : ''}`}
@@ -256,10 +337,109 @@ export default function MessagesDrawer({ isOpen, onClose }) {
                               transition={{ delay: i * 0.05 }}
                               whileHover={{ x: 4, backgroundColor: 'var(--color-slate-100)' }}
                             >
-                              <Hash size={16} className={`mr-2 ${activeChannelId === channel.id ? 'text-primary-600' : 'text-slate-400'}`} />
+                              {channel.is_private ? <Lock size={16} className={`mr-2 ${activeChannelId === channel.id ? 'text-primary-600' : 'text-slate-400'}`} /> : <Hash size={16} className={`mr-2 ${activeChannelId === channel.id ? 'text-primary-600' : 'text-slate-400'}`} />}
                               {channel.name}
                             </motion.div>
                          ))}
+
+                         <div className="drawer-section-title flex items-center justify-between mt-8">
+                            <span>Direct Messages</span>
+                            <button className="icon-btn-minimal p-1" onClick={() => setViewState('create-dm')} title="New DM">
+                              <Plus size={14} />
+                            </button>
+                         </div>
+                         {channels.filter(c => c.name.startsWith('dm_')).map((channel, i) => (
+                            <motion.div 
+                              key={channel.id} 
+                              className={`drawer-list-item ${activeChannelId === channel.id ? 'active' : ''}`}
+                              onClick={() => {
+                                setActiveChannelId(channel.id);
+                                setViewState('chat');
+                              }}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: (channels.length + i) * 0.05 }}
+                              whileHover={{ x: 4, backgroundColor: 'var(--color-slate-100)' }}
+                            >
+                              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold mr-2 shadow-sm shadow-black/10" style={{ background: getAvatarGradient(getChannelDisplayName(channel)) }}>
+                                  {getChannelDisplayName(channel).charAt(0).toUpperCase()}
+                              </div>
+                              {getChannelDisplayName(channel)}
+                            </motion.div>
+                         ))}
+                     {/* --- CHANNELS LIST VIEW --- */}
+                      </motion.div>
+                    ) : viewState === 'create-channel' ? (
+                      <motion.div 
+                        key="create-channel"
+                        className="channels-view flex flex-col p-6"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                      >
+                        <div className="mb-4">
+                          <label className="block text-sm font-bold text-slate-700 mb-1">Channel Name</label>
+                          <input 
+                            type="text" 
+                            className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all font-semibold"
+                            placeholder="e.g. general, announcements"
+                            value={newChannelName}
+                            onChange={(e) => setNewChannelName(e.target.value)}
+                          />
+                        </div>
+                        <div className="mb-6 flex items-center gap-3">
+                          <input 
+                            type="checkbox" 
+                            id="private-check"
+                            className="w-4 h-4 text-primary-600 rounded"
+                            checked={newChannelIsPrivate}
+                            onChange={(e) => setNewChannelIsPrivate(e.target.checked)}
+                          />
+                          <label htmlFor="private-check" className="text-sm font-semibold text-slate-700 select-none">Make Private</label>
+                        </div>
+                        <button 
+                          className="w-full bg-primary-600 text-white font-bold py-2 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+                          onClick={handleCreateChannel}
+                          disabled={!newChannelName.trim()}
+                        >
+                          Create Channel
+                        </button>
+                      </motion.div>
+                    ) : viewState === 'create-dm' ? (
+                      <motion.div 
+                        key="create-dm"
+                        className="channels-view"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                      >
+                         <div className="drawer-section-title px-6 flex items-center justify-between">
+                            <span>Select Team Member</span>
+                         </div>
+                         <div className="px-4">
+                           {allUsers.length === 0 ? (
+                             <div className="p-4 text-center text-sm text-slate-500 font-semibold">No other team members found.</div>
+                           ) : (
+                             allUsers.map((u, i) => (
+                                <motion.div 
+                                  key={u.id} 
+                                  className="drawer-list-item flex items-center gap-3 p-3 rounded-lg hover:bg-slate-100 cursor-pointer"
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: i * 0.05 }}
+                                  onClick={() => handleStartDM(u)}
+                                >
+                                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold shadow-sm" style={{ background: getAvatarGradient(u.name) }}>
+                                    {u.name.charAt(0).toUpperCase()}
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="font-bold text-slate-800">{u.name}</span>
+                                    <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-bold uppercase w-fit">{u.role}</span>
+                                  </div>
+                                </motion.div>
+                             ))
+                           )}
+                         </div>
                       </motion.div>
                     ) : (
                       <motion.div 
