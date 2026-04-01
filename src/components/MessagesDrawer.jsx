@@ -17,14 +17,15 @@ export default function MessagesDrawer({ isOpen, onClose }) {
 
   // Generate a deterministic gradient for an avatar based on a string (name)
   const getAvatarGradient = (name) => {
-    if (!name) return 'linear-gradient(135deg, #e2e8f0, #cbd5e1)';
+    if (!name) return 'linear-gradient(135deg, #94a3b8, #cbd5e1)';
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
         hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
-    const colorHash1 = hash % 360;
-    const colorHash2 = (hash + 50) % 360;
-    return `linear-gradient(135deg, hsl(${colorHash1 > 0 ? colorHash1 : -colorHash1}, 70%, 65%), hsl(${colorHash2 > 0 ? colorHash2 : -colorHash2}, 80%, 55%))`;
+    // Keeping colors warm, blue-ish, but not excessively bright (saturation 45-55%, lightness 40-50%)
+    const hue = Math.abs(hash % 40) + 190; // Hue between 190 (cyan/blue) and 230 (indigo/blue)
+    const hue2 = hue + 20;
+    return `linear-gradient(135deg, hsl(${hue}, 55%, 50%), hsl(${hue2}, 45%, 40%))`;
   };
 
   useEffect(() => {
@@ -279,37 +280,45 @@ export default function MessagesDrawer({ isOpen, onClose }) {
                           ) : (
                             messages.map((msg, idx) => {
                               const prevMsg = messages[idx - 1];
+                              const isOwn = msg.user_id === user?.id;
                               const isGrouped = prevMsg && prevMsg.user_id === msg.user_id && (new Date(msg.created_at) - new Date(prevMsg.created_at)) < 300000;
                               
                               return (
                                 <motion.div 
                                   key={msg.id} 
-                                  className={`drawer-msg-item ${isGrouped ? 'grouped' : ''}`}
+                                  className={`drawer-msg-item ${isGrouped ? 'grouped' : ''} ${isOwn ? 'own-message' : 'other-message'}`}
                                   initial={{ opacity: 0, y: 15, scale: 0.98 }}
                                   animate={{ opacity: 1, y: 0, scale: 1 }}
                                   transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                                 >
-                                  {!isGrouped ? (
-                                    <div 
-                                      className="drawer-msg-avatar"
-                                      style={{ background: getAvatarGradient(msg.users?.name) }}
-                                    >
-                                      {msg.users?.name ? msg.users.name.charAt(0).toUpperCase() : 'U'}
-                                    </div>
-                                  ) : (
-                                    <div className="drawer-msg-avatar-spacer">
-                                      <span className="drawer-msg-time-hover">{new Date(msg.created_at).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'})}</span>
-                                    </div>
+                                  {!isOwn && (
+                                    <>
+                                      {!isGrouped ? (
+                                        <div 
+                                          className="drawer-msg-avatar"
+                                          style={{ background: getAvatarGradient(msg.users?.name) }}
+                                        >
+                                          {msg.users?.name ? msg.users.name.charAt(0).toUpperCase() : 'U'}
+                                        </div>
+                                      ) : (
+                                        <div className="drawer-msg-avatar-spacer" />
+                                      )}
+                                    </>
                                   )}
                                   
                                   <div className="drawer-msg-content">
-                                    {!isGrouped && (
+                                    {!isGrouped && !isOwn && (
                                       <div className="drawer-msg-meta">
-                                        <span className="drawer-msg-author">{msg.users?.name || 'Unknown User'}</span>
+                                        <span className="drawer-msg-author">{msg.users?.name || 'Unknown'}</span>
                                         <span className="drawer-msg-time">{formatTimestamp(msg.created_at)}</span>
                                       </div>
                                     )}
-                                    <div className="drawer-msg-text">
+                                    {!isGrouped && isOwn && (
+                                      <div className="drawer-msg-meta-own">
+                                        <span className="drawer-msg-time">{formatTimestamp(msg.created_at)}</span>
+                                      </div>
+                                    )}
+                                    <div className={`drawer-msg-bubble ${isOwn ? 'own-bubble' : 'other-bubble'}`}>
                                       {msg.content}
                                     </div>
                                   </div>

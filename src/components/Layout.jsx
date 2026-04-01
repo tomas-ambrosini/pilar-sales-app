@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, LogOut, LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Megaphone, DollarSign, Settings, Bell, Search, Truck, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../supabaseClient';
 import { useRole, ROLES } from '../context/RoleContext';
 import Modal from './Modal';
 import CommandMenu from './CommandMenu';
@@ -53,6 +54,32 @@ export default function Layout() {
   const [activeModal, setActiveModal] = useState(null);
   const [isCommandMenuOpen, setCommandMenuOpen] = useState(false);
   const [isMessagesOpen, setMessagesOpen] = useState(false);
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    
+    // Clear notification when drawer opens
+    if (isMessagesOpen) {
+      setHasUnreadMessages(false);
+    }
+
+    const channelListener = supabase.channel('global:chat_messages')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+        (payload) => {
+          if (payload.new.user_id !== user.id && !isMessagesOpen) {
+            setHasUnreadMessages(true);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channelListener);
+    };
+  }, [user, isMessagesOpen]);
 
   const handleOpenModal = (title) => setActiveModal(title);
   const handleCloseModal = () => setActiveModal(null);
@@ -115,6 +142,9 @@ export default function Layout() {
              
              <button className="icon-btn relative" aria-label="Messages" onClick={() => setMessagesOpen(true)}>
                <MessageCircle size={20} />
+               {hasUnreadMessages && (
+                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+               )}
              </button>
 
              <button className="icon-btn" aria-label="Notifications" onClick={() => handleOpenModal('Notifications')}>
