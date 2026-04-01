@@ -175,3 +175,14 @@ BEGIN
   GROUP BY cm.channel_id;
 END;
 $$;
+
+-- ==========================================
+-- PHASE 5: MEDIA ATTACHMENTS (NEW)
+-- ==========================================
+
+-- 1. Add Media Support Columns to chat_messages
+ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS attachment_url TEXT;
+ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS attachment_type TEXT; -- e.g. 'image/jpeg', 'application/pdf'
+
+-- Note: The user MUST manually create a public Storage Bucket named 'chat_attachments'
+-- in the Supabase Dashboard -> Storage -> Create Bucket. It must be set to 'PUBLIC'.
