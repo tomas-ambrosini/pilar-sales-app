@@ -131,6 +131,7 @@ CREATE POLICY "Enable delete for members" ON public.channel_members FOR DELETE U
 
 -- 3. Upgrade Channel Reading Logic
 DROP POLICY IF EXISTS "Enable read access for all users" ON public.chat_channels;
+DROP POLICY IF EXISTS "Enable read access for channels" ON public.chat_channels;
 CREATE POLICY "Enable read access for channels" ON public.chat_channels FOR SELECT 
 USING (
   is_private = false
