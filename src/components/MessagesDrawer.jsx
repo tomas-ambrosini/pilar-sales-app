@@ -368,7 +368,10 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     scrollToBottom();
 
     const { error } = await supabase.from('chat_messages').insert([newMsg]);
-    if (error) console.error("Error sending message", error);
+    if (error) {
+       console.error("Error sending message", error);
+       alert("Failed to send message over websocket: " + error.message);
+    }
     setIsUploading(false);
   };
 
