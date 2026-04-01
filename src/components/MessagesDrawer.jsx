@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User, Edit2, Trash2, Reply, Paperclip, FileText, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User, Edit2, Trash2, Reply, Paperclip, FileText, Loader2, Image as ImageIcon, SmilePlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './MessagesDrawer.css';
 
@@ -30,6 +30,11 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
   const [isUploading, setIsUploading] = useState(false);
   const [expandedImage, setExpandedImage] = useState(null);
   const hiddenFileInput = useRef(null);
+
+  // Phase 6 Live Typing States
+  const [typingUsers, setTypingUsers] = useState([]);
+  const typingTimeoutRef = useRef(null);
+  const presenceChannelRef = useRef(null);
 
   // Generate a deterministic gradient for an avatar based on a string (name)
   const getAvatarGradient = (name) => {
@@ -133,6 +138,11 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
           users (
             name,
             role
+          ),
+          chat_reactions (
+            id,
+            user_id,
+            emoji
           )
         `)
         .eq('channel_id', activeChannelId)
@@ -195,12 +205,54 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
           }
         }
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'chat_reactions' },
+        (payload) => {
+          if (payload.event === 'INSERT') {
+            setMessages(prev => prev.map(m => m.id === payload.new.message_id 
+              ? { ...m, chat_reactions: [...(m.chat_reactions || []), payload.new] } 
+              : m));
+          } else if (payload.event === 'DELETE') {
+            setMessages(prev => prev.map(m => m.id === payload.old.message_id 
+              ? { ...m, chat_reactions: (m.chat_reactions || []).filter(r => r.id !== payload.old.id) } 
+              : m));
+          }
+        }
+      )
       .subscribe();
+
+    const presenceChannel = supabase.channel(`presence_${activeChannelId}`, {
+      config: { presence: { key: user?.id } }
+    });
+
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState();
+        const currentlyTyping = [];
+        for (const [key, users] of Object.entries(state)) {
+            users.forEach(u => {
+               if (u.isTyping && u.userId !== user?.id && u.userName) {
+                 currentlyTyping.push(u.userName);
+               }
+            });
+        }
+        setTypingUsers([...new Set(currentlyTyping)]);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({ userId: user?.id, userName: user?.name, isTyping: false });
+        }
+      });
+      
+    presenceChannelRef.current = presenceChannel;
 
     return () => {
       supabase.removeChannel(globalChannelListener);
+      supabase.removeChannel(presenceChannel);
+      presenceChannelRef.current = null;
     };
-  }, [activeChannelId, isOpen, user?.id]);
+  }, [activeChannelId, isOpen, user?.id, user?.name]);
 
   useEffect(() => {
     if (forceChannel && isOpen) {
@@ -375,6 +427,10 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     }
     setIsUploading(false);
     
+    if (presenceChannelRef.current && user) {
+      presenceChannelRef.current.track({ userId: user.id, userName: user.name, isTyping: false });
+    }
+    
     setTimeout(() => {
       inputRef.current?.focus();
     }, 50);
@@ -384,6 +440,26 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     setMessages(prev => prev.filter(m => m.id !== msgId)); // Optimistic UI
     const { error } = await supabase.from('chat_messages').delete().eq('id', msgId);
     if (error) console.error("Error deleting msg", error);
+  };
+
+  const handleToggleReaction = async (msgId, emoji) => {
+    const msg = messages.find(m => m.id === msgId);
+    if (!msg) return;
+    
+    const existingReaction = (msg.chat_reactions || []).find(r => r.user_id === user?.id && r.emoji === emoji);
+    
+    if (existingReaction) {
+      // Opt UI
+      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, chat_reactions: (m.chat_reactions || []).filter(r => r.id !== existingReaction.id) } : m));
+      const { error } = await supabase.from('chat_reactions').delete().eq('id', existingReaction.id);
+      if (error) console.error("Error deleting reaction", error);
+    } else {
+      // Opt UI
+      const tempId = `temp-react-${Date.now()}`;
+      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, chat_reactions: [...(m.chat_reactions || []), { id: tempId, user_id: user.id, emoji, message_id: msgId }] } : m));
+      const { error } = await supabase.from('chat_reactions').insert([{ message_id: msgId, user_id: user.id, emoji }]);
+      if (error) console.error("Error adding reaction", error);
+    }
   };
 
   const startEditing = (msg) => {
@@ -418,6 +494,15 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
   const handleInputChange = (e) => {
     const val = e.target.value;
     setInputValue(val);
+    
+    // Phase 6 Live Typing Logic
+    if (presenceChannelRef.current && user) {
+      presenceChannelRef.current.track({ userId: user.id, userName: user.name, isTyping: true });
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        presenceChannelRef.current?.track({ userId: user.id, userName: user.name, isTyping: false });
+      }, 3000);
+    }
     
     // Detect if user is typing a mention
     const cursorPos = e.target.selectionStart;
@@ -823,12 +908,50 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                                         !msg.attachment_url && <span className="italic text-slate-400">Empty message</span>
                                       )}
                                       {isGrouped && msg.updated_at && msg.updated_at !== msg.created_at && <span className="ml-2 text-[0.6rem] text-slate-400 italic">(edited)</span>}
+                                      
+                                      {/* Reactions Grid */}
+                                      {msg.chat_reactions && msg.chat_reactions.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mt-1.5 pt-1">
+                                          {Object.entries(msg.chat_reactions.reduce((acc, curr) => {
+                                            acc[curr.emoji] = (acc[curr.emoji] || 0) + 1;
+                                            return acc;
+                                          }, {})).map(([emoji, count]) => {
+                                            const hasReacted = msg.chat_reactions.some(r => r.emoji === emoji && r.user_id === user?.id);
+                                            return (
+                                              <button 
+                                                key={emoji}
+                                                onClick={() => handleToggleReaction(msg.id, emoji)}
+                                                className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-bold border transition-colors ${
+                                                  hasReacted 
+                                                    ? 'bg-primary-50 border-primary-200 text-primary-700' 
+                                                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
+                                                }`}
+                                              >
+                                                <span>{emoji}</span>
+                                                <span className="opacity-80">{count}</span>
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
 
                                   {/* Hover Actions */}
                                   {!msg.id.toString().startsWith('temp-') && (
                                     <div className="drawer-msg-actions">
+                                      <div className="flex items-center mr-1 gap-0.5 bg-slate-50 rounded pl-1 pr-1 border-r border-slate-200">
+                                        {['👍', '🔥', '✅', '👀'].map(emoji => (
+                                          <button 
+                                            key={emoji} 
+                                            className="p-1 hover:bg-white rounded transition-colors" 
+                                            onClick={() => handleToggleReaction(msg.id, emoji)}
+                                            title={`React with ${emoji}`}
+                                          >
+                                            {emoji}
+                                          </button>
+                                        ))}
+                                      </div>
                                       <button className="icon-btn-minimal p-1.5" onClick={() => startReplying(msg)} title="Reply">
                                         <Reply size={13} className="text-slate-500 hover:text-primary-600" />
                                       </button>
@@ -852,6 +975,14 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                         </div>
 
                         <div className="drawer-input-area relative">
+                          {/* Live Typing Indicator */}
+                          {typingUsers.length > 0 && (
+                            <div className="absolute -top-5 left-6 text-[11px] text-primary-600 font-bold italic animate-pulse transition-all bg-slate-50 px-3 pb-2 pt-1.5 rounded-t-lg border border-b-0 border-slate-200 z-0">
+                              <Loader2 size={10} className="inline animate-spin mr-1.5 -mt-0.5" />
+                              {typingUsers.join(', ')} {typingUsers.length > 1 ? 'are typing...' : 'is typing...'}
+                            </div>
+                          )}
+
                           <input 
                             type="file" 
                             ref={hiddenFileInput} 

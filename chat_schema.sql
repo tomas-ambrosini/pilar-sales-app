@@ -186,3 +186,57 @@ ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS attachment_type TEXT; 
 
 -- Note: The user MUST manually create a public Storage Bucket named 'chat_attachments'
 -- in the Supabase Dashboard -> Storage -> Create Bucket. It must be set to 'PUBLIC'.
+
+-- 2. Create Storage Policies to allow users to legally upload files to the bucket
+DROP POLICY IF EXISTS "Allow authenticated uploads to chat_attachments" ON storage.objects;
+CREATE POLICY "Allow authenticated uploads to chat_attachments" 
+ON storage.objects FOR INSERT 
+TO authenticated 
+WITH CHECK (bucket_id = 'chat_attachments');
+
+DROP POLICY IF EXISTS "Allow public file reading for chat_attachments" ON storage.objects;
+CREATE POLICY "Allow public file reading for chat_attachments" 
+ON storage.objects FOR SELECT 
+TO public 
+USING (bucket_id = 'chat_attachments');
+
+-- ==========================================
+-- PHASE 6: EMOJI REACTIONS & PRESENCE
+-- ==========================================
+
+-- 1. Create Reactions Table
+CREATE TABLE IF NOT EXISTS public.chat_reactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    message_id UUID REFERENCES public.chat_messages(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    emoji TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    -- Enforce that a particular user can only react with a specific emoji once per message
+    CONSTRAINT unique_user_message_emoji UNIQUE (message_id, user_id, emoji)
+);
+
+-- 2. Turn on Row Level Security
+ALTER TABLE public.chat_reactions ENABLE ROW LEVEL SECURITY;
+
+-- 3. Create RLS Policies for Reactions
+DROP POLICY IF EXISTS "Enable read access for all authenticated users" ON public.chat_reactions;
+CREATE POLICY "Enable read access for all authenticated users" ON public.chat_reactions FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON public.chat_reactions;
+CREATE POLICY "Enable insert for authenticated users" ON public.chat_reactions FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Enable delete for reaction owner" ON public.chat_reactions;
+CREATE POLICY "Enable delete for reaction owner" ON public.chat_reactions FOR DELETE USING (user_id = auth.uid());
+
+-- 4. Enable Realtime Broadcasting
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' 
+    AND schemaname = 'public' 
+    AND tablename = 'chat_reactions'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_reactions;
+  END IF;
+END $$;
