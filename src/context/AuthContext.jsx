@@ -40,8 +40,18 @@ export function AuthProvider({ children }) {
     if (data) {
       setUser({ ...authUser, ...data });
     } else {
-      // Default fallback if no row exists in users table yet
-      setUser({ ...authUser, role: 'Sales Rep', name: authUser.email.split('@')[0] });
+      // Generate fallback profile for legacy users
+      const fallbackProfile = {
+        id: authUser.id,
+        email: authUser.email,
+        name: authUser.email.split('@')[0],
+        role: 'Sales Rep'
+      };
+      
+      // Auto-insert them so Realtime FKs won't fail
+      await supabase.from('users').insert([fallbackProfile]);
+
+      setUser({ ...authUser, ...fallbackProfile });
     }
     setIsLoading(false);
   };

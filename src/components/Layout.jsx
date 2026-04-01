@@ -7,6 +7,7 @@ import { useRole, ROLES } from '../context/RoleContext';
 import Modal from './Modal';
 import CommandMenu from './CommandMenu';
 import RoleSwitcher from './RoleSwitcher';
+import MessagesDrawer from './MessagesDrawer';
 import './Layout.css';
 
 const navGroups = [
@@ -19,13 +20,6 @@ const navGroups = [
       { path: '/catalog', label: 'Catalog', icon: BookOpen, allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
       { path: '/proposals', label: 'Proposals', icon: FileCheck, allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
       { path: '/sales-pipeline', label: 'Pipeline', icon: ClipboardList, allowedRoles: [ROLES.ADMIN, ROLES.SALES] }
-    ]
-  },
-  {
-    title: 'Communication',
-    allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH, ROLES.SUBCONTRACTOR],
-    items: [
-      { path: '/messages', label: 'Messages', icon: MessageCircle, allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH, ROLES.SUBCONTRACTOR] }
     ]
   },
   {
@@ -58,6 +52,7 @@ export default function Layout() {
   const location = useLocation();
   const [activeModal, setActiveModal] = useState(null);
   const [isCommandMenuOpen, setCommandMenuOpen] = useState(false);
+  const [isMessagesOpen, setMessagesOpen] = useState(false);
 
   const handleOpenModal = (title) => setActiveModal(title);
   const handleCloseModal = () => setActiveModal(null);
@@ -118,6 +113,10 @@ export default function Layout() {
                <kbd className="font-mono text-[10px] uppercase font-bold text-slate-400 tracking-widest border border-slate-300 rounded px-1.5 py-0.5 bg-white">Cmd K</kbd>
              </button>
              
+             <button className="icon-btn relative" aria-label="Messages" onClick={() => setMessagesOpen(true)}>
+               <MessageCircle size={20} />
+             </button>
+
              <button className="icon-btn" aria-label="Notifications" onClick={() => handleOpenModal('Notifications')}>
                <Bell size={20} />
                <span className="badge"></span>
@@ -185,6 +184,7 @@ export default function Layout() {
         </div>
       </Modal>
       <CommandMenu isOpen={isCommandMenuOpen} setIsOpen={setCommandMenuOpen} />
+      <MessagesDrawer isOpen={isMessagesOpen} onClose={() => setMessagesOpen(false)} />
     </div>
   );
 }
