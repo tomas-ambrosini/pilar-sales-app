@@ -185,16 +185,16 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
   useEffect(() => {
     if (viewState === 'chat') {
       scrollToBottom();
+      // Framer Motion CSS transform fallback
+      const timer = setTimeout(scrollToBottom, 250);
+      return () => clearTimeout(timer);
     }
   }, [viewState, messages]);
 
   const scrollToBottom = () => {
-    // Fire precisely after mount and render
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
-      }, 50);
-    });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
+    }
   };
 
   const handleCreateChannel = async () => {
