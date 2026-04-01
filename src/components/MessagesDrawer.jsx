@@ -161,62 +161,60 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     const globalChannelListener = supabase.channel(`chat_update_${activeChannelId}_${Date.now()}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'chat_messages' },
+        { event: '*', schema: 'public' },
         async (payload) => {
-          console.log("🔥 REALTIME WEBSOCKET PAYLOAD RECEIVED 🔥", payload);
-          if (payload.event === 'INSERT') {
-            const newMessage = payload.new;
-            if (newMessage.user_id === user?.id) return; 
+          if (payload.table === 'chat_messages') {
+            console.log("🔥 REALTIME WEBSOCKET TEXT PAYLOAD 🔥", payload);
+            if (payload.event === 'INSERT') {
+              const newMessage = payload.new;
+              if (newMessage.user_id === user?.id) return; 
 
-            // Active channel UI append
-            if (newMessage.channel_id === activeChannelRef.current) {
-              const { data: userData } = await supabase
-                .from('users')
-                .select('name, role')
-                .eq('id', newMessage.user_id)
-                .maybeSingle();
+              // Active channel UI append
+              if (newMessage.channel_id === activeChannelRef.current) {
+                const { data: userData } = await supabase
+                  .from('users')
+                  .select('name, role')
+                  .eq('id', newMessage.user_id)
+                  .maybeSingle();
 
-              if (userData) {
-                newMessage.users = userData;
+                if (userData) {
+                  newMessage.users = userData;
+                }
+
+                setMessages(prev => [...prev, newMessage]);
+                scrollToBottom();
+
+                // Mark as read immediately
+                 supabase.from('channel_members').upsert({ 
+                   channel_id: activeChannelRef.current, 
+                   user_id: user.id,
+                   last_read_at: new Date().toISOString() 
+                 }, { onConflict: 'channel_id,user_id' }).then();
+              } else {
+                // Not the active channel: Add unread badge
+                setUnreadCounts(prev => ({ ...prev, [newMessage.channel_id]: (prev[newMessage.channel_id] || 0) + 1 }));
               }
-
-              setMessages(prev => [...prev, newMessage]);
-              scrollToBottom();
-
-              // Mark as read immediately
-               supabase.from('channel_members').upsert({ 
-                 channel_id: activeChannelRef.current, 
-                 user_id: user.id,
-                 last_read_at: new Date().toISOString() 
-               }, { onConflict: 'channel_id,user_id' }).then();
-            } else {
-              // Not the active channel: Add unread badge
-              setUnreadCounts(prev => ({ ...prev, [newMessage.channel_id]: (prev[newMessage.channel_id] || 0) + 1 }));
+              
+            } else if (payload.event === 'UPDATE') {
+               if (payload.new.channel_id === activeChannelRef.current) {
+                 setMessages(prev => prev.map(m => m.id === payload.new.id ? { ...m, ...payload.new } : m));
+               }
+            } else if (payload.event === 'DELETE') {
+               if (payload.old.channel_id === activeChannelRef.current) {
+                 setMessages(prev => prev.filter(m => m.id !== payload.old.id));
+               }
             }
-            
-          } else if (payload.event === 'UPDATE') {
-             if (payload.new.channel_id === activeChannelRef.current) {
-               setMessages(prev => prev.map(m => m.id === payload.new.id ? { ...m, ...payload.new } : m));
-             }
-          } else if (payload.event === 'DELETE') {
-             if (payload.old.channel_id === activeChannelRef.current) {
-               setMessages(prev => prev.filter(m => m.id !== payload.old.id));
-             }
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'chat_reactions' },
-        (payload) => {
-          if (payload.event === 'INSERT') {
-            setMessages(prev => prev.map(m => m.id === payload.new.message_id 
-              ? { ...m, chat_reactions: [...(m.chat_reactions || []), payload.new] } 
-              : m));
-          } else if (payload.event === 'DELETE') {
-            setMessages(prev => prev.map(m => m.id === payload.old.message_id 
-              ? { ...m, chat_reactions: (m.chat_reactions || []).filter(r => r.id !== payload.old.id) } 
-              : m));
+          } else if (payload.table === 'chat_reactions') {
+            console.log("🔥 REALTIME WEBSOCKET REACTION PAYLOAD 🔥", payload);
+            if (payload.event === 'INSERT') {
+              setMessages(prev => prev.map(m => m.id === payload.new.message_id 
+                ? { ...m, chat_reactions: [...(m.chat_reactions || []), payload.new] } 
+                : m));
+            } else if (payload.event === 'DELETE') {
+              setMessages(prev => prev.map(m => m.id === payload.old.message_id 
+                ? { ...m, chat_reactions: (m.chat_reactions || []).filter(r => r.id !== payload.old.id) } 
+                : m));
+            }
           }
         }
       )
