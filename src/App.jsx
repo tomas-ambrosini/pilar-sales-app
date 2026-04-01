@@ -42,6 +42,8 @@ function ProtectedRoutes() {
   );
 }
 
+import { Toaster } from 'react-hot-toast';
+
 function App() {
   return (
     <AuthProvider>
@@ -51,6 +53,20 @@ function App() {
             <RoleProvider>
               <BrowserRouter>
                 <ProtectedRoutes />
+                <Toaster 
+                  position="top-right" 
+                  toastOptions={{
+                    duration: 5000,
+                    style: {
+                      background: '#334155',
+                      color: '#fff',
+                      borderRadius: '8px',
+                      fontSize: '0.9rem',
+                      fontWeight: '500',
+                      boxShadow: '0 10px 25px rgba(15, 23, 42, 0.2)'
+                    }
+                  }} 
+                />
               </BrowserRouter>
             </RoleProvider>
           </ProposalProvider>

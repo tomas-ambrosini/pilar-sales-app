@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, LogOut, LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Megaphone, DollarSign, Settings, Bell, Search, Truck, MessageCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import { useRole, ROLES } from '../context/RoleContext';
@@ -59,6 +60,11 @@ export default function Layout() {
   useEffect(() => {
     if (!user) return;
     
+    // Request Native OS Notification permission
+    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+
     // Clear notification when drawer opens
     if (isMessagesOpen) {
       setHasUnreadMessages(false);
@@ -69,8 +75,44 @@ export default function Layout() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'chat_messages' },
         (payload) => {
-          if (payload.new.user_id !== user.id && !isMessagesOpen) {
-            setHasUnreadMessages(true);
+          if (payload.new.user_id !== user.id) {
+            
+            const isMentioned = Boolean(user.name) && payload.new.content.toLowerCase().includes(`@${user.name.replace(/\s+/g, '').toLowerCase()}`);
+
+            if (!isMessagesOpen || isMentioned) {
+               const title = isMentioned ? '🔔 You were Mentioned' : 'New Pilar Message';
+               
+               // OS Level Notification if tab is hidden
+               if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+                 new Notification(title, { body: payload.new.content });
+               }
+
+               // In-app Toast popup
+               toast(
+                 <div>
+                   <div style={{fontWeight: 'bold', marginBottom: '4px', color: isMentioned ? '#fcd34d' : '#38bdf8'}}>
+                     {title}
+                   </div>
+                   <div style={{fontSize: '0.85rem', color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '220px'}}>
+                     {payload.new.content}
+                   </div>
+                 </div>,
+                 {
+                   duration: isMentioned ? 6000 : 4000,
+                   position: 'top-right',
+                   style: { 
+                     borderLeft: isMentioned ? '4px solid #fcd34d' : '4px solid #38bdf8',
+                     background: '#1e293b',
+                     color: 'white',
+                     padding: '12px 16px'
+                   }
+                 }
+               );
+            }
+
+            if (!isMessagesOpen) {
+              setHasUnreadMessages(true);
+            }
           }
         }
       )
