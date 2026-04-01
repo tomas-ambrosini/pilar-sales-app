@@ -56,6 +56,7 @@ export default function Layout() {
   const [isCommandMenuOpen, setCommandMenuOpen] = useState(false);
   const [isMessagesOpen, setMessagesOpen] = useState(false);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+  const [forceChannelId, setForceChannelId] = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -88,15 +89,23 @@ export default function Layout() {
                }
 
                // In-app Toast popup
-               toast(
-                 <div>
+               toast((t) => (
+                 <div 
+                   onClick={() => {
+                     setForceChannelId(payload.new.channel_id);
+                     setMessagesOpen(true);
+                     toast.dismiss(t.id);
+                   }}
+                   style={{ cursor: 'pointer' }}
+                 >
                    <div style={{fontWeight: 'bold', marginBottom: '4px', color: isMentioned ? '#fcd34d' : '#38bdf8'}}>
                      {title}
                    </div>
                    <div style={{fontSize: '0.85rem', color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '220px'}}>
                      {payload.new.content}
                    </div>
-                 </div>,
+                 </div>
+               ),
                  {
                    duration: isMentioned ? 6000 : 4000,
                    position: 'top-right',
@@ -256,7 +265,12 @@ export default function Layout() {
         </div>
       </Modal>
       <CommandMenu isOpen={isCommandMenuOpen} setIsOpen={setCommandMenuOpen} />
-      <MessagesDrawer isOpen={isMessagesOpen} onClose={() => setMessagesOpen(false)} />
+      <MessagesDrawer 
+        isOpen={isMessagesOpen} 
+        onClose={() => setMessagesOpen(false)} 
+        forceChannel={forceChannelId}
+        onClearForceChannel={() => setForceChannelId(null)}
+      />
     </div>
   );
 }

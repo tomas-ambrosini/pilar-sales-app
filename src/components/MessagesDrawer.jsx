@@ -5,7 +5,7 @@ import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User, Edit2, Trash
 import { motion, AnimatePresence } from 'framer-motion';
 import './MessagesDrawer.css';
 
-export default function MessagesDrawer({ isOpen, onClose }) {
+export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearForceChannel }) {
   const { user } = useAuth();
   const [channels, setChannels] = useState([]);
   const [activeChannelId, setActiveChannelId] = useState(null);
@@ -174,10 +174,27 @@ export default function MessagesDrawer({ isOpen, onClose }) {
     };
   }, [activeChannelId, isOpen, user?.id]);
 
+  useEffect(() => {
+    if (forceChannel && isOpen) {
+      setActiveChannelId(forceChannel);
+      setViewState('chat');
+      if (onClearForceChannel) onClearForceChannel();
+    }
+  }, [forceChannel, isOpen, onClearForceChannel]);
+
+  useEffect(() => {
+    if (viewState === 'chat') {
+      scrollToBottom();
+    }
+  }, [viewState, messages]);
+
   const scrollToBottom = () => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 150);
+    // Fire precisely after mount and render
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+      }, 50);
+    });
   };
 
   const handleCreateChannel = async () => {
