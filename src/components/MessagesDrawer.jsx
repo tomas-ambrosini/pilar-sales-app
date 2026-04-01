@@ -148,7 +148,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
 
     fetchMessages();
 
-    const globalChannelListener = supabase.channel(`public:chat_messages`)
+    const globalChannelListener = supabase.channel(`chat_update_${activeChannelId}_${Date.now()}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'chat_messages' },

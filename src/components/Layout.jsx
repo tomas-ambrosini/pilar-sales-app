@@ -71,7 +71,7 @@ export default function Layout() {
       setHasUnreadMessages(false);
     }
 
-    const channelListener = supabase.channel('global:chat_messages')
+    const channelListener = supabase.channel(`global_tracker_${user.id}_${Date.now()}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'chat_messages' },
