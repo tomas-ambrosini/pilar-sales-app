@@ -11,7 +11,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const editingId = isEditing ? editModeData.id : null;
   
   const hasDraft = typeof window !== 'undefined' && !!localStorage.getItem('pilar_wizard_draft');
-  const [step, setStep] = useState(isEditing ? 7 : (hasPreloadedData ? 1 : (hasDraft ? 0 : 1)));
+  const [step, setStep] = useState(isEditing ? 6 : (hasPreloadedData ? 1 : (hasDraft ? 0 : 1)));
   const { customers } = useCustomers();
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedLocationId, setSelectedLocationId] = useState('');
@@ -213,7 +213,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
       }
     };
 
-    const wizardState = { step: 7, selectedCustomerId, selectedLocationId, survey, photos, tonnageFilter, selectedTiers, addons, discounts };
+    const wizardState = { step: 6, selectedCustomerId, selectedLocationId, survey, photos, tonnageFilter, selectedTiers, addons, discounts };
 
     if (isEditing) {
        const oppId = editModeData.proposal_data?.associated_opportunity_id;
@@ -264,7 +264,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
             {step > 0 && <button className="text-[10px] font-bold text-slate-400 hover:text-primary-600 transition flex items-center gap-1 mt-1 w-max" onClick={onComplete} title="Your progress is automatically saved"><Save size={12}/> {isEditing ? 'Discard Edits & Exit' : 'Save Draft & Exit'}</button>}
           </div>
           <div className="flex gap-1.5">
-             {[1,2,3,4,5,6,7].map(num => (
+             {[1,2,3,4,5,6].map(num => (
                 <button 
                   key={num} 
                   onClick={() => { if (isEditing) setStep(num); else if (num < step) setStep(num); }}
@@ -490,15 +490,15 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
             </div>
             <div className="flex justify-between mt-8 pt-4 border-t border-slate-100">
                <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(1)}><ArrowLeft size={16}/> Back</button>
-               <button className="btn-primary flex items-center justify-center gap-2 w-max" onClick={() => setStep(3)}>Next: Filter Catalog <ArrowRight size={16}/></button>
+               <button className="btn-primary flex items-center justify-center gap-2 w-max" onClick={() => setStep(3)}>Next: Select Equipment <ArrowRight size={16}/></button>
             </div>
           </div>
         )}
 
         {step === 3 && (
           <div>
-            <h3 className="font-bold mb-4 text-slate-700">3. Filter Required Equipment Size</h3>
-            <div className="bg-slate-50 p-6 rounded border border-slate-200">
+            <h3 className="font-bold mb-4 text-slate-700">3. Filter & Map Equipment Tiers</h3>
+            <div className="bg-slate-50 p-6 rounded border border-slate-200 mb-6">
                 <label className="text-sm font-bold text-slate-600 mb-2 block">Specify Replacement Tonnage</label>
                 <select className="input-field w-full lg:w-1/3 text-lg font-black font-mono text-primary-700 mb-6 border-primary-300 shadow-sm" value={tonnageFilter} onChange={e => {setTonnageFilter(e.target.value); setSelectedTiers({best: null, better: null, good: null});}}>
                    <option value="">-- Choose Tonnage --</option>
@@ -524,41 +524,37 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                    </div>
                 )}
             </div>
-            <div className="flex justify-between mt-8 pt-4 border-t border-slate-100">
+
+            {tonnageFilter && filteredCatalog.length > 0 && (
+              <div>
+                <h4 className="font-bold mb-4 text-slate-700 border-b pb-2">Assign Consumer Options</h4>
+                <p className="text-xs text-slate-500 mb-6">Map previously filtered {tonnageFilter}-Ton systems into the Good/Better/Best presentation model for the homeowner.</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[ {k: 'best', l: 'Premium (Best)'}, {k: 'better', l: 'Core (Better)'}, {k: 'good', l: 'Baseline (Good)'} ].map(tier => (
+                     <div key={tier.k} className="bg-white p-5 border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div className={`absolute top-0 left-0 right-0 h-1.5 ${tier.k === 'best' ? 'bg-primary-500' : tier.k === 'better' ? 'bg-emerald-500' : 'bg-slate-400'}`}></div>
+                        <label className="block font-black uppercase text-slate-700 text-sm tracking-wider mb-4 mt-1">{tier.l}</label>
+                        <select className="input-field w-full text-sm font-semibold text-slate-600 bg-slate-50 focus:bg-white transition-colors" value={selectedTiers[tier.k]?.id || ''} onChange={e => setSelectedTiers({...selectedTiers, [tier.k]: filteredCatalog.find(c => c.id.toString() === e.target.value)})}>
+                           <option value="">-- Remove/Empty --</option>
+                           {filteredCatalog.map(sys => <option key={sys.id} value={sys.id}>{sys.brand} {sys.series} {sys.seer} SEER</option>)}
+                        </select>
+                     </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between mt-10 pt-4 border-t border-slate-100">
                <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(2)}><ArrowLeft size={16}/> Back</button>
-               <button className="btn-primary flex items-center justify-center gap-2 w-max" onClick={() => setStep(4)} disabled={!tonnageFilter || filteredCatalog.length === 0}>Next: Assign Tiers <ArrowRight size={16}/></button>
+               <button className="btn-primary flex items-center justify-center gap-2 w-max" onClick={() => setStep(4)} disabled={!selectedTiers.good && !selectedTiers.better && !selectedTiers.best}>Next: Map Subcontracting <ArrowRight size={16}/></button>
             </div>
           </div>
         )}
 
         {step === 4 && (
           <div>
-            <h3 className="font-bold mb-4 text-slate-700">4. Finalize Consumer Proposal Options</h3>
-            <p className="text-xs text-slate-500 mb-6">Map previously filtered {tonnageFilter}-Ton systems into the Good/Better/Best presentation model for the homeowner.</p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[ {k: 'best', l: 'Premium (Best)'}, {k: 'better', l: 'Core (Better)'}, {k: 'good', l: 'Baseline (Good)'} ].map(tier => (
-                 <div key={tier.k} className="bg-white p-5 border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                    <div className={`absolute top-0 left-0 right-0 h-1.5 ${tier.k === 'best' ? 'bg-primary-500' : tier.k === 'better' ? 'bg-emerald-500' : 'bg-slate-400'}`}></div>
-                    <label className="block font-black uppercase text-slate-700 text-sm tracking-wider mb-4 mt-1">{tier.l}</label>
-                    <select className="input-field w-full text-sm font-semibold text-slate-600 bg-slate-50 focus:bg-white transition-colors" value={selectedTiers[tier.k]?.id || ''} onChange={e => setSelectedTiers({...selectedTiers, [tier.k]: filteredCatalog.find(c => c.id.toString() === e.target.value)})}>
-                       <option value="">-- Remove/Empty --</option>
-                       {filteredCatalog.map(sys => <option key={sys.id} value={sys.id}>{sys.brand} {sys.series} {sys.seer} SEER</option>)}
-                    </select>
-                 </div>
-              ))}
-            </div>
-
-            <div className="flex justify-between mt-10 pt-4 border-t border-slate-100">
-               <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(3)}><ArrowLeft size={16}/> Back</button>
-               <button className="btn-primary flex items-center justify-center gap-2 w-max" onClick={() => setStep(5)} disabled={!selectedTiers.good && !selectedTiers.better && !selectedTiers.best}>Next: Map Subcontracting <ArrowRight size={16}/></button>
-            </div>
-          </div>
-        )}
-
-        {step === 5 && (
-          <div>
-             <h3 className="font-bold mb-2 text-slate-700">5. Global Variable Labor & Add-ons</h3>
+             <h3 className="font-bold mb-2 text-slate-700">4. Global Variable Labor & Add-ons</h3>
              <p className="text-xs text-slate-500 mb-6">Items toggled below are universally injected into every active tier in the Proposal. Select necessary logistics.</p>
 
              <div className="bg-slate-50 p-6 rounded border border-slate-200 grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -575,15 +571,15 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
              </div>
 
              <div className="flex justify-between mt-8 pt-4 border-t border-slate-100">
-               <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(4)}><ArrowLeft size={16}/> Back</button>
-               <button className="btn-primary flex items-center gap-2" onClick={() => setStep(6)}><DollarSign size={16}/> View Global Margins <ArrowRight size={16}/></button>
+               <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(3)}><ArrowLeft size={16}/> Back</button>
+               <button className="btn-primary flex items-center gap-2" onClick={() => setStep(5)}><DollarSign size={16}/> View Global Margins <ArrowRight size={16}/></button>
             </div>
           </div>
         )}
 
-        {step === 6 && (
+        {step === 5 && (
           <div>
-            <h3 className="font-bold mb-2 text-slate-800 flex items-center gap-2"><DollarSign className="text-emerald-600"/> 6. Internal Pricing Controls & Offer Discounting</h3>
+            <h3 className="font-bold mb-2 text-slate-800 flex items-center gap-2"><DollarSign className="text-emerald-600"/> 5. Internal Pricing Controls & Offer Discounting</h3>
             <div className="glass-panel border-red-200 bg-red-50/20 mb-6 flex gap-3 p-4 items-start">
                <AlertTriangle className="text-red-500 mt-1 shrink-0" size={20}/>
                <p className="text-xs text-red-800 font-medium"><strong>Confidential Dashboard:</strong> This data reflects absolute floor costs and backend margin protections. Your base commission algorithm operates against the <span className="underline font-bold">Target System Par</span>. Providing a retail discount strictly lowers the final transaction price, not your proportional algorithmic baseline.</p>
@@ -593,8 +589,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                 <div className="border-2 border-dashed border-red-200 bg-red-50 p-10 text-center rounded-xl my-8">
                    <AlertTriangle size={32} className="mx-auto text-red-400 mb-4" />
                    <h3 className="font-bold text-red-800 text-lg mb-2">No Equipment Tiers Selected</h3>
-                   <p className="text-red-600 text-sm max-w-md mx-auto">This proposal lacks associated equipment tiers. You must navigate back to <strong>Step 4: Assign Tiers</strong> and map equipment before applying pricing controls.</p>
-                   <button className="bg-red-600 text-white font-bold py-2 px-6 rounded mt-6 mx-auto block hover:bg-red-700 transition" onClick={() => setStep(4)}>Return to Step 4</button>
+                   <p className="text-red-600 text-sm max-w-md mx-auto">This proposal lacks associated equipment tiers. You must navigate back to <strong>Step 3: Filter & Map Equipment Tiers</strong> and map equipment before applying pricing controls.</p>
+                   <button className="bg-red-600 text-white font-bold py-2 px-6 rounded mt-6 mx-auto block hover:bg-red-700 transition" onClick={() => setStep(3)}>Return to Step 3</button>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -653,13 +649,13 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
             )}
 
             <div className="flex justify-between mt-10 pt-4 border-t border-slate-100">
-               <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(5)}><ArrowLeft size={16}/> Back</button>
-               <button className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded font-bold flex items-center gap-2 shadow-lg" onClick={() => setStep(7)}>Finalize Transaction <ArrowRight size={16}/></button>
+               <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(4)}><ArrowLeft size={16}/> Back</button>
+               <button className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded font-bold flex items-center gap-2 shadow-lg" onClick={() => setStep(6)}>Finalize Transaction <ArrowRight size={16}/></button>
             </div>
           </div>
         )}
 
-        {step === 7 && (
+        {step === 6 && (
           <div className="text-center py-10">
              <div className="w-20 h-20 bg-success-50 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Check size={40} className="text-success-600" />
@@ -668,7 +664,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
              <p className="text-sm text-slate-500 mb-10 max-w-lg mx-auto">The digital payloads have been mathematically validated. Click below to immutably snap these 3 tiers to the database, generate the link, and fire the opportunity to the Pipeline Board.</p>
              
              <div className="flex justify-center gap-4">
-                <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(6)}><ArrowLeft size={16}/> Modify Margins</button>
+                <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(5)}><ArrowLeft size={16}/> Modify Margins</button>
                 <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-lg font-black tracking-wide flex items-center gap-2 shadow-xl hover:scale-105 transition-transform" onClick={generateProposal}>
                    {isEditing ? 'OVERWRITE & UPDATE PROPOSAL' : 'GENERATE DIGITAL PROPOSAL'}
                 </button>
