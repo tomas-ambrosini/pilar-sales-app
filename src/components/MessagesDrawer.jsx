@@ -158,7 +158,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
 
     fetchMessages();
 
-    const globalChannelListener = supabase.channel(`chat_update_${activeChannelId}_${Date.now()}`)
+    const globalChannelListener = supabase.channel(`chat_update_${activeChannelId}_msgs_${Date.now()}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'chat_messages' },
@@ -205,6 +205,9 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
           }
         }
       )
+      .subscribe();
+
+    const reactionsListener = supabase.channel(`chat_update_${activeChannelId}_reacts_${Date.now()}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'chat_reactions' },
@@ -250,6 +253,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
 
     return () => {
       supabase.removeChannel(globalChannelListener);
+      supabase.removeChannel(reactionsListener);
       supabase.removeChannel(presenceChannel);
       presenceChannelRef.current = null;
     };
@@ -371,6 +375,10 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     }
 
     // INSERT FLOW
+    if (presenceChannelRef.current && user) {
+      presenceChannelRef.current.track({ userId: user.id, userName: user.name, isTyping: false });
+    }
+    
     setIsUploading(true);
     let uploadedUrl = null;
     let uploadedType = null;
@@ -427,10 +435,6 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
        alert("Failed to send message over websocket: " + error.message);
     }
     setIsUploading(false);
-    
-    if (presenceChannelRef.current && user) {
-      presenceChannelRef.current.track({ userId: user.id, userName: user.name, isTyping: false });
-    }
     
     setTimeout(() => {
       inputRef.current?.focus();
