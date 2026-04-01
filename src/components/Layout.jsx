@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldAlert, LogOut, LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Megaphone, DollarSign, Settings, Bell, Search, Truck } from 'lucide-react';
+import { ShieldAlert, LogOut, LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Megaphone, DollarSign, Settings, Bell, Search, Truck, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useRole, ROLES } from '../context/RoleContext';
 import Modal from './Modal';
@@ -19,6 +19,13 @@ const navGroups = [
       { path: '/catalog', label: 'Catalog', icon: BookOpen, allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
       { path: '/proposals', label: 'Proposals', icon: FileCheck, allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
       { path: '/sales-pipeline', label: 'Pipeline', icon: ClipboardList, allowedRoles: [ROLES.ADMIN, ROLES.SALES] }
+    ]
+  },
+  {
+    title: 'Communication',
+    allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH, ROLES.SUBCONTRACTOR],
+    items: [
+      { path: '/messages', label: 'Messages', icon: MessageCircle, allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH, ROLES.SUBCONTRACTOR] }
     ]
   },
   {
