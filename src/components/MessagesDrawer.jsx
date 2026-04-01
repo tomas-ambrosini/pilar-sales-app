@@ -128,6 +128,8 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
           updated_at,
           user_id,
           reply_to_id,
+          attachment_url,
+          attachment_type,
           users (
             name,
             role
