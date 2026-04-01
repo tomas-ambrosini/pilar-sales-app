@@ -164,7 +164,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                 .from('users')
                 .select('name, role')
                 .eq('id', newMessage.user_id)
-                .single();
+                .maybeSingle();
 
               if (userData) {
                 newMessage.users = userData;
