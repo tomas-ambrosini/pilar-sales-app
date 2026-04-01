@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User } from 'lucide-react';
+import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User, Edit2, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './MessagesDrawer.css';
 
@@ -12,6 +12,7 @@ export default function MessagesDrawer({ isOpen, onClose }) {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [dbError, setDbError] = useState(null);
+  const [editingMsgId, setEditingMsgId] = useState(null);
   const messagesEndRef = useRef(null);
   const [viewState, setViewState] = useState('channels'); // 'channels', 'chat', 'create-channel', 'create-dm'
   const [allUsers, setAllUsers] = useState([]);
@@ -74,6 +75,7 @@ export default function MessagesDrawer({ isOpen, onClose }) {
           id,
           content,
           created_at,
+          updated_at,
           user_id,
           users (
             name,
@@ -98,22 +100,27 @@ export default function MessagesDrawer({ isOpen, onClose }) {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `channel_id=eq.${activeChannelId}` },
         async (payload) => {
-          const newMessage = payload.new;
-          
-          if (newMessage.user_id === user?.id) return; 
+          if (payload.event === 'INSERT') {
+            const newMessage = payload.new;
+            if (newMessage.user_id === user?.id) return; 
 
-          const { data: userData } = await supabase
-            .from('users')
-            .select('name, role')
-            .eq('id', newMessage.user_id)
-            .single();
+            const { data: userData } = await supabase
+              .from('users')
+              .select('name, role')
+              .eq('id', newMessage.user_id)
+              .single();
 
-          if (userData) {
-            newMessage.users = userData;
+            if (userData) {
+              newMessage.users = userData;
+            }
+
+            setMessages(prev => [...prev, newMessage]);
+            scrollToBottom();
+          } else if (payload.event === 'UPDATE') {
+             setMessages(prev => prev.map(m => m.id === payload.new.id ? { ...m, ...payload.new } : m));
+          } else if (payload.event === 'DELETE') {
+             setMessages(prev => prev.filter(m => m.id !== payload.old.id));
           }
-
-          setMessages(prev => [...prev, newMessage]);
-          scrollToBottom();
         }
       )
       .subscribe();
@@ -181,6 +188,22 @@ export default function MessagesDrawer({ isOpen, onClose }) {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !activeChannelId || !user) return;
 
+    if (editingMsgId) {
+       // EDIT FLOW
+       const originalMsg = messages.find(m => m.id === editingMsgId);
+       if (!originalMsg) return;
+
+       const updatedContent = inputValue.trim();
+       setMessages(prev => prev.map(m => m.id === editingMsgId ? { ...m, content: updatedContent } : m));
+       setInputValue('');
+       setEditingMsgId(null);
+
+       const { error } = await supabase.from('chat_messages').update({ content: updatedContent, updated_at: new Date().toISOString() }).eq('id', editingMsgId);
+       if (error) console.error("Error editing msg", error);
+       return;
+    }
+
+    // INSERT FLOW
     const newMsg = {
       channel_id: activeChannelId,
       user_id: user.id,
@@ -199,6 +222,17 @@ export default function MessagesDrawer({ isOpen, onClose }) {
 
     const { error } = await supabase.from('chat_messages').insert([newMsg]);
     if (error) console.error("Error sending message", error);
+  };
+
+  const handleDeleteMessage = async (msgId) => {
+    setMessages(prev => prev.filter(m => m.id !== msgId)); // Optimistic UI
+    const { error } = await supabase.from('chat_messages').delete().eq('id', msgId);
+    if (error) console.error("Error deleting msg", error);
+  };
+
+  const startEditing = (msg) => {
+    setEditingMsgId(msg.id);
+    setInputValue(msg.content);
   };
 
   const handleKeyDown = (e) => {
@@ -466,42 +500,51 @@ export default function MessagesDrawer({ isOpen, onClose }) {
                               return (
                                 <motion.div 
                                   key={msg.id} 
-                                  className={`drawer-msg-item ${isGrouped ? 'grouped' : ''} ${isOwn ? 'own-message' : 'other-message'}`}
+                                  className={`drawer-msg-item ${isGrouped ? 'grouped' : ''}`}
                                   initial={{ opacity: 0, y: 15, scale: 0.98 }}
                                   animate={{ opacity: 1, y: 0, scale: 1 }}
                                   transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                                 >
-                                  {!isOwn && (
-                                    <>
-                                      {!isGrouped ? (
-                                        <div 
-                                          className="drawer-msg-avatar"
-                                          style={{ background: getAvatarGradient(msg.users?.name) }}
-                                        >
-                                          {msg.users?.name ? msg.users.name.charAt(0).toUpperCase() : 'U'}
-                                        </div>
-                                      ) : (
-                                        <div className="drawer-msg-avatar-spacer" />
-                                      )}
-                                    </>
+                                  {!isGrouped ? (
+                                    <div 
+                                      className="drawer-msg-avatar"
+                                      style={{ background: getAvatarGradient(msg.users?.name) }}
+                                    >
+                                      {msg.users?.name ? msg.users.name.charAt(0).toUpperCase() : 'U'}
+                                    </div>
+                                  ) : (
+                                    <div className="drawer-msg-avatar-spacer">
+                                      <span className="drawer-msg-time-hover">{new Date(msg.created_at).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'})}</span>
+                                    </div>
                                   )}
                                   
                                   <div className="drawer-msg-content">
-                                    {!isGrouped && !isOwn && (
+                                    {!isGrouped && (
                                       <div className="drawer-msg-meta">
-                                        <span className="drawer-msg-author">{msg.users?.name || 'Unknown'}</span>
-                                        <span className="drawer-msg-time">{formatTimestamp(msg.created_at)}</span>
+                                        <span className="drawer-msg-author">{msg.users?.name || 'Unknown User'}</span>
+                                        <span className="drawer-msg-time">
+                                          {formatTimestamp(msg.created_at)}
+                                          {msg.updated_at && msg.updated_at !== msg.created_at && <span className="ml-1 text-[0.6rem] text-slate-400 italic">(edited)</span>}
+                                        </span>
                                       </div>
                                     )}
-                                    {!isGrouped && isOwn && (
-                                      <div className="drawer-msg-meta-own">
-                                        <span className="drawer-msg-time">{formatTimestamp(msg.created_at)}</span>
-                                      </div>
-                                    )}
-                                    <div className={`drawer-msg-bubble ${isOwn ? 'own-bubble' : 'other-bubble'}`}>
+                                    <div className="drawer-msg-text">
                                       {msg.content}
+                                      {isGrouped && msg.updated_at && msg.updated_at !== msg.created_at && <span className="ml-2 text-[0.6rem] text-slate-400 italic">(edited)</span>}
                                     </div>
                                   </div>
+
+                                  {/* Hover Actions for own messages */}
+                                  {isOwn && !msg.id.toString().startsWith('temp-') && (
+                                    <div className="drawer-msg-actions">
+                                      <button className="icon-btn-minimal p-1.5" onClick={() => startEditing(msg)} title="Edit">
+                                        <Edit2 size={13} className="text-slate-500 hover:text-primary-600" />
+                                      </button>
+                                      <button className="icon-btn-minimal p-1.5 hover:text-red-600" onClick={() => handleDeleteMessage(msg.id)} title="Delete">
+                                        <Trash2 size={13} className="text-slate-500 hover:text-red-600" />
+                                      </button>
+                                    </div>
+                                  )}
                                 </motion.div>
                               );
                             })
@@ -518,12 +561,21 @@ export default function MessagesDrawer({ isOpen, onClose }) {
                               onChange={(e) => setInputValue(e.target.value)}
                               onKeyDown={handleKeyDown}
                             />
-                            <div className="drawer-input-actions">
-                              <div className="drawer-input-hints">
-                                <span className="kbd-hint">↵</span> to send  <span className="kbd-hint mx-2">⇧ ↵</span> for new line
+                            <div className="drawer-input-actions flex items-center justify-between">
+                              <div className="drawer-input-hints w-full">
+                                {editingMsgId ? (
+                                   <div className="flex items-center justify-between w-full">
+                                      <span className="text-primary-600 font-bold ml-1">Editing message...</span>
+                                      <button className="text-xs hover:underline cursor-pointer" onClick={() => { setEditingMsgId(null); setInputValue(''); }}>Cancel</button>
+                                   </div>
+                                ) : (
+                                   <>
+                                     <span className="kbd-hint">↵</span> to send  <span className="kbd-hint mx-2">⇧ ↵</span> for new line
+                                   </>
+                                )}
                               </div>
                               <motion.button 
-                                className="drawer-send-btn"
+                                className="drawer-send-btn ml-3 shadow-md"
                                 onClick={handleSendMessage}
                                 disabled={!inputValue.trim()}
                                 whileHover={inputValue.trim() ? { scale: 1.05 } : {}}

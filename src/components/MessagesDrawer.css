@@ -154,30 +154,40 @@
   text-align: center;
 }
 
-/* Elite Chat Bubble Items */
+/* ----------------------------------
+   Professional Slack-style Layout
+----------------------------------- */
 .drawer-msg-item {
   display: flex;
-  gap: 0.65rem;
-  padding: 0.35rem 1.5rem;
+  gap: 0.85rem;
+  padding: 0.75rem 1.5rem;
   position: relative;
   width: 100%;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.04); /* Division between individual messages/groups */
 }
 
-.drawer-msg-item.own-message {
-  flex-direction: row-reverse; /* Push to right */
+.drawer-msg-item:hover {
+  background: var(--color-slate-100); /* Professional hover context */
 }
 
+/* Grouped messages (from same author) remove the top padding and top border */
 .drawer-msg-item.grouped {
-  padding-top: 0.15rem;
-  padding-bottom: 0.15rem;
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+  border-bottom: none; /* Only the last message in a group stack gets the border */
+}
+
+.drawer-msg-item.grouped:last-child,
+.drawer-msg-item:not(.grouped) {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.04);
 }
 
 .drawer-msg-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%; /* Circle for bubble chat */
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md); /* Professional rounded square */
   color: var(--color-white); 
-  box-shadow: 0 2px 4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.2);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -185,24 +195,36 @@
   font-size: 1rem;
   text-shadow: 0 1px 2px rgba(0,0,0,0.1);
   flex-shrink: 0;
-  align-self: flex-end; /* Pin to bottom of bubble stack */
-  margin-bottom: 0.2rem;
+  align-self: flex-start; /* Pin to top */
 }
 
 .drawer-msg-avatar-spacer {
-  width: 34px;
+  width: 36px;
   flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+}
+
+/* Hover time for grouped messages */
+.drawer-msg-time-hover {
+  font-size: 0.65rem;
+  color: var(--color-slate-400);
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.1s;
+  padding-top: 0.15rem;
+}
+
+.drawer-msg-item:hover .drawer-msg-time-hover {
+  opacity: 1;
 }
 
 .drawer-msg-content {
   display: flex;
   flex-direction: column;
-  max-width: 75%; /* Don't stretch across screen */
+  max-width: calc(100% - 48px);
   align-items: flex-start;
-}
-
-.drawer-msg-item.own-message .drawer-msg-content {
-  align-items: flex-end;
+  width: 100%;
 }
 
 .drawer-msg-meta {
@@ -211,61 +233,50 @@
   gap: 0.5rem;
   line-height: 1.2;
   margin-bottom: 0.25rem;
-  margin-left: 0.5rem;
-}
-
-.drawer-msg-meta-own {
-  display: flex;
-  align-items: baseline;
-  line-height: 1.2;
-  margin-bottom: 0.25rem;
-  margin-right: 0.5rem;
 }
 
 .drawer-msg-author {
-  font-weight: 700;
-  color: var(--color-slate-600);
-  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--color-slate-900);
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
 }
 
 .drawer-msg-time {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   color: var(--color-slate-400);
   font-weight: 500;
 }
 
-.drawer-msg-bubble {
-  padding: 0.65rem 0.85rem;
-  line-height: 1.4;
+.drawer-msg-text {
+  color: var(--color-slate-800);
+  line-height: 1.5;
   font-size: 0.95rem;
   word-wrap: break-word;
   white-space: pre-wrap;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  width: 100%;
 }
 
-.other-bubble {
-  background: var(--color-slate-200); /* Warm grey */
-  color: var(--color-slate-900);
-  border-radius: 1.2rem;
-  border-bottom-left-radius: 0.3rem; /* Tail effect */
+.drawer-msg-actions {
+  position: absolute;
+  right: 1.5rem;
+  top: -10px;
+  background: white;
+  border: 1px solid var(--color-slate-200);
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-md);
+  padding: 0.2rem;
+  display: flex;
+  gap: 0.2rem;
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(5px);
+  z-index: 5;
 }
 
-/* If it's grouped and not the first message, change rounding */
-.drawer-msg-item.grouped:not(:last-child) .other-bubble {
-  border-bottom-left-radius: 1.2rem;
-  border-top-left-radius: 0.3rem;
-}
-
-.own-bubble {
-  background: var(--color-primary-600); /* Blue */
-  color: white;
-  border-radius: 1.2rem;
-  border-bottom-right-radius: 0.3rem; /* Tail effect */
-}
-
-.drawer-msg-item.grouped:not(:last-child) .own-bubble {
-  border-bottom-right-radius: 1.2rem;
-  border-top-right-radius: 0.3rem;
+.drawer-msg-item:hover .drawer-msg-actions {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Glass Input Area */
