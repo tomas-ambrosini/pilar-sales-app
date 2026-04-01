@@ -32,9 +32,16 @@ CREATE TABLE IF NOT EXISTS public.chat_channels (
 ALTER TABLE public.chat_channels ENABLE ROW LEVEL SECURITY;
 
 -- Allow all authenticated users full access to channels for now
+DROP POLICY IF EXISTS "Enable read access for all users" ON public.chat_channels;
 CREATE POLICY "Enable read access for all users" ON public.chat_channels FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON public.chat_channels;
 CREATE POLICY "Enable insert for authenticated users only" ON public.chat_channels FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Enable update for authenticated users only" ON public.chat_channels;
 CREATE POLICY "Enable update for authenticated users only" ON public.chat_channels FOR UPDATE USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Enable delete for authenticated users only" ON public.chat_channels;
 CREATE POLICY "Enable delete for authenticated users only" ON public.chat_channels FOR DELETE USING (auth.role() = 'authenticated');
 
 -- 2. CHAT MESSAGES TABLE
@@ -51,9 +58,16 @@ CREATE TABLE IF NOT EXISTS public.chat_messages (
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 
 -- Allow all authenticated users full access to messages for now
+DROP POLICY IF EXISTS "Enable read access for all authenticated users" ON public.chat_messages;
 CREATE POLICY "Enable read access for all authenticated users" ON public.chat_messages FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON public.chat_messages;
 CREATE POLICY "Enable insert for authenticated users only" ON public.chat_messages FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Enable update for authenticated users only" ON public.chat_messages;
 CREATE POLICY "Enable update for authenticated users only" ON public.chat_messages FOR UPDATE USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Enable delete for authenticated users only" ON public.chat_messages;
 CREATE POLICY "Enable delete for authenticated users only" ON public.chat_messages FOR DELETE USING (auth.role() = 'authenticated');
 
 -- 3. ENABLE REALTIME FOR CHAT MESSAGES
@@ -91,8 +105,13 @@ CREATE TABLE IF NOT EXISTS public.channel_members (
 ALTER TABLE public.channel_members ENABLE ROW LEVEL SECURITY;
 
 -- Members can see their own memberships, or see memberships of any channel they are part of
+DROP POLICY IF EXISTS "Enable read for members" ON public.channel_members;
 CREATE POLICY "Enable read for members" ON public.channel_members FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Enable insert for members" ON public.channel_members;
 CREATE POLICY "Enable insert for members" ON public.channel_members FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Enable delete for members" ON public.channel_members;
 CREATE POLICY "Enable delete for members" ON public.channel_members FOR DELETE USING (true);
 
 -- 3. Upgrade Channel Reading Logic
