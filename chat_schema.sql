@@ -106,3 +106,10 @@ USING (
 
 -- Note: The `messages` inherit privacy purely by the client only subscribing to accessible channels, 
 -- but strictly, RLS on messages could also be tightened. We will leave it flat for now for speed!
+
+-- ==========================================
+-- PHASE 3 OVERHAUL: INLINE REPLIES
+-- ==========================================
+
+-- Add the tracking column for replies
+ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS reply_to_id UUID REFERENCES public.chat_messages(id) ON DELETE SET NULL;

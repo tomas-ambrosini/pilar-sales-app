@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User, Edit2, Trash2 } from 'lucide-react';
+import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User, Edit2, Trash2, Reply } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './MessagesDrawer.css';
 
@@ -13,6 +13,7 @@ export default function MessagesDrawer({ isOpen, onClose }) {
   const [inputValue, setInputValue] = useState('');
   const [dbError, setDbError] = useState(null);
   const [editingMsgId, setEditingMsgId] = useState(null);
+  const [replyingToMsg, setReplyingToMsg] = useState(null);
   const messagesEndRef = useRef(null);
   const [viewState, setViewState] = useState('channels'); // 'channels', 'chat', 'create-channel', 'create-dm'
   const [allUsers, setAllUsers] = useState([]);
@@ -77,6 +78,7 @@ export default function MessagesDrawer({ isOpen, onClose }) {
           created_at,
           updated_at,
           user_id,
+          reply_to_id,
           users (
             name,
             role
@@ -208,6 +210,7 @@ export default function MessagesDrawer({ isOpen, onClose }) {
       channel_id: activeChannelId,
       user_id: user.id,
       content: inputValue,
+      reply_to_id: replyingToMsg ? replyingToMsg.id : null
     };
 
     const optimisticMsg = {
@@ -218,6 +221,7 @@ export default function MessagesDrawer({ isOpen, onClose }) {
     };
     setMessages(prev => [...prev, optimisticMsg]);
     setInputValue('');
+    setReplyingToMsg(null);
     scrollToBottom();
 
     const { error } = await supabase.from('chat_messages').insert([newMsg]);
@@ -232,7 +236,15 @@ export default function MessagesDrawer({ isOpen, onClose }) {
 
   const startEditing = (msg) => {
     setEditingMsgId(msg.id);
+    setReplyingToMsg(null);
     setInputValue(msg.content);
+  };
+
+  const startReplying = (msg) => {
+    setReplyingToMsg(msg);
+    setEditingMsgId(null);
+    setInputValue('');
+    // Focus the input visually (handled naturally by component state, but could add ref)
   };
 
   const handleKeyDown = (e) => {
@@ -495,7 +507,7 @@ export default function MessagesDrawer({ isOpen, onClose }) {
                             messages.map((msg, idx) => {
                               const prevMsg = messages[idx - 1];
                               const isOwn = msg.user_id === user?.id;
-                              const isGrouped = prevMsg && prevMsg.user_id === msg.user_id && (new Date(msg.created_at) - new Date(prevMsg.created_at)) < 300000;
+                              const isGrouped = Boolean(msg.user_id) && prevMsg && prevMsg.user_id === msg.user_id && (new Date(msg.created_at) - new Date(prevMsg.created_at)) < 300000;
                               
                               return (
                                 <motion.div 
@@ -528,21 +540,41 @@ export default function MessagesDrawer({ isOpen, onClose }) {
                                         </span>
                                       </div>
                                     )}
+                                    {msg.reply_to_id && (
+                                      <div className="drawer-msg-quote cursor-pointer" onClick={() => {
+                                        // Scroll to message functionality could go here
+                                      }}>
+                                        <div className="drawer-msg-quote-author">
+                                          <Reply size={10} className="mr-1 inline -mt-0.5" /> 
+                                          {messages.find(m => m.id === msg.reply_to_id)?.users?.name || 'Unknown User'}
+                                        </div>
+                                        <div className="drawer-msg-quote-text truncate">
+                                          {messages.find(m => m.id === msg.reply_to_id)?.content || 'Original message was deleted'}
+                                        </div>
+                                      </div>
+                                    )}
                                     <div className="drawer-msg-text">
                                       {msg.content}
                                       {isGrouped && msg.updated_at && msg.updated_at !== msg.created_at && <span className="ml-2 text-[0.6rem] text-slate-400 italic">(edited)</span>}
                                     </div>
                                   </div>
 
-                                  {/* Hover Actions for own messages */}
-                                  {isOwn && !msg.id.toString().startsWith('temp-') && (
+                                  {/* Hover Actions */}
+                                  {!msg.id.toString().startsWith('temp-') && (
                                     <div className="drawer-msg-actions">
-                                      <button className="icon-btn-minimal p-1.5" onClick={() => startEditing(msg)} title="Edit">
-                                        <Edit2 size={13} className="text-slate-500 hover:text-primary-600" />
+                                      <button className="icon-btn-minimal p-1.5" onClick={() => startReplying(msg)} title="Reply">
+                                        <Reply size={13} className="text-slate-500 hover:text-primary-600" />
                                       </button>
-                                      <button className="icon-btn-minimal p-1.5 hover:text-red-600" onClick={() => handleDeleteMessage(msg.id)} title="Delete">
-                                        <Trash2 size={13} className="text-slate-500 hover:text-red-600" />
-                                      </button>
+                                      {isOwn && (
+                                        <>
+                                          <button className="icon-btn-minimal p-1.5" onClick={() => startEditing(msg)} title="Edit">
+                                            <Edit2 size={13} className="text-slate-500 hover:text-primary-600" />
+                                          </button>
+                                          <button className="icon-btn-minimal p-1.5 hover:text-red-600" onClick={() => handleDeleteMessage(msg.id)} title="Delete">
+                                            <Trash2 size={13} className="text-slate-500 hover:text-red-600" />
+                                          </button>
+                                        </>
+                                      )}
                                     </div>
                                   )}
                                 </motion.div>
@@ -553,10 +585,21 @@ export default function MessagesDrawer({ isOpen, onClose }) {
                         </div>
 
                         <div className="drawer-input-area">
-                          <div className="drawer-input-wrapper">
+                          {replyingToMsg && (
+                            <div className="drawer-input-reply-banner absolute -top-8 left-6 right-6 bg-slate-100 border border-slate-200 border-b-0 rounded-t-lg px-3 py-1.5 flex justify-between items-center shadow-sm">
+                              <span className="text-xs font-semibold text-slate-600 truncate">
+                                <Reply size={12} className="inline mr-1" />
+                                Replying to <span className="font-bold">{replyingToMsg.users?.name || 'Unknown User'}</span>
+                              </span>
+                              <button className="text-slate-400 hover:text-slate-700" onClick={() => setReplyingToMsg(null)}>
+                                <X size={14} />
+                              </button>
+                            </div>
+                          )}
+                          <div className={`drawer-input-wrapper ${replyingToMsg ? 'rounded-tl-none rounded-tr-none' : ''}`}>
                             <textarea 
                               className="drawer-input custom-scrollbar"
-                              placeholder={`Message #${activeChannel?.name || '...'}`}
+                              placeholder={replyingToMsg ? "Type a reply..." : `Message #${activeChannel?.name || '...'}`}
                               value={inputValue}
                               onChange={(e) => setInputValue(e.target.value)}
                               onKeyDown={handleKeyDown}

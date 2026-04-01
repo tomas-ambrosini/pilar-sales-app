@@ -159,28 +159,36 @@
 ----------------------------------- */
 .drawer-msg-item {
   display: flex;
-  gap: 0.85rem;
-  padding: 0.75rem 1.5rem;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
   position: relative;
   width: 100%;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.04); /* Division between individual messages/groups */
+  border-bottom: 1px solid var(--color-slate-200); /* More obvious division */
 }
 
 .drawer-msg-item:hover {
-  background: var(--color-slate-100); /* Professional hover context */
+  background: var(--color-slate-50); 
 }
 
-/* Grouped messages (from same author) remove the top padding and top border */
+/* Grouped messages (from same author within 5 mins) */
 .drawer-msg-item.grouped {
-  padding-top: 0.2rem;
-  padding-bottom: 0.2rem;
-  border-bottom: none; /* Only the last message in a group stack gets the border */
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  border-top: none;
+  border-bottom: none; 
 }
 
-.drawer-msg-item.grouped:last-child,
-.drawer-msg-item:not(.grouped) {
-  border-bottom: 1px solid rgba(15, 23, 42, 0.04);
+.drawer-msg-item.grouped:last-child {
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-slate-200);
 }
+
+.drawer-msg-item:not(.grouped) {
+  margin-top: 0.5rem; /* Forces a physical gap between totally separate conversations */
+  border-top: 1px solid var(--color-slate-100);
+}
+
+
 
 .drawer-msg-avatar {
   width: 36px;
@@ -248,6 +256,30 @@
   font-weight: 500;
 }
 
+.drawer-msg-quote {
+  margin-top: 0.2rem;
+  margin-bottom: 0.4rem;
+  padding: 0.25rem 0.5rem;
+  border-left: 3px solid var(--color-slate-200);
+  background: var(--color-slate-50);
+  border-radius: 0 4px 4px 0;
+  font-size: 0.8rem;
+  color: var(--color-slate-600);
+}
+
+.drawer-msg-quote-author {
+  font-weight: 700;
+  color: var(--color-slate-700);
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+}
+
+.drawer-msg-quote-text {
+  font-style: italic;
+  margin-top: 0.1rem;
+}
+
 .drawer-msg-text {
   color: var(--color-slate-800);
   line-height: 1.5;
@@ -260,18 +292,18 @@
 .drawer-msg-actions {
   position: absolute;
   right: 1.5rem;
-  top: -10px;
+  top: -15px;
   background: white;
   border: 1px solid var(--color-slate-200);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08); /* sexy floating shadow */
   border-radius: var(--radius-md);
   padding: 0.2rem;
   display: flex;
   gap: 0.2rem;
   opacity: 0;
   transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  transform: translateY(5px);
-  z-index: 5;
+  transform: translateY(8px);
+  z-index: 10;
 }
 
 .drawer-msg-item:hover .drawer-msg-actions {
@@ -281,9 +313,9 @@
 
 /* Glass Input Area */
 .drawer-input-area {
-  padding: 1rem 1.5rem 1.5rem;
-  background: var(--color-white);
-  border-top: 1px solid var(--color-slate-200);
+  padding: 0.75rem 1.5rem 1.75rem 1.5rem;
+  background: var(--color-slate-50);
+  border-top: none;
   position: relative;
 }
 
@@ -291,11 +323,11 @@
 .drawer-input-area::before {
   content: '';
   position: absolute;
-  top: -20px;
+  top: -24px;
   left: 0;
   right: 0;
-  height: 20px;
-  background: linear-gradient(to top, var(--color-white), transparent);
+  height: 24px;
+  background: linear-gradient(to top, var(--color-slate-50), transparent);
   pointer-events: none;
 }
 
@@ -303,16 +335,16 @@
   display: flex;
   flex-direction: column;
   border: 1px solid var(--color-slate-300);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   background: var(--color-white);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05); /* Premium glass float */
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06); 
 }
 
 .drawer-input-wrapper:focus-within {
   border-color: var(--color-primary-400);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08), 0 0 0 3px var(--color-primary-100);
-  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08), 0 0 0 4px var(--color-primary-50);
+  transform: translateY(-2px);
 }
 
 .drawer-input {
