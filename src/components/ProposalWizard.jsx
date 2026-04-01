@@ -16,22 +16,40 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedLocationId, setSelectedLocationId] = useState('');
   
-  // Measurement Data State
-  const [survey, setSurvey] = useState({
-    systemType: '', currentTonnage: '', gasRefrigerant: 'R410A', existingBrand: '', yearManufactured: '',
-    mainBreakerAmps: '', condenserBreaker: '', disconnectCondition: 'Pass', whipCondition: 'Pass',
-    condenserLocation: '', ahuLocation: '', ductCondition: '', condensateType: '', thermostat: '',
-    m1: '', m2: '', m3: '', m4: '', m5: '', m6: '', m7: '', m8: '', m9: '', m10: '',
-    m11: '', m12: '', m13: '', m14: '', m15: '', m16: '', m17: '',
-    m18: '', m19: '', m20: '', m21: '', m22: '', m23: '', m24: '', m25: '', m26: '', m27: ''
+  const generateEmptySystem = (id) => ({
+    id,
+    name: `System ${id}`,
+    survey: {
+      systemType: '', currentTonnage: '', gasRefrigerant: 'R410A', existingBrand: '', yearManufactured: '',
+      mainBreakerAmps: '', condenserBreaker: '', disconnectCondition: 'Pass', whipCondition: 'Pass',
+      condenserLocation: '', ahuLocation: '', ductCondition: '', condensateType: '', thermostat: '',
+      m1: '', m2: '', m3: '', m4: '', m5: '', m6: '', m7: '', m8: '', m9: '', m10: '',
+      m11: '', m12: '', m13: '', m14: '', m15: '', m16: '', m17: '',
+      m18: '', m19: '', m20: '', m21: '', m22: '', m23: '', m24: '', m25: '', m26: '', m27: ''
+    },
+    photos: { condenser_wide: null, condenser_data_plate: null, indoor_unit_wide: null, indoor_data_plate: null, electrical_panel_open: null },
+    tonnageFilter: '',
+    selectedTiers: { best: null, better: null, good: null },
+    addons: {}
   });
-  
-  // Photo State
-  const [photos, setPhotos] = useState({ 
-    condenser_wide: null, condenser_data_plate: null, indoor_unit_wide: null, indoor_data_plate: null, electrical_panel_open: null 
-  });
+
+  const [systems, setSystems] = useState([generateEmptySystem(1)]);
+  const [activeSystemId, setActiveSystemId] = useState(1);
+  const [discountPercent, setDiscountPercent] = useState(0); 
   const [uploadingPhoto, setUploadingPhoto] = useState(null);
-  
+
+  const activeSystem = systems.find(s => s.id === activeSystemId) || systems[0];
+  const { survey, photos, tonnageFilter, selectedTiers, addons } = activeSystem;
+
+  const updateActiveSystem = (field, value) => {
+     setSystems(prev => prev.map(sys => sys.id === activeSystemId ? { ...sys, [field]: value } : sys));
+  };
+  const setSurvey = (val) => updateActiveSystem('survey', typeof val === 'function' ? val(survey) : val);
+  const setPhotos = (val) => updateActiveSystem('photos', typeof val === 'function' ? val(photos) : val);
+  const setTonnageFilter = (val) => updateActiveSystem('tonnageFilter', typeof val === 'function' ? val(tonnageFilter) : val);
+  const setSelectedTiers = (val) => updateActiveSystem('selectedTiers', typeof val === 'function' ? val(selectedTiers) : val);
+  const setAddons = (val) => updateActiveSystem('addons', typeof val === 'function' ? val(addons) : val);
+
   // Live Database Arrays
   const [catalog, setCatalog] = useState([]);
   const [laborRates, setLaborRates] = useState([]);
@@ -40,19 +58,13 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   });
   const [dbReady, setDbReady] = useState(false);
 
-  // Proposal Pipeline State
-  const [tonnageFilter, setTonnageFilter] = useState('');
-  const [selectedTiers, setSelectedTiers] = useState({ best: null, better: null, good: null });
-  const [addons, setAddons] = useState({});
-  const [discounts, setDiscounts] = useState({ best: 0, better: 0, good: 0 });
-
   useEffect(() => {
     if (step > 0 && dbReady && !isEditing) {
       localStorage.setItem('pilar_wizard_draft', JSON.stringify({
-         step, selectedCustomerId, selectedLocationId, survey, photos, tonnageFilter, selectedTiers, addons, discounts
+         step, selectedCustomerId, selectedLocationId, systems, discountPercent
       }));
     }
-  }, [step, selectedCustomerId, selectedLocationId, survey, photos, tonnageFilter, selectedTiers, addons, discounts, dbReady, isEditing]);
+  }, [step, selectedCustomerId, selectedLocationId, systems, discountPercent, dbReady, isEditing]);
 
   // Handle Edit/Clone Mode Rehydration
   useEffect(() => {
@@ -62,12 +74,16 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
             try {
                if (draft.selectedCustomerId) setSelectedCustomerId(draft.selectedCustomerId);
                if (draft.selectedLocationId) setSelectedLocationId(draft.selectedLocationId);
-               if (draft.survey) setSurvey(draft.survey);
-               if (draft.photos) setPhotos({...photos, ...draft.photos});
-               if (draft.tonnageFilter) setTonnageFilter(draft.tonnageFilter);
-               if (draft.selectedTiers) setSelectedTiers(draft.selectedTiers);
-               if (draft.addons) setAddons(draft.addons);
-               if (draft.discounts) setDiscounts({best: 0, better: 0, good: 0, ...draft.discounts});
+               if (draft.systems) {
+                   setSystems(draft.systems);
+                   setActiveSystemId(draft.systems[0].id);
+               } else if (draft.survey) {
+                   setSystems([{
+                       id: 1, name: "System 1", survey: draft.survey, photos: draft.photos || {}, tonnageFilter: draft.tonnageFilter || '',
+                       selectedTiers: draft.selectedTiers || { best: null, better: null, good: null }, addons: draft.addons || {}
+                   }]);
+               }
+               if (draft.discountPercent !== undefined) setDiscountPercent(draft.discountPercent);
             } catch(e) {}
         } else {
             // Failsafe: Proposal exists but lacked Wizard 2.0 state (Legacy or corrupted data)
@@ -141,31 +157,24 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     });
   };
 
-  // The Baseline Calculation ignoring any custom discounts
-  const calculateBaselineRetail = (rawEquipCost, tierType = 'Good') => {
+  const calculateSystemBaselineRetail = (sys, rawEquipCost, tierType = 'Good') => {
     if (!rawEquipCost) return 0;
-    
-    const activeAddons = laborRates.filter(l => addons[l.id]);
+    const activeAddons = laborRates.filter(l => sys.addons[l.id]);
     const taxableMaterials = activeAddons.filter(l => !['Labor', 'Install', 'Subcontract', 'Permit'].includes(l.category)).reduce((s, i) => s + i.cost, 0);
     const nontaxableLabor = activeAddons.filter(l => ['Labor', 'Install', 'Subcontract', 'Permit'].includes(l.category)).reduce((s, i) => s + i.cost, 0);
-
     const taxRate = margins.sales_tax || 0.07;
     const equipWithTax = (rawEquipCost + taxableMaterials) * (1 + taxRate); 
     const totalHardCost = equipWithTax + nontaxableLabor;
-    
     const costWithReserve = totalHardCost * (1 + (margins.service_reserve || 0.05)); 
-    
     let targetMargin = margins.good_margin || 0.35;
     if (tierType === 'Better') targetMargin = margins.better_margin || 0.40;
     if (tierType === 'Best') targetMargin = margins.best_margin || 0.45;
-    
-    const salesPrice = costWithReserve / (1 - targetMargin);
-    return Math.round(salesPrice);
+    return Math.round(costWithReserve / (1 - targetMargin));
   };
 
-  const getHardCostOnly = (rawEquipCost) => {
+  const getSystemHardCostOnly = (sys, rawEquipCost) => {
     if (!rawEquipCost) return 0;
-    const activeAddons = laborRates.filter(l => addons[l.id]);
+    const activeAddons = laborRates.filter(l => sys.addons[l.id]);
     const taxableMaterials = activeAddons.filter(l => !['Labor', 'Install', 'Subcontract', 'Permit'].includes(l.category)).reduce((s, i) => s + i.cost, 0);
     const nontaxableLabor = activeAddons.filter(l => ['Labor', 'Install', 'Subcontract', 'Permit'].includes(l.category)).reduce((s, i) => s + i.cost, 0);
     const taxRate = margins.sales_tax || 0.07;
@@ -173,12 +182,52 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   };
 
   const generateProposal = async () => {
-    // Make sure we have enough data
-    const bestBase = calculateBaselineRetail(selectedTiers.best?.system_cost, 'Best');
-    const betterBase = calculateBaselineRetail(selectedTiers.better?.system_cost, 'Better');
-    const goodBase = calculateBaselineRetail(selectedTiers.good?.system_cost, 'Good');
+    let systemBestSum = 0;
+    systems.forEach(sys => systemBestSum += calculateSystemBaselineRetail(sys, sys.selectedTiers.best?.system_cost, 'Best'));
+    const approximateRetailForComm = getRetailFromBest(systemBestSum || 0);
 
-    const finalAmount = Math.max((betterBase - discounts.better), (goodBase - discounts.good), 0);
+    const finalTiers = { best: null, better: null, good: null };
+
+    ['best', 'better', 'good'].forEach(tierKey => {
+       const isActive = systems.some(sys => sys.selectedTiers[tierKey]);
+       if (!isActive) return;
+
+       let totalBaseline = 0;
+       let sysBrands = [];
+       let totalTons = 0;
+       
+       systems.forEach(sys => {
+          if (sys.selectedTiers[tierKey]) {
+             totalBaseline += calculateSystemBaselineRetail(sys, sys.selectedTiers[tierKey].system_cost, tierKey.charAt(0).toUpperCase() + tierKey.slice(1));
+             sysBrands.push(`${sys.name}: ${sys.selectedTiers[tierKey].brand} ${sys.selectedTiers[tierKey].series}`);
+             totalTons += (sys.selectedTiers[tierKey].tons || 0);
+          }
+       });
+
+       const discountAmount = totalBaseline * (discountPercent / 100);
+       const finalPrice = totalBaseline - discountAmount;
+       const commission = computeCommission(totalBaseline, approximateRetailForComm);
+
+       let features = [];
+       if (tierKey === 'best') features = ["Variable Speed Ultra Quiet", "Highest Efficiency Ratings", "Premium 12-Year Parts Warranty", "Advanced Dehumidification Control"];
+       if (tierKey === 'better') features = ["Two-Stage Enhanced Comfort", "High Efficiency SEER2", "10-Year Parts Warranty", "Consistent Temperature Control"];
+       if (tierKey === 'good') features = ["Single-Stage Operation", "Base Efficiency Standard", "5-Year Parts Warranty", "Cost-Effective Reliable Cooling"];
+
+       finalTiers[tierKey] = {
+           id: tierKey,
+           brand: sysBrands.length > 1 ? "Multiple" : sysBrands[0]?.split(': ')[1]?.split(' ')[0],
+           series: sysBrands.length > 1 ? "Systems" : sysBrands[0]?.split(': ')[1]?.split(' ')[1],
+           tons: totalTons,
+           baselinePrice: totalBaseline, 
+           saleDiscount: discountAmount, 
+           salesPrice: finalPrice,
+           commission: commission,
+           features: features,
+           equipmentList: sysBrands
+       };
+    });
+
+    const finalAmount = Math.max((finalTiers.better?.salesPrice || 0), (finalTiers.good?.salesPrice || 0), 0);
     const cust = customers.find(c => c.id.toString() === selectedCustomerId.toString());
     if (!cust) return;
 
@@ -187,33 +236,13 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     const selectedProp = cust.locations?.find(l => l.id.toString() === selectedLocationId.toString()) || cust.locations?.[0];
     const propAddressString = selectedProp ? `${selectedProp.street_address}${selectedProp.city ? ', ' + selectedProp.city : ''}` : 'Unknown Address';
 
-    const approximateRetailForComm = getRetailFromBest(bestBase || 0);
-
     const finalProposalData = {
       generatedAt: new Date().toISOString(),
-      tiers: {
-        best: selectedTiers.best ? {
-          id: selectedTiers.best.id, brand: selectedTiers.best.brand, series: selectedTiers.best.series, tons: selectedTiers.best.tons,
-          baselinePrice: bestBase, saleDiscount: discounts.best, salesPrice: (bestBase - discounts.best),
-          commission: computeCommission(bestBase, approximateRetailForComm), // Commission based on baseline
-          features: ["Variable Speed Ultra Quiet", "Highest Efficiency Ratings", "Premium 12-Year Parts Warranty", "Advanced Dehumidification Control"]
-        } : null,
-        better: selectedTiers.better ? {
-          id: selectedTiers.better.id, brand: selectedTiers.better.brand, series: selectedTiers.better.series, tons: selectedTiers.better.tons,
-          baselinePrice: betterBase, saleDiscount: discounts.better, salesPrice: (betterBase - discounts.better),
-          commission: computeCommission(betterBase, approximateRetailForComm),
-          features: ["Two-Stage Enhanced Comfort", "High Efficiency SEER2", "10-Year Parts Warranty", "Consistent Temperature Control"]
-        } : null,
-        good: selectedTiers.good ? {
-          id: selectedTiers.good.id, brand: selectedTiers.good.brand, series: selectedTiers.good.series, tons: selectedTiers.good.tons,
-          baselinePrice: goodBase, saleDiscount: discounts.good, salesPrice: (goodBase - discounts.good),
-          commission: computeCommission(goodBase, approximateRetailForComm),
-          features: ["Single-Stage Operation", "Base Efficiency Standard", "5-Year Parts Warranty", "Cost-Effective Reliable Cooling"]
-        } : null
-      }
+      systems: systems,
+      tiers: finalTiers
     };
 
-    const wizardState = { step: 6, selectedCustomerId, selectedLocationId, survey, photos, tonnageFilter, selectedTiers, addons, discounts };
+    const wizardState = { step: 6, selectedCustomerId, selectedLocationId, systems, discountPercent };
 
     if (isEditing) {
        const oppId = editModeData.proposal_data?.associated_opportunity_id;
@@ -279,6 +308,42 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
         <AnimatePresence mode="wait">
           <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
+
+          {step >= 2 && step <= 4 && (
+             <div className="flex items-center gap-2 mb-6 border-b border-slate-200 pb-2 overflow-x-auto">
+                {systems.map(sys => (
+                   <button 
+                     key={sys.id} 
+                     onClick={() => setActiveSystemId(sys.id)}
+                     className={`px-4 py-2 font-bold text-sm rounded-t-lg transition-colors whitespace-nowrap ${activeSystemId === sys.id ? 'bg-primary-50 text-primary-700 border-b-2 border-primary-500' : 'text-slate-500 hover:bg-slate-50'}`}
+                   >
+                      {sys.name}
+                   </button>
+                ))}
+                <button 
+                  onClick={() => {
+                     const nextId = Math.max(...systems.map(s => s.id)) + 1;
+                     setSystems([...systems, generateEmptySystem(nextId)]);
+                     setActiveSystemId(nextId);
+                  }}
+                  className="px-3 py-1.5 ml-2 text-xs font-bold text-primary-600 border border-primary-200 rounded hover:bg-primary-50 transition-colors whitespace-nowrap"
+                >
+                   + Add Unit
+                </button>
+                {systems.length > 1 && (
+                  <button 
+                    onClick={() => {
+                       const newSystems = systems.filter(s => s.id !== activeSystemId);
+                       setSystems(newSystems);
+                       setActiveSystemId(newSystems[0].id);
+                    }}
+                    className="px-3 py-1.5 ml-auto text-xs font-bold text-danger-600 border border-danger-200 rounded hover:bg-danger-50 transition-colors whitespace-nowrap"
+                  >
+                     - Remove Unit
+                  </button>
+                )}
+             </div>
+          )}
         {step === 0 && (
            <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center mb-6">
@@ -298,12 +363,16 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                          const draft = JSON.parse(draftStr);
                          if (draft.selectedCustomerId) setSelectedCustomerId(draft.selectedCustomerId);
                          if (draft.selectedLocationId) setSelectedLocationId(draft.selectedLocationId);
-                         if (draft.survey) setSurvey(draft.survey);
-                         if (draft.photos) setPhotos(draft.photos);
-                         if (draft.tonnageFilter) setTonnageFilter(draft.tonnageFilter);
-                         if (draft.selectedTiers) setSelectedTiers(draft.selectedTiers);
-                         if (draft.addons) setAddons(draft.addons);
-                         if (draft.discounts) setDiscounts(draft.discounts);
+                         if (draft.systems) {
+                             setSystems(draft.systems);
+                             setActiveSystemId(draft.systems[0].id);
+                         } else if (draft.survey) {
+                             setSystems([{
+                                 id: 1, name: "System 1", survey: draft.survey, photos: draft.photos || {}, tonnageFilter: draft.tonnageFilter || '',
+                                 selectedTiers: draft.selectedTiers || { best: null, better: null, good: null }, addons: draft.addons || {}
+                             }]);
+                         }
+                         if (draft.discountPercent !== undefined) setDiscountPercent(draft.discountPercent);
                          setStep(draft.step > 0 ? draft.step : 1);
                      } else {
                          setStep(1);
@@ -585,7 +654,20 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                <p className="text-xs text-red-800 font-medium"><strong>Confidential Dashboard:</strong> This data reflects absolute floor costs and backend margin protections. Your base commission algorithm operates against the <span className="underline font-bold">Target System Par</span>. Providing a retail discount strictly lowers the final transaction price, not your proportional algorithmic baseline.</p>
             </div>
 
-            {(!selectedTiers.best && !selectedTiers.better && !selectedTiers.good) ? (
+            <div className="mb-6 flex justify-between items-center bg-white border border-primary-200 rounded-lg p-4 shadow-sm">
+               <div>
+                  <h4 className="font-bold text-slate-700">Global Customer Discount</h4>
+                  <p className="text-xs text-slate-500">Applies equally to all configured systems and tiers.</p>
+               </div>
+               <div className="flex items-center gap-3">
+                  <div className="relative w-32">
+                     <span className="absolute inset-y-0 right-0 pr-4 flex items-center text-primary-600 font-black pointer-events-none">%</span>
+                     <input type="number" step="1" min="0" max="100" className="input-field w-full text-right pr-8 font-mono font-black text-primary-700 text-xl" value={discountPercent || ''} onChange={e => setDiscountPercent(parseFloat(e.target.value) || 0)} placeholder="0"/>
+                  </div>
+               </div>
+            </div>
+
+            {(!systems.some(s => s.selectedTiers.best || s.selectedTiers.better || s.selectedTiers.good)) ? (
                 <div className="border-2 border-dashed border-red-200 bg-red-50 p-10 text-center rounded-xl my-8">
                    <AlertTriangle size={32} className="mx-auto text-red-400 mb-4" />
                    <h3 className="font-bold text-red-800 text-lg mb-2">No Equipment Tiers Selected</h3>
@@ -595,45 +677,53 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {[ {k: 'best', l: 'Premium (BestTier)', m: margins.best_margin}, {k: 'better', l: 'Core (BetterTier)', m: margins.better_margin}, {k: 'good', l: 'Baseline (GoodTier)', m: margins.good_margin} ].map(tier => {
-                     if (!selectedTiers[tier.k]) return null;
-                 const rawEquip = selectedTiers[tier.k].system_cost || 0;
-                 const floorCost = getHardCostOnly(rawEquip);
-                 const absoluteTotalFloor = floorCost * (1 + (margins.service_reserve || 0.05)); // Physical floor + internal protection rule
-                 const baselineRetail = calculateBaselineRetail(rawEquip, tier.k.charAt(0).toUpperCase() + tier.k.slice(1));
-                 const baseComm = computeCommission(baselineRetail, getRetailFromBest(calculateBaselineRetail(selectedTiers.best?.system_cost || rawEquip, 'Best')));
-                 const discount = parseFloat(discounts[tier.k]) || 0;
-                 const finalPrice = baselineRetail - discount;
-                 
-                 // System Safeguard calculation (e.g. absolutely no lower than Floor Cost!)
-                 const isBelowFloor = finalPrice < absoluteTotalFloor;
+                     const isActive = systems.some(sys => sys.selectedTiers[tier.k]);
+                     if (!isActive) return null;
+                     
+                     let totalRawEquip = 0;
+                     let totalFloorCost = 0;
+                     let totalBaselineRetail = 0;
+
+                     systems.forEach(sys => {
+                        if (sys.selectedTiers[tier.k]) {
+                           const raw = sys.selectedTiers[tier.k].system_cost || 0;
+                           totalRawEquip += raw;
+                           totalFloorCost += getSystemHardCostOnly(sys, raw);
+                           totalBaselineRetail += calculateSystemBaselineRetail(sys, raw, tier.k.charAt(0).toUpperCase() + tier.k.slice(1));
+                        }
+                     });
+
+                     const absoluteTotalFloor = totalFloorCost * (1 + (margins.service_reserve || 0.05));
+                     const baselineCommBase = systems.reduce((acc, sys) => acc + calculateSystemBaselineRetail(sys, sys.selectedTiers.best?.system_cost || sys.selectedTiers[tier.k]?.system_cost, 'Best'), 0);
+                     const baseComm = computeCommission(totalBaselineRetail, getRetailFromBest(baselineCommBase));
+                     
+                     const discountAmount = totalBaselineRetail * (discountPercent / 100);
+                     const finalPrice = totalBaselineRetail - discountAmount;
+                     const isBelowFloor = finalPrice < absoluteTotalFloor;
 
                  return (
                  <div key={tier.k} className="bg-white border-2 border-slate-200 rounded-xl overflow-hidden shadow-md flex flex-col">
                     <div className="bg-slate-100 py-3 px-4 border-b border-slate-200 font-bold text-sm text-center uppercase tracking-wider text-slate-600">{tier.l}</div>
                     <div className="p-5 flex-1 flex flex-col gap-4">
                        
-                       {/* Transparent Breakdown */}
                        <div className="bg-slate-50 border border-slate-100 rounded p-3 text-xs space-y-1.5 font-mono">
-                          <div className="flex justify-between text-slate-500"><span>Raw System/Mat:</span><span>${rawEquip.toFixed(2)}</span></div>
-                          <div className="flex justify-between text-slate-500 border-b border-slate-200 pb-1.5"><span>V-Labor Addons:</span><span>+ ${(floorCost - rawEquip).toFixed(2)}</span></div>
-                          <div className="flex justify-between font-bold text-slate-700"><span>Hard Cost Total:</span><span>${floorCost.toFixed(2)}</span></div>
+                          <div className="flex justify-between text-slate-500"><span>Raw System/Mat:</span><span>${totalRawEquip.toFixed(2)}</span></div>
+                          <div className="flex justify-between text-slate-500 border-b border-slate-200 pb-1.5"><span>V-Labor Addons:</span><span>+ ${(totalFloorCost - totalRawEquip).toFixed(2)}</span></div>
+                          <div className="flex justify-between font-bold text-slate-700"><span>Hard Cost Total:</span><span>${totalFloorCost.toFixed(2)}</span></div>
                           <div className="flex justify-between text-slate-500 pt-1.5"><span>1st Yr Reserve:</span><span>+ {((margins.service_reserve || 0.05)*100).toFixed(1)}%</span></div>
                           <div className="flex justify-between text-slate-500"><span>Target Markup:</span><span>/ {((1 - tier.m)*100).toFixed(1)}% Par</span></div>
                        </div>
 
-                       {/* Target Retail Baseline */}
                        <div className="text-center pt-2">
                           <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1">Target Retail Baseline</label>
-                          <div className="text-2xl font-black text-slate-800">${baselineRetail.toLocaleString()}</div>
+                          <div className="text-2xl font-black text-slate-800">${totalBaselineRetail.toLocaleString()}</div>
                           <div className="text-xs font-bold text-emerald-600 mt-1">Algorithmic Commission: ${baseComm.toLocaleString()}</div>
                        </div>
 
-                       {/* Interactive Discount Engine */}
                        <div className="mt-auto pt-4 border-t border-slate-100 relative">
-                          <label className="text-[10px] uppercase font-bold text-primary-600 block mb-1">Apply Rep Discount ($)</label>
-                          <div className="relative mb-4">
-                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span className="text-danger-500 font-black">- $</span></div>
-                             <input type="number" step="0.01" min="0" className="input-field w-full pl-8 font-mono font-black text-danger-600 bg-red-50 border-red-200 outline-none focus:ring-2 focus:ring-red-400 hover:bg-red-100 transition-colors" value={discounts[tier.k] || ''} onChange={e => setDiscounts({...discounts, [tier.k]: parseFloat(e.target.value) || 0})} placeholder="0.00"/>
+                          <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1 text-center">Global Discount Application</label>
+                          <div className="text-center mb-4 text-danger font-black">
+                             - ${discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} (-{discountPercent}%)
                           </div>
 
                           <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1 text-center">Final Presentable Price</label>

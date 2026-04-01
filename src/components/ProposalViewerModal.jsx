@@ -29,8 +29,19 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
           <div className="flex-grow space-y-4 mb-6">
              <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Equipment</p>
-                <p className="font-bold text-slate-800">{tierData.brand} {tierData.series}</p>
-                <p className="text-sm text-slate-600">{tierData.tons} Ton System</p>
+                {tierData.equipmentList && tierData.equipmentList.length > 0 ? (
+                   <div className="space-y-1">
+                      {tierData.equipmentList.map((eq, i) => (
+                          <p key={i} className="text-sm font-bold text-slate-800">{eq}</p>
+                      ))}
+                      <p className="text-xs text-slate-600 border-t border-slate-200 mt-1 pt-1">Total: {tierData.tons} Tons</p>
+                   </div>
+                ) : (
+                   <>
+                      <p className="font-bold text-slate-800">{tierData.brand} {tierData.series}</p>
+                      <p className="text-sm text-slate-600">{tierData.tons} Ton System</p>
+                   </>
+                )}
              </div>
              
              <div>
