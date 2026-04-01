@@ -73,11 +73,26 @@ CREATE POLICY "Enable delete for authenticated users only" ON public.chat_messag
 -- 3. ENABLE REALTIME FOR CHAT MESSAGES
 -- This allows the frontend to receive real-time updates when new messages are inserted.
 -- Note: 'chat_messages' table needs to be added to the Supabase publication.
-BEGIN;
-  -- Add the tables to the supabase_realtime publication
-  ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
-  ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_channels;
-COMMIT;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' 
+    AND schemaname = 'public' 
+    AND tablename = 'chat_messages'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' 
+    AND schemaname = 'public' 
+    AND tablename = 'chat_channels'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_channels;
+  END IF;
+END $$;
 
 -- 4. INSERT DEFAULT CHANNEL
 -- Insert a "# general" channel if it doesn't already exist.
