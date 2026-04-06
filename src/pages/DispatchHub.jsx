@@ -201,6 +201,31 @@ export default function DispatchHub() {
       }
    };
 
+   const handleStatusUpdate = async (job, newStatus) => {
+      try {
+         const updates = { status: newStatus };
+         
+         if (newStatus === 'En Route') {
+             updates.dispatch_notes = (job.dispatch_notes || '') + `\n[${new Date().toLocaleTimeString()}] Crew En Route`;
+         } else if (newStatus === 'In Progress') {
+             updates.dispatch_notes = (job.dispatch_notes || '') + `\n[${new Date().toLocaleTimeString()}] Crew Arrived - Job Started`;
+         } else if (newStatus === 'Completed') {
+             updates.dispatch_notes = (job.dispatch_notes || '') + `\n[${new Date().toLocaleTimeString()}] Job Completed Successfully`;
+         }
+
+         if (job.type === 'opportunity') {
+             await supabase.from('opportunities').update(updates).eq('id', job.dbId);
+         } else {
+             await supabase.from('work_orders').update(updates).eq('id', job.dbId);
+         }
+         
+         setSelectedJob({ ...job, status: newStatus, dispatch_notes: updates.dispatch_notes || job.dispatch_notes });
+         fetchOpportunities();
+      } catch (err) {
+         console.error("Failed to update status", err);
+      }
+   };
+
    // Smart Phone Lookup
    useEffect(() => {
       if (searchPhone.length >= 7) {
@@ -521,6 +546,25 @@ Details: ${formData.notes}
                               <button className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-slate-900/20 transition-all text-sm">
                                  <Phone size={16}/> Dispatch Crew
                               </button>
+                           )}
+                           {activeRole === ROLES.SUBCONTRACTOR && (
+                              <>
+                                 {selectedJob.status === 'Scheduled' && (
+                                     <button onClick={() => handleStatusUpdate(selectedJob, 'En Route')} className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold shadow-lg transition-all text-sm">
+                                        🚀 Start Drive (En Route)
+                                     </button>
+                                 )}
+                                 {selectedJob.status === 'En Route' && (
+                                     <button onClick={() => handleStatusUpdate(selectedJob, 'In Progress')} className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-bold shadow-lg transition-all text-sm animate-pulse">
+                                        📍 Arrived (Start Job)
+                                     </button>
+                                 )}
+                                 {selectedJob.status === 'In Progress' && (
+                                     <button onClick={() => handleStatusUpdate(selectedJob, 'Completed')} className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold shadow-lg transition-all text-sm">
+                                        ✅ Complete Job
+                                     </button>
+                                 )}
+                              </>
                            )}
                         </div>
                      </div>

@@ -11,12 +11,15 @@ import ProposalWizard from '../components/ProposalWizard';
 import ProposalViewerModal from '../components/ProposalViewerModal';
 import ContractDocumentModal from '../components/ContractDocumentModal';
 
+import SignaturePad from '../components/SignaturePad';
+
 export default function Proposals() {
   const { proposals, addProposal, updateProposal, deleteProposal, loading } = useProposals();
   const { customers } = useCustomers();
   const [showWizard, setShowWizard] = useState(false);
   const [viewingProposal, setViewingProposal] = useState(null);
   const [viewingContract, setViewingContract] = useState(null);
+  const [signingContract, setSigningContract] = useState(null);
   const [editingProposal, setEditingProposal] = useState(null);
   const [deletingProposal, setDeletingProposal] = useState(null);
   const [editForm, setEditForm] = useState({ customer: '', amount: '', status: '' });
@@ -68,7 +71,16 @@ export default function Proposals() {
      }
   };
 
-  const handleAcceptProposal = async (tierName, tierData, proposal) => {
+  const handleInitiateAcceptance = (tierName, tierData, proposal) => {
+     // Instead of instantly fulfilling the database, we launch the Signature Capture
+     setViewingProposal(null);
+     setSigningContract({ proposal, tierName, tierData, date: new Date().toLocaleDateString() });
+  };
+
+  const executeSignedContract = async (signatureData) => {
+     if (!signingContract) return;
+     const { tierName, tierData, proposal } = signingContract;
+
      // 1. Build Work Order Payload
      const workOrderNotes = `
 **FIELD WORK ORDER**
@@ -77,7 +89,7 @@ Equipment: ${tierData.brand} ${tierData.series} (${tierData.tons} Ton)
 Included Add-ons / Features:
 ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
 
-> System Note: Proposal ${proposal.id} automatically converted to Job on ${new Date().toLocaleDateString()}.
+> System Note: Proposal ${proposal.id} electronically signed and converted to Job on ${new Date().toLocaleDateString()}.
 `.trim();
 
      const oppId = proposal.proposal_data?.associated_opportunity_id;
@@ -96,7 +108,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                      opportunity_id: oppId,
                      household_id: oppRow.household_id,
                      status: 'Unscheduled',
-                     execution_payload: { tierName, ...tierData },
+                     execution_payload: { tierName, ...tierData, signature: signatureData },
                      dispatch_notes: workOrderNotes
                  });
 
@@ -104,7 +116,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                  await supabase.from('activity_logs').insert({
                      household_id: oppRow.household_id,
                      activity_type: 'Contract Executed',
-                     description: `Digital Contract executed for ${tierName} System. Work Order dispatched. Official contract dynamically emailed to client.`,
+                     description: `Client signed Digital Contract for ${tierName} System. Work Order generated.`,
                      is_pinned_alert: true
                  });
              }
@@ -113,15 +125,20 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
          }
      }
 
-     // 5. Update Proposal Status and Lock Amount
-     await updateProposal(proposal.id, { 
+     // 5. Update Proposal Status, Lock Amount, and Save Signature!
+     const finalDbObj = { 
          status: 'Approved',
-         amount: tierData.salesPrice
-     });
+         amount: tierData.salesPrice,
+         signature_data: signatureData
+     };
+     
+     await updateProposal(proposal.id, finalDbObj);
 
-     // Jump straight from the quoting tool into the formal generated contract!
-     setViewingProposal(null);
-     setViewingContract({ proposal, tierName, tierData, date: new Date().toLocaleDateString() });
+     // Move to the View Contract state
+     const finalContractData = { ...signingContract };
+     finalContractData.proposal.signature_data = signatureData;
+     setSigningContract(null);
+     setViewingContract(finalContractData);
   };
 
   const handleDeleteConfirm = () => {
@@ -294,7 +311,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
         isOpen={!!viewingProposal}
         onClose={() => setViewingProposal(null)}
         proposal={viewingProposal}
-        onAccept={handleAcceptProposal}
+        onAccept={handleInitiateAcceptance}
         onViewContract={(proposalData) => {
            setViewingProposal(null);
            // Build a dummy state to view past contracts natively
@@ -303,6 +320,19 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
            setViewingContract({ proposal: proposalData, tierName: matchedTierName?.toUpperCase(), tierData: matchedTierData, date: proposalData.date });
         }}
       />
+
+      {/* Signature Capture Overlay */}
+      {signingContract && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSigningContract(null)}></div>
+           <div className="relative z-10 w-full max-w-lg">
+              <SignaturePad 
+                onSave={(signatureData) => executeSignedContract(signatureData)} 
+                onCancel={() => setSigningContract(null)} 
+              />
+           </div>
+        </div>
+      )}
 
       {/* Verified Mock PDF Contract Modal */}
       <ContractDocumentModal 

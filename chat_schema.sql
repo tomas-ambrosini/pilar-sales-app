@@ -240,3 +240,10 @@ BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_reactions;
   END IF;
 END $$;
+
+-- ==========================================
+-- PHASE 7: CONTRACTS & E-SIGNATURES
+-- ==========================================
+ALTER TABLE public.proposals ADD COLUMN IF NOT EXISTS signature_data TEXT;
+ALTER TABLE public.proposals ADD COLUMN IF NOT EXISTS signed_at TIMESTAMPTZ;
+

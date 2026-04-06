@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Settings, LogOut, ArrowRight } from 'lucide-react';
+import { Search, LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Settings, LogOut, ArrowRight, UserCheck } from 'lucide-react';
+import { useCustomers } from '../context/CustomerContext';
+import { useProposals } from '../context/ProposalContext';
 
 const STATIC_COMMANDS = [
   { id: 'dash', name: 'Go to Dashboard', icon: LayoutDashboard, route: '/dashboard', section: 'Navigation' },
@@ -17,6 +19,8 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef(null);
+  const { customers } = useCustomers();
+  const { proposals } = useProposals();
   const navigate = useNavigate();
 
   // Keyboard Event Listeners for Cmd+K and Navigation
@@ -47,9 +51,38 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
     }
   }, [isOpen]);
 
-  const filteredCommands = query === '' 
-    ? STATIC_COMMANDS 
-    : STATIC_COMMANDS.filter(cmd => cmd.name.toLowerCase().includes(query.toLowerCase()));
+  const getDynamicResults = () => {
+    if (!query) return STATIC_COMMANDS;
+    
+    const q = query.toLowerCase();
+    const staticMatches = STATIC_COMMANDS.filter(cmd => cmd.name.toLowerCase().includes(q));
+    
+    const customerMatches = customers
+      .filter(c => c.name.toLowerCase().includes(q) || (c.phone && c.phone.includes(q)))
+      .map(c => ({
+         id: `c_${c.id}`,
+         name: `${c.name}`,
+         icon: UserCheck,
+         route: '/customers',
+         section: 'Customers'
+      }))
+      .slice(0, 3); // Max 3 static customers
+
+    const proposalMatches = proposals
+      .filter(p => p.customer?.toLowerCase().includes(q) || p.status?.toLowerCase().includes(q))
+      .map(p => ({
+         id: `p_${p.id}`,
+         name: `Quote for ${p.customer} ($${p.amount})`,
+         icon: FileCheck,
+         route: '/proposals',
+         section: 'Proposals'
+      }))
+      .slice(0, 3);
+
+    return [...staticMatches, ...customerMatches, ...proposalMatches];
+  };
+
+  const filteredCommands = getDynamicResults();
 
   // Up/Down Navigation inside Menu
   useEffect(() => {
@@ -140,8 +173,9 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
                          <div className={`p-2 rounded-lg mr-4 ${isSelected ? 'bg-primary-100/50 text-primary-600' : 'bg-slate-100/50 text-slate-400'}`}>
                            <cmd.icon size={18} />
                          </div>
-                         <div className="flex-1">
+                         <div className="flex-1 flex flex-col items-start gap-0.5">
                            <span className="font-semibold block">{cmd.name}</span>
+                           <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">{cmd.section}</span>
                          </div>
                          {isSelected && <ArrowRight size={16} className="text-primary-500" />}
                        </button>
