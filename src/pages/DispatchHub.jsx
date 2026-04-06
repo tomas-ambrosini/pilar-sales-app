@@ -67,7 +67,7 @@ export default function DispatchHub() {
              scheduled_date, scheduled_time_block, dispatch_notes, assigned_crew_id, created_at,
              households ( id, household_name, addresses!households_service_address_id_fkey ( street_address, city ) )
            `)
-           .in('status', ['New Lead', 'Site Survey Scheduled', 'Deal Won']); // Deal Won included for legacy fallback
+           .in('status', ['New Lead', 'Site Survey Scheduled']);
            
          if (oppErr) throw oppErr;
 
