@@ -258,7 +258,15 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                   
                   <button 
                     className="flex items-center gap-1 text-sm font-bold text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 px-3 py-2 rounded-lg transition-colors border border-primary-100 shadow-sm"
-                    onClick={() => setViewingProposal(proposal)}
+                    onClick={() => {
+                        if (proposal.status === 'Approved') {
+                           const matchedTierName = ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers[t]?.salesPrice === proposal.amount) || 'good';
+                           const matchedTierData = proposal.proposal_data?.tiers[matchedTierName];
+                           setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
+                        } else {
+                           setViewingProposal(proposal);
+                        }
+                    }}
                   >
                     View <ArrowRight size={14}/>
                   </button>

@@ -6,6 +6,7 @@ import './Customers.css';
 import { useCustomers } from '../context/CustomerContext';
 import { useProposals } from '../context/ProposalContext';
 import ProposalViewerModal from '../components/ProposalViewerModal';
+import ContractDocumentModal from '../components/ContractDocumentModal';
 
 function CustomerList() {
   const navigate = useNavigate();
@@ -288,6 +289,7 @@ function CustomerDetail() {
   const [isAddPropertyOpen, setIsAddPropertyOpen] = useState(false);
   const [newPropertyAddress, setNewPropertyAddress] = useState('');
   const [viewingProposal, setViewingProposal] = useState(null);
+  const [viewingContract, setViewingContract] = useState(null);
   
   const customer = customers.find(c => c.id.toString() === id.toString());
   
@@ -424,7 +426,15 @@ function CustomerDetail() {
           {customerProposals.length > 0 ? (
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                {customerProposals.map(prop => (
-                 <div key={prop.id} className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col justify-between" onClick={() => setViewingProposal(prop)}>
+                 <div key={prop.id} className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col justify-between" onClick={() => {
+                        if (prop.status === 'Approved') {
+                           const matchedTierName = ['good', 'better', 'best'].find(t => prop.proposal_data?.tiers[t]?.salesPrice === prop.amount) || 'good';
+                           const matchedTierData = prop.proposal_data?.tiers[matchedTierName];
+                           setViewingContract({ proposal: prop, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: prop.date });
+                        } else {
+                           setViewingProposal(prop);
+                        }
+                 }}>
                     <div className="flex justify-between items-start mb-2">
                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">{prop.id}</span>
                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${prop.status === 'Approved' ? 'bg-success-100 text-success-800' : prop.status === 'Sent' ? 'bg-secondary-100 text-secondary-800' : 'bg-slate-100 text-slate-600'}`}>{prop.status}</span>
@@ -591,6 +601,18 @@ function CustomerDetail() {
           isOpen={!!viewingProposal} 
           onClose={() => setViewingProposal(null)} 
           proposal={viewingProposal} 
+          onViewContract={(proposalData) => {
+             setViewingProposal(null);
+             const matchedTierName = ['good', 'better', 'best'].find(t => proposalData.proposal_data?.tiers[t]?.salesPrice === proposalData.amount) || 'good';
+             const matchedTierData = proposalData.proposal_data?.tiers[matchedTierName];
+             setViewingContract({ proposal: proposalData, tierName: matchedTierName?.toUpperCase(), tierData: matchedTierData, date: proposalData.date });
+          }}
+      />
+
+      <ContractDocumentModal 
+        isOpen={!!viewingContract}
+        onClose={() => setViewingContract(null)}
+        contractData={viewingContract}
       />
     </div>
   );
