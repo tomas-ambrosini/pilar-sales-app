@@ -422,13 +422,7 @@ export default function SalesPipeline() {
                >
                   Generated Proposal {activeJob?.proposalData ? '📝' : ''}
                </button>
-               <button 
-                  className={`pb-2 transition-colors flex items-center gap-1 ${activeTab === 'dispatch' ? 'border-b-2 border-primary-500 text-primary-600' : 'hover:text-slate-700'}`}
-                  onClick={() => setActiveTab('dispatch')}
-               >
-                  Dispatch Ops <Clock size={12} className="mb-0.5" />
-               </button>
-            </div>
+             </div>
             
             <div className="flex-1 overflow-y-auto px-4 pb-4">
                {activeTab === 'details' && (

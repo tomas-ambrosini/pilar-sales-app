@@ -10,7 +10,7 @@
     <title>Pilar Home Platform</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"></div><script>window.addEventListener("error", function(e) { document.body.innerHTML += "<div style=\"background:red;color:white;padding:20px;z-index:9999;position:fixed;top:0;left:0;right:0;\">" + e.error.stack + "</div>"; }); window.addEventListener("unhandledrejection", function(e) { document.body.innerHTML += "<div style=\"background:red;color:white;padding:20px;z-index:9999;position:fixed;top:0;left:0;right:0;\">" + e.reason.stack + "</div>"; });</script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
