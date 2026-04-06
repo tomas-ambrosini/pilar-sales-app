@@ -5,6 +5,7 @@ import { ClipboardList, PlusCircle, Calendar, MapPin, Pen, Activity, CheckSquare
 import Modal from '../components/Modal';
 import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
+import DispatchCalendar from '../components/DispatchCalendar';
 
 const PIPELINE_STAGES = [
   { id: 'New Lead', title: 'Incoming Leads', color: '#94a3b8' },
@@ -24,6 +25,7 @@ export default function SalesPipeline() {
   const { customers } = useCustomers();
   const [pipeline, setPipeline] = useState(initialPipeline);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('kanban');
 
   // Modals & Forms
   const [activeJob, setActiveJob] = useState(null);
@@ -327,7 +329,10 @@ export default function SalesPipeline() {
           <p className="page-subtitle">Track opportunities strictly from Lead Intake to Job Execution.</p>
         </div>
         <div className="flex gap-4 items-center">
-
+          <div className="flex bg-slate-200/50 p-1 rounded-md shadow-inner border border-slate-200">
+            <button className={`px-4 py-1.5 text-sm font-bold rounded transition-all ${viewMode === 'kanban' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setViewMode('kanban')}>Kanban Board</button>
+            <button className={`px-4 py-1.5 text-sm font-bold rounded transition-all flex items-center gap-1.5 ${viewMode === 'calendar' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setViewMode('calendar')}><Calendar size={14}/> Calendar View</button>
+          </div>
           <button className="primary-action-btn" onClick={() => setIsNewLeadOpen(true)}>
             <PlusCircle size={18} className="mr-2" /> New Internal Deal
           </button>
@@ -336,7 +341,7 @@ export default function SalesPipeline() {
       
       {loading ? (
         <div className="flex-center h-64 flex-col text-slate-500 animate-pulse"><div className="loader mb-4"></div>Syncing Boards...</div>
-      ) : (
+      ) : viewMode === 'kanban' ? (
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="pipeline-board flex gap-2 overflow-x-auto pb-6 pt-2 flex-1 items-stretch w-full">
             {PIPELINE_STAGES.map(stage => (
@@ -344,6 +349,12 @@ export default function SalesPipeline() {
             ))}
           </div>
         </DragDropContext>
+      ) : (
+         <DispatchCalendar 
+            pipeline={pipeline} 
+            readOnly={true}
+            onCardClick={(job) => { setActiveJob(job); setActiveTab('details'); }} 
+         />
       )}
 
       {/* Lost Deal Post-Mortem */}

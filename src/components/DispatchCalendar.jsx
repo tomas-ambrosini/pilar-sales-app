@@ -11,7 +11,7 @@ const getStartOfWeek = () => {
    return new Date(d.setDate(diff));
 };
 
-export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick }) {
+export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick, readOnly = false }) {
    const [crews, setCrews] = useState([]);
    const [loading, setLoading] = useState(true);
    const [baseDate, setBaseDate] = useState(getStartOfWeek());
@@ -23,15 +23,15 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick 
       setBaseDate(newD);
    };
 
-   useEffect(() => {
-      fetchCrews();
-   }, []);
-
    const fetchCrews = async () => {
       const { data, error } = await supabase.from('crews').select('*').order('crew_name');
       if (data) setCrews(data);
       setLoading(false);
    };
+
+   useEffect(() => {
+      fetchCrews();
+   }, []);
 
    const handleDragEnd = (result) => {
       const { destination, source, draggableId } = result;
@@ -96,7 +96,7 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick 
       const isProgress = ['En Route', 'In Progress'].includes(job.status);
 
       return (
-         <Draggable key={job.id} draggableId={job.id} index={index}>
+         <Draggable key={job.id} draggableId={job.id} index={index} isDragDisabled={readOnly}>
             {(provided, snapshot) => (
                <div 
                   ref={provided.innerRef}
