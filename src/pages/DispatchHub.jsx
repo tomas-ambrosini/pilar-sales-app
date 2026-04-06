@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
 import { useInvoices } from '../context/InvoiceContext';
-import { Phone, User, MapPin, AlertCircle, CalendarClock, ShieldAlert, CheckCircle2, Navigation, Search, MessageSquare, Edit3, Trash2, FileText, Zap, ShieldCheck } from 'lucide-react';
+import { Phone, User, MapPin, AlertCircle, CalendarClock, ShieldAlert, CheckCircle2, Navigation, Search, MessageSquare, Edit3, Trash2, FileText, Zap, ShieldCheck, Image as ImageIcon } from 'lucide-react';
 import DispatchCalendar from '../components/DispatchCalendar';
 import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '../components/Modal';
@@ -149,8 +149,7 @@ export default function DispatchHub() {
                scheduled_date: wo.scheduled_date,
                scheduled_time_block: wo.scheduled_time_block,
                dispatch_notes: wo.dispatch_notes,
-               assigned_crew_id: wo.assigned_crew_id,
-               execution_payload: wo.execution_payload
+               assigned_crew_id: wo.assigned_crew_id
              };
              if (sortedMap[wo.status]) sortedMap[wo.status].push(jobCard);
              else sortedMap['Unscheduled'].push(jobCard);
@@ -579,26 +578,32 @@ Details: ${formData.notes}
                />
                
                {/* Flyout Modal */}
-               <Modal isOpen={selectedJob !== null} onClose={() => { setSelectedJob(null); setActiveTab('details'); }} title={`Deal #${selectedJob?.displayId}`}>
+               <Modal 
+                  isOpen={selectedJob !== null} 
+                  onClose={() => { setSelectedJob(null); setActiveTab('details'); }} 
+                  title={`${selectedJob?.type === 'work_order' ? 'Work Order' : 'Site Survey'} #${selectedJob?.displayId}`}
+               >
          <div className="flex flex-col h-full" style={{ minHeight: '400px' }}>
-            <div className="flex border-b border-slate-200 mb-4 px-4 pt-2 gap-4 text-sm font-semibold text-slate-500">
+            <div className="flex border-b border-slate-200 mb-4 px-4 pt-2 gap-4 text-sm font-semibold text-slate-500 overflow-x-auto">
                <button 
-                  className={`pb-2 transition-colors ${activeTab === 'details' ? 'border-b-2 border-primary-500 text-primary-600' : 'hover:text-slate-700'}`}
+                  className={`pb-2 transition-colors whitespace-nowrap ${activeTab === 'details' ? 'border-b-2 border-primary-500 text-primary-600' : 'hover:text-slate-700'}`}
                   onClick={() => setActiveTab('details')}
                >
-                  Deal Details
+                  {selectedJob?.type === 'work_order' ? 'Job Details' : 'Survey Details'}
                </button>
+               {selectedJob?.type === 'opportunity' && (
+                  <button 
+                     className={`pb-2 transition-colors whitespace-nowrap ${activeTab === 'photos' ? 'border-b-2 border-primary-500 text-primary-600' : 'hover:text-slate-700'}`}
+                     onClick={() => setActiveTab('photos')}
+                  >
+                     Survey Photos {selectedJob?.surveyPhotos && Object.values(selectedJob.surveyPhotos).some(Boolean) ? '📸' : ''}
+                  </button>
+               )}
                <button 
-                  className={`pb-2 transition-colors ${activeTab === 'photos' ? 'border-b-2 border-primary-500 text-primary-600' : 'hover:text-slate-700'}`}
-                  onClick={() => setActiveTab('photos')}
-               >
-                  Survey Photos {selectedJob?.surveyPhotos && Object.values(selectedJob.surveyPhotos).some(Boolean) ? '📸' : ''}
-               </button>
-               <button 
-                  className={`pb-2 transition-colors ${activeTab === 'proposal' ? 'border-b-2 border-primary-500 text-primary-600' : 'hover:text-slate-700'}`}
+                  className={`pb-2 transition-colors whitespace-nowrap ${activeTab === 'proposal' ? 'border-b-2 border-primary-500 text-primary-600' : 'hover:text-slate-700'}`}
                   onClick={() => setActiveTab('proposal')}
                >
-                  Generated Proposal {selectedJob?.proposalData ? '📝' : ''}
+                  {selectedJob?.type === 'work_order' ? 'Execution Payload' : 'Generated Proposal'} {selectedJob?.proposalData ? '📝' : ''}
                </button>
              </div>
             
@@ -607,7 +612,7 @@ Details: ${formData.notes}
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
                      {isEditingJob ? (
                         <div className="space-y-4">
-                           <h3 className="font-bold text-slate-700 border-b pb-2 mb-4">Edit Deal #{selectedJob?.displayId}</h3>
+                           <h3 className="font-bold text-slate-700 border-b pb-2 mb-4">Edit {selectedJob?.type === 'work_order' ? 'Work Order' : 'Survey'} #{selectedJob?.displayId}</h3>
                            <div className="form-group">
                               <label className="text-xs font-bold text-slate-600 mb-1 block">Internal Notes / Issue</label>
                               <textarea 
@@ -720,7 +725,7 @@ Details: ${formData.notes}
                         <div className="flex flex-col items-center justify-center p-12 bg-slate-50 rounded border border-slate-200 text-center shadow-sm h-full">
                            <ShieldCheck size={48} className="text-slate-300 mb-4" />
                            <h4 className="font-bold text-slate-600 mb-2 text-lg">No Digital Proposal Generated</h4>
-                           <p className="text-sm text-slate-500 max-w-sm leading-relaxed">This deal was manually created or pushed back without completing the Proposal Wizard. Generate a new estimate to automatically inject the 3-Tier retail pricing view here.</p>
+                           <p className="text-sm text-slate-500 max-w-sm leading-relaxed">This record was manually created or pushed back without completing the Proposal Wizard. Generate a new estimate to automatically inject the 3-Tier retail pricing view here.</p>
                         </div>
                      ) : (
                         <div className="space-y-6">
@@ -829,7 +834,7 @@ Details: ${formData.notes}
                         <div className="flex flex-col items-center justify-center p-8 bg-slate-50 rounded border border-slate-200 text-center">
                            <ImageIcon size={48} className="text-slate-300 mb-3" />
                            <h4 className="font-bold text-slate-600 mb-1">No Photos Attached</h4>
-                           <p className="text-xs text-slate-500 max-w-xs">The salesperson did not upload any site survey images for this deal during the proposal creation.</p>
+                           <p className="text-xs text-slate-500 max-w-xs">The advisor did not upload any site survey images for this assignment.</p>
                         </div>
                      ) : (
                         <div className="grid grid-cols-2 gap-4">
@@ -861,7 +866,7 @@ Details: ${formData.notes}
             </div>
 
             <div className="p-4 border-t border-slate-200 mt-auto shrink-0 bg-white">
-               <button className="btn-secondary w-full" onClick={() => { setSelectedJob(null); setActiveTab('details'); }}>Close Deal Window</button>
+               <button className="btn-secondary w-full" onClick={() => { setSelectedJob(null); setActiveTab('details'); }}>Close Window</button>
             </div>
          </div>
       </Modal>
