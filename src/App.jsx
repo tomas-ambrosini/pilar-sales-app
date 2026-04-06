@@ -35,9 +35,11 @@ function ProtectedRoutes() {
         <Route path="proposals/*" element={<Proposals />} />
         <Route path="sales-pipeline/*" element={<SalesPipeline />} />
         <Route path="dispatch/*" element={<DispatchHub />} />
+        <Route path="dispatch-hub/*" element={<Navigate to="/dispatch" replace />} />
         <Route path="marketing/*" element={<Marketing />} />
         <Route path="finance/*" element={<Finance />} />
         <Route path="operations/*" element={<Operations />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>
   );
