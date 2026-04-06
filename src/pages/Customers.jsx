@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
+import { Routes, Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Search, Plus, Phone, Mail, MapPin, ChevronRight, User as UserIcon, Calendar, FileText, Edit2, Trash2, Tag, Clock } from 'lucide-react';
 import Modal from '../components/Modal';
 import './Customers.css';
@@ -10,7 +10,15 @@ import ProposalViewerModal from '../components/ProposalViewerModal';
 function CustomerList() {
   const navigate = useNavigate();
   const { customers, addCustomer } = useCustomers();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+
+  React.useEffect(() => {
+     if (searchParams.get('action') === 'new') {
+        setIsAddCustomerOpen(true);
+        setSearchParams({}); // Consume the query arg so reloading doesn't bounce it open
+     }
+  }, [searchParams, setSearchParams]);
 
   const [searchQuery, setSearchQuery] = useState('');
 

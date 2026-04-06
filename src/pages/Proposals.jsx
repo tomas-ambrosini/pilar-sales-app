@@ -10,13 +10,22 @@ import './Proposals.css';
 import ProposalWizard from '../components/ProposalWizard';
 import ProposalViewerModal from '../components/ProposalViewerModal';
 import ContractDocumentModal from '../components/ContractDocumentModal';
-
 import SignaturePad from '../components/SignaturePad';
+import { useSearchParams } from 'react-router-dom';
 
 export default function Proposals() {
   const { proposals, addProposal, updateProposal, deleteProposal, loading } = useProposals();
   const { customers } = useCustomers();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showWizard, setShowWizard] = useState(false);
+
+  useEffect(() => {
+     if (searchParams.get('action') === 'new') {
+         setShowWizard(true);
+         setSearchParams({});
+     }
+  }, [searchParams, setSearchParams]);
+
   const [viewingProposal, setViewingProposal] = useState(null);
   const [viewingContract, setViewingContract] = useState(null);
   const [signingContract, setSigningContract] = useState(null);

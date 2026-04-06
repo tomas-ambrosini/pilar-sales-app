@@ -10,8 +10,8 @@ const STATIC_COMMANDS = [
   { id: 'pipe', name: 'Open Sales Pipeline', icon: ClipboardList, route: '/sales-pipeline', section: 'Navigation' },
   { id: 'cust', name: 'View Customers', icon: Users, route: '/customers', section: 'Navigation' },
   { id: 'cat', name: 'Equipment Catalog', icon: BookOpen, route: '/catalog', section: 'Navigation' },
-  { id: 'prop', name: 'Create New Proposal', icon: FileCheck, route: '/proposals/new', section: 'Actions' },
-  { id: 'addcust', name: 'Add New Customer', icon: Users, route: '/customers/new', section: 'Actions' },
+  { id: 'prop', name: 'Create New Proposal', icon: FileCheck, route: '/proposals?action=new', section: 'Actions' },
+  { id: 'addcust', name: 'Add New Customer', icon: Users, route: '/customers?action=new', section: 'Actions' },
   { id: 'settings', name: 'Operations & Settings', icon: Settings, route: '/operations', section: 'System' },
 ];
 
