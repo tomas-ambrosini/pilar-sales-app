@@ -102,6 +102,7 @@ export default function DispatchHub() {
                displayId: opp.id.substring(0,8).toUpperCase(),
                status: opp.status,
                customerName: opp.households?.household_name || 'Unknown',
+               household_id: opp.households?.id,
                address: addressString,
                date: new Date(opp.created_at).toLocaleDateString(),
                urgency: opp.urgency_level,
@@ -130,10 +131,12 @@ export default function DispatchHub() {
                displayId: wo.work_order_number,
                status: wo.status,
                customerName: wo.households?.household_name || 'Unknown',
+               household_id: wo.households?.id,
                address: addressString,
                date: new Date(wo.created_at).toLocaleDateString(),
                urgency: wo.urgency_level,
                issue: wo.execution_payload?.tierName ? `Install: ${wo.execution_payload.tierName}` : 'Execution Job',
+               execution_payload: wo.execution_payload,
                scheduled_date: wo.scheduled_date,
                scheduled_time_block: wo.scheduled_time_block,
                dispatch_notes: wo.dispatch_notes,
@@ -236,6 +239,7 @@ export default function DispatchHub() {
                      await addInvoice({
                          customer: job.customerName,
                          work_order_id: job.dbId,
+                         household_id: job.household_id,
                          amount: amount
                      });
                      console.log('Automated Invoice Generated for', job.customerName, amount);

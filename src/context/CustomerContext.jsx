@@ -32,7 +32,10 @@ export function CustomerProvider({ children }) {
                     tags,
                     created_at,
                     addresses!addresses_household_id_fkey ( id, street_address, city, state, zip, property_details, is_primary_residence ),
-                    contacts ( id, first_name, last_name, primary_phone, email, role )
+                    contacts ( id, first_name, last_name, primary_phone, email, role ),
+                    opportunities ( id, status, urgency_level, issue_description, created_at ),
+                    work_orders ( id, work_order_number, status, urgency_level, created_at ),
+                    invoices ( id, amount, status, issued_at, customer )
                 `)
                 .order('created_at', { ascending: false });
 
@@ -56,6 +59,9 @@ export function CustomerProvider({ children }) {
                         locations: locations, // New Multi-Location Array
                         tags: household.tags || [],
                         addedDate: new Date(household.created_at).toLocaleDateString(),
+                        opportunities: household.opportunities || [],
+                        work_orders: household.work_orders || [],
+                        invoices: household.invoices || [],
                         raw: household // Keep full relational data for advanced CRM views
                     };
                 });

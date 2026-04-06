@@ -417,6 +417,77 @@ function CustomerDetail() {
            </div>
         </div>
 
+        {/* --- NEW: ERP LIFECYCLE TRACKING --- */}
+        <section className="detail-card glass-panel full-width mt-2 mb-6 border-l-4 border-l-primary-500 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary-100 rounded-bl-full opacity-50 pointer-events-none"></div>
+          <div className="card-header-row mb-6 relative z-10">
+            <h2 className="card-title text-slate-800 m-0">ERP Lifecycle & Operations</h2>
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full border border-slate-200">System Activity</div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
+             {/* Opportunities / Pipeline */}
+             <div className="bg-white border rounded-lg p-5 shadow-sm border-slate-200 hover:border-primary-300 transition-colors">
+                <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 tracking-wider text-[11px] uppercase text-primary-600 flex items-center justify-between">
+                   Sales Pipeline <span className="bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full">{customer.opportunities?.length || 0}</span>
+                </h3>
+                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                   {customer.opportunities?.length > 0 ? customer.opportunities.map(opp => (
+                      <div key={opp.id} className="relative pl-4">
+                         <div className="absolute left-0 top-1.5 w-2 h-2 rounded-full bg-primary-500 shadow-[0_0_0_4px_rgba(14,165,233,0.1)]"></div>
+                         <div className="absolute left-1 top-4 bottom-[-16px] w-[2px] bg-slate-100 last:hidden"></div>
+                         <div className="flex justify-between items-center mb-1">
+                            <span className="font-bold text-sm text-slate-700">{opp.status}</span>
+                            <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 font-mono leading-none flex items-center justify-center">#{opp.id.substring(0,8).toUpperCase()}</span>
+                         </div>
+                         <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{opp.issue_description || 'No issue description recorded'}</p>
+                      </div>
+                   )) : <div className="text-xs text-slate-400 italic bg-slate-50 p-3 rounded text-center">No active deals found.</div>}
+                </div>
+             </div>
+
+             {/* Work Orders */}
+             <div className="bg-white border rounded-lg p-5 shadow-sm border-slate-200 hover:border-amber-300 transition-colors">
+                <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 tracking-wider text-[11px] uppercase text-amber-600 flex items-center justify-between">
+                   Dispatch Hub <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">{customer.work_orders?.length || 0}</span>
+                </h3>
+                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                   {customer.work_orders?.length > 0 ? customer.work_orders.map(wo => (
+                      <div key={wo.id} className="relative pl-4">
+                         <div className="absolute left-0 top-1.5 w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_0_4px_rgba(245,158,11,0.1)]"></div>
+                         <div className="absolute left-1 top-4 bottom-[-16px] w-[2px] bg-slate-100 last:hidden"></div>
+                         <div className="flex justify-between items-center mb-1">
+                            <span className="font-bold text-sm text-slate-700">{wo.status}</span>
+                            <span className="text-[10px] bg-amber-50 px-1.5 py-0.5 rounded text-amber-700 font-mono font-bold leading-none flex items-center justify-center border border-amber-200/50">#{wo.work_order_number}</span>
+                         </div>
+                         <p className="text-xs text-slate-500">Urgency: <span className="font-medium text-slate-600">{wo.urgency_level}</span></p>
+                      </div>
+                   )) : <div className="text-xs text-slate-400 italic bg-slate-50 p-3 rounded text-center">No scheduled operations logs.</div>}
+                </div>
+             </div>
+
+             {/* Financials / Invoices */}
+             <div className="bg-white border rounded-lg p-5 shadow-sm border-slate-200 hover:border-emerald-300 transition-colors">
+                <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 tracking-wider text-[11px] uppercase text-emerald-600 flex items-center justify-between">
+                   Financial Ledgers <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">{customer.invoices?.length || 0}</span>
+                </h3>
+                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                   {customer.invoices?.length > 0 ? customer.invoices.map(inv => (
+                      <div key={inv.id} className="relative pl-4">
+                         <div className="absolute left-0 top-1.5 w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.1)]"></div>
+                         <div className="absolute left-1 top-4 bottom-[-16px] w-[2px] bg-slate-100 last:hidden"></div>
+                         <div className="flex justify-between items-center mb-1">
+                            <span className="font-black text-sm text-slate-800">${Number(inv.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded font-black tracking-widest uppercase leading-none flex items-center justify-center ${inv.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>{inv.status}</span>
+                         </div>
+                         <p className="text-xs text-slate-400 font-mono mt-0.5 pl-0.5">{inv.id}</p>
+                      </div>
+                   )) : <div className="text-xs text-slate-400 italic bg-slate-50 p-3 rounded text-center">No billing records generated.</div>}
+                </div>
+             </div>
+          </div>
+        </section>
+
         <section className="detail-card glass-panel full-width">
           <div className="card-header-row">
             <h2 className="card-title">Proposals & Quotes</h2>

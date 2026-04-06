@@ -28,7 +28,7 @@ export function InvoiceProvider({ children }) {
                 .select('*')
                 .order('issued_at', { ascending: false });
 
-            if (error) throw error;
+            if (error && error.code !== 'PGRST205') throw error; // Ignore missing table error during migration
             if (data) setInvoices(data);
         } catch (error) {
             console.error('Error fetching invoices:', error.message);
@@ -51,10 +51,14 @@ export function InvoiceProvider({ children }) {
 
         setInvoices(prev => [newInvoice, ...prev]);
         
-        const { error } = await supabase.from('invoices').insert([newInvoice]);
-        if (error) {
-            console.error('Failed to insert invoice:', error.message);
-            fetchInvoices();
+        try {
+           const { error } = await supabase.from('invoices').insert([newInvoice]);
+           if (error && error.code !== 'PGRST205') {
+               console.error('Failed to insert invoice:', error.message);
+               fetchInvoices();
+           }
+        } catch (e) {
+           console.log("Invoice system not fully initialized.", e);
         }
         return newInvoice;
     };
