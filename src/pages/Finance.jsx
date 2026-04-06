@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { DollarSign, FileText, CreditCard, TrendingUp, Download, CheckCircle, AlertCircle, RefreshCw, ChevronRight, Settings, Save } from 'lucide-react';
+import { DollarSign, FileText, CreditCard, TrendingUp, Download, CheckCircle, AlertCircle, RefreshCw, ChevronRight, Settings, Save, CheckSquare } from 'lucide-react';
+import { useInvoices } from '../context/InvoiceContext';
+import InvoiceDocumentModal from '../components/InvoiceDocumentModal';
 import './Proposals.css';
 
 export default function Finance() {
   const [activeTab, setActiveTab] = useState('overview');
   const [margins, setMargins] = useState({ good_margin: 0.35, better_margin: 0.40, best_margin: 0.45, service_reserve: 0.05, sales_tax: 0.07 });
+  const { invoices, updateInvoice } = useInvoices();
   
+  // Modals
+  const [loggingCheckFor, setLoggingCheckFor] = useState(null);
+  const [viewingInvoice, setViewingInvoice] = useState(null);
+
   useEffect(() => {
     fetchMargins();
   }, []);
@@ -21,11 +28,22 @@ export default function Finance() {
     alert('Global margins updated! All future estimates will use these rates.');
   };
 
-  const invoices = [
-    { id: 'INV-1025', customer: 'Alex Rivera', date: 'Oct 28', amount: '$12,450', status: 'Paid', method: 'Stripe' },
-    { id: 'INV-1024', customer: 'John & Sarah Miller', date: 'Oct 26', amount: '$15,400', status: 'Pending', method: 'Check' },
-    { id: 'INV-1023', customer: 'David Chen', date: 'Oct 24', amount: '$12,500', status: 'Overdue', method: 'Stripe' },
-  ];
+  const handleLogCheck = async (invoice) => {
+      // In a real app we'd open a modal. For now, let's just mark it!
+      const checkNumber = prompt(`Log Check Payment for ${invoice.customer}\nEnter Check/Routing Number:`);
+      if (checkNumber) {
+          await updateInvoice(invoice.id, {
+              status: 'Paid',
+              payment_method: `Check #${checkNumber}`,
+              paid_at: new Date().toISOString()
+          });
+      }
+  };
+
+  const pendingInvoices = invoices.filter(i => i.status !== 'Paid');
+  const totalGross = invoices.reduce((sum, i) => sum + Number(i.amount || 0), 0);
+  const totalOutstanding = pendingInvoices.reduce((sum, i) => sum + Number(i.amount || 0), 0);
+  const overdueCount = pendingInvoices.filter(i => i.status === 'Overdue').length;
 
   const renderTabContent = () => {
     if (activeTab === 'overview') {
@@ -33,30 +51,31 @@ export default function Finance() {
         <div className="fade-in">
           <div className="grid grid-cols-4 gap-6 mb-8">
             <div className="glass-panel p-6 flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Gross Revenue (MTD)</span>
-              <span className="text-3xl font-bold text-slate-800">$142,500</span>
-              <span className="text-sm text-success flex items-center"><TrendingUp size={14} className="mr-1" /> +15% from last month</span>
+              <span className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Gross Billed (YTD)</span>
+              <span className="text-3xl font-bold text-slate-800">${totalGross.toLocaleString()}</span>
+              <span className="text-sm text-success flex items-center"><TrendingUp size={14} className="mr-1" /> Ledger Live</span>
+            </div>
+            <div className="glass-panel p-6 flex flex-col gap-2 relative overflow-hidden">
+               {totalOutstanding > 0 && <div className="absolute top-0 right-0 w-2 h-full bg-primary-500"></div>}
+               <span className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Outstanding Accounts</span>
+               <span className="text-3xl font-bold text-slate-800">${totalOutstanding.toLocaleString()}</span>
+               <span className={`text-sm flex items-center ${overdueCount > 0 ? 'text-danger' : 'text-slate-500'}`}><AlertCircle size={14} className="mr-1" /> {overdueCount} Overdue</span>
             </div>
             <div className="glass-panel p-6 flex flex-col gap-2">
-               <span className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Outstanding Invoices</span>
-               <span className="text-3xl font-bold text-slate-800">$27,900</span>
-               <span className="text-sm text-danger flex items-center"><AlertCircle size={14} className="mr-1" /> 2 Overdue</span>
-            </div>
-            <div className="glass-panel p-6 flex flex-col gap-2">
-               <span className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Check Deposits Processing</span>
-               <span className="text-3xl font-bold text-slate-800">$15,400</span>
-               <span className="text-sm text-slate-500 flex items-center">Pending Bank Verify</span>
+               <span className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Automated Workflows</span>
+               <span className="text-3xl font-bold text-slate-800">{invoices.length}</span>
+               <span className="text-sm text-slate-500 flex items-center">Invoices Autogenerated</span>
             </div>
             <div className="glass-panel p-6 flex flex-col justify-between">
                <div>
                  <span className="text-sm font-semibold text-slate-500 uppercase tracking-wider block mb-2">Integration Status</span>
                  <div className="flex items-center gap-2 mb-1">
                    <div className="w-2 h-2 rounded-full bg-success"></div>
-                   <span className="text-sm font-semibold">QuickBooks Sync Active</span>
+                   <span className="text-sm font-semibold">Live Pilar Automations</span>
                  </div>
                  <div className="flex items-center gap-2">
                    <div className="w-2 h-2 rounded-full bg-success"></div>
-                   <span className="text-sm font-semibold">Stripe Checkout Active</span>
+                   <span className="text-sm font-semibold">Dispatch Polling Active</span>
                  </div>
                </div>
                <button className="text-sm text-primary-600 font-semibold flex items-center gap-1 mt-2">
@@ -66,42 +85,53 @@ export default function Finance() {
           </div>
 
           <div className="bg-white rounded-md shadow-sm border border-slate-200 overflow-hidden">
-            <div className="flex justify-between items-center p-4 border-b border-slate-200">
-              <h3 className="font-bold text-slate-800">Recent Invoices</h3>
-              <button className="text-sm font-semibold text-primary-600">View All</button>
+            <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
+              <h3 className="font-bold text-slate-800">Master Invoice Directory</h3>
+              <button className="text-sm font-semibold text-primary-600">Download CSV</button>
             </div>
-            <table className="w-full text-left border-collapse" style={{ width: '100%' }}>
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-sm text-slate-500">
-                  <th className="p-4 font-semibold">Invoice ID</th>
-                  <th className="p-4 font-semibold">Customer</th>
-                  <th className="p-4 font-semibold">Date</th>
-                  <th className="p-4 font-semibold">Amount</th>
-                  <th className="p-4 font-semibold">Method</th>
-                  <th className="p-4 font-semibold">Status</th>
-                  <th className="p-4 font-semibold"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map(inv => (
-                  <tr key={inv.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="p-4 font-bold text-slate-800">{inv.id}</td>
-                    <td className="p-4 font-medium text-slate-800">{inv.customer}</td>
-                    <td className="p-4 text-slate-600">{inv.date}</td>
-                    <td className="p-4 font-medium text-slate-800">{inv.amount}</td>
-                    <td className="p-4 text-slate-600">{inv.method}</td>
-                    <td className="p-4">
-                      {inv.status === 'Paid' && <span className="badge bg-success text-white px-2 py-1 rounded text-xs font-bold">{inv.status}</span>}
-                      {inv.status === 'Pending' && <span className="badge bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">{inv.status}</span>}
-                      {inv.status === 'Overdue' && <span className="badge bg-danger text-white px-2 py-1 rounded text-xs font-bold">{inv.status}</span>}
-                    </td>
-                    <td className="p-4 text-right">
-                      <button className="text-slate-400 hover:text-primary-600 transition-fast"><Download size={18} /></button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {invoices.length === 0 ? (
+                <div className="p-8 text-center text-slate-500">
+                   No invoices have been generated yet. Complete a Work Order in the Dispatch Hub to auto-spawn an invoice.
+                </div>
+            ) : (
+                <table className="w-full text-left border-collapse" style={{ width: '100%' }}>
+                <thead>
+                    <tr className="bg-white border-b border-slate-200 text-sm text-slate-500 uppercase tracking-wider">
+                    <th className="p-4 font-semibold text-[10px]">Invoice ID</th>
+                    <th className="p-4 font-semibold text-[10px]">Customer / Account</th>
+                    <th className="p-4 font-semibold text-[10px]">Issued Date</th>
+                    <th className="p-4 font-semibold text-[10px]">Total Amount</th>
+                    <th className="p-4 font-semibold text-[10px]">Payment Method</th>
+                    <th className="p-4 font-semibold text-[10px]">Status</th>
+                    <th className="p-4 font-semibold text-[10px]"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {invoices.map(inv => (
+                    <tr key={inv.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                        <td className="p-4 font-bold text-slate-800 text-xs">{inv.id}</td>
+                        <td className="p-4 font-bold text-primary-800">{inv.customer}</td>
+                        <td className="p-4 text-slate-500 text-sm font-medium">{new Date(inv.issued_at).toLocaleDateString()}</td>
+                        <td className="p-4 font-black text-slate-800">${Number(inv.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        <td className="p-4 text-slate-500 text-sm font-medium">{inv.payment_method || '-'}</td>
+                        <td className="p-4">
+                        {inv.status === 'Paid' && <span className="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">{inv.status}</span>}
+                        {inv.status === 'Pending' && <span className="bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">{inv.status}</span>}
+                        {inv.status === 'Overdue' && <span className="bg-rose-100 text-rose-800 border border-rose-200 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">{inv.status}</span>}
+                        </td>
+                        <td className="p-4 text-right flex gap-2 justify-end">
+                            {inv.status !== 'Paid' && (
+                                <button className="text-[10px] font-bold text-primary-600 bg-primary-50 hover:bg-primary-100 px-3 py-1.5 rounded uppercase tracking-wider border border-primary-200 flex items-center gap-1" onClick={() => handleLogCheck(inv)}>
+                                    <CheckSquare size={12} /> Log Pay
+                                </button>
+                            )}
+                            <button className="text-slate-400 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 p-1.5 rounded transition-fast" title="Download PDF" onClick={() => setViewingInvoice(inv)}><Download size={14} /></button>
+                        </td>
+                    </tr>
+                    ))}
+                </tbody>
+                </table>
+            )}
           </div>
         </div>
       );
@@ -115,6 +145,7 @@ export default function Finance() {
               <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-2 text-xl"><Settings className="text-primary-500"/> Global Pricing Engine</h3>
               <p className="text-slate-500 text-sm mb-8">Update the baseline logic math used across all sales proposals and catalog generation. These variables natively control retail prices.</p>
               
+              {/* Settings layout omitted for brevity, exact same as before */}
               <div className="flex justify-between items-center mb-4 bg-white p-4 rounded-lg border border-slate-100 shadow-sm">
                  <span className="font-semibold text-slate-700">Good Tier Target Margin</span>
                  <div className="flex items-center gap-2">
@@ -168,14 +199,33 @@ export default function Finance() {
     
     if (activeTab === 'checks') {
       return (
-        <div className="fade-in">
-          <div className="empty-state glass-panel" style={{ padding: '4rem 2rem' }}>
-            <FileText size={48} style={{ color: 'var(--color-primary-500)', margin: '0 auto 1.5rem', opacity: 0.5 }} />
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Check Deposit Log</h2>
-            <p style={{ color: 'var(--color-slate-500)', maxWidth: '500px', margin: '0 auto 2rem' }}>
-              Track physical checks collected by technicians in the field and log deposits to the company bank accounts.
-            </p>
-            <button className="primary-action-btn max-w-xs mx-auto">Log New Check</button>
+        <div className="fade-in max-w-2xl">
+          <div className="glass-panel p-8">
+            <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+                <div className="p-4 bg-primary-50 rounded-full text-primary-600"><FileText size={32}/></div>
+                <div>
+                   <h2 className="text-xl font-bold text-slate-800">Check & Cash Ledgers</h2>
+                   <p className="text-slate-500 text-sm">Select an outstanding invoice below to mark it as collected.</p>
+                </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+                {pendingInvoices.length === 0 && <p className="text-slate-500 italic">No pending invoices require collection!</p>}
+                {pendingInvoices.map(inv => (
+                    <div key={inv.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg bg-white shadow-sm">
+                        <div>
+                            <p className="font-bold text-slate-800">{inv.customer}</p>
+                            <p className="text-xs text-slate-500 uppercase font-black tracking-wider">{inv.id} • ${Number(inv.amount).toLocaleString()}</p>
+                        </div>
+                        <button 
+                            className="bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs uppercase tracking-wider py-2 px-4 rounded shadow-sm"
+                            onClick={() => handleLogCheck(inv)}
+                        >
+                            Record Payment
+                        </button>
+                    </div>
+                ))}
+            </div>
           </div>
         </div>
       );
@@ -187,38 +237,41 @@ export default function Finance() {
       <header className="page-header">
         <div>
           <h1 className="page-title">Finance & Accounting</h1>
-          <p className="page-subtitle">Track revenue, client payments, and system integrations</p>
+          <p className="page-subtitle">Track YTD revenue, auto-issued invoices, and reconcile uncollected balances</p>
         </div>
-        <button className="primary-action-btn">
-          Create Invoice
-        </button>
       </header>
 
       {/* Custom Tab Navigation */}
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-lg w-max mb-8">
+      <div className="flex gap-1 bg-slate-100/50 p-1.5 rounded-xl w-max mb-8 border border-slate-200/50 shadow-sm backdrop-blur-sm">
         <button 
           onClick={() => setActiveTab('overview')}
-          className={`px-4 py-2 font-semibold text-sm rounded-md transition-fast ${activeTab === 'overview' ? 'bg-white shadow-sm text-primary-700' : 'text-slate-500 hover:text-slate-700'}`}
+          className={`px-5 py-2.5 font-bold text-xs uppercase tracking-wider rounded-lg transition-all duration-300 ${activeTab === 'overview' ? 'bg-white shadow-md text-primary-700 border-b-2 border-primary-500' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}
         >
-          Financial Overview
-        </button>
-        <button 
-          onClick={() => setActiveTab('pricing')}
-          className={`px-4 py-2 font-semibold text-sm rounded-md transition-fast ${activeTab === 'pricing' ? 'bg-white shadow-sm text-primary-700' : 'text-slate-500 hover:text-slate-700'}`}
-        >
-          Pricing Logic
+          Ledger Overview
         </button>
         <button 
           onClick={() => setActiveTab('checks')}
-          className={`px-4 py-2 font-semibold text-sm rounded-md transition-fast ${activeTab === 'checks' ? 'bg-white shadow-sm text-primary-700' : 'text-slate-500 hover:text-slate-700'}`}
+          className={`px-5 py-2.5 font-bold text-xs uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-2 ${activeTab === 'checks' ? 'bg-white shadow-md text-primary-700 border-b-2 border-primary-500' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}
         >
-          Check Deposits
+          Check Collections {pendingInvoices.length > 0 && <span className="bg-danger text-white px-1.5 py-0.5 rounded text-[9px]">{pendingInvoices.length}</span>}
+        </button>
+        <button 
+          onClick={() => setActiveTab('pricing')}
+          className={`px-5 py-2.5 font-bold text-xs uppercase tracking-wider rounded-lg transition-all duration-300 ${activeTab === 'pricing' ? 'bg-white shadow-md text-primary-700 border-b-2 border-primary-500' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}
+        >
+          Pricing Logic Data
         </button>
       </div>
 
       <div className="mt-4">
         {renderTabContent()}
       </div>
+
+      <InvoiceDocumentModal 
+         isOpen={!!viewingInvoice} 
+         onClose={() => setViewingInvoice(null)} 
+         invoiceData={viewingInvoice} 
+      />
     </div>
   );
 }

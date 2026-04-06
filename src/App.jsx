@@ -15,6 +15,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { CustomerProvider } from './context/CustomerContext';
 import { CatalogProvider } from './context/CatalogContext';
 import { ProposalProvider } from './context/ProposalContext';
+import { InvoiceProvider } from './context/InvoiceContext';
 import { RoleProvider } from './context/RoleContext';
 
 function ProtectedRoutes() {
@@ -50,7 +51,8 @@ function App() {
       <CustomerProvider>
         <CatalogProvider>
           <ProposalProvider>
-            <RoleProvider>
+            <InvoiceProvider>
+              <RoleProvider>
               <BrowserRouter>
                 <ProtectedRoutes />
                 <Toaster 
@@ -68,7 +70,8 @@ function App() {
                   }} 
                 />
               </BrowserRouter>
-            </RoleProvider>
+              </RoleProvider>
+            </InvoiceProvider>
           </ProposalProvider>
         </CatalogProvider>
       </CustomerProvider>

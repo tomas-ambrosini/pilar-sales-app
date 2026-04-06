@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
+import { useInvoices } from '../context/InvoiceContext';
 import { Phone, User, MapPin, AlertCircle, CalendarClock, ShieldAlert, CheckCircle2, Navigation, Search, MessageSquare } from 'lucide-react';
 import DispatchCalendar from '../components/DispatchCalendar';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,6 +20,7 @@ const PIPELINE_STAGES = [
 export default function DispatchHub() {
    const { activeRole } = useRole();
    const { customers, addCustomer } = useCustomers();
+   const { addInvoice } = useInvoices();
    const [searchPhone, setSearchPhone] = useState('');
    const [matchedCustomer, setMatchedCustomer] = useState(null);
    const [loading, setLoading] = useState(true);
@@ -127,7 +129,8 @@ export default function DispatchHub() {
                scheduled_date: wo.scheduled_date,
                scheduled_time_block: wo.scheduled_time_block,
                dispatch_notes: wo.dispatch_notes,
-               assigned_crew_id: wo.assigned_crew_id
+               assigned_crew_id: wo.assigned_crew_id,
+               execution_payload: wo.execution_payload
              };
              if (sortedMap[wo.status]) sortedMap[wo.status].push(jobCard);
              else sortedMap['Unscheduled'].push(jobCard);
@@ -217,6 +220,21 @@ export default function DispatchHub() {
              await supabase.from('opportunities').update(updates).eq('id', job.dbId);
          } else {
              await supabase.from('work_orders').update(updates).eq('id', job.dbId);
+             
+             // Phase 8: Financial Automations
+             if (newStatus === 'Completed') {
+                 try {
+                     const amount = job.execution_payload?.salesPrice || 0;
+                     await addInvoice({
+                         customer: job.customerName,
+                         work_order_id: job.dbId,
+                         amount: amount
+                     });
+                     console.log('Automated Invoice Generated for', job.customerName, amount);
+                 } catch (finErr) {
+                     console.error('Finance sync failed:', finErr);
+                 }
+             }
          }
          
          setSelectedJob({ ...job, status: newStatus, dispatch_notes: updates.dispatch_notes || job.dispatch_notes });

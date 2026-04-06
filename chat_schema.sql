@@ -247,3 +247,21 @@ END $$;
 ALTER TABLE public.proposals ADD COLUMN IF NOT EXISTS signature_data TEXT;
 ALTER TABLE public.proposals ADD COLUMN IF NOT EXISTS signed_at TIMESTAMPTZ;
 
+-- ==============================================================================
+-- PHASE 8: FINANCE & INVOICING CORE
+-- ==============================================================================
+
+CREATE TABLE IF NOT EXISTS public.invoices (
+    id TEXT PRIMARY KEY, -- Format: INV-1000
+    customer VARCHAR(255) NOT NULL,
+    work_order_id UUID REFERENCES public.work_orders(id) ON DELETE SET NULL,
+    proposal_id TEXT REFERENCES public.proposals(id) ON DELETE SET NULL,
+    amount NUMERIC(10, 2) NOT NULL,
+    status VARCHAR(50) DEFAULT 'Pending', -- Pending, Paid, Overdue
+    payment_method VARCHAR(100), -- Stripe, Check, Cash
+    issued_at TIMESTAMPTZ DEFAULT NOW(),
+    paid_at TIMESTAMPTZ,
+    invoice_data JSONB -- Line items, taxes
+);
+
+
