@@ -647,8 +647,13 @@ export default function SalesPipeline() {
                )}
             </div>
 
-            <div className="p-4 border-t border-slate-200 mt-auto shrink-0 bg-white">
-               <button className="btn-secondary w-full" onClick={() => { setActiveJob(null); setActiveTab('details'); }}>Close Window</button>
+            <div className="p-4 border-t border-slate-200 mt-auto shrink-0 bg-slate-50 flex gap-3">
+               <button className="btn-secondary flex-1" onClick={() => { setActiveJob(null); setActiveTab('details'); }}>Close Window</button>
+               {activeJob?.status !== 'Deal Won' && (
+                  <button onClick={() => { localStorage.setItem('pilar_draft_customer', JSON.stringify({id: activeJob.dbId, ...activeJob})); window.location.href='/proposals'; }} className="btn-primary flex-1 flex items-center justify-center gap-2">
+                     <FileText size={16} /> Open Proposal Engine
+                  </button>
+               )}
             </div>
          </div>
       </Modal>

@@ -17,11 +17,28 @@ export default function Proposals() {
   const { proposals, addProposal, updateProposal, deleteProposal, loading } = useProposals();
   const { customers } = useCustomers();
   const [searchParams] = useSearchParams();
-  const [showWizard, setShowWizard] = useState(() => searchParams.get('action') === 'new');
+  const [showWizard, setShowWizard] = useState(false);
+  const [wizardConfig, setWizardConfig] = useState(null);
 
   useEffect(() => {
-     if (searchParams.get('action') === 'new') {
+     const draftCustStr = localStorage.getItem('pilar_draft_customer');
+     if (draftCustStr) {
+         try {
+            const draftCust = JSON.parse(draftCustStr);
+            setWizardConfig({
+                isDraft: true,
+                step: 1,
+                selectedCustomerId: draftCust.household_id || draftCust.customer_id || '',
+                selectedLocationId: draftCust.site_survey_data?.property_id || '',
+                survey: draftCust.site_survey_data || null,
+                proposal_data: { associated_opportunity_id: draftCust.id || draftCust.dbId }
+            });
+            setShowWizard(true);
+         } catch(e){}
+         localStorage.removeItem('pilar_draft_customer');
+     } else if (searchParams.get('action') === 'new') {
          setShowWizard(true);
+         setWizardConfig(true);
          window.history.replaceState({}, document.title, window.location.pathname);
      }
   }, [searchParams]);
@@ -46,7 +63,7 @@ export default function Proposals() {
   }, [showWizard]);
   
   if (loading && proposals.length === 0) return <div className="page-container flex-center"><h3>Loading Proposals...</h3></div>;
-  if (showWizard) return <ProposalWizard onComplete={() => setShowWizard(false)} addProposal={addProposal} updateProposal={updateProposal} editModeData={showWizard} />;
+  if (showWizard) return <ProposalWizard onComplete={() => setShowWizard(false)} addProposal={addProposal} updateProposal={updateProposal} editModeData={wizardConfig} />;
 
   const handleEditOpen = (proposal) => {
     setEditingProposal(proposal);
