@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
 import { useInvoices } from '../context/InvoiceContext';
-import { Phone, User, MapPin, AlertCircle, CalendarClock, ShieldAlert, CheckCircle2, Navigation, Search, MessageSquare } from 'lucide-react';
+import { Phone, User, MapPin, AlertCircle, CalendarClock, ShieldAlert, CheckCircle2, Navigation, Search, MessageSquare, Edit3, Trash2, FileText, Zap, ShieldCheck } from 'lucide-react';
 import DispatchCalendar from '../components/DispatchCalendar';
 import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '../components/Modal';
@@ -25,6 +25,12 @@ export default function DispatchHub() {
    const [matchedCustomer, setMatchedCustomer] = useState(null);
    const [loading, setLoading] = useState(true);
    const [selectedJob, setSelectedJob] = useState(null);
+   // Extended Modal States
+   const [activeTab, setActiveTab] = useState('details');
+   const [isEditingJob, setIsEditingJob] = useState(false);
+   const [editJobForm, setEditJobForm] = useState({ issue_description: '', urgency: 'Medium', status: '' });
+   const [deletingJob, setDeletingJob] = useState(false);
+
    
    // Form State (9-Step OSC Intake)
    const [formData, setFormData] = useState({
@@ -63,7 +69,7 @@ export default function DispatchHub() {
          const { data: oppData, error: oppErr } = await supabase
            .from('opportunities')
            .select(`
-             id, status, urgency_level, issue_description,
+             id, status, urgency_level, issue_description, site_survey_data, proposal_data,
              scheduled_date, scheduled_time_block, dispatch_notes, assigned_crew_id, created_at,
              households ( id, household_name, addresses!households_service_address_id_fkey ( street_address, city ) )
            `)
@@ -100,6 +106,8 @@ export default function DispatchHub() {
                date: new Date(opp.created_at).toLocaleDateString(),
                urgency: opp.urgency_level,
                issue: opp.issue_description,
+               surveyPhotos: opp.site_survey_data?.photos || null,
+               proposalData: opp.proposal_data || null,
                scheduled_date: opp.scheduled_date,
                scheduled_time_block: opp.scheduled_time_block,
                dispatch_notes: opp.dispatch_notes,
@@ -271,6 +279,56 @@ export default function DispatchHub() {
          setMatchedCustomer(null);
       }
    }, [searchPhone, customers]);
+
+   
+   const handleSaveEdit = async () => {
+      if (!selectedJob) return;
+      try {
+         const updates = { 
+             issue_description: editJobForm.issue_description, 
+             urgency_level: editJobForm.urgency, 
+             status: editJobForm.status 
+         };
+         
+         const table = selectedJob.type === 'opportunity' ? 'opportunities' : 'work_orders';
+         await supabase.from(table).update(updates).eq('id', selectedJob.dbId);
+         
+         setSelectedJob({ ...selectedJob, issue: editJobForm.issue_description, urgency: editJobForm.urgency, status: editJobForm.status });
+         setIsEditingJob(false);
+         fetchOpportunities();
+      } catch (err) {
+         alert("Failed to save: " + err.message);
+      }
+   };
+
+   const handleDeleteJob = async () => {
+      if (!selectedJob) return;
+      try {
+         setLoading(true);
+         const table = selectedJob.type === 'opportunity' ? 'opportunities' : 'work_orders';
+         const { error } = await supabase.from(table).delete().eq('id', selectedJob.dbId);
+         if (error) throw error;
+         setSelectedJob(null);
+         setDeletingJob(false);
+         fetchOpportunities();
+      } catch (err) {
+         alert("Failed to delete: " + err.message);
+         setDeletingJob(false);
+      } finally {
+         setLoading(false);
+      }
+   };
+
+   
+   useEffect(() => {
+      if (isEditingJob && selectedJob) {
+         setEditJobForm({ 
+            issue_description: selectedJob.issue || '', 
+            urgency: selectedJob.urgency || 'Medium', 
+            status: selectedJob.status || '' 
+         });
+      }
+   }, [isEditingJob, selectedJob]);
 
    const handleDispatchSubmit = async (e) => {
       e.preventDefault();
@@ -501,93 +559,310 @@ Details: ${formData.notes}
                <DispatchCalendar 
                   pipeline={pipeline} 
                   onScheduleJob={handleScheduleJob}
-                  onCardClick={j => setSelectedJob(j)}
+                  onCardClick={j => { setSelectedJob(j); setActiveTab('details'); setIsEditingJob(false); }}
                />
                
                {/* Flyout Modal */}
-               <Modal isOpen={!!selectedJob} onClose={() => setSelectedJob(null)} title="Job Dispatch Details" size="md">
-                  {selectedJob && (
-                     <div className="space-y-6 pt-2">
-                        {/* Premium Header */}
-                        <div>
-                           <div className="flex items-start justify-between mb-1">
-                              <h3 className="text-2xl font-black text-slate-800 tracking-tight">
-                                 {selectedJob.customerName}
-                              </h3>
-                              {selectedJob.urgency === 'High' && (
-                                 <span className="bg-rose-50 border border-rose-200 text-rose-600 text-[10px] px-2.5 py-1 rounded-full uppercase tracking-widest font-bold flex items-center gap-1 shadow-sm">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></div> High Priority
+               <Modal isOpen={selectedJob !== null} onClose={() => { setSelectedJob(null); setActiveTab('details'); }} title={`Deal #${selectedJob?.displayId}`}>
+         <div className="flex flex-col h-full" style={{ minHeight: '400px' }}>
+            <div className="flex border-b border-slate-200 mb-4 px-4 pt-2 gap-4 text-sm font-semibold text-slate-500">
+               <button 
+                  className={`pb-2 transition-colors ${activeTab === 'details' ? 'border-b-2 border-primary-500 text-primary-600' : 'hover:text-slate-700'}`}
+                  onClick={() => setActiveTab('details')}
+               >
+                  Deal Details
+               </button>
+               <button 
+                  className={`pb-2 transition-colors ${activeTab === 'photos' ? 'border-b-2 border-primary-500 text-primary-600' : 'hover:text-slate-700'}`}
+                  onClick={() => setActiveTab('photos')}
+               >
+                  Survey Photos {selectedJob?.surveyPhotos && Object.values(selectedJob.surveyPhotos).some(Boolean) ? '📸' : ''}
+               </button>
+               <button 
+                  className={`pb-2 transition-colors ${activeTab === 'proposal' ? 'border-b-2 border-primary-500 text-primary-600' : 'hover:text-slate-700'}`}
+                  onClick={() => setActiveTab('proposal')}
+               >
+                  Generated Proposal {selectedJob?.proposalData ? '📝' : ''}
+               </button>
+             </div>
+            
+            <div className="flex-1 overflow-y-auto px-4 pb-4">
+               {activeTab === 'details' && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+                     {isEditingJob ? (
+                        <div className="space-y-4">
+                           <h3 className="font-bold text-slate-700 border-b pb-2 mb-4">Edit Deal #{selectedJob?.displayId}</h3>
+                           <div className="form-group">
+                              <label className="text-xs font-bold text-slate-600 mb-1 block">Internal Notes / Issue</label>
+                              <textarea 
+                                 value={editJobForm.issue_description} 
+                                 onChange={e => setEditJobForm({...editJobForm, issue_description: e.target.value})}
+                                 className="w-full border border-slate-300 p-2 rounded-md min-h-[100px]"
+                              />
+                           </div>
+                           <div className="grid grid-cols-2 gap-4">
+                              <div className="form-group">
+                                 <label className="text-xs font-bold text-slate-600 mb-1 block">Urgency</label>
+                                 <select 
+                                    value={editJobForm.urgency} 
+                                    onChange={e => setEditJobForm({...editJobForm, urgency: e.target.value})}
+                                    className="w-full border border-slate-300 p-2 rounded-md"
+                                 >
+                                    <option value="Low">Low - System Working</option>
+                                    <option value="Medium">Medium - Failing / Noisy</option>
+                                    <option value="High">Emergency - System Down!</option>
+                                 </select>
+                              </div>
+                              <div className="form-group">
+                                 <label className="text-xs font-bold text-slate-600 mb-1 block">Pipeline Status Override</label>
+                                 <select 
+                                    value={editJobForm.status} 
+                                    onChange={e => setEditJobForm({...editJobForm, status: e.target.value})}
+                                    className="w-full border border-slate-300 p-2 rounded-md bg-amber-50"
+                                 >
+                                    {PIPELINE_STAGES.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+                                 </select>
+                              </div>
+                           </div>
+                           <div className="flex gap-2 justify-end pt-4">
+                              <button onClick={() => setIsEditingJob(false)} className="btn-secondary">Cancel</button>
+                              <button onClick={handleSaveEdit} className="btn-primary">Save Changes</button>
+                           </div>
+                        </div>
+                     ) : (
+                        <>
+                           <h3 className="font-bold text-lg mb-1">{selectedJob?.customerName}</h3>
+                           <p className="text-sm text-slate-500 mb-4">{selectedJob?.address}</p>
+                           
+                           <div className="bg-slate-50 p-4 rounded-md border border-slate-200 mb-4 flex items-center justify-between">
+                              <div>
+                                 <p className="text-xs font-bold text-slate-400 mb-1">URGENCY</p>
+                                 <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${selectedJob?.urgency === 'High' ? 'bg-red-100 text-red-700' : selectedJob?.urgency === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                                    {selectedJob?.urgency}
                                  </span>
+                              </div>
+                              <div className="text-right">
+                                 <p className="text-xs font-bold text-slate-400 mb-1">CURRENT STATUS</p>
+                                 <p className="text-sm font-semibold text-slate-700">{selectedJob?.status}</p>
+                              </div>
+                           </div>
+
+                           <div className="bg-blue-50/50 p-4 rounded-md border border-blue-100">
+                              <p className="text-xs font-bold text-blue-400 mb-2 flex items-center gap-1"><FileText size={14}/> INTERNAL NOTES</p>
+                              <p className="text-slate-800 text-sm italic">{selectedJob?.issue || 'No notes provided by staff.'}</p>
+                           </div>
+
+                           
+                           {activeRole !== ROLES.SUBCONTRACTOR && (
+                              <div className="pt-6 border-t border-slate-100 flex justify-between items-center mt-6">
+                                 <button onClick={() => setDeletingJob(true)} className="text-red-500 hover:text-red-700 hover:bg-red-50 text-xs font-bold py-2 px-3 rounded flex items-center gap-1 transition-colors">
+                                    <Trash2 size={14} /> Delete Job
+                                 </button>
+                                 <button onClick={() => setIsEditingJob(true)} className="btn-secondary text-xs flex items-center gap-1">
+                                    <Edit3 size={14} /> Quick Edit
+                                 </button>
+                              </div>
+                           )}
+                           
+                           {/* Ops & Dispatch Footer Actions */ }
+                           <div className="flex justify-end gap-3 pt-6 border-t border-slate-100 mt-4">
+                              {activeRole !== ROLES.SUBCONTRACTOR && (
+                                 <button onClick={() => {}} className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold flex items-center gap-2 shadow-sm text-xs">
+                                    <Phone size={14}/> Notify Dispatch Crew
+                                 </button>
+                              )}
+                              {activeRole === ROLES.SUBCONTRACTOR && (
+                                 <>
+                                    {selectedJob?.status === 'Scheduled' && (
+                                        <button onClick={() => handleStatusUpdate(selectedJob, 'En Route')} className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold shadow-lg transition-all text-xs">
+                                           🚀 Start Drive
+                                        </button>
+                                    )}
+                                    {selectedJob?.status === 'En Route' && (
+                                        <button onClick={() => handleStatusUpdate(selectedJob, 'In Progress')} className="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-bold shadow-lg transition-all text-xs animate-pulse">
+                                           📍 Arrived (Start)
+                                        </button>
+                                    )}
+                                    {selectedJob?.status === 'In Progress' && (
+                                        <button onClick={() => handleStatusUpdate(selectedJob, 'Completed')} className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold shadow-lg transition-all text-xs">
+                                           ✅ Complete Work Order
+                                        </button>
+                                    )}
+                                 </>
                               )}
                            </div>
-                           <p className="text-slate-400 font-mono text-xs flex items-center gap-2">
-                              System Reference <span className="text-slate-500 font-bold">#{selectedJob.displayId}</span>
-                           </p>
+
+                        </>
+                     )}
+                  </motion.div>
+               )}
+
+
+               {activeTab === 'proposal' && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="h-full">
+                     {!selectedJob?.proposalData ? (
+                        <div className="flex flex-col items-center justify-center p-12 bg-slate-50 rounded border border-slate-200 text-center shadow-sm h-full">
+                           <ShieldCheck size={48} className="text-slate-300 mb-4" />
+                           <h4 className="font-bold text-slate-600 mb-2 text-lg">No Digital Proposal Generated</h4>
+                           <p className="text-sm text-slate-500 max-w-sm leading-relaxed">This deal was manually created or pushed back without completing the Proposal Wizard. Generate a new estimate to automatically inject the 3-Tier retail pricing view here.</p>
                         </div>
-                        
-                        {/* Elegant Data Grid */}
+                     ) : (
+                        <div className="space-y-6">
+                           <div className="text-center mb-6">
+                              <h2 className="text-xl font-black text-slate-800 tracking-tight">Investment Options</h2>
+                              <p className="text-sm text-slate-500 mt-1">Generated {new Date(selectedJob.proposalData.generatedAt).toLocaleDateString()} for {selectedJob?.customerName}</p>
+                           </div>
+                           
+                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                              {/* BEST TIER */}
+                              {selectedJob.proposalData.tiers.best && (
+                                 <motion.div whileHover={{ y: -5 }} className="relative bg-white rounded-xl border-2 border-primary-500 shadow-xl overflow-hidden flex flex-col">
+                                    <div className="absolute top-0 left-0 right-0 bg-primary-500 text-white text-center text-xs font-bold py-1 tracking-widest uppercase">
+                                       Best Option
+                                    </div>
+                                    <div className="p-6 pt-10 text-center border-b border-slate-100 flex-1">
+                                       <h3 className="text-2xl font-black text-slate-800">${selectedJob.proposalData.tiers.best.salesPrice.toLocaleString()}</h3>
+                                       <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">Turnkey Total</p>
+                                       
+                                       <div className="mt-4 inline-block bg-primary-50 px-3 py-1 rounded-full text-primary-700 text-xs font-bold border border-primary-100">
+                                          {selectedJob.proposalData.tiers.best.brand} {selectedJob.proposalData.tiers.best.tons}T
+                                       </div>
+                                    </div>
+                                    <div className="p-5 bg-slate-50 flex-1">
+                                       <ul className="space-y-3">
+                                          {selectedJob.proposalData.tiers.best.features.map((feat, i) => (
+                                             <li key={i} className="flex items-start gap-2 text-xs text-slate-600 font-medium leading-relaxed">
+                                                <Zap size={14} className="text-primary-500 shrink-0 mt-0.5" />
+                                                {feat}
+                                             </li>
+                                          ))}
+                                       </ul>
+                                    </div>
+                                 </motion.div>
+                              )}
+
+                              {/* BETTER TIER */}
+                              {selectedJob.proposalData.tiers.better && (
+                                 <motion.div whileHover={{ y: -5 }} className="relative bg-white rounded-xl border border-slate-200 shadow-lg overflow-hidden flex flex-col">
+                                    <div className="absolute top-0 left-0 right-0 bg-slate-700 text-white text-center text-xs font-bold py-1 tracking-widest uppercase">
+                                       Better Option
+                                    </div>
+                                    <div className="p-6 pt-10 text-center border-b border-slate-100 flex-1">
+                                       <h3 className="text-2xl font-black text-slate-800">${selectedJob.proposalData.tiers.better.salesPrice.toLocaleString()}</h3>
+                                       <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">Turnkey Total</p>
+                                       
+                                       <div className="mt-4 inline-block bg-slate-100 px-3 py-1 rounded-full text-slate-600 text-xs font-bold border border-slate-200">
+                                          {selectedJob.proposalData.tiers.better.brand} {selectedJob.proposalData.tiers.better.tons}T
+                                       </div>
+                                    </div>
+                                    <div className="p-5 bg-slate-50 flex-1">
+                                       <ul className="space-y-3">
+                                          {selectedJob.proposalData.tiers.better.features.map((feat, i) => (
+                                             <li key={i} className="flex items-start gap-2 text-xs text-slate-600 font-medium leading-relaxed">
+                                                <CheckSquare size={14} className="text-slate-400 shrink-0 mt-0.5" />
+                                                {feat}
+                                             </li>
+                                          ))}
+                                       </ul>
+                                    </div>
+                                 </motion.div>
+                              )}
+
+                              {/* GOOD TIER */}
+                              {selectedJob.proposalData.tiers.good && (
+                                 <motion.div whileHover={{ y: -5 }} className="relative bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col opacity-90 hover:opacity-100">
+                                    <div className="absolute top-0 left-0 right-0 bg-slate-300 text-slate-600 text-center text-xs font-bold py-1 tracking-widest uppercase">
+                                       Good Option
+                                    </div>
+                                    <div className="p-6 pt-10 text-center border-b border-slate-100 flex-1">
+                                       <h3 className="text-2xl font-black text-slate-800">${selectedJob.proposalData.tiers.good.salesPrice.toLocaleString()}</h3>
+                                       <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">Turnkey Total</p>
+                                       
+                                       <div className="mt-4 inline-block bg-slate-100 px-3 py-1 rounded-full text-slate-500 text-xs font-bold border border-slate-200">
+                                          {selectedJob.proposalData.tiers.good.brand} {selectedJob.proposalData.tiers.good.tons}T
+                                       </div>
+                                    </div>
+                                    <div className="p-5 bg-slate-50 flex-1">
+                                       <ul className="space-y-3">
+                                          {selectedJob.proposalData.tiers.good.features.map((feat, i) => (
+                                             <li key={i} className="flex items-start gap-2 text-xs text-slate-500 font-medium leading-relaxed">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-1.5 shrink-0" />
+                                                {feat}
+                                             </li>
+                                          ))}
+                                       </ul>
+                                    </div>
+                                 </motion.div>
+                              )}
+                           </div>
+                           
+                           <div className="bg-amber-50 rounded-lg p-4 border border-amber-100 mt-6 flex items-start gap-3">
+                              <ShieldCheck size={20} className="text-amber-500 shrink-0 mt-0.5" />
+                              <div className="text-sm text-amber-800">
+                                 <strong>Dealer Cost & Margins Protected:</strong> Material line items, sub-labor, flush costs, crane rentals, and gross margin algorithms are explicitly hidden from this client-facing presentation layout.
+                              </div>
+                           </div>
+                        </div>
+                     )}
+                  </motion.div>
+               )}
+
+               {activeTab === 'photos' && (
+                  <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2 }}>
+                     {!selectedJob?.surveyPhotos || !Object.values(selectedJob.surveyPhotos).some(Boolean) ? (
+                        <div className="flex flex-col items-center justify-center p-8 bg-slate-50 rounded border border-slate-200 text-center">
+                           <ImageIcon size={48} className="text-slate-300 mb-3" />
+                           <h4 className="font-bold text-slate-600 mb-1">No Photos Attached</h4>
+                           <p className="text-xs text-slate-500 max-w-xs">The salesperson did not upload any site survey images for this deal during the proposal creation.</p>
+                        </div>
+                     ) : (
                         <div className="grid grid-cols-2 gap-4">
-                           <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 shadow-sm hover:border-primary-200 transition-colors">
-                              <label className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5 mb-1 tracking-wider uppercase">
-                                 <MapPin size={12} className="text-primary-500"/> Service Address
-                              </label>
-                              <span className="text-sm font-semibold text-slate-700 leading-tight block pr-2">
-                                 {selectedJob.address}
-                              </span>
-                           </div>
-                           <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 shadow-sm hover:border-amber-200 transition-colors">
-                              <label className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5 mb-1 tracking-wider uppercase">
-                                 <CalendarClock size={12} className="text-amber-500"/> Dispatch Window
-                              </label>
-                              <span className="text-sm font-semibold text-slate-700 leading-tight block">
-                                 {selectedJob.scheduled_date ? `${selectedJob.scheduled_date.toLocaleDateString ? selectedJob.scheduled_date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'}) : selectedJob.scheduled_date} ${selectedJob.scheduled_time_block ? `(${selectedJob.scheduled_time_block.replace('Exact: ', '')})` : ''}` : 'Queue / Unassigned'}
-                              </span>
-                           </div>
+                           {Object.entries(selectedJob.surveyPhotos).map(([key, url]) => {
+                              if (!url) return null;
+                              const labels = {
+                                 condenser_wide: 'Condenser Wide View',
+                                 condenser_data_plate: 'Condenser Data Plate',
+                                 indoor_unit_wide: 'Indoor Unit Wide View',
+                                 indoor_data_plate: 'Indoor Data Plate',
+                                 electrical_panel_open: 'Electrical Panel'
+                              };
+                              return (
+                                 <div key={key} className="border border-slate-200 rounded p-2 bg-slate-50">
+                                    <span className="block text-[10px] font-bold uppercase text-slate-500 mb-2 truncate">{labels[key] || key}</span>
+                                    <a href={url} target="_blank" rel="noreferrer" className="block relative group overflow-hidden rounded">
+                                       <img src={url} alt={key} className="w-full h-32 object-cover transition-transform group-hover:scale-105" />
+                                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                          <Search size={24} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                       </div>
+                                    </a>
+                                 </div>
+                              );
+                           })}
                         </div>
+                     )}
+                  </motion.div>
+               )}
+            </div>
 
-                        {/* Soft Notes Container */}
-                        <div className="relative">
-                           <div className="absolute top-0 left-4 -mt-2 bg-white px-2">
-                              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                                 <MessageSquare size={12} className="text-slate-400"/> {activeRole === ROLES.SUBCONTRACTOR ? 'Work Order Instructions' : 'Diagnostic Log'}
-                              </h4>
-                           </div>
-                           <div className="bg-white border-2 border-slate-100 rounded-xl p-5 pt-6 text-sm text-slate-600 leading-relaxed max-h-[220px] overflow-auto shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] whitespace-pre-wrap">
-                              {selectedJob.dispatch_notes || <span className="italic text-slate-400">No dispatch notes recorded for this ticket.</span>}
-                           </div>
-                        </div>
+            <div className="p-4 border-t border-slate-200 mt-auto shrink-0 bg-white">
+               <button className="btn-secondary w-full" onClick={() => { setSelectedJob(null); setActiveTab('details'); }}>Close Deal Window</button>
+            </div>
+         </div>
+      </Modal>
 
-                        {/* Footer Actions */}
-                        <div className="flex justify-end gap-3 pt-2">
-                           <button onClick={() => setSelectedJob(null)} className="px-5 py-2.5 rounded-lg font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all text-sm">Close</button>
-                           {activeRole !== ROLES.SUBCONTRACTOR && (
-                              <button className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-slate-900/20 transition-all text-sm">
-                                 <Phone size={16}/> Dispatch Crew
-                              </button>
-                           )}
-                           {activeRole === ROLES.SUBCONTRACTOR && (
-                              <>
-                                 {selectedJob.status === 'Scheduled' && (
-                                     <button onClick={() => handleStatusUpdate(selectedJob, 'En Route')} className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold shadow-lg transition-all text-sm">
-                                        🚀 Start Drive (En Route)
-                                     </button>
-                                 )}
-                                 {selectedJob.status === 'En Route' && (
-                                     <button onClick={() => handleStatusUpdate(selectedJob, 'In Progress')} className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-bold shadow-lg transition-all text-sm animate-pulse">
-                                        📍 Arrived (Start Job)
-                                     </button>
-                                 )}
-                                 {selectedJob.status === 'In Progress' && (
-                                     <button onClick={() => handleStatusUpdate(selectedJob, 'Completed')} className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold shadow-lg transition-all text-sm">
-                                        ✅ Complete Job
-                                     </button>
-                                 )}
-                              </>
-                           )}
-                        </div>
-                     </div>
-                  )}
-               </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={deletingJob} onClose={() => setDeletingJob(false)} title="Delete Job Card" size="sm">
+         <div className="p-4 bg-red-50 border border-red-100 rounded-lg text-center mb-6">
+            <h4 className="text-red-800 font-bold mb-2">Delete {selectedJob?.displayId}?</h4>
+            <p className="text-sm text-red-600 font-medium">This will permanently remove the record and cannot be undone.</p>
+         </div>
+         <div className="flex gap-3 justify-end items-center">
+            <button className="btn-secondary" onClick={() => setDeletingJob(false)}>Cancel</button>
+            <button className="btn-primary !bg-red-500 hover:!bg-red-600 border-none px-6" onClick={handleDeleteJob}>Confirm Deletion</button>
+         </div>
+      </Modal>
+
             </div>
 
          </div>
