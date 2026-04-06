@@ -145,7 +145,27 @@ export default function SalesPipeline() {
     const sourceCol = source.droppableId;
     const destCol = destination.droppableId;
 
-    // Rely entirely on Supabase Realtime to update the UI globally and prevent React duplication
+    // Optimistically update UI to prevent Drag-and-Drop visual snapping glitches
+    setPipeline(prev => {
+      const newPipeline = { ...prev };
+      // Prevent mutations by deep cloning the arrays we are changing
+      const sArr = [...(newPipeline[sourceCol] || [])];
+      const dArr = sourceCol === destCol ? sArr : [...(newPipeline[destCol] || [])];
+      
+      const movedJobIndex = sArr.findIndex(j => j.id === draggableId);
+      if (movedJobIndex !== -1) {
+          const [movedJob] = sArr.splice(movedJobIndex, 1);
+          movedJob.status = destCol; // Update internal status
+          
+          dArr.splice(destination.index, 0, movedJob);
+          
+          newPipeline[sourceCol] = sArr;
+          if (sourceCol !== destCol) {
+            newPipeline[destCol] = dArr;
+          }
+      }
+      return newPipeline;
+    });
 
     // Lost Deal Post-Mortem Intercept
     if (destCol === 'Lost') {
