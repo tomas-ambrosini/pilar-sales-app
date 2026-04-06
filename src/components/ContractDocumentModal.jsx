@@ -122,17 +122,19 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                {/* Digital Signature Block */}
                <div className="flex justify-between items-end border-t border-slate-300 pt-10 pb-10">
                    <div className="flex-1 max-w-sm">
-                      <div className="relative mb-2 flex justify-center">
+                      <div className="relative mb-2 h-20 flex items-end">
                          {proposal.signature_data ? (
-                             <img src={proposal.signature_data} alt="Customer Signature" className="h-16 w-auto object-contain mix-blend-multiply" />
+                             <img src={proposal.signature_data} alt="Customer Signature" className="absolute bottom-0 left-0 h-24 w-auto object-contain mix-blend-multiply" />
                          ) : (
-                             <div className="absolute inset-0 flex items-center justify-center opacity-10 font-[cursive] text-4xl whitespace-nowrap overflow-hidden pointer-events-none text-slate-900 w-[200%] -ml-[50%]">
-                                 {proposal.customer} {proposal.customer}
-                             </div>
+                             <>
+                                <div className="absolute inset-0 flex items-center justify-center opacity-10 font-[cursive] text-4xl whitespace-nowrap overflow-hidden pointer-events-none text-slate-900 w-[200%] -ml-[50%]">
+                                    {proposal.customer} {proposal.customer}
+                                </div>
+                                <div className="relative z-10 flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 w-fit px-3 py-1 rounded border border-emerald-200 mb-2">
+                                   <Pen size={14} /> Legally Binding E-Signature
+                                </div>
+                             </>
                          )}
-                         <div className="relative z-10 flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 w-fit px-3 py-1 rounded border border-emerald-200">
-                            <Pen size={14} /> Legally Binding E-Signature
-                         </div>
                       </div>
                       <div className="h-0.5 bg-slate-800 w-full mb-2"></div>
                       <p className="text-xs font-bold text-slate-800">Customer Authorization</p>
