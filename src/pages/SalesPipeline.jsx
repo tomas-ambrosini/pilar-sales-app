@@ -145,23 +145,7 @@ export default function SalesPipeline() {
     const sourceCol = source.droppableId;
     const destCol = destination.droppableId;
 
-    // Optimistically update UI
-    setPipeline(prev => {
-      const newPipeline = { ...prev };
-      const sArr = [...newPipeline[sourceCol]];
-      const dArr = sourceCol === destCol ? sArr : [...newPipeline[destCol]];
-      
-      const [movedJob] = sArr.splice(source.index, 1);
-      movedJob.status = destCol; // Update internal status
-      
-      dArr.splice(destination.index, 0, movedJob);
-      
-      newPipeline[sourceCol] = sArr;
-      if (sourceCol !== destCol) {
-        newPipeline[destCol] = dArr;
-      }
-      return newPipeline;
-    });
+    // Rely entirely on Supabase Realtime to update the UI globally and prevent React duplication
 
     // Lost Deal Post-Mortem Intercept
     if (destCol === 'Lost') {
@@ -632,7 +616,7 @@ export default function SalesPipeline() {
                         <div className="flex flex-col items-center justify-center p-8 bg-slate-50 rounded border border-slate-200 text-center">
                            <ImageIcon size={48} className="text-slate-300 mb-3" />
                            <h4 className="font-bold text-slate-600 mb-1">No Photos Attached</h4>
-                           <p className="text-xs text-slate-500 max-w-xs">The salesperson did not upload any site survey images for this deal during the proposal creation.</p>
+                           <p className="text-xs text-slate-500 max-w-xs">The advisor did not upload any site survey images for this assignment.</p>
                         </div>
                      ) : (
                         <div className="grid grid-cols-2 gap-4">
@@ -664,7 +648,7 @@ export default function SalesPipeline() {
             </div>
 
             <div className="p-4 border-t border-slate-200 mt-auto shrink-0 bg-white">
-               <button className="btn-secondary w-full" onClick={() => { setActiveJob(null); setActiveTab('details'); }}>Close Deal Window</button>
+               <button className="btn-secondary w-full" onClick={() => { setActiveJob(null); setActiveTab('details'); }}>Close Window</button>
             </div>
          </div>
       </Modal>
