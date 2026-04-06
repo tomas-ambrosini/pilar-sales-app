@@ -104,7 +104,7 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick,
                   {...provided.dragHandleProps}
                   onClick={() => onCardClick && onCardClick(job)}
                   className={`bg-white border rounded-xl p-3 cursor-pointer active:cursor-grabbing transition-all relative overflow-hidden flex flex-col justify-between 
-                     ${isMatrix ? 'w-full mb-2 h-[105px]' : 'w-[280px] shrink-0 mx-2'} 
+                     ${isMatrix ? 'w-full mb-2 min-h-[105px] shrink-0' : 'w-[280px] shrink-0 mx-2'} 
                      ${snapshot.isDragging 
                         ? 'ring-4 ring-primary-500/20 shadow-2xl shadow-primary-500/30 scale-[1.03] rotate-1 z-[999] border-primary-500' 
                         : isWarning ? 'border-amber-400 shadow-[0_2px_8px_-3px_rgba(251,191,36,0.5)]' : 'border-slate-200/80 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.06)] hover:shadow-lg hover:border-slate-300'}`}
@@ -201,7 +201,7 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick,
                                    ref={provided.innerRef}
                                    {...provided.droppableProps}
                                 >
-                                    <div className="w-full h-full flex flex-col relative z-10">
+                                    <div className="w-full flex-1 flex flex-col relative z-10 h-max">
                                        {cellJobs.map((job, idx) => (
                                           <JobCard key={job.id} job={job} index={idx} isMatrix={true} />
                                        ))}

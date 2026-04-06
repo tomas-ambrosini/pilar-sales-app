@@ -54,13 +54,22 @@ export default function DispatchHub() {
    useEffect(() => {
       fetchOpportunities();
       
-      const channel = supabase.channel('realtime_dispatch')
+      const oppChannel = supabase.channel('realtime_dispatch_opps')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'opportunities' }, () => {
            fetchOpportunities();
         })
         .subscribe();
+        
+      const woChannel = supabase.channel('realtime_dispatch_wo')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'work_orders' }, () => {
+           fetchOpportunities();
+        })
+        .subscribe();
   
-      return () => supabase.removeChannel(channel);
+      return () => {
+          supabase.removeChannel(oppChannel);
+          supabase.removeChannel(woChannel);
+      };
    }, []);
 
    const fetchOpportunities = async () => {
