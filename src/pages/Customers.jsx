@@ -10,15 +10,15 @@ import ProposalViewerModal from '../components/ProposalViewerModal';
 function CustomerList() {
   const navigate = useNavigate();
   const { customers, addCustomer } = useCustomers();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(() => searchParams.get('action') === 'new');
 
   React.useEffect(() => {
      if (searchParams.get('action') === 'new') {
         setIsAddCustomerOpen(true);
-        setSearchParams({}); // Consume the query arg so reloading doesn't bounce it open
+        window.history.replaceState({}, document.title, window.location.pathname);
      }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams]);
 
   const [searchQuery, setSearchQuery] = useState('');
 

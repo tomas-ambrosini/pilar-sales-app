@@ -16,15 +16,15 @@ import { useSearchParams } from 'react-router-dom';
 export default function Proposals() {
   const { proposals, addProposal, updateProposal, deleteProposal, loading } = useProposals();
   const { customers } = useCustomers();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [showWizard, setShowWizard] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [showWizard, setShowWizard] = useState(() => searchParams.get('action') === 'new');
 
   useEffect(() => {
      if (searchParams.get('action') === 'new') {
          setShowWizard(true);
-         setSearchParams({});
+         window.history.replaceState({}, document.title, window.location.pathname);
      }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams]);
 
   const [viewingProposal, setViewingProposal] = useState(null);
   const [viewingContract, setViewingContract] = useState(null);
