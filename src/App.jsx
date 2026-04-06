@@ -29,8 +29,8 @@ function ProtectedRoutes() {
 
   return (
     <Routes>
-      <Route path="/tech/*" element={<FieldTech />} />
       <Route path="/" element={<Layout />}>
+        <Route path="tech/*" element={<FieldTech />} />
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="customers/*" element={<Customers />} />

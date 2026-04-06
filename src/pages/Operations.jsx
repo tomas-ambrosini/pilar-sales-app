@@ -37,10 +37,13 @@ export default function Operations() {
         .from('opportunities')
         .select(`
           id,
+          household_id,
           status,
           proposal_data,
+          dispatch_notes,
           created_at,
           households (
+            id,
             household_name
           )
         `)
@@ -65,11 +68,32 @@ export default function Operations() {
   const handleApproveDeal = async () => {
     if (!selectedDeal) return;
     
+    // 1. Get the payload elements from the Selected Deal
+    const tierKey = selectedDeal.proposal_data?.selected_tier || 'best';
+    const tierData = selectedDeal.proposal_data?.tiers?.[tierKey] || {};
+    const signatureData = selectedDeal.proposal_data?.signature;
+    const householdId = selectedDeal.household_id;
+
     const updatedProposalData = {
         ...selectedDeal.proposal_data,
         manager_approved: true
     };
 
+    // 2. Generate the Work Order ONLY upon Manager Approval
+    const { error: woError } = await supabase.from('work_orders').insert({
+        opportunity_id: selectedDeal.id,
+        household_id: householdId,
+        status: 'Unscheduled',
+        execution_payload: { tierName: tierKey, ...tierData, signature: signatureData },
+        dispatch_notes: selectedDeal.dispatch_notes || "Operations approved deal. Awaiting dispatch."
+    });
+
+    if (woError) {
+        console.error("Failed to generate Work Order:", woError);
+        return;
+    }
+
+    // 3. Mark the Opportunity as Approved
     const { error } = await supabase
         .from('opportunities')
         .update({ proposal_data: updatedProposalData })
@@ -79,7 +103,7 @@ export default function Operations() {
         setDeals(prev => prev.filter(d => d.id !== selectedDeal.id));
         setSelectedDeal(null);
     } else {
-        console.error("Failed to approve deal:", error);
+        console.error("Failed to approve opportunity:", error);
     }
   };
 

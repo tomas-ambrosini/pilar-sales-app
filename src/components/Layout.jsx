@@ -42,6 +42,7 @@ const navGroups = [
     title: 'Operations',
     allowedRoles: [ROLES.ADMIN, ROLES.DISPATCH, ROLES.SUBCONTRACTOR],
     items: [
+      { path: '/tech', label: 'Field Execution', icon: Truck, allowedRoles: [ROLES.SUBCONTRACTOR, ROLES.DISPATCH] },
       { path: '/dispatch', label: 'Dispatch Hub', icon: Truck, allowedRoles: [ROLES.ADMIN, ROLES.DISPATCH, ROLES.SUBCONTRACTOR] },
       { path: '/operations', label: 'Settings', icon: Settings, allowedRoles: [ROLES.ADMIN] }
     ]
@@ -185,9 +186,6 @@ export default function Layout() {
           <div className="desktop-header-title flex items-center gap-4">
             <span className="company-tag hidden md:inline-flex">Home Division</span>
             <RoleSwitcher />
-            <a href="/tech" target="_blank" rel="noreferrer" className="hidden lg:flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-emerald-600 shadow-sm transition-colors cursor-pointer ml-4">
-               📱 Open Tech Mobile App
-            </a>
           </div>
           <div className="top-bar-actions">
              <button

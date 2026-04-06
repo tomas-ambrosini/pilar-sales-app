@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Clock, CheckCircle, Zap, Shield, ChevronLeft, Phone, Camera, FileText } from 'lucide-react';
-import './FieldTech.css'; // We'll add some specific mobile styles
+import { MapPin, Navigation, Clock, CheckCircle, Zap, Shield, ChevronLeft, Phone, Camera, FileText, AlertTriangle } from 'lucide-react';
 
 export default function FieldTech() {
   const [jobs, setJobs] = useState([]);
@@ -66,21 +65,11 @@ export default function FieldTech() {
 
   // Render the list of today's jobs
   const renderRouteList = () => (
-    <div className="mobile-route-container">
-      <header className="mobile-header shadow-sm">
-        <div>
-           <h1 className="text-xl font-black text-slate-800 tracking-tight">Today's Route</h1>
-           <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</p>
-        </div>
-        <div className="flex items-center gap-3">
-           <button onClick={() => window.close()} className="text-[10px] font-bold text-slate-400 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded">Close</button>
-           <div className="w-10 h-10 rounded-full bg-primary-100 border-2 border-white shadow-sm flex items-center justify-center font-bold text-primary-700">
-              TC
-           </div>
-        </div>
-      </header>
+    <div className="mobile-route-container fade-in">
+      <div className="px-4 py-6">
+        <h1 className="text-xl font-black text-slate-800 tracking-tight">Today's Route</h1>
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1 mb-6">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</p>
 
-      <div className="px-4 py-2">
         {jobs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <CheckCircle size={48} className="text-emerald-300 mb-4" />
@@ -90,7 +79,8 @@ export default function FieldTech() {
         ) : (
           <div className="space-y-4">
             {jobs.map(job => {
-               const addr = job.households?.addresses?.[0];
+               const rawAddr = job.households?.addresses;
+               const addr = Array.isArray(rawAddr) ? rawAddr[0] : rawAddr;
                const addressStr = addr ? `${addr.street_address}, ${addr.city}` : 'Unknown Address';
                const isEnRoute = job.status === 'En Route';
                const isInProgress = job.status === 'In Progress';
@@ -138,9 +128,12 @@ export default function FieldTech() {
   const renderActiveJob = () => {
      if (!activeJob) return null;
      
-     const addr = activeJob.households?.addresses?.[0];
-     const addressStr = addr ? `${addr.street_address}, ${addr.city}, ${addr.state} ${addr.zip}` : 'Unknown Address';
-     const phone = activeJob.households?.contacts?.[0]?.primary_phone;
+     const rawAddr = activeJob.households?.addresses;
+     const addr = Array.isArray(rawAddr) ? rawAddr[0] : rawAddr;
+     const addressStr = addr ? `${addr.street_address}, ${addr.city}, ${addr.state || ''} ${addr.zip || ''}` : 'Unknown Address';
+     
+     const rawContacts = activeJob.households?.contacts;
+     const phone = Array.isArray(rawContacts) ? rawContacts[0]?.primary_phone : rawContacts?.primary_phone;
      const isEnRoute = activeJob.status === 'En Route';
      const isInProgress = activeJob.status === 'In Progress';
      const installSpec = activeJob.execution_payload;
@@ -153,13 +146,13 @@ export default function FieldTech() {
          exit={{ x: '100%' }}
          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
        >
-          <div className="execution-header glass-panel border-b-0 pb-6 rounded-none relative">
+          <div className="execution-header rounded-none relative pt-4">
             {/* Top Navigation */}
              <div className="flex justify-between items-center mb-6">
-                <button className="w-10 h-10 rounded-full bg-white/50 backdrop-blur flex-center border border-slate-200 shadow-sm" onClick={() => setActiveJob(null)}>
+                <button className="w-10 h-10 rounded-full bg-white shadow flex-center border border-slate-200" onClick={() => setActiveJob(null)}>
                    <ChevronLeft size={20} className="text-slate-700"/>
                 </button>
-                <span className="text-xs font-black tracking-widest uppercase text-slate-500 bg-white/50 px-3 py-1.5 rounded-full border border-slate-200">
+                <span className="text-xs font-black tracking-widest uppercase text-slate-500 bg-white shadow-sm px-3 py-1.5 rounded-full border border-slate-200">
                    #{activeJob.work_order_number}
                 </span>
              </div>
@@ -238,7 +231,7 @@ export default function FieldTech() {
   };
 
   return (
-    <div className="mobile-wrapper bg-slate-50 min-h-screen pb-10">
+    <div className="max-w-md mx-auto relative pb-20">
        <AnimatePresence>
           {activeJob ? renderActiveJob() : renderRouteList()}
        </AnimatePresence>

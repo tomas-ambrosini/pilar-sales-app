@@ -104,28 +104,30 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
      const oppId = proposal.proposal_data?.associated_opportunity_id;
      if (oppId) {
          try {
-             // 1. Update Sales Pipeline Opportunity
+             // 1. Get existing opportunity data
+             const { data: oppRow } = await supabase.from('opportunities').select('household_id, proposal_data').eq('id', oppId).single();
+             
+             // 2. We inject the accepted tier and signature into the Opportunity's proposal_data payload
+             const updatedOppPayload = {
+                 ...(oppRow?.proposal_data || proposal.proposal_data || {}),
+                 selected_tier: tierName,
+                 signature: signatureData,
+                 manager_approved: false // explicitly flag for Operations Queue
+             };
+
+             // 3. Update Sales Pipeline Opportunity to 'Deal Won'. (It will now sit in Operations waiting for Manager Approval)
              await supabase.from('opportunities').update({
                  status: 'Deal Won',
-                 dispatch_notes: workOrderNotes
+                 dispatch_notes: workOrderNotes,
+                 proposal_data: updatedOppPayload
              }).eq('id', oppId);
 
-             const { data: oppRow } = await supabase.from('opportunities').select('household_id').eq('id', oppId).single();
              if (oppRow?.household_id) {
-                 // 3. Auto-spawn the Work Order in the Operations Database
-                 await supabase.from('work_orders').insert({
-                     opportunity_id: oppId,
-                     household_id: oppRow.household_id,
-                     status: 'Unscheduled',
-                     execution_payload: { tierName, ...tierData, signature: signatureData },
-                     dispatch_notes: workOrderNotes
-                 });
-
                  // 4. Inject Verified Paper Trail to Customer CRM File
                  await supabase.from('activity_logs').insert({
                      household_id: oppRow.household_id,
-                     activity_type: 'Contract Executed',
-                     description: `Client signed Digital Contract for ${tierName} System. Work Order generated.`,
+                     activity_type: 'Contract Executed (Pending Approval)',
+                     description: `Client signed Digital Contract for ${tierName} System. Awaiting Manager Approval in Operations.`,
                      is_pinned_alert: true
                  });
              }

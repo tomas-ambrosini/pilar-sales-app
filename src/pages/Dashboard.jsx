@@ -5,11 +5,22 @@ import { Users, FileText, DollarSign, Activity, FileCheck, ArrowRight, BookOpen 
 import { useCustomers } from '../context/CustomerContext';
 import { useProposals } from '../context/ProposalContext';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../supabaseClient';
+import { Truck } from 'lucide-react';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { customers } = useCustomers();
   const { proposals } = useProposals();
+  const [activeWorkOrders, setActiveWorkOrders] = React.useState(0);
+
+  React.useEffect(() => {
+     const fetchWo = async () => {
+        const { count } = await supabase.from('work_orders').select('*', { count: 'exact', head: true }).neq('status', 'Completed');
+        setActiveWorkOrders(count || 0);
+     };
+     fetchWo();
+  }, []);
 
   // Calculations
   const activeProposals = proposals.filter(p => p.status !== 'rejected');
@@ -102,24 +113,21 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        {/* Quick Actions Card */}
-        <motion.div variants={itemVariants} className="bg-gradient-to-br from-[#2A9D8F] to-teal-900 p-6 rounded-3xl shadow-lg border border-teal-700 flex flex-col text-white relative overflow-hidden">
-          <div className="absolute -right-4 -bottom-4 opacity-10 transform rotate-12">
-            <BookOpen size={160} />
+        {/* Operations Hub */}
+        <motion.div variants={itemVariants} className="bg-gradient-to-br from-[#2A9D8F] to-teal-900 p-6 rounded-3xl shadow-lg border border-teal-700 flex flex-col text-white relative overflow-hidden group hover:shadow-xl transition-shadow">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
+            <Truck size={100} />
           </div>
           <div className="flex items-center gap-3 mb-6 relative z-10">
              <div className="bg-white/20 text-white p-3 rounded-2xl backdrop-blur-sm">
-               <Activity size={24} />
+               <Truck size={24} />
              </div>
-             <h3 className="font-bold uppercase tracking-wider text-xs opacity-90">Quick Actions</h3>
+             <span className="font-bold uppercase tracking-wider text-xs opacity-90">Operations Pipeline</span>
           </div>
-          <div className="space-y-3 relative z-10 font-bold mt-auto">
-             <Link to="/proposals" className="flex items-center justify-between bg-white/10 hover:bg-white/20 px-5 py-4 rounded-2xl transition-all hover:scale-[1.02] backdrop-blur-sm border border-white/10">
-               <span>New Estimate</span>
-               <ArrowRight size={18} />
-             </Link>
-             <Link to="/customers" className="flex items-center justify-between bg-white/10 hover:bg-white/20 px-5 py-4 rounded-2xl transition-all hover:scale-[1.02] backdrop-blur-sm border border-white/10">
-               <span>Add Customer</span>
+          <h2 className="text-4xl font-black text-white relative z-10">{activeWorkOrders}</h2>
+          <div className="space-y-3 relative z-10 font-bold mt-auto pt-6">
+             <Link to="/dispatch" className="flex items-center justify-between bg-white/10 hover:bg-white/20 px-5 py-4 rounded-2xl transition-all hover:scale-[1.02] backdrop-blur-sm border border-white/10">
+               <span className="text-sm">Open Dispatch Hub</span>
                <ArrowRight size={18} />
              </Link>
           </div>
