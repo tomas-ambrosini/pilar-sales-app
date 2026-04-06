@@ -18,6 +18,8 @@ import { ProposalProvider } from './context/ProposalContext';
 import { InvoiceProvider } from './context/InvoiceContext';
 import { RoleProvider } from './context/RoleContext';
 
+import FieldTech from './pages/FieldTech';
+
 function ProtectedRoutes() {
   const { user } = useAuth();
 
@@ -27,6 +29,7 @@ function ProtectedRoutes() {
 
   return (
     <Routes>
+      <Route path="/tech/*" element={<FieldTech />} />
       <Route path="/" element={<Layout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
