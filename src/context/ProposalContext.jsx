@@ -94,7 +94,24 @@ export function ProposalProvider({ children }) {
     };
 
     const deleteProposal = async (id) => {
+        const oldProposal = proposals.find(p => p.id === id);
+        const oppId = oldProposal?.proposal_data?.associated_opportunity_id;
+
         setProposals(prev => prev.filter(p => p.id !== id));
+        
+        // Always attempt to delete associated downstream records to keep Kanban and Dispatch Hub synced
+        try {
+            // Priority 1: Clear Operations/Dispatch first to avoid Opportunity constraint violations
+            await supabase.from('work_orders').delete().eq('proposal_id', id);
+            
+            // Priority 2: Clear Sales Pipeline deal
+            if (oppId) {
+                await supabase.from('opportunities').delete().eq('id', oppId);
+            }
+        } catch (e) {
+            console.warn('Silent issue cascading delete, but continuing to delete proposal:', e);
+        }
+
         const { error } = await supabase.from('proposals').delete().eq('id', id);
         if (error) {
             console.error('Failed to delete proposal:', error);
