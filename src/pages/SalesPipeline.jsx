@@ -3,7 +3,6 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ClipboardList, PlusCircle, Calendar, MapPin, Pen, Activity, CheckSquare, Search, ChevronRight, FileText, Clock, File, Edit3, Trash2, ShieldCheck, Zap, Image as ImageIcon } from 'lucide-react';
 import Modal from '../components/Modal';
-import DispatchCalendar from '../components/DispatchCalendar';
 import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
 
@@ -24,9 +23,7 @@ const initialPipeline = PIPELINE_STAGES.reduce((acc, stage) => {
 export default function SalesPipeline() {
   const { customers } = useCustomers();
   const [pipeline, setPipeline] = useState(initialPipeline);
-  const [crews, setCrews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('kanban'); // 'kanban' or 'dispatch'
 
   // Modals & Forms
   const [activeJob, setActiveJob] = useState(null);
@@ -38,7 +35,6 @@ export default function SalesPipeline() {
 
   const [newLeadForm, setNewLeadForm] = useState({ household_id: '', issue_description: '', urgency: 'Medium' });
   const [editJobForm, setEditJobForm] = useState({ issue_description: '', urgency: 'Medium', status: '' });
-  const [dispatchForm, setDispatchForm] = useState({ date: '', time_block: '', crew_id: '', notes: '' });
 
   // Temporary ID holders
   const [pendingLostDeal, setPendingLostDeal] = useState(null);
@@ -47,12 +43,6 @@ export default function SalesPipeline() {
 
   useEffect(() => {
      if (activeJob) {
-        setDispatchForm({
-           crew_id: activeJob.assigned_crew_id || '',
-           date: activeJob.scheduled_date || '',
-           time_block: activeJob.scheduled_time_block || '',
-           notes: activeJob.dispatch_notes || ''
-        });
         setEditJobForm({
            issue_description: activeJob.issue || '',
            urgency: activeJob.urgency || 'Medium',
@@ -64,7 +54,6 @@ export default function SalesPipeline() {
 
   useEffect(() => {
     fetchOpportunities();
-    fetchCrews();
     
     // Live Supabase Subscriptions
     const channel = supabase.channel('realtime_opportunities')
@@ -75,11 +64,6 @@ export default function SalesPipeline() {
 
     return () => supabase.removeChannel(channel);
   }, []);
-
-  const fetchCrews = async () => {
-     const { data } = await supabase.from('crews').select('*');
-     if (data) setCrews(data);
-  };
 
   const fetchOpportunities = async () => {
     try {
@@ -190,46 +174,6 @@ export default function SalesPipeline() {
        console.error("Drag update failed:", error);
        fetchOpportunities(); // Revert on failure
     }
-  };
-  const handleScheduleJob = async (jobId, crewId, dateStr) => {
-     // Optimistically update Deal Won column to prevent UI snapback
-     setPipeline(prev => {
-        const newPipe = { ...prev };
-        const wonJobs = [...(newPipe['Deal Won'] || [])];
-        const jobIndex = wonJobs.findIndex(j => j.id === jobId);
-        if (jobIndex !== -1) {
-           wonJobs[jobIndex] = { ...wonJobs[jobIndex], scheduled_date: dateStr, assigned_crew_id: crewId };
-           newPipe['Deal Won'] = wonJobs;
-        }
-        return newPipe;
-     });
-
-     // Mutate real database
-     const { error } = await supabase.from('opportunities')
-        .update({ scheduled_date: dateStr, assigned_crew_id: crewId })
-        .eq('id', jobId);
-
-     if (error) {
-        console.error("Schedule drop failed:", error);
-        fetchOpportunities(); // Revert state
-     }
-  };
-
-  const handleSaveDispatch = async (e) => {
-      e.preventDefault();
-      const { error } = await supabase.from('opportunities').update({
-         scheduled_date: dispatchForm.date || null,
-         scheduled_time_block: dispatchForm.time_block || null,
-         assigned_crew_id: dispatchForm.crew_id || null,
-         dispatch_notes: dispatchForm.notes || null
-      }).eq('id', activeJob.id);
-      
-      if (!error) {
-         fetchOpportunities();
-         setActiveTab('details');
-      } else {
-         console.error('Failed to save dispatch details', error);
-      }
   };
 
   const handleSaveEdit = async () => {
@@ -574,69 +518,6 @@ export default function SalesPipeline() {
                   </motion.div>
                )}
 
-               {activeTab === 'dispatch' && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="h-full">
-                     <h3 className="font-bold text-lg mb-1">{activeJob?.customerName}</h3>
-                     <p className="text-sm text-slate-500 mb-4 pb-4 border-b border-slate-200">Dispatch & Scheduling Settings</p>
-                     
-                     <form onSubmit={handleSaveDispatch} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                           <div className="form-group">
-                              <label className="text-[10px] font-bold text-slate-600 mb-1 block uppercase tracking-wider">Assigned Install Crew</label>
-                              <select 
-                                 value={dispatchForm.crew_id} 
-                                 onChange={e => setDispatchForm({...dispatchForm, crew_id: e.target.value})}
-                                 className="w-full border border-slate-300 p-2 rounded-md"
-                              >
-                                 <option value="">-- Unassigned --</option>
-                                 {crews.map(c => <option key={c.id} value={c.id}>{c.crew_name}</option>)}
-                              </select>
-                           </div>
-                           <div className="form-group">
-                              <label className="text-[10px] font-bold text-slate-600 mb-1 block uppercase tracking-wider">Scheduled Date</label>
-                              <input 
-                                 type="date" 
-                                 value={dispatchForm.date} 
-                                 onChange={e => setDispatchForm({...dispatchForm, date: e.target.value})}
-                                 className="w-full border border-slate-300 p-2 rounded-md"
-                              />
-                           </div>
-                        </div>
-
-                        <div className="form-group">
-                           <label className="text-[10px] font-bold text-slate-600 mb-1 block uppercase tracking-wider">Time Block (Arrival Window)</label>
-                           <select 
-                              value={dispatchForm.time_block} 
-                              onChange={e => setDispatchForm({...dispatchForm, time_block: e.target.value})}
-                              className="w-full border border-slate-300 p-2 rounded-md"
-                           >
-                              <option value="">-- Not Set --</option>
-                              <option value="08:00 AM - 12:00 PM">08:00 AM - 12:00 PM (Morning Range)</option>
-                              <option value="12:00 PM - 04:00 PM">12:00 PM - 04:00 PM (Afternoon Range)</option>
-                              <option value="04:00 PM - 08:00 PM">04:00 PM - 08:00 PM (Evening Range)</option>
-                              <option value="Exact: 08:00 AM">Exact: 08:00 AM (First Job Fixed)</option>
-                           </select>
-                        </div>
-
-                        <div className="form-group">
-                           <label className="text-[10px] font-bold text-slate-600 mb-1 flex items-center justify-between uppercase tracking-wider">
-                              Operational Notes for Techs
-                              <span className="text-[10px] text-primary-600 font-bold bg-primary-50 border border-primary-200 px-2 py-0.5 rounded tooltip" title="These notes will be the first thing the subcontractor sees on their app dashboard.">Visible in Subcontractor App</span>
-                           </label>
-                           <textarea 
-                              value={dispatchForm.notes} 
-                              onChange={e => setDispatchForm({...dispatchForm, notes: e.target.value})}
-                              className="w-full border border-slate-300 p-3 rounded-md min-h-[120px] text-sm"
-                              placeholder="E.g., Gate code is 1234. Beware of the large dog in backyard. Customer wants outdoor unit on a new 36 inch pad."
-                           ></textarea>
-                        </div>
-
-                        <div className="pt-4 border-t border-slate-100 flex justify-end">
-                           <button type="submit" className="btn-primary shadow-lg shadow-primary-500/20">Save Dispatch Details</button>
-                        </div>
-                     </form>
-                  </motion.div>
-               )}
 
                {activeTab === 'proposal' && (
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="h-full">
