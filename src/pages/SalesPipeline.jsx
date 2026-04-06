@@ -437,7 +437,7 @@ export default function SalesPipeline() {
             
             <div className="flex-1 overflow-y-auto px-4 pb-4">
                {activeTab === 'details' && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="flex flex-col h-full min-h-[300px]">
                      {isEditingJob ? (
                         <div className="space-y-4">
                            <h3 className="font-bold text-slate-700 border-b pb-2 mb-4">Edit Deal #{activeJob?.displayId}</h3>
@@ -502,7 +502,7 @@ export default function SalesPipeline() {
                            </div>
 
                            {viewMode !== 'calendar' && (
-                              <div className="pt-6 border-t border-slate-100 flex justify-between items-center mt-6">
+                              <div className="pt-6 border-t border-slate-100 flex justify-between items-center mt-auto">
                                  <button onClick={() => setDeletingJob(activeJob)} className="text-red-500 hover:text-red-700 hover:bg-red-50 text-xs font-bold py-2 px-3 rounded flex items-center gap-1 transition-colors">
                                     <Trash2 size={14} /> Delete Deal
                                  </button>

@@ -116,9 +116,9 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick,
                         {getInitials(job.customerName)}
                      </div>
                      <div className="flex-1 min-w-0 pt-0.5">
-                        <div className="flex justify-between items-center mb-0.5">
-                           <span className="font-bold text-[11px] text-slate-800 truncate pr-2">{job.customerName}</span>
-                           <span className="text-slate-400 font-mono text-[9px] bg-slate-100 px-1 rounded">#{job.displayId}</span>
+                        <div className="flex justify-between items-center mb-0.5 gap-1">
+                           <span className="font-bold text-[11px] text-slate-800 truncate min-w-0" title={job.customerName}>{job.customerName}</span>
+                           <span className="text-slate-400 font-mono text-[9px] bg-slate-100 px-1 rounded whitespace-nowrap shrink-0">#{job.displayId}</span>
                         </div>
                         <div className="text-[10px] text-slate-500 truncate flex items-center gap-1">
                            <MapPin size={10} className="shrink-0" /> {job.address}
