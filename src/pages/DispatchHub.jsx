@@ -540,7 +540,7 @@ Details: ${formData.notes}
                                  <CalendarClock size={12} className="text-amber-500"/> Dispatch Window
                               </label>
                               <span className="text-sm font-semibold text-slate-700 leading-tight block">
-                                 {selectedJob.scheduled_date ? `${selectedJob.scheduled_date.toLocaleDateString ? selectedJob.scheduled_date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'}) : selectedJob.scheduled_date} (${selectedJob.scheduled_time_block.replace('Exact: ', '')})` : 'Queue / Unassigned'}
+                                 {selectedJob.scheduled_date ? `${selectedJob.scheduled_date.toLocaleDateString ? selectedJob.scheduled_date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'}) : selectedJob.scheduled_date} ${selectedJob.scheduled_time_block ? `(${selectedJob.scheduled_time_block.replace('Exact: ', '')})` : ''}` : 'Queue / Unassigned'}
                               </span>
                            </div>
                         </div>
