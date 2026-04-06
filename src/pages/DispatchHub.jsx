@@ -166,48 +166,19 @@ export default function DispatchHub() {
 
    const handleScheduleJob = async (draggableId, crewId, dateStr) => {
       let originalStatus = null;
-      let newStatus = null;
       let jobType = null;
       let dbId = null;
 
-      setPipeline(prev => {
-         const newPipe = { ...prev };
-         for (const col of Object.keys(newPipe)) {
-             const jobIndex = newPipe[col].findIndex(j => j.id === draggableId);
-             if (jobIndex !== -1) {
-                originalStatus = newPipe[col][jobIndex].status;
-                jobType = newPipe[col][jobIndex].type;
-                dbId = newPipe[col][jobIndex].dbId;
-                const arr = [...newPipe[col]];
-                
-                newStatus = originalStatus;
-                
-                // State Machine Logic
-                if (jobType === 'opportunity') {
-                    if (dateStr && originalStatus === 'New Lead') newStatus = 'Site Survey Scheduled';
-                    if (!dateStr && originalStatus === 'Site Survey Scheduled') newStatus = 'New Lead';
-                } else if (jobType === 'work_order') {
-                    if (dateStr && originalStatus === 'Unscheduled') newStatus = 'Scheduled';
-                    if (!dateStr && originalStatus === 'Scheduled') newStatus = 'Unscheduled';
-                }
-                
-                if (newStatus !== originalStatus) {
-                   const jobCard = { ...arr[jobIndex], scheduled_date: dateStr, assigned_crew_id: crewId, status: newStatus };
-                   arr.splice(jobIndex, 1);
-                   newPipe[col] = arr;
-                   if (!newPipe[newStatus]) newPipe[newStatus] = [];
-                   newPipe[newStatus].push(jobCard);
-                } else {
-                   arr[jobIndex] = { ...arr[jobIndex], scheduled_date: dateStr, assigned_crew_id: crewId };
-                   newPipe[col] = arr;
-                }
-                break;
-             }
-         }
-         return newPipe;
-      });
- 
-      // Push to Supabase
+      // Find the job to get its current status
+      for (const col of Object.keys(pipeline)) {
+          const matchedJob = pipeline[col].find(j => j.id === draggableId);
+          if (matchedJob) {
+              originalStatus = matchedJob.status;
+              jobType = matchedJob.type;
+              dbId = matchedJob.dbId;
+              break;
+          }
+      }
       if (originalStatus && dbId && jobType) {
          let dbUpdate = { scheduled_date: dateStr, assigned_crew_id: crewId };
          

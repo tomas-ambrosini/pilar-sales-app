@@ -161,7 +161,7 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick,
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 overflow-auto text-sm min-h-[500px]">
            <div 
               className="grid min-w-[1400px]"
-              style={{ gridTemplateColumns: '224px repeat(7, minmax(160px, 1fr))' }}
+              style={{ gridTemplateColumns: '224px repeat(7, minmax(160px, 1fr))', gridAutoRows: 'minmax(140px, auto)' }}
            >
               {/* Top Left Header (Controls) */}
               <div className="h-12 border-b border-r border-slate-200 flex items-center justify-between px-2 font-bold text-slate-500 uppercase text-[11px] tracking-wider bg-slate-50 shadow-sm sticky top-0 left-0 z-30">
