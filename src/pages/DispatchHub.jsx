@@ -352,8 +352,11 @@ export default function DispatchHub() {
              });
              if (res.success) {
                  householdId = res.id;
+             } else if (res.duplicateId) {
+                 // Gracefully use the existing customer if they were matched by phone/email
+                 householdId = res.duplicateId;
              } else {
-                 throw new Error(res.error || res.message);
+                 throw new Error(res.error || res.message || "Failed to create customer.");
              }
          }
 
@@ -624,7 +627,7 @@ Details: ${formData.notes}
                                     onChange={e => setEditJobForm({...editJobForm, status: e.target.value})}
                                     className="w-full border border-slate-300 p-2 rounded-md bg-amber-50"
                                  >
-                                    {PIPELINE_STAGES.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+                                    {PIPELINE_STAGES.map(s => <option key={s} value={s}>{s}</option>)}
                                  </select>
                               </div>
                            </div>
