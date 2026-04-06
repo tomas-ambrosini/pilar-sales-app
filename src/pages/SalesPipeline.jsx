@@ -501,14 +501,16 @@ export default function SalesPipeline() {
                               <p className="text-slate-800 text-sm italic">{activeJob?.issue || 'No notes provided by staff.'}</p>
                            </div>
 
-                           <div className="pt-6 border-t border-slate-100 flex justify-between items-center mt-6">
-                              <button onClick={() => setDeletingJob(activeJob)} className="text-red-500 hover:text-red-700 hover:bg-red-50 text-xs font-bold py-2 px-3 rounded flex items-center gap-1 transition-colors">
-                                 <Trash2 size={14} /> Delete Deal
-                              </button>
-                              <button onClick={() => setIsEditingJob(true)} className="btn-secondary text-xs flex items-center gap-1">
-                                 <Edit3 size={14} /> Quick Edit
-                              </button>
-                           </div>
+                           {viewMode !== 'calendar' && (
+                              <div className="pt-6 border-t border-slate-100 flex justify-between items-center mt-6">
+                                 <button onClick={() => setDeletingJob(activeJob)} className="text-red-500 hover:text-red-700 hover:bg-red-50 text-xs font-bold py-2 px-3 rounded flex items-center gap-1 transition-colors">
+                                    <Trash2 size={14} /> Delete Deal
+                                 </button>
+                                 <button onClick={() => setIsEditingJob(true)} className="btn-secondary text-xs flex items-center gap-1">
+                                    <Edit3 size={14} /> Quick Edit
+                                 </button>
+                              </div>
+                           )}
                         </>
                      )}
                   </motion.div>
