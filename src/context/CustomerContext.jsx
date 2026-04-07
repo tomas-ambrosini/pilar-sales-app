@@ -34,9 +34,9 @@ export function CustomerProvider({ children }) {
                     addresses!addresses_household_id_fkey ( id, street_address, city, state, zip, property_details, is_primary_residence ),
                     contacts ( id, first_name, last_name, primary_phone, email, role ),
                     opportunities ( id, status, urgency_level, issue_description, created_at ),
-                    work_orders ( id, work_order_number, status, urgency_level, created_at ),
-                    invoices ( id, amount, status, issued_at, customer )
+                    work_orders ( id, work_order_number, status, urgency_level, created_at )
                 `)
+                .eq('is_active', true)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -61,7 +61,6 @@ export function CustomerProvider({ children }) {
                         addedDate: new Date(household.created_at).toLocaleDateString(),
                         opportunities: household.opportunities || [],
                         work_orders: household.work_orders || [],
-                        invoices: household.invoices || [],
                         raw: household // Keep full relational data for advanced CRM views
                     };
                 });
@@ -211,22 +210,10 @@ export function CustomerProvider({ children }) {
             // Optimistic delete
             setCustomers(prev => prev.filter(c => c.id !== id));
             
-            // 1. Manually clean up associated records first (acts as a Native Cascade if DB constraints fail)
-            await supabase.from('contacts').delete().eq('household_id', id);
-            await supabase.from('opportunities').delete().eq('household_id', id);
-            await supabase.from('activity_logs').delete().eq('household_id', id);
-            
-            // 2. Fetch the address ID before we drop the household to clean it up perfectly
-            const { data: houseData } = await supabase.from('households').select('service_address_id').eq('id', id).single();
-            
-            // 3. Drop Household
-            const { error } = await supabase.from('households').delete().eq('id', id);
+            // We no longer cascade delete records to preserve history.
+            // We only soft-delete the top-level household record to hide it from the global directory.
+            const { error } = await supabase.from('households').update({ is_active: false }).eq('id', id);
             if (error) throw error;
-            
-            // 4. Drop Address (Clean Garbage Collection)
-            if (houseData && houseData.service_address_id) {
-                await supabase.from('addresses').delete().eq('id', houseData.service_address_id);
-            }
 
             fetchCustomers();
         } catch (error) {

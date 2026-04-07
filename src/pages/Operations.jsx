@@ -48,6 +48,7 @@ export default function Operations() {
           )
         `)
         .eq('status', 'Deal Won')
+        .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -145,14 +146,15 @@ export default function Operations() {
                 <p className="text-sm">All won deals have been reviewed and approved.</p>
             </div>
         ) : (
-            <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+            <div className="overflow-x-auto w-full">
+                <table className="w-full text-left border-collapse whitespace-nowrap min-w-[800px]">
                     <thead>
                         <tr className="bg-slate-50 text-slate-500 text-[10px] uppercase font-bold tracking-wider border-b border-slate-200">
                             <th className="p-3 pl-4">Customer ID / Date</th>
                             <th className="p-3">Customer Name</th>
                             <th className="p-3">Tier Sold</th>
                             <th className="p-3">Sold Price</th>
+                            <th className="p-3 text-center overflow-hidden">Margin Health</th>
                             <th className="p-3 text-right pr-4">Actions</th>
                         </tr>
                     </thead>
@@ -166,6 +168,11 @@ export default function Operations() {
                             const price = tierData?.salesPrice || 0;
                             const brand = tierData?.brand || 'Unknown';
                             
+                            const mockHardCost = deal.proposal_data?.hardCosts || (price * 0.45);
+                            const mockCommission = deal.proposal_data?.commission || (price * 0.05);
+                            const retailPrice = deal.proposal_data?.retailPrice || (price * 1.05);
+                            const hs = evaluateDealHealth(price, retailPrice, mockHardCost, mockCommission);
+
                             return (
                                 <tr key={deal.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="p-3 pl-4">
@@ -180,6 +187,13 @@ export default function Operations() {
                                     </td>
                                     <td className="p-3 font-black text-slate-800">
                                         ${price.toLocaleString()}
+                                    </td>
+                                    <td className="p-3 text-center">
+                                       {hs.isFlagged ? (
+                                          <div className="inline-flex items-center gap-1.5 bg-red-50 text-red-700 text-[9px] font-bold px-2.5 py-1 rounded-sm border border-red-200 shadow-sm whitespace-nowrap"><AlertTriangle size={10} strokeWidth={3} /> REVIEW NEEDED</div>
+                                       ) : (
+                                          <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold px-2.5 py-1 rounded-sm border border-emerald-200 shadow-sm whitespace-nowrap"><CheckSquare size={10} strokeWidth={3} /> MARGINS HEALTHY</div>
+                                       )}
                                     </td>
                                     <td className="p-3 text-right pr-4">
                                         <button 
@@ -201,7 +215,7 @@ export default function Operations() {
   };
 
   const renderITTab = () => (
-    <div className="fade-in grid grid-cols-2 gap-6">
+    <div className="fade-in grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-md shadow-sm border border-slate-200 overflow-hidden">
         <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
             <h3 className="font-bold text-slate-800">Fleet & Device Management</h3>
@@ -286,8 +300,8 @@ export default function Operations() {
       <Modal isOpen={selectedDeal !== null} onClose={() => setSelectedDeal(null)} title={`Margin X-Ray: Deal #${selectedDeal?.id?.substring(0,8).toUpperCase()}`}>
           {selectedDeal && (
               <div className="flex flex-col h-full bg-slate-50 -mx-6 -mt-4 pb-0">
-                  <div className="p-6 bg-white border-b border-slate-200">
-                      <div className="flex justify-between items-start">
+                  <div className="p-4 md:p-6 bg-white border-b border-slate-200">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                           <div>
                               <h2 className="text-xl font-black text-slate-800 mb-1">{selectedDeal.households?.household_name}</h2>
                               <p className="text-sm font-semibold text-slate-500 flex items-center gap-1.5 ">
@@ -307,7 +321,7 @@ export default function Operations() {
                       </div>
                   </div>
 
-                  <div className="p-6 grid grid-cols-2 gap-6">
+                  <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-4">
                           <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-2">Revenue Breakdown</h4>
                           

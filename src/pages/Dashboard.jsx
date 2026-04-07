@@ -16,18 +16,21 @@ export default function Dashboard() {
 
   React.useEffect(() => {
      const fetchWo = async () => {
-        const { count } = await supabase.from('work_orders').select('*', { count: 'exact', head: true }).neq('status', 'Completed');
+        const { count } = await supabase.from('work_orders').select('*', { count: 'exact', head: true })
+          .neq('status', 'Completed')
+          .neq('status', 'Cancelled')
+          .eq('is_active', true);
         setActiveWorkOrders(count || 0);
      };
      fetchWo();
   }, []);
 
   // Calculations
-  const activeProposals = proposals.filter(p => p.status !== 'rejected');
+  const activeProposals = proposals.filter(p => p.status === 'Sent' || p.status === 'Approved' || p.status === 'Accepted');
   const totalPipelineValue = activeProposals.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
   
   const recentCustomers = [...customers].sort((a,b) => new Date(b.created_at || b.addedDate) - new Date(a.created_at || a.addedDate)).slice(0, 4);
-  const recentProposals = [...proposals].sort((a,b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date)).slice(0, 4);
+  const recentProposals = proposals.filter(p => !['Draft', 'Lost', 'Cancelled', 'rejected'].includes(p.status)).sort((a,b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date)).slice(0, 4);
 
   const containerVariants = {
     hidden: { opacity: 0 },

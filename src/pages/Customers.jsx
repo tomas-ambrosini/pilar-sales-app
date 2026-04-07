@@ -465,26 +465,6 @@ function CustomerDetail() {
                    )) : <div className="text-xs text-slate-400 italic bg-slate-50 p-3 rounded text-center">No scheduled operations logs.</div>}
                 </div>
              </div>
-
-             {/* Financials / Invoices */}
-             <div className="bg-white border rounded-lg p-5 shadow-sm border-slate-200 hover:border-emerald-300 transition-colors">
-                <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 tracking-wider text-[11px] uppercase text-emerald-600 flex items-center justify-between">
-                   Financial Ledgers <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">{customer.invoices?.length || 0}</span>
-                </h3>
-                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                   {customer.invoices?.length > 0 ? customer.invoices.map(inv => (
-                      <div key={inv.id} className="relative pl-4">
-                         <div className="absolute left-0 top-1.5 w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.1)]"></div>
-                         <div className="absolute left-1 top-4 bottom-[-16px] w-[2px] bg-slate-100 last:hidden"></div>
-                         <div className="flex justify-between items-center mb-1">
-                            <span className="font-black text-sm text-slate-800">${Number(inv.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                            <span className={`text-[10px] px-2 py-0.5 rounded font-black tracking-widest uppercase leading-none flex items-center justify-center ${inv.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>{inv.status}</span>
-                         </div>
-                         <p className="text-xs text-slate-400 font-mono mt-0.5 pl-0.5">{inv.id}</p>
-                      </div>
-                   )) : <div className="text-xs text-slate-400 italic bg-slate-50 p-3 rounded text-center">No billing records generated.</div>}
-                </div>
-             </div>
           </div>
         </section>
 

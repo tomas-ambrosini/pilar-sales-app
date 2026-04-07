@@ -42,13 +42,15 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick,
       let newCrewId = null;
       let newDate = null;
 
+      let linkedUserId = null;
       if (destination.droppableId !== 'unassigned') {
          const parts = destination.droppableId.split('::');
          newCrewId = parts[0];
          newDate = parts[1];
+         linkedUserId = parts[2] || null;
       }
 
-      onScheduleJob(draggableId, newCrewId, newDate);
+      onScheduleJob(draggableId, newCrewId, newDate, linkedUserId);
    };
 
    const workOrderStatuses = ['Unscheduled', 'Scheduled', 'En Route', 'In Progress', 'Permit Pending', 'Pending Inspection', 'Failed Inspection'];
@@ -126,10 +128,15 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick,
                      </div>
                   </div>
                   
-                  <div className="pl-1 shrink-0 flex items-center justify-between mt-auto">
-                     <span className={`inline-flex items-center gap-1 border text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm ${isWarning ? 'bg-amber-50 border-amber-200 text-amber-700' : lightBgMap[themeColor]} ${isWarning ? '' : textMap[themeColor]}`}>
-                        <div className={`w-1.5 h-1.5 rounded-full ${isWarning ? 'bg-amber-500' : bgMap[themeColor]} ${isProgress ? 'animate-pulse' : ''}`}></div>
-                        {job.status === 'Unscheduled' ? 'New Work Order' : job.status}
+                  <div className="pl-1 shrink-0 flex items-center justify-between mt-auto gap-2">
+                     <span className={`inline-flex items-center gap-1 border text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm ${job.status === 'Unscheduled' ? 'bg-rose-50 border-rose-200 text-rose-700' : isWarning ? 'bg-amber-50 border-amber-200 text-amber-700' : lightBgMap[themeColor]} ${isWarning || job.status === 'Unscheduled' ? '' : textMap[themeColor]}`}>
+                        <div className={`w-1.5 h-1.5 rounded-full ${job.status === 'Unscheduled' ? 'bg-rose-500' : isWarning ? 'bg-amber-500' : bgMap[themeColor]} ${isProgress ? 'animate-pulse' : ''}`}></div>
+                        {job.status === 'Unscheduled' ? (
+                           <span className="animate-pulse">NEEDS SCHEDULING</span>
+                        ) : job.status}
+                     </span>
+                     <span className="text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200 shrink-0 shadow-sm">
+                        {isInstall ? 'INSTALL' : 'SURVEY'}
                      </span>
                   </div>
 
@@ -189,7 +196,7 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick,
 
                     {/* Droppable Day Cells for this Crew */}
                     {days.map((day, i) => {
-                       const dropId = `${crew.id}::${day.isoStr}`;
+                       const dropId = `${crew.id}::${day.isoStr}::${crew.linked_user_id || ''}`;
                        const cellJobs = allBoardJobs.filter(j => j.scheduled_date === day.isoStr && j.assigned_crew_id === crew.id);
 
                        return (

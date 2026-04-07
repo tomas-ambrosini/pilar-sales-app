@@ -43,7 +43,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                    <p className="text-xs text-slate-500 mt-2">123 Corporate Blvd, Ste 100<br/>Miami, FL 33132<br/>Lic #CAC18192348</p>
                 </div>
                 <div className="text-right">
-                   <div className="text-3xl font-black text-slate-200 uppercase tracking-widest mb-2">Invoice</div>
+                   <div className="text-3xl font-black text-slate-200 uppercase tracking-widest mb-2">Contract</div>
                    <p className="text-sm font-bold text-slate-800">Date: <span className="font-normal text-slate-600">{date}</span></p>
                    <p className="text-sm font-bold text-slate-800">Job Reference: <span className="font-normal text-slate-600">{proposal?.id || 'N/A'}</span></p>
                 </div>

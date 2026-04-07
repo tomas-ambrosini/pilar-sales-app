@@ -30,9 +30,9 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    // Try to fetch custom profile (role, name) from users table
+    // Try to fetch custom profile (role, full_name) from user_profiles table
     const { data, err } = await supabase
-      .from('users')
+      .from('user_profiles')
       .select('*')
       .eq('id', authUser.id)
       .single();
@@ -44,12 +44,12 @@ export function AuthProvider({ children }) {
       const fallbackProfile = {
         id: authUser.id,
         email: authUser.email,
-        name: authUser.email.split('@')[0],
-        role: 'Sales Rep'
+        full_name: authUser.email.split('@')[0],
+        role: 'SALES'
       };
       
       // Auto-insert them so Realtime FKs won't fail
-      await supabase.from('users').insert([fallbackProfile]);
+      await supabase.from('user_profiles').insert([fallbackProfile]);
 
       setUser({ ...authUser, ...fallbackProfile });
     }
@@ -72,7 +72,7 @@ export function AuthProvider({ children }) {
     return true;
   };
 
-  const signup = async (email, password, name, role = 'Sales Rep') => {
+  const signup = async (email, password, name, role = 'SALES') => {
     setIsLoading(true);
     setError(null);
     const { data, error } = await supabase.auth.signUp({
@@ -87,12 +87,12 @@ export function AuthProvider({ children }) {
     }
 
     if (data?.user) {
-      // Create user profile in users table
-      await supabase.from('users').insert([{
+      // Create user profile in user_profiles table
+      await supabase.from('user_profiles').insert([{
         id: data.user.id,
         email,
         role,
-        name
+        full_name: name
       }]);
     }
     

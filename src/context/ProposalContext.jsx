@@ -39,11 +39,37 @@ export function ProposalProvider({ children }) {
         }
     };
 
+    // Creates a draft natively in the DB without optimistic UI flooding
+    const createDraft = async (draftData) => {
+        const newId = crypto.randomUUID();
+        const newDraft = {
+            id: newId,
+            status: 'Draft',
+            customer: draftData.customer || 'Unknown Customer',
+            amount: draftData.amount || 0,
+            associated_opportunity_id: draftData.associated_opportunity_id || null,
+            proposal_data: draftData.proposal_data || null,
+            updated_at: new Date().toISOString()
+        };
+        
+        const { data, error } = await supabase.from('proposals').insert([newDraft]).select().single();
+        if (error) {
+            console.error('Failed to create draft proposal:', error);
+            return null;
+        }
+        
+        if (draftData.associated_opportunity_id) {
+            await supabase.from('opportunities').update({ status: 'Proposal Building' }).eq('id', draftData.associated_opportunity_id);
+        }
+
+        // Push secretly into local memory without triggering major UI snapping
+        setProposals(prev => [data, ...prev]);
+        return data; 
+    };
+
     const addProposal = async (proposalData) => {
-        // Generate new PR ID locally for visual immediate feedback
-        const ids = proposals.map(p => parseInt(p.id.replace('PR-', ''))).filter(n => !isNaN(n));
-        const nextNum = Math.max(1044, ...ids, 0) + 1;
-        const nextId = `PR-${nextNum}`;
+        // Generate new PR UUID locally, letting Postgres DB handle proposal_number sequence natively
+        const nextId = crypto.randomUUID();
 
         const newProposal = {
             id: nextId,
@@ -51,7 +77,9 @@ export function ProposalProvider({ children }) {
             amount: proposalData.amount,
             date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
             status: 'Sent',
-            proposal_data: proposalData.proposal_data || null
+            associated_opportunity_id: proposalData.associated_opportunity_id || null,
+            proposal_data: proposalData.proposal_data || null,
+            updated_at: new Date().toISOString()
         };
 
         // Optimistic UI update
@@ -63,6 +91,8 @@ export function ProposalProvider({ children }) {
         if (error) {
             console.error('Failed to create proposal live:', error);
             fetchProposals(); // Revert on failure
+        } else if (proposalData.associated_opportunity_id) {
+            await supabase.from('opportunities').update({ status: 'Proposal Sent' }).eq('id', proposalData.associated_opportunity_id);
         }
     };
 
@@ -99,18 +129,8 @@ export function ProposalProvider({ children }) {
 
         setProposals(prev => prev.filter(p => p.id !== id));
         
-        // Always attempt to delete associated downstream records to keep Kanban and Dispatch Hub synced
-        try {
-            // Priority 1: Clear Operations/Dispatch first to avoid Opportunity constraint violations
-            await supabase.from('work_orders').delete().eq('proposal_id', id);
-            
-            // Priority 2: Clear Sales Pipeline deal
-            if (oppId) {
-                await supabase.from('opportunities').delete().eq('id', oppId);
-            }
-        } catch (e) {
-            console.warn('Silent issue cascading delete, but continuing to delete proposal:', e);
-        }
+        // Caution Rule Followed: Discarding a quote draft should NEVER destroy actual Deals or Work Orders.
+        // A proposal is a disposable document, we explicitly only delete the proposal.
 
         const { error } = await supabase.from('proposals').delete().eq('id', id);
         if (error) {
@@ -120,7 +140,7 @@ export function ProposalProvider({ children }) {
     };
 
     return (
-        <ProposalContext.Provider value={{ proposals, addProposal, updateProposal, deleteProposal, loading }}>
+        <ProposalContext.Provider value={{ proposals, createDraft, addProposal, updateProposal, deleteProposal, loading }}>
             {children}
         </ProposalContext.Provider>
     );

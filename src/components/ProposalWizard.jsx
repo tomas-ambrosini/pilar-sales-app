@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
 import { useAuth } from '../context/AuthContext';
+import { useProposals } from '../context/ProposalContext';
 import { Check, Image as ImageIcon, Layers, Tag, DollarSign, Calculator, AlertTriangle, ArrowRight, ArrowLeft, Save, Clock, RefreshCcw } from 'lucide-react';
 
 export default function ProposalWizard({ onComplete, addProposal, updateProposal, editModeData }) {
@@ -59,19 +60,63 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
      sales_tax: 0.07, service_reserve: 0.05, good_margin: 0.35, better_margin: 0.40, best_margin: 0.45 
   });
   const [dbReady, setDbReady] = useState(false);
+  
+  const { createDraft, updateProposal } = useProposals();
+  const [draftServerId, setDraftServerId] = useState(isEditing ? editModeData.id : null);
+  const syncTimer = React.useRef(null);
+  const isInitializingDraft = React.useRef(false);
 
   useEffect(() => {
-    if (step > 0 && dbReady && !isEditing) {
-      localStorage.setItem('pilar_wizard_draft', JSON.stringify({
-         step, selectedCustomerId, selectedLocationId, systems, discountPercent
-      }));
+    if (selectedCustomerId !== '' && dbReady && !isEditing) {
+      if (syncTimer.current) clearTimeout(syncTimer.current);
+
+      syncTimer.current = setTimeout(async () => {
+         const draftPayload = {
+            wizard_state: { step, selectedCustomerId, selectedLocationId, systems, discountPercent },
+            associated_opportunity_id: editModeData?.associated_opportunity_id || null
+         };
+         
+         const customerName = selectedCustomerId 
+             ? customers.find(c => c.id === selectedCustomerId)?.name || 'Unknown' 
+             : 'Unknown Customer';
+
+         if (!draftServerId) {
+             if (isInitializingDraft.current) return;
+             isInitializingDraft.current = true;
+             
+             try {
+                const newDraft = await createDraft({
+                    customer: customerName,
+                    amount: 0,
+                    associated_opportunity_id: draftPayload.associated_opportunity_id,
+                    proposal_data: draftPayload
+                });
+                if (newDraft && newDraft.id) {
+                    setDraftServerId(newDraft.id);
+                }
+             } finally {
+                if (!draftServerId) {
+                   isInitializingDraft.current = false;
+                }
+             }
+         } else {
+             await updateProposal(draftServerId, {
+                 customer: customerName,
+                 proposal_data: draftPayload,
+                 associated_opportunity_id: draftPayload.associated_opportunity_id,
+                 updated_at: new Date().toISOString()
+             });
+         }
+      }, 1500);
     }
-  }, [step, selectedCustomerId, selectedLocationId, systems, discountPercent, dbReady, isEditing]);
+    
+    return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
+  }, [step, selectedCustomerId, selectedLocationId, systems, discountPercent, dbReady, isEditing, draftServerId]);
 
   // Handle Edit/Clone Mode Rehydration
   useEffect(() => {
     if (hasPreloadedData) {
-        const draft = editModeData.isDraft ? editModeData : editModeData?.proposal_data?.wizard_state;
+        const draft = editModeData?.proposal_data?.wizard_state;
         if (draft && Object.keys(draft).length > 0) {
             try {
                if (draft.selectedCustomerId) setSelectedCustomerId(draft.selectedCustomerId);
@@ -183,6 +228,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   };
 
   const generateProposal = async () => {
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+    
     let systemBestSum = 0;
     systems.forEach(sys => systemBestSum += calculateSystemBaselineRetail(sys, sys.selectedTiers.best?.system_cost, 'Best'));
     const approximateRetailForComm = getRetailFromBest(systemBestSum || 0);
@@ -270,11 +317,18 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        const finalOppId = oppData ? oppData.id : null;
        const linkedProposalData = { ...finalProposalData, associated_opportunity_id: finalOppId, wizard_state: wizardState };
        
-       addProposal({ customer: customerName, amount: finalAmount, proposal_data: linkedProposalData });
+       if (draftServerId) {
+          updateProposal(draftServerId, { customer: customerName, amount: finalAmount, status: 'Sent', associated_opportunity_id: finalOppId, proposal_data: linkedProposalData, updated_at: new Date().toISOString() });
+       } else {
+          addProposal({ customer: customerName, amount: finalAmount, associated_opportunity_id: finalOppId, proposal_data: linkedProposalData });
+       }
     } else {
-       addProposal({ customer: customerName, amount: finalAmount, proposal_data: { ...finalProposalData, wizard_state: wizardState } });
+       if (draftServerId) {
+          updateProposal(draftServerId, { customer: customerName, amount: finalAmount, status: 'Sent', proposal_data: { ...finalProposalData, wizard_state: wizardState }, updated_at: new Date().toISOString() });
+       } else {
+          addProposal({ customer: customerName, amount: finalAmount, proposal_data: { ...finalProposalData, wizard_state: wizardState } });
+       }
     }
-    if (!isEditing) localStorage.removeItem('pilar_wizard_draft');
     onComplete();
   };
 

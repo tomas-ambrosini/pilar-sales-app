@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useProposals } from '../context/ProposalContext';
 import { useCustomers } from '../context/CustomerContext';
-import { Plus, Check, FileText, Edit2, Trash2, ArrowRight, CalendarClock } from 'lucide-react';
+import { Plus, Check, FileText, Edit2, Trash2, ArrowRight, CalendarClock, Lock } from 'lucide-react';
 import Modal from '../components/Modal';
 import './Proposals.css';
 import ProposalWizard from '../components/ProposalWizard';
@@ -66,8 +66,14 @@ export default function Proposals() {
   if (showWizard) return <ProposalWizard onComplete={() => setShowWizard(false)} addProposal={addProposal} updateProposal={updateProposal} editModeData={wizardConfig} />;
 
   const handleEditOpen = (proposal) => {
+    if (proposal.status === 'Approved') return;
     setEditingProposal(proposal);
     setEditForm({ customer: proposal.customer, amount: proposal.amount, status: proposal.status });
+  };
+
+  const handleDeleteOpen = (proposal) => {
+    if (proposal.status === 'Approved') return;
+    setDeletingProposal(proposal);
   };
 
   const handleEditSubmit = (e) => {
@@ -81,8 +87,9 @@ export default function Proposals() {
   };
 
   const handleReopenInWizard = () => {
-     if (['Sent', 'Opened', 'Approved'].includes(editingProposal.status)) {
-        // Automatically Clone to prevent state pollution on Approved deals
+     if (editingProposal?.status === 'Approved') return; // Additional security lock
+     if (['Sent', 'Opened'].includes(editingProposal.status)) {
+        // Automatically Clone to prevent state pollution on active deals
         updateProposal(editingProposal.id, { status: 'Rejected (Replaced)' });
         
         // Force clone by stripping ID
@@ -246,8 +253,16 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                   </div>
                   
                   <div className="flex items-center gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
-                     <button className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-md transition-colors" onClick={() => handleEditOpen(proposal)} title="Edit Details"><Edit2 size={14} /></button>
-                     <button className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors" onClick={() => setDeletingProposal(proposal)} title="Delete"><Trash2 size={14} /></button>
+                     {proposal.status === 'Approved' ? (
+                        <div className="flex items-center text-slate-300 px-2" title="Locked: Contract Signed & Dispatched">
+                           <Lock size={14} />
+                        </div>
+                     ) : (
+                        <>
+                           <button className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-md transition-colors" onClick={() => handleEditOpen(proposal)} title="Edit Details"><Edit2 size={14} /></button>
+                           <button className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Delete"><Trash2 size={14} /></button>
+                        </>
+                     )}
                   </div>
                 </div>
 

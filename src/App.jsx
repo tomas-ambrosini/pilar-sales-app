@@ -15,10 +15,26 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { CustomerProvider } from './context/CustomerContext';
 import { CatalogProvider } from './context/CatalogContext';
 import { ProposalProvider } from './context/ProposalContext';
-import { InvoiceProvider } from './context/InvoiceContext';
 import { RoleProvider } from './context/RoleContext';
 
 import FieldTech from './pages/FieldTech';
+
+const RoleRoute = ({ children, allowedRoles }) => {
+  const { user } = useAuth();
+  
+  if (!user) return <Navigate to="/" replace />;
+  
+  const role = user.role || 'SALES'; // Secure fallback
+  
+  if (!allowedRoles.includes(role)) {
+    // Hard rejection fallback matrices
+    if (role === 'SUBCONTRACTOR') return <Navigate to="/tech" replace />;
+    if (role === 'DISPATCH') return <Navigate to="/dispatch" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return children;
+};
 
 function ProtectedRoutes() {
   const { user } = useAuth();
@@ -30,19 +46,28 @@ function ProtectedRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
-        <Route path="tech/*" element={<FieldTech />} />
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="customers/*" element={<Customers />} />
-        <Route path="catalog/*" element={<Catalog />} />
-        <Route path="proposals/*" element={<Proposals />} />
-        <Route path="sales-pipeline/*" element={<SalesPipeline />} />
-        <Route path="dispatch/*" element={<DispatchHub />} />
+        {/* SUBCONTRACTOR SHARED DOMAIN */}
+        <Route path="tech/*" element={<RoleRoute allowedRoles={['ADMIN', 'DISPATCH', 'SUBCONTRACTOR']}><FieldTech /></RoleRoute>} />
+        
+        {/* SALES & OPS DOMAINS */}
+        <Route path="dashboard" element={<RoleRoute allowedRoles={['ADMIN', 'DISPATCH', 'SALES']}><Dashboard /></RoleRoute>} />
+        <Route path="customers/*" element={<RoleRoute allowedRoles={['ADMIN', 'DISPATCH', 'SALES']}><Customers /></RoleRoute>} />
+        <Route path="proposals/*" element={<RoleRoute allowedRoles={['ADMIN', 'DISPATCH', 'SALES']}><Proposals /></RoleRoute>} />
+        <Route path="sales-pipeline/*" element={<RoleRoute allowedRoles={['ADMIN', 'DISPATCH', 'SALES']}><SalesPipeline /></RoleRoute>} />
+        
+        {/* HIGH CLEARANCE OPS */}
+        <Route path="dispatch/*" element={<RoleRoute allowedRoles={['ADMIN', 'DISPATCH']}><DispatchHub /></RoleRoute>} />
         <Route path="dispatch-hub/*" element={<Navigate to="/dispatch" replace />} />
-        <Route path="marketing/*" element={<Marketing />} />
-        <Route path="finance/*" element={<Finance />} />
-        <Route path="operations/*" element={<Operations />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="operations/*" element={<RoleRoute allowedRoles={['ADMIN', 'DISPATCH']}><Operations /></RoleRoute>} />
+        <Route path="finance/*" element={<RoleRoute allowedRoles={['ADMIN', 'DISPATCH']}><Finance /></RoleRoute>} />
+        
+        {/* GLOBAL EXECUTIVE ADMIN */}
+        <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN']}><Catalog /></RoleRoute>} />
+        <Route path="marketing/*" element={<RoleRoute allowedRoles={['ADMIN']}><Marketing /></RoleRoute>} />
+        
+        {/* WILDCARDS / DEFAULTS */}
+        <Route index element={<RoleRoute allowedRoles={['ADMIN', 'DISPATCH', 'SALES']}><Navigate to="/dashboard" replace /></RoleRoute>} />
+        <Route path="*" element={<RoleRoute allowedRoles={['ADMIN', 'DISPATCH', 'SALES']}><Navigate to="/dashboard" replace /></RoleRoute>} />
       </Route>
     </Routes>
   );
@@ -56,7 +81,6 @@ function App() {
       <CustomerProvider>
         <CatalogProvider>
           <ProposalProvider>
-            <InvoiceProvider>
               <RoleProvider>
               <BrowserRouter>
                 <ProtectedRoutes />
@@ -76,7 +100,6 @@ function App() {
                 />
               </BrowserRouter>
               </RoleProvider>
-            </InvoiceProvider>
           </ProposalProvider>
         </CatalogProvider>
       </CustomerProvider>

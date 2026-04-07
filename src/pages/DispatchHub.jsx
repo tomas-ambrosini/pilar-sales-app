@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
-import { useInvoices } from '../context/InvoiceContext';
 import { Phone, User, MapPin, AlertCircle, CalendarClock, ShieldAlert, CheckCircle2, Navigation, Search, MessageSquare, Edit3, Trash2, FileText, Zap, ShieldCheck, Image as ImageIcon } from 'lucide-react';
 import DispatchCalendar from '../components/DispatchCalendar';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,7 +19,6 @@ const PIPELINE_STAGES = [
 export default function DispatchHub() {
    const { activeRole } = useRole();
    const { customers, addCustomer } = useCustomers();
-   const { addInvoice } = useInvoices();
    const [searchPhone, setSearchPhone] = useState('');
    const [matchedCustomer, setMatchedCustomer] = useState(null);
    const [loading, setLoading] = useState(true);
@@ -82,7 +80,8 @@ export default function DispatchHub() {
              scheduled_date, scheduled_time_block, dispatch_notes, assigned_crew_id, created_at,
              households ( id, household_name, addresses!households_service_address_id_fkey ( street_address, city ) )
            `)
-           .in('status', ['New Lead', 'Site Survey Scheduled']);
+           .in('status', ['New Lead', 'Site Survey Scheduled'])
+           .eq('is_active', true);
            
          if (oppErr) throw oppErr;
 
@@ -93,7 +92,10 @@ export default function DispatchHub() {
              id, work_order_number, status, urgency_level, execution_payload,
              scheduled_date, scheduled_time_block, dispatch_notes, assigned_crew_id, created_at,
              households ( id, household_name, addresses!households_service_address_id_fkey ( street_address, city ) )
-           `);
+           `)
+           .eq('is_active', true)
+           .neq('status', 'Completed')
+           .neq('status', 'Cancelled');
 
          if (woErr && woErr.code !== 'PGRST205') throw woErr; // Ignore table missing error during migration
    
@@ -164,7 +166,7 @@ export default function DispatchHub() {
        }
    };
 
-   const handleScheduleJob = async (draggableId, crewId, dateStr) => {
+   const handleScheduleJob = async (draggableId, crewId, dateStr, linkedUserId) => {
       let originalStatus = null;
       let jobType = null;
       let dbId = null;
@@ -208,12 +210,18 @@ export default function DispatchHub() {
          return newPipe;
       });
       if (originalStatus && dbId && jobType) {
-         let dbUpdate = { scheduled_date: dateStr, assigned_crew_id: crewId };
+         let dbUpdate = { 
+            scheduled_date: dateStr, 
+            assigned_crew_id: crewId, 
+            assigned_tech_user_id: linkedUserId || null 
+         };
          
          if (jobType === 'opportunity') {
-             if (dateStr && originalStatus === 'New Lead') dbUpdate.status = 'Site Survey Scheduled';
-             if (!dateStr && originalStatus === 'Site Survey Scheduled') dbUpdate.status = 'New Lead';
-             await supabase.from('opportunities').update(dbUpdate).eq('id', dbId);
+             // Ops directive: DO NOT write tech ID to opportunities natively for MVP
+             let oppUpdate = { scheduled_date: dateStr, assigned_crew_id: crewId };
+             if (dateStr && originalStatus === 'New Lead') oppUpdate.status = 'Site Survey Scheduled';
+             if (!dateStr && originalStatus === 'Site Survey Scheduled') oppUpdate.status = 'New Lead';
+             await supabase.from('opportunities').update(oppUpdate).eq('id', dbId);
          } else if (jobType === 'work_order') {
              if (dateStr && originalStatus === 'Unscheduled') dbUpdate.status = 'Scheduled';
              if (!dateStr && originalStatus === 'Scheduled') dbUpdate.status = 'Unscheduled';
@@ -238,22 +246,6 @@ export default function DispatchHub() {
              await supabase.from('opportunities').update(updates).eq('id', job.dbId);
          } else {
              await supabase.from('work_orders').update(updates).eq('id', job.dbId);
-             
-             // Phase 8: Financial Automations
-             if (newStatus === 'Completed') {
-                 try {
-                     const amount = job.execution_payload?.salesPrice || 0;
-                     await addInvoice({
-                         customer: job.customerName,
-                         work_order_id: job.dbId,
-                         household_id: job.household_id,
-                         amount: amount
-                     });
-                     console.log('Automated Invoice Generated for', job.customerName, amount);
-                 } catch (finErr) {
-                     console.error('Finance sync failed:', finErr);
-                 }
-             }
          }
          
          setSelectedJob({ ...job, status: newStatus, dispatch_notes: updates.dispatch_notes || job.dispatch_notes });
@@ -317,7 +309,8 @@ export default function DispatchHub() {
       try {
          setLoading(true);
          const table = selectedJob.type === 'opportunity' ? 'opportunities' : 'work_orders';
-         const { error } = await supabase.from(table).delete().eq('id', selectedJob.dbId);
+         // Caution Rule Followed: This explicit "Delete Job" action represents an intentional Archive/Cancel.
+         const { error } = await supabase.from(table).update({ is_active: false }).eq('id', selectedJob.dbId);
          if (error) throw error;
          setSelectedJob(null);
          setDeletingJob(false);

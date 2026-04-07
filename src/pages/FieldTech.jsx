@@ -23,7 +23,9 @@ export default function FieldTech() {
 
   const fetchTechJobs = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+
+      let query = supabase
         .from('work_orders')
         .select(`
           id, work_order_number, status, urgency_level, execution_payload,
@@ -36,7 +38,15 @@ export default function FieldTech() {
         `)
         .neq('status', 'Completed') // Only show active jobs
         .not('scheduled_date', 'is', null) // Only show scheduled jobs
+        .eq('is_active', true)
         .order('scheduled_date', { ascending: true });
+
+      // Only slice routes for assigned tech if authenticated natively
+      if (user) {
+         query = query.eq('assigned_tech_user_id', user.id);
+      }
+
+      const { data, error } = await query;
 
       if (error && error.code !== 'PGRST205') throw error;
       if (data) setJobs(data);

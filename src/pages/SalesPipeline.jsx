@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ClipboardList, PlusCircle, Calendar, MapPin, Pen, Activity, CheckSquare, Search, ChevronRight, FileText, Clock, File, Edit3, Trash2, ShieldCheck, Zap, Image as ImageIcon } from 'lucide-react';
 import Modal from '../components/Modal';
 import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
+import { useAuth } from '../context/AuthContext';
 import DispatchCalendar from '../components/DispatchCalendar';
 
 const PIPELINE_STAGES = [
@@ -22,6 +22,7 @@ const initialPipeline = PIPELINE_STAGES.reduce((acc, stage) => {
 }, {});
 
 export default function SalesPipeline() {
+  const { user } = useAuth();
   const { customers } = useCustomers();
   const [pipeline, setPipeline] = useState(initialPipeline);
   const [loading, setLoading] = useState(true);
@@ -88,7 +89,11 @@ export default function SalesPipeline() {
              household_name,
              addresses!households_service_address_id_fkey ( street_address, city )
           )
-        `);
+        `)
+        .eq('is_active', true)
+        .neq('status', 'Lost')
+        .neq('status', 'Deal Won')
+        .neq('status', 'Job Completed');
       if (error) throw error;
 
       if (data) {
@@ -137,51 +142,6 @@ export default function SalesPipeline() {
     }
   };
 
-  const onDragEnd = async (result) => {
-    const { source, destination, draggableId } = result;
-    if (!destination) return;
-    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
-    
-    const sourceCol = source.droppableId;
-    const destCol = destination.droppableId;
-
-    // Optimistically update UI to prevent Drag-and-Drop visual snapping glitches
-    setPipeline(prev => {
-      const newPipeline = { ...prev };
-      // Prevent mutations by deep cloning the arrays we are changing
-      const sArr = [...(newPipeline[sourceCol] || [])];
-      const dArr = sourceCol === destCol ? sArr : [...(newPipeline[destCol] || [])];
-      
-      const movedJobIndex = sArr.findIndex(j => j.id === draggableId);
-      if (movedJobIndex !== -1) {
-          const [movedJob] = sArr.splice(movedJobIndex, 1);
-          movedJob.status = destCol; // Update internal status
-          
-          dArr.splice(destination.index, 0, movedJob);
-          
-          newPipeline[sourceCol] = sArr;
-          if (sourceCol !== destCol) {
-            newPipeline[destCol] = dArr;
-          }
-      }
-      return newPipeline;
-    });
-
-    // Lost Deal Post-Mortem Intercept
-    if (destCol === 'Lost') {
-       setPendingLostDeal(draggableId);
-       setIsLostModalOpen(true);
-       return; // Paused until modal is saved.
-    }
-
-    // Persist to Supabase natively
-    const { error } = await supabase.from('opportunities').update({ status: destCol }).eq('id', draggableId);
-    if (error) {
-       console.error("Drag update failed:", error);
-       fetchOpportunities(); // Revert on failure
-    }
-  };
-
   const handleSaveEdit = async () => {
       if (!activeJob) return;
       const { error } = await supabase.from('opportunities').update({
@@ -202,10 +162,9 @@ export default function SalesPipeline() {
       const jobToDelete = deletingJob;
       if (!jobToDelete) return;
 
-      // Unblock deletion by removing child work orders that reference this deal
-      await supabase.from('work_orders').delete().eq('opportunity_id', jobToDelete.id);
-
-      const { error } = await supabase.from('opportunities').delete().eq('id', jobToDelete.id);
+        // We ONLY soft-delete the opportunity. We no longer blindly cascade delete work_orders.
+        // If a work_order exists, Operations must manually cancel/void it independently. 
+        const { error } = await supabase.from('opportunities').update({ is_active: false }).eq('id', jobToDelete.id);
       if (!error) {
          fetchOpportunities();
          if (activeJob?.id === jobToDelete.id) {
@@ -228,9 +187,11 @@ export default function SalesPipeline() {
   const handleCreateLead = async (e) => {
     e.preventDefault();
     if (!newLeadForm.household_id) return alert('Select a customer first.');
+    if (!user?.id) return alert('Authentication Error: Cannot create lead without an active user session.');
 
     const { error } = await supabase.from('opportunities').insert({
        household_id: newLeadForm.household_id,
+       assigned_salesperson_id: user.id,
        urgency_level: newLeadForm.urgency,
        issue_description: newLeadForm.issue_description,
        status: 'New Lead'
@@ -247,15 +208,27 @@ export default function SalesPipeline() {
 
   const handleSaveLostReason = async () => {
     if (!pendingLostDeal || !lostReason) return;
+    
+    // Find the job across all columns to get the household_id
+    let jobHouseholdId = null;
+    for (const col of Object.values(pipeline)) {
+       const job = col.find(j => j.id === pendingLostDeal);
+       if (job) jobHouseholdId = job.household_id;
+    }
+
     // Log Activity (Graveyard recording)
-    await supabase.from('activity_logs').insert({
-       household_id: pipeline['Lost'].find(j => j.id === pendingLostDeal)?.household_id, // we don't have household id in draggableId easily without fetch, skipped for MVP
-       activity_type: 'Deal Lost',
-       description: `Deal marked as lost. Reason: ${lostReason}`
-    });
+    if (jobHouseholdId) {
+        await supabase.from('activity_logs').insert({
+           household_id: jobHouseholdId,
+           activity_type: 'Deal Lost',
+           description: `Deal marked as lost. Reason: ${lostReason}`
+        });
+    }
+
     // Persist status
     await supabase.from('opportunities').update({ status: 'Lost' }).eq('id', pendingLostDeal);
     
+    fetchOpportunities();
     setIsLostModalOpen(false);
     setPendingLostDeal(null);
     setLostReason('');
@@ -270,58 +243,44 @@ export default function SalesPipeline() {
         </span>
       </div>
       
-      <Droppable droppableId={columnId}>
-        {(provided, snapshot) => (
-          <div 
-            className={`pipeline-cards flex flex-col gap-2 flex-1 transition-colors ${snapshot.isDraggingOver ? 'bg-slate-100/50 rounded' : ''}`} 
-            style={{ minHeight: '100px' }}
-            ref={provided.innerRef}
-            {...provided.droppableProps}
-          >
-            {jobs.map((job, index) => (
-              <Draggable key={job.id} draggableId={job.id} index={index}>
-                {(provided, snapshot) => (
-                  <div 
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    style={provided.draggableProps.style}
-                    className={`job-card bg-white p-2 rounded shadow-sm border border-slate-200 cursor-grab hover:border-primary-400 transition-shadow transition-colors ${snapshot.isDragging ? 'shadow-2xl shadow-primary-500/20 z-[9999] ring-2 ring-primary-500 opacity-95 relative' : ''}`}
-                    onClick={() => { setActiveJob(job); setActiveTab('details'); }}
-                  >
-                    <div className="flex justify-between items-start mb-1 gap-1">
-                       <span className="font-bold text-slate-800 text-xs leading-tight break-words">{job.customerName}</span>
-                       <span className={`shrink-0 text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider ${job.urgency === 'High' ? 'bg-red-100 text-red-700' : job.urgency === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
-                           {job.urgency === 'High' ? 'HOT' : job.urgency}
-                       </span>
-                    </div>
-                    <div className="text-[10px] text-slate-500 flex items-center gap-1.5 mb-2 truncate">
-                      <MapPin size={10} className="shrink-0 text-slate-400" /> <span className="truncate">{job.address}</span>
-                    </div>
-                    {job.issue && (
-                       <div className="text-[10px] text-slate-500 truncate border-t border-slate-100 pt-1 mt-1 font-medium">"{job.issue}"</div>
-                    )}
-                    
-                    {/* New Lead Column Specific Actions */}
-                    {columnId === 'New Lead' && (
-                       <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
-                          {job.status === 'Contact Attempted' ? (
-                             <span className="text-[9px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-1.5 py-0.5 rounded-sm uppercase tracking-wide">Contacted</span>
-                          ) : (
-                             <button onClick={(e) => handleMarkContacted(e, job.id)} className="text-[9px] font-bold text-primary-600 hover:text-primary-800 hover:bg-primary-50 px-1.5 py-0.5 rounded transition-colors uppercase tracking-wide flex items-center gap-1">
-                                Mark Contacted
-                             </button>
-                          )}
-                       </div>
-                    )}
-                  </div>
+      <div 
+        className="pipeline-cards flex flex-col gap-2 flex-1 transition-colors relative" 
+        style={{ minHeight: '100px' }}
+      >
+        {jobs.map((job) => (
+              <div 
+                key={job.id}
+                className="job-card bg-white p-2 rounded shadow-sm border border-slate-200 cursor-pointer hover:border-primary-400 hover:shadow-md transition-shadow transition-colors"
+                onClick={() => { setActiveJob(job); setActiveTab('details'); }}
+              >
+                <div className="flex justify-between items-start mb-1 gap-1">
+                   <span className="font-bold text-slate-800 text-xs leading-tight break-words">{job.customerName}</span>
+                   <span className={`shrink-0 text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider ${job.urgency === 'High' ? 'bg-red-100 text-red-700' : job.urgency === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                       {job.urgency === 'High' ? 'HOT' : job.urgency}
+                   </span>
+                </div>
+                <div className="text-[10px] text-slate-500 flex items-center gap-1.5 mb-2 truncate">
+                  <MapPin size={10} className="shrink-0 text-slate-400" /> <span className="truncate">{job.address}</span>
+                </div>
+                {job.issue && (
+                   <div className="text-[10px] text-slate-500 truncate border-t border-slate-100 pt-1 mt-1 font-medium">"{job.issue}"</div>
                 )}
-              </Draggable>
-            ))}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
+                
+                {/* New Lead Column Specific Actions */}
+                {columnId === 'New Lead' && (
+                   <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
+                      {job.status === 'Contact Attempted' ? (
+                         <span className="text-[9px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-1.5 py-0.5 rounded-sm uppercase tracking-wide">Contacted</span>
+                      ) : (
+                         <button onClick={(e) => handleMarkContacted(e, job.id)} className="text-[9px] font-bold text-primary-600 hover:text-primary-800 hover:bg-primary-50 px-1.5 py-0.5 rounded transition-colors uppercase tracking-wide flex items-center gap-1">
+                            Mark Contacted
+                         </button>
+                      )}
+                   </div>
+                )}
+              </div>
+        ))}
+      </div>
     </div>
   );
 
@@ -346,13 +305,11 @@ export default function SalesPipeline() {
       {loading ? (
         <div className="flex-center h-64 flex-col text-slate-500 animate-pulse"><div className="loader mb-4"></div>Syncing Boards...</div>
       ) : viewMode === 'kanban' ? (
-        <DragDropContext onDragEnd={onDragEnd}>
           <div className="pipeline-board flex gap-2 overflow-x-auto pb-6 pt-2 flex-1 items-stretch w-full">
             {PIPELINE_STAGES.map(stage => (
               <Column key={stage.id} columnId={stage.id} title={stage.title} color={stage.color} jobs={pipeline[stage.id]} />
             ))}
           </div>
-        </DragDropContext>
       ) : (
          <DispatchCalendar 
             pipeline={pipeline} 
@@ -453,7 +410,7 @@ export default function SalesPipeline() {
                                  className="w-full border border-slate-300 p-2 rounded-md min-h-[100px]"
                               />
                            </div>
-                           <div className="grid grid-cols-2 gap-4">
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="form-group">
                                  <label className="text-xs font-bold text-slate-600 mb-1 block">Urgency</label>
                                  <select 
@@ -506,11 +463,20 @@ export default function SalesPipeline() {
                            </div>
 
                            {viewMode !== 'calendar' && (
-                              <div className="pt-6 border-t border-slate-100 flex justify-between items-center mt-auto">
-                                 <button onClick={() => setDeletingJob(activeJob)} className="text-red-500 hover:text-red-700 hover:bg-red-50 text-xs font-bold py-2 px-3 rounded flex items-center gap-1 transition-colors">
-                                    <Trash2 size={14} /> Delete Deal
+                              <div className="pt-6 border-t border-slate-100 flex justify-between items-center mt-auto gap-2">
+                                 <button onClick={() => setDeletingJob(activeJob)} className="text-red-500 hover:text-red-700 hover:bg-red-50 text-[10px] font-bold py-2 px-2 rounded flex items-center gap-1 transition-colors shrink-0">
+                                    <Trash2 size={14} /> Delete 
                                  </button>
-                                 <button onClick={() => setIsEditingJob(true)} className="btn-secondary text-xs flex items-center gap-1">
+                                 {activeJob?.status !== 'Lost' && (
+                                     <button 
+                                        onClick={() => { setPendingLostDeal(activeJob.id); setIsLostModalOpen(true); setActiveJob(null); }} 
+                                        className="text-amber-600 hover:bg-amber-50 rounded border border-amber-200 text-[10px] font-bold py-1.5 px-2 transition-colors flex items-center gap-1"
+                                     >
+                                        Mark as Lost
+                                     </button>
+                                 )}
+                                 <div className="flex-1"></div>
+                                 <button onClick={() => setIsEditingJob(true)} className="btn-secondary text-xs flex items-center gap-1 shrink-0">
                                     <Edit3 size={14} /> Quick Edit
                                  </button>
                               </div>
@@ -639,7 +605,7 @@ export default function SalesPipeline() {
                            <p className="text-xs text-slate-500 max-w-xs">The advisor did not upload any site survey images for this assignment.</p>
                         </div>
                      ) : (
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                            {Object.entries(activeJob.surveyPhotos).map(([key, url]) => {
                               if (!url) return null;
                               const labels = {
