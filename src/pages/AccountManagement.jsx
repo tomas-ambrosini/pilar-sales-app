@@ -14,6 +14,7 @@ export default function AccountManagement() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(null); // holds user obj
   const [showResetModal, setShowResetModal] = useState(null);
+  const [successPayload, setSuccessPayload] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -60,6 +61,7 @@ export default function AccountManagement() {
        await invokeAdminAction('createUser', payload);
        toast.success('Account created successfully!', { id: 'create' });
        setShowCreateModal(false);
+       setSuccessPayload(payload);
        fetchUsers();
     } catch (err) {
        toast.error(err.message || 'Error creating account', { id: 'create' });
@@ -274,6 +276,40 @@ export default function AccountManagement() {
                      <button type="submit" className="px-4 py-2 bg-amber-500 text-white rounded text-sm font-bold hover:bg-amber-600">Issue Reset</button>
                   </div>
                </form>
+            </div>
+         </div>
+      )}
+
+      {/* SUCCESS MODAL (ONBOARDING MESSAGE) */}
+      {successPayload && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border-t-8 border-emerald-500">
+               <h3 className="text-xl font-black text-slate-800 mb-2">Account Provisioned!</h3>
+               <p className="text-sm text-slate-600 mb-6">Send the following secure message to the team member so they can log in.</p>
+               
+               <div className="relative bg-slate-50 border border-slate-200 rounded-lg p-4 font-mono text-xs leading-relaxed text-slate-700 mb-4 whitespace-pre-wrap select-all">
+{`Your Pilar Home CRM dashboard is ready.
+
+1. Go to: crm.pilarhome.com (or your vercel link)
+2. Login Email: ${successPayload.email}
+3. Temp Password: ${successPayload.password}
+
+Note: You will be forced to create a secure permanent password upon your first login.`}
+               </div>
+               
+               <div className="flex justify-end gap-3 pt-2">
+                  <button type="button" onClick={() => setSuccessPayload(null)} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors">Close</button>
+                  <button 
+                    onClick={() => {
+                        const msg = `Your Pilar Home CRM dashboard is ready.\n\n1. Go to: crm.pilarhome.com (or your vercel link)\n2. Login Email: ${successPayload.email}\n3. Temp Password: ${successPayload.password}\n\nNote: You will be forced to create a secure permanent password upon your first login.`;
+                        navigator.clipboard.writeText(msg);
+                        toast.success('Message copied to clipboard!');
+                    }} 
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-sm font-bold shadow-sm transition-colors flex items-center gap-2"
+                  >
+                     <Copy size={14} /> Copy Message
+                  </button>
+               </div>
             </div>
          </div>
       )}
