@@ -38,20 +38,18 @@ export function AuthProvider({ children }) {
       .single();
 
     if (data) {
+      if (data.status === 'inactive') {
+        setUser(null);
+        setError('Your account is currently inactive. Please contact your system administrator.');
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        return;
+      }
       setUser({ ...authUser, ...data });
     } else {
-      // Generate fallback profile for legacy users
-      const fallbackProfile = {
-        id: authUser.id,
-        email: authUser.email,
-        full_name: authUser.email.split('@')[0],
-        role: 'SALES'
-      };
-      
-      // Auto-insert them so Realtime FKs won't fail
-      await supabase.from('user_profiles').insert([fallbackProfile]);
-
-      setUser({ ...authUser, ...fallbackProfile });
+      // In the new architecture, accounts are provisioned via Edge Functions, so a profile should always exist.
+      // If it doesn't exist yet (legacy dev), simulate a safe minimal record in-memory.
+      setUser({ ...authUser, role: 'SALES', must_change_password: false });
     }
     setIsLoading(false);
   };
@@ -72,39 +70,14 @@ export function AuthProvider({ children }) {
     return true;
   };
 
-  const signup = async (email, password, name, role = 'SALES') => {
-    setIsLoading(true);
-    setError(null);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (error) {
-      setError(error.message);
-      setIsLoading(false);
-      return false;
-    }
-
-    if (data?.user) {
-      // Create user profile in user_profiles table
-      await supabase.from('user_profiles').insert([{
-        id: data.user.id,
-        email,
-        role,
-        full_name: name
-      }]);
-    }
-    
-    return true;
-  }
+  // PUBLIC SIGNUP COMPLETELY REMOVED. Accounts must be provisioned via Admin tools.
 
   const logout = async () => {
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isLoading, error }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading, error }}>
       {!isLoading && children}
     </AuthContext.Provider>
   );

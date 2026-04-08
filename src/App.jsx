@@ -7,6 +7,8 @@ import Proposals from './pages/Proposals';
 import PublicQuoteView from './pages/PublicQuoteView';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
+import FirstSetup from './pages/FirstSetup';
+import AccountManagement from './pages/AccountManagement';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CustomerProvider } from './context/CustomerContext';
 import { CatalogProvider } from './context/CatalogContext';
@@ -37,6 +39,14 @@ const RoleRoute = ({ children, allowedRoles }) => {
 function MainRouter() {
   const { user } = useAuth();
 
+  if (user?.must_change_password) {
+    return (
+      <Routes>
+        <Route path="*" element={<FirstSetup />} />
+      </Routes>
+    );
+  }
+
   return (
     <Routes>
       <Route path="/quote/:id" element={<PublicQuoteView />} />
@@ -51,6 +61,7 @@ function MainRouter() {
           
           {/* GLOBAL EXECUTIVE ADMIN */}
           <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN']}><Catalog /></RoleRoute>} />
+          <Route path="account-management/*" element={<RoleRoute allowedRoles={['ADMIN']}><AccountManagement /></RoleRoute>} />
           
           {/* WILDCARDS / DEFAULTS */}
           <Route index element={<RoleRoute allowedRoles={['ADMIN', 'SALES']}><Dashboard /></RoleRoute>} />

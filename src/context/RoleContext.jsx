@@ -1,29 +1,21 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 const RoleContext = createContext();
 
 export const ROLES = {
-  ADMIN: 'System Admin',
-  SALES: 'Sales Rep',
-  DISPATCH: 'Call Center / Dispatch',
-  SUBCONTRACTOR: 'Subcontractor / Crew'
+  ADMIN: 'ADMIN',
+  SALES: 'SALES',
 };
 
 export const RoleProvider = ({ children }) => {
   // Try to load from localStorage so it persists across refreshes
-  const getInitialRole = () => {
-    const savedRole = localStorage.getItem('pilar_simulated_role');
-    return savedRole ? savedRole : ROLES.ADMIN;
-  };
-
-  const [activeRole, setActiveRole] = useState(getInitialRole);
-
-  useEffect(() => {
-    localStorage.setItem('pilar_simulated_role', activeRole);
-  }, [activeRole]);
+  const { user } = useAuth();
+  // Role mapping: if user lacks a role, fallback to SALES. If not logged in, null.
+  const activeRole = user?.role || ROLES.SALES;
 
   return (
-    <RoleContext.Provider value={{ activeRole, setActiveRole, ROLES }}>
+    <RoleContext.Provider value={{ activeRole, ROLES }}>
       {children}
     </RoleContext.Provider>
   );
