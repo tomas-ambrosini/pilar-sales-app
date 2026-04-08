@@ -295,7 +295,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
          ))}
       </div>
 
-      <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl w-full mx-auto">
+      <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
          {activeDraft && filterMode === 'All' && (
            <div className="border border-primary-200 bg-primary-50 rounded-xl p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden group">
               <div className="flex items-center gap-4">
