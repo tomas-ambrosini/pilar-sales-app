@@ -57,7 +57,7 @@ serve(async (req) => {
       if (createError) throw createError;
 
       // Ensure profile writes correctly
-      await supabaseAdmin.from('user_profiles').upsert({
+      const { error: upsertError } = await supabaseAdmin.from('user_profiles').upsert({
         id: newUser.user.id,
         email,
         full_name,
@@ -66,6 +66,12 @@ serve(async (req) => {
         status: 'active',
         must_change_password: true
       });
+
+      if (upsertError) {
+         // Rollback auth user creation if profile creation fails
+         await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
+         throw new Error(`Profile DB Error: ${upsertError.message}`);
+      }
 
       return new Response(JSON.stringify({ success: true, user: newUser.user }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
