@@ -9,6 +9,8 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import FirstSetup from './pages/FirstSetup';
 import AccountManagement from './pages/AccountManagement';
+import SalesPipeline from './pages/SalesPipeline';
+import DispatchHub from './pages/DispatchHub';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CustomerProvider } from './context/CustomerContext';
 import { CatalogProvider } from './context/CatalogContext';
@@ -62,6 +64,10 @@ function MainRouter() {
           {/* GLOBAL EXECUTIVE ADMIN */}
           <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN']}><Catalog /></RoleRoute>} />
           <Route path="account-management/*" element={<RoleRoute allowedRoles={['ADMIN']}><AccountManagement /></RoleRoute>} />
+          
+          {/* LEGACY OPERATIONS ERP */}
+          <Route path="pipeline/*" element={<RoleRoute allowedRoles={['ADMIN']}><SalesPipeline /></RoleRoute>} />
+          <Route path="dispatch/*" element={<RoleRoute allowedRoles={['ADMIN']}><DispatchHub /></RoleRoute>} />
           
           {/* WILDCARDS / DEFAULTS */}
           <Route index element={<RoleRoute allowedRoles={['ADMIN', 'SALES']}><Dashboard /></RoleRoute>} />

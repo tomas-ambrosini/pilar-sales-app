@@ -22,6 +22,14 @@ const navGroups = [
       { path: '/catalog', label: 'Catalog', icon: BookOpen, allowedRoles: [ROLES.ADMIN] },
       { path: '/account-management', label: 'Account Mgmt', icon: Settings, allowedRoles: [ROLES.ADMIN] }
     ]
+  },
+  {
+    title: 'Operations ERP (Legacy)',
+    allowedRoles: [ROLES.ADMIN],
+    items: [
+      { path: '/pipeline', label: 'Pipeline Ops', icon: ClipboardList, allowedRoles: [ROLES.ADMIN] },
+      { path: '/dispatch', label: 'Dispatch', icon: Truck, allowedRoles: [ROLES.ADMIN] }
+    ]
   }
 ];
 
