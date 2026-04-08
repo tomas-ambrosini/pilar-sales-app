@@ -363,29 +363,29 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                   if (proposal.status === 'Approved') badgeColors = 'bg-emerald-50 text-emerald-600 border-emerald-200';
       
                   return (
-                    <div key={proposal.id} className="group bg-white hover:bg-slate-50/80 transition-colors flex flex-col md:flex-row md:items-center justify-between px-6 py-3 relative">
+                    <div key={proposal.id} className="group bg-white hover:bg-slate-50/80 transition-colors flex flex-col md:flex-row md:items-center justify-between px-6 py-4 relative">
                  
                  {/* Visual Accent Strip */}
                  <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${proposal.status === 'Approved' ? 'bg-emerald-500' : proposal.status === 'Sent' ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
 
                  {/* COL 1: Customer & Date */}
-                 <div className="flex items-center gap-3 md:w-[25%] shrink-0 mb-3 md:mb-0 pl-2">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-slate-500 bg-white border border-slate-200 shadow-sm shrink-0">
+                 <div className="flex items-center gap-4 md:w-[25%] shrink-0 mb-3 md:mb-0 pl-2">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-slate-500 bg-white border border-slate-200 shadow-sm shrink-0">
                        {proposal.customer?.charAt(0) || 'C'}
                     </div>
                     <div className="flex flex-col min-w-0">
-                       <h3 className="text-sm font-black text-slate-800 truncate leading-tight mb-0.5">{proposal.customer}</h3>
-                       <p className="text-[11px] font-medium text-slate-400 truncate">
+                       <h3 className="text-base font-black text-slate-800 truncate leading-tight mb-1">{proposal.customer}</h3>
+                       <p className="text-xs font-semibold text-slate-500 truncate">
                           {new Date(proposal.updated_at || proposal.created_at).toLocaleDateString()} 
-                          <span className="text-slate-300 mx-1.5">•</span> 
-                          <span className="font-mono text-[9px] uppercase tracking-wider">{proposal.id.split('-')[0]}</span>
+                          <span className="text-slate-300 mx-2">•</span> 
+                          <span className="font-mono text-[10px] uppercase tracking-wider text-slate-400">{proposal.id.split('-')[0]}</span>
                        </p>
                     </div>
                  </div>
 
                  {/* COL 2: Status */}
                  <div className="md:w-[12%] shrink-0 mb-2 md:mb-0">
-                    <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded inline-block shadow-sm ${badgeColors}`}>
+                    <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md inline-block shadow-sm ${badgeColors}`}>
                       {proposal.status}
                     </span>
                  </div>
@@ -400,25 +400,25 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                             const max = Math.max(...prices);
                             return (
                                <>
-                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Est. Value</span>
-                                 <span className="text-sm font-bold text-slate-700 leading-none">
-                                    ${min.toLocaleString()} <span className="text-slate-400 font-bold mx-1">-</span> ${max.toLocaleString()}
+                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Est. Value</span>
+                                 <span className="text-base font-bold text-slate-700 leading-none">
+                                    ${min.toLocaleString()} <span className="text-slate-400 font-black mx-1.5">-</span> ${max.toLocaleString()}
                                  </span>
                                </>
                             );
                         }
                         return (
                              <>
-                               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Est. Value</span>
-                               <span className="text-sm font-bold text-slate-700 leading-none">
+                               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Est. Value</span>
+                               <span className="text-base font-bold text-slate-700 leading-none">
                                   ${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                </span>
                              </>
                         );
                     })() : (
                        <>
-                         <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1">Accepted</span>
-                         <span className="text-sm font-black text-emerald-700 leading-none">
+                         <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1.5">Accepted</span>
+                         <span className="text-base font-black text-emerald-700 leading-none">
                             ${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                          </span>
                        </>
@@ -428,36 +428,36 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                  {/* COL 4: Owner */}
                  <div className="hidden lg:flex md:w-[15%] shrink-0 items-center">
                     {proposal.user_profiles?.full_name ? (
-                       <div className="flex items-center gap-2 overflow-hidden bg-slate-50 py-1 px-2 rounded border border-slate-100 max-w-[140px]">
-                          <div className="w-4 h-4 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-[8px] font-black uppercase shrink-0">
+                       <div className="flex items-center gap-2 overflow-hidden bg-slate-50 py-1.5 px-2.5 rounded-md border border-slate-200 shadow-sm max-w-[160px]">
+                          <div className="w-5 h-5 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-[10px] font-black uppercase shrink-0">
                              {proposal.user_profiles.full_name.charAt(0)}
                           </div>
-                          <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wide truncate">{proposal.user_profiles.full_name.split('@')[0]}</span>
+                          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide truncate">{proposal.user_profiles.full_name.split('@')[0]}</span>
                        </div>
                     ) : (
-                       <span className="text-[10px] font-bold text-slate-400 italic">Unassigned</span>
+                       <span className="text-xs font-bold text-slate-400 italic">Unassigned</span>
                     )}
                  </div>
 
                  {/* COL 5: Actions */}
-                 <div className="flex items-center justify-between md:justify-end gap-3 flex-1 shrink-0 mt-3 md:mt-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
+                 <div className="flex flex-wrap items-center justify-between md:justify-end gap-4 flex-1 shrink-0 pt-3 md:pt-0 mt-3 md:mt-0 border-t md:border-transparent md:border-0 border-slate-200">
                     <div className="flex md:opacity-0 group-hover:opacity-100 transition-opacity gap-1">
                        {proposal.status !== 'Approved' && (
                           <>
-                             <button className="p-1 text-slate-400 hover:text-primary-600 rounded transition-colors" onClick={() => handleEditOpen(proposal)} title="Edit Details"><Edit2 size={14} /></button>
-                             <button className="p-1 text-slate-400 hover:text-danger-600 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Delete"><Trash2 size={14} /></button>
+                             <button className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors" onClick={() => handleEditOpen(proposal)} title="Edit Details"><Edit2 size={16} /></button>
+                             <button className="p-1.5 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Delete"><Trash2 size={16} /></button>
                           </>
                        )}
                     </div>
 
                     <div className="flex border border-slate-200 rounded-lg shrink-0 bg-white shadow-sm overflow-hidden text-slate-500">
-                       <button onClick={() => handleMailto(proposal)} className="p-1.5 hover:text-slate-900 hover:bg-slate-50 transition-colors border-r border-slate-200" title="Email Client"><Mail size={14} /></button>
-                       <button onClick={() => handleCopyMessage(proposal)} className="p-1.5 hover:text-slate-900 hover:bg-slate-50 transition-colors border-r border-slate-200" title="Copy Message"><Copy size={14} /></button>
-                       <button onClick={() => handleCopyLink(proposal)} className="p-1.5 hover:text-slate-900 hover:bg-slate-50 transition-colors" title="Copy Link"><Link size={14} /></button>
+                       <button onClick={() => handleMailto(proposal)} className="p-2 hover:text-slate-900 hover:bg-slate-50 transition-colors border-r border-slate-200" title="Email Client"><Mail size={16} /></button>
+                       <button onClick={() => handleCopyMessage(proposal)} className="p-2 hover:text-slate-900 hover:bg-slate-50 transition-colors border-r border-slate-200" title="Copy Message"><Copy size={16} /></button>
+                       <button onClick={() => handleCopyLink(proposal)} className="p-2 hover:text-slate-900 hover:bg-slate-50 transition-colors" title="Copy Link"><Link size={16} /></button>
                     </div>
 
                     <button 
-                      className={`flex items-center justify-center gap-1.5 text-xs font-black px-4 py-2 rounded-lg shrink-0 w-[110px] shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none ${proposal.status === 'Approved' ? 'bg-emerald-500 text-white hover:bg-emerald-600 focus:ring-emerald-500 border border-emerald-600' : 'bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900'}`}
+                      className={`flex items-center justify-center gap-1.5 text-sm font-black px-5 py-2.5 rounded-lg shrink-0 min-w-[120px] shadow-md transition-all focus:ring-2 focus:ring-offset-1 outline-none ${proposal.status === 'Approved' ? 'bg-emerald-500 text-white hover:bg-emerald-600 focus:ring-emerald-500 border border-emerald-600' : 'bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900 border border-slate-900'}`}
                       onClick={() => {
                           if (proposal.status === 'Approved') {
                              const matchedTierName = ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers[t]?.salesPrice === proposal.amount) || 'good';
