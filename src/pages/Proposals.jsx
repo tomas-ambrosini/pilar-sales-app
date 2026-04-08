@@ -350,34 +350,33 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
             if (proposal.status === 'Approved') badgeColors = 'bg-emerald-50 text-emerald-600 border-emerald-200';
 
             return (
-              <div key={proposal.id} className="group bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 relative pl-4 md:pl-6 overflow-hidden">
+              <div key={proposal.id} className="group bg-white border-b border-slate-100 hover:bg-slate-50 transition-all flex flex-col md:flex-row md:items-center justify-between px-4 py-3 relative overflow-hidden">
                  
                  {/* Visual Accent Strip */}
-                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${proposal.status === 'Approved' ? 'bg-emerald-400' : proposal.status === 'Sent' ? 'bg-blue-400' : 'bg-slate-200'}`}></div>
+                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${proposal.status === 'Approved' ? 'bg-emerald-500' : proposal.status === 'Sent' ? 'bg-blue-500' : 'bg-slate-200'}`}></div>
 
-                 {/* Left Column: ID, Customer & Date */}
-                 <div className="flex items-center gap-4 min-w-[200px] flex-1">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-slate-400 bg-slate-50 border border-slate-100 shrink-0">
+                 {/* COL 1: Customer & Date */}
+                 <div className="flex items-center gap-3 md:w-[25%] shrink-0 mb-3 md:mb-0 pl-2">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-slate-600 bg-white border border-slate-200 shadow-sm shrink-0">
                        {proposal.customer?.charAt(0) || 'C'}
                     </div>
-                    <div className="flex flex-col">
-                       <h3 className="text-sm font-black text-slate-800 tracking-tight truncate max-w-[200px]">{proposal.customer}</h3>
-                       <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase tracking-wider mt-0.5">
-                          <Clock size={10}/> {new Date(proposal.updated_at || proposal.created_at).toLocaleDateString()}
+                    <div className="flex flex-col min-w-0">
+                       <h3 className="text-sm font-bold text-slate-900 truncate">{proposal.customer}</h3>
+                       <p className="text-xs font-medium text-slate-500 truncate mt-0.5">
+                          {new Date(proposal.updated_at || proposal.created_at).toLocaleDateString()} <span className="text-slate-300 mx-1">•</span> <span className="font-mono text-[10px]">{proposal.id.split('-')[0]}</span>
                        </p>
                     </div>
                  </div>
 
-                 {/* Middle 1: Status & UUID */}
-                 <div className="flex flex-col md:items-center min-w-[120px]">
-                    <span className={`text-[9px] uppercase font-black tracking-widest px-2.5 py-0.5 rounded-full border mb-1 w-max ${badgeColors}`}>
+                 {/* COL 2: Status */}
+                 <div className="md:w-[12%] shrink-0 mb-2 md:mb-0">
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border inline-block ${badgeColors}`}>
                       {proposal.status}
                     </span>
-                    <span className="text-[9px] font-mono text-slate-400 truncate max-w-[80px]" title={proposal.id}>{proposal.id.split('-')[0]}</span>
                  </div>
 
-                 {/* Middle 2: Price */}
-                 <div className="min-w-[140px] text-left md:text-center">
+                 {/* COL 3: Pricing */}
+                 <div className="md:w-[20%] shrink-0 flex flex-col">
                     {(!proposal.status || ['Draft', 'Sent', 'Opened'].includes(proposal.status)) ? (() => {
                         const tiers = proposal.proposal_data?.tiers || {};
                         const prices = [tiers.good?.salesPrice, tiers.better?.salesPrice, tiers.best?.salesPrice].filter(Boolean);
@@ -386,59 +385,64 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                             const max = Math.max(...prices);
                             return (
                                <>
-                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Estimated Range</p>
-                                 <div className="text-sm font-black text-slate-700 leading-none tracking-tight">
-                                    ${min.toLocaleString()} <span className="text-slate-300 font-normal mx-0.5">-</span> ${max.toLocaleString()}
-                                 </div>
+                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Est. Value</span>
+                                 <span className="text-sm font-semibold text-slate-700 leading-none">
+                                    ${min.toLocaleString()} <span className="text-slate-300 mx-0.5">-</span> ${max.toLocaleString()}
+                                 </span>
                                </>
                             );
                         }
                         return (
                              <>
-                               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Est. Amount</p>
-                               <div className="text-sm font-black text-slate-700 leading-none">
+                               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Est. Value</span>
+                               <span className="text-sm font-semibold text-slate-700 leading-none">
                                   ${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                               </div>
+                               </span>
                              </>
                         );
                     })() : (
                        <>
-                         <p className="text-[9px] font-bold text-success uppercase tracking-wider mb-0.5">Accepted Amount</p>
-                         <div className="text-sm font-black text-emerald-700 leading-none">
+                         <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest leading-none mb-1">Accepted</span>
+                         <span className="text-sm font-black text-emerald-700 leading-none">
                             ${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                         </div>
+                         </span>
                        </>
                     )}
                  </div>
 
-                 {/* Middle 3: Owner */}
-                 <div className="hidden lg:flex min-w-[100px] justify-center">
-                    {proposal.user_profiles?.full_name && (
-                       <p className="text-[9px] font-bold text-primary-700 flex items-center gap-1 uppercase tracking-wider bg-primary-50 px-2 py-1 rounded border border-primary-100">
-                          {proposal.user_profiles.full_name.split(' ')[0]}
-                       </p>
+                 {/* COL 4: Owner */}
+                 <div className="hidden lg:flex w-[15%] shrink-0 items-center">
+                    {proposal.user_profiles?.full_name ? (
+                       <div className="flex items-center gap-2 overflow-hidden">
+                          <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[9px] font-bold uppercase shrink-0">
+                             {proposal.user_profiles.full_name.charAt(0)}
+                          </div>
+                          <span className="text-xs font-semibold text-slate-600 truncate pr-2">{proposal.user_profiles.full_name}</span>
+                       </div>
+                    ) : (
+                       <span className="text-xs font-medium text-slate-400 italic">Unassigned</span>
                     )}
                  </div>
 
-                 {/* Right Column: Actions */}
-                 <div className="flex items-center gap-2 justify-end w-full md:w-auto mt-2 md:mt-0 pt-3 md:pt-0 border-t md:border-0 border-slate-100">
-                    <div className="flex opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity gap-1 mr-1">
+                 {/* COL 5: Actions */}
+                 <div className="flex items-center justify-between md:justify-end gap-3 flex-1 shrink-0 mt-3 md:mt-0 pt-3 md:pt-0 border-t md:border-0 border-slate-100">
+                    <div className="flex md:opacity-0 group-hover:opacity-100 transition-opacity gap-1">
                        {proposal.status !== 'Approved' && (
                           <>
-                             <button className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors" onClick={() => handleEditOpen(proposal)} title="Edit Details"><Edit2 size={14} /></button>
-                             <button className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Delete"><Trash2 size={14} /></button>
+                             <button className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors" onClick={() => handleEditOpen(proposal)} title="Edit Details"><Edit2 size={14} /></button>
+                             <button className="p-1.5 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Delete"><Trash2 size={14} /></button>
                           </>
                        )}
                     </div>
 
-                    <div className="flex border border-slate-200 rounded shrink-0 bg-slate-50">
-                       <button onClick={() => handleMailto(proposal)} className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-white transition-colors border-r border-slate-200" title="Email Client"><Mail size={14} /></button>
-                       <button onClick={() => handleCopyMessage(proposal)} className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-white transition-colors border-r border-slate-200" title="Copy Message"><Copy size={14} /></button>
-                       <button onClick={() => handleCopyLink(proposal)} className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-white transition-colors" title="Copy Link"><Link size={14} /></button>
+                    <div className="flex border border-slate-200 rounded shrink-0 bg-white shadow-sm overflow-hidden text-slate-500">
+                       <button onClick={() => handleMailto(proposal)} className="p-1.5 hover:text-slate-900 hover:bg-slate-50 transition-colors border-r border-slate-200" title="Email Client"><Mail size={14} /></button>
+                       <button onClick={() => handleCopyMessage(proposal)} className="p-1.5 hover:text-slate-900 hover:bg-slate-50 transition-colors border-r border-slate-200" title="Copy Message"><Copy size={14} /></button>
+                       <button onClick={() => handleCopyLink(proposal)} className="p-1.5 hover:text-slate-900 hover:bg-slate-50 transition-colors" title="Copy Link"><Link size={14} /></button>
                     </div>
 
                     <button 
-                      className={`flex items-center justify-center gap-1 text-xs font-bold px-3 py-1.5 rounded transition-colors border shrink-0 min-w-[90px] ${proposal.status === 'Approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-white text-primary-600 border-primary-200 hover:bg-primary-50'}`}
+                      className={`flex items-center justify-center gap-1.5 text-xs font-bold px-4 py-2 rounded shrink-0 min-w-[100px] shadow-sm transition-all ${proposal.status === 'Approved' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
                       onClick={() => {
                           if (proposal.status === 'Approved') {
                              const matchedTierName = ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers[t]?.salesPrice === proposal.amount) || 'good';
@@ -449,7 +453,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                           }
                       }}
                     >
-                      {proposal.status === 'Approved' ? 'Contract' : 'Preview'} <ArrowRight size={14}/>
+                       {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : 'Resume'}
                     </button>
                  </div>
               </div>
