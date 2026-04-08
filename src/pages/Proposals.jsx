@@ -460,7 +460,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
 
                     {/* Main Action Button */}
                     <button 
-                      className={`flex items-center justify-center gap-1.5 text-[13px] font-black px-5 py-2.5 rounded-lg shrink-0 min-w-[110px] shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none ${proposal.status === 'Approved' ? 'bg-emerald-500 text-white hover:bg-emerald-600 focus:ring-emerald-500 border border-emerald-600' : 'bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900 border border-slate-900'}`}
+                      className={`flex items-center justify-center gap-1.5 text-[13px] font-black py-2.5 rounded-lg shrink-0 w-[110px] shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none ${proposal.status === 'Approved' ? 'bg-emerald-500 text-white hover:bg-emerald-600 focus:ring-emerald-500 border border-emerald-600' : 'bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900 border border-slate-900'}`}
                       onClick={() => {
                           if (proposal.status === 'Approved') {
                              const matchedTierName = ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers[t]?.salesPrice === proposal.amount) || 'good';
