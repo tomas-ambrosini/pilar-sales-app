@@ -393,10 +393,37 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                 {/* Amount & CTA Footer */}
                 <div className="flex items-end justify-between pt-4 border-t border-slate-100">
                   <div>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Quote Amount</p>
-                    <div className="text-2xl font-black text-slate-900 leading-none">
-                       ${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </div>
+                    {(!proposal.status || ['Draft', 'Sent', 'Opened'].includes(proposal.status)) ? (() => {
+                        const tiers = proposal.proposal_data?.tiers || {};
+                        const prices = [tiers.good?.salesPrice, tiers.better?.salesPrice, tiers.best?.salesPrice].filter(Boolean);
+                        if (prices.length > 0) {
+                            const min = Math.min(...prices);
+                            const max = Math.max(...prices);
+                            return (
+                               <>
+                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Estimated Range</p>
+                                 <div className="text-xl font-black text-slate-700 leading-none tracking-tight">
+                                    ${min.toLocaleString()} <span className="text-slate-300 font-normal mx-0.5">-</span> ${max.toLocaleString()}
+                                 </div>
+                               </>
+                            );
+                        }
+                        return (
+                             <>
+                               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Est. Amount</p>
+                               <div className="text-xl font-black text-slate-700 leading-none">
+                                  ${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                               </div>
+                             </>
+                        );
+                    })() : (
+                       <>
+                         <p className="text-[9px] font-bold text-success uppercase tracking-wider mb-0.5">Accepted Amount</p>
+                         <div className="text-2xl font-black text-slate-900 leading-none">
+                            ${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                         </div>
+                       </>
+                    )}
                   </div>
                   
                   <div className="flex items-center gap-2">
