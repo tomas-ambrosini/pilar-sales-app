@@ -38,7 +38,7 @@ serve(async (req) => {
 
     if (profile?.role !== 'ADMIN' || profile?.status !== 'active') {
       return new Response(JSON.stringify({ error: 'Unauthorized: Admin privileges required.' }), {
-        status: 403,
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -61,7 +61,7 @@ serve(async (req) => {
         id: newUser.user.id,
         email,
         full_name,
-        username,
+        username: username || null,
         role: role || 'SALES',
         status: 'active',
         must_change_password: true
@@ -111,13 +111,13 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ error: 'Unknown action' }), {
-      status: 400,
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 400,
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

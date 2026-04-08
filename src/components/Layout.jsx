@@ -27,8 +27,8 @@ const navGroups = [
     title: 'Operations ERP (Legacy)',
     allowedRoles: [ROLES.ADMIN],
     items: [
-      { path: '/pipeline', label: 'Pipeline Ops', icon: ClipboardList, allowedRoles: [ROLES.ADMIN] },
-      { path: '/dispatch', label: 'Dispatch', icon: Truck, allowedRoles: [ROLES.ADMIN] }
+      { path: '/pipeline', label: 'Pipeline Ops (ON HOLD)', icon: ClipboardList, allowedRoles: [ROLES.ADMIN] },
+      { path: '/dispatch', label: 'Dispatch (ON HOLD)', icon: Truck, allowedRoles: [ROLES.ADMIN] }
     ]
   }
 ];
