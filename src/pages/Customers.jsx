@@ -93,9 +93,21 @@ function CustomerList() {
       </div>
 
       <div className="customers-list">
-        {customers
-         .filter(c => {
-             const sq = searchQuery.toLowerCase();
+        {customers.length === 0 ? (
+          <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ marginBottom: '1rem', color: 'var(--color-slate-300)', background: 'var(--color-slate-50)', padding: '1rem', borderRadius: '50%' }}>
+              <UserIcon size={48} />
+            </div>
+            <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-slate-800)', fontSize: '1.25rem', fontWeight: 'bold' }}>No customers yet</h3>
+            <p style={{ color: 'var(--color-slate-500)', marginBottom: '2rem', fontSize: '0.95rem' }}>Create your first customer profile to start generating quotes.</p>
+            <button className="primary-action-btn" onClick={() => setIsAddCustomerOpen(true)}>
+              <Plus size={18} /> Add Your First Customer
+            </button>
+          </div>
+        ) : (
+          customers
+           .filter(c => {
+               const sq = searchQuery.toLowerCase();
              return (
                  (c.name && c.name.toLowerCase().includes(sq)) || 
                  (c.address && c.address.toLowerCase().includes(sq)) || 
@@ -122,7 +134,7 @@ function CustomerList() {
             </div>
             <ChevronRight size={20} className="chevron-icon" />
           </div>
-        ))}
+        )))}
       </div>
 
       <Modal

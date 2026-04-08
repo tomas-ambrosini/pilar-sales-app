@@ -13,37 +13,12 @@ import './Layout.css';
 
 const navGroups = [
   {
-    title: 'Sales & CRM',
-    allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH],
+    title: 'CRM MVP',
+    allowedRoles: [ROLES.ADMIN, ROLES.SALES],
     items: [
-      { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH] },
-      { path: '/customers', label: 'Customers', icon: Users, allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH] },
-      { path: '/catalog', label: 'Catalog', icon: BookOpen, allowedRoles: [ROLES.ADMIN] },
-      { path: '/proposals', label: 'Proposals', icon: FileCheck, allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH] },
-      { path: '/sales-pipeline', label: 'Pipeline', icon: ClipboardList, allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH] }
-    ]
-  },
-  {
-    title: 'Marketing',
-    allowedRoles: [ROLES.ADMIN],
-    items: [
-      { path: '/marketing', label: 'Marketing', icon: Megaphone, allowedRoles: [ROLES.ADMIN] }
-    ]
-  },
-  {
-    title: 'Finance',
-    allowedRoles: [ROLES.ADMIN, ROLES.DISPATCH],
-    items: [
-      { path: '/finance', label: 'Finance', icon: DollarSign, allowedRoles: [ROLES.ADMIN, ROLES.DISPATCH] }
-    ]
-  },
-  {
-    title: 'Operations',
-    allowedRoles: [ROLES.ADMIN, ROLES.DISPATCH, ROLES.SUBCONTRACTOR],
-    items: [
-      { path: '/operations', label: 'Operations', icon: Settings, allowedRoles: [ROLES.ADMIN, ROLES.DISPATCH] },
-      { path: '/dispatch', label: 'Dispatch Hub', icon: Truck, allowedRoles: [ROLES.ADMIN, ROLES.DISPATCH] },
-      { path: '/tech', label: 'Field Execution', icon: Truck, allowedRoles: [ROLES.SUBCONTRACTOR, ROLES.DISPATCH, ROLES.ADMIN] }
+      { path: '/customers', label: 'Customers', icon: Users, allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
+      { path: '/proposals', label: 'Proposals', icon: FileCheck, allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
+      { path: '/catalog', label: 'Catalog', icon: BookOpen, allowedRoles: [ROLES.ADMIN] }
     ]
   }
 ];

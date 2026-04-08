@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useProposals } from '../context/ProposalContext';
 import { useCustomers } from '../context/CustomerContext';
-import { Search, Plus, Calendar, Settings, ShieldCheck, Mail, Printer, AlertTriangle, FileText, Share, Clock, Home, PenTool, CheckCircle, Smartphone, Edit2, Trash2, ArrowRight, CalendarClock, Lock } from 'lucide-react';
+import { Search, Plus, Calendar, Settings, ShieldCheck, Mail, Printer, AlertTriangle, FileText, Share, Clock, Home, PenTool, CheckCircle, Smartphone, Edit2, Trash2, ArrowRight, CalendarClock, Lock, Link, Copy } from 'lucide-react';
 import Modal from '../components/Modal';
+import toast from 'react-hot-toast';
 import './Proposals.css';
 import { PIPELINE_STATES, PipelineController } from '../utils/pipelineControls';
 import ProposalWizard from '../components/ProposalWizard';
@@ -51,6 +52,7 @@ export default function Proposals() {
   const [deletingProposal, setDeletingProposal] = useState(null);
   const [editForm, setEditForm] = useState({ customer: '', amount: '', status: '' });
   const [activeDraft, setActiveDraft] = useState(null);
+  const [filterMode, setFilterMode] = useState('All');
 
   useEffect(() => {
      if (!showWizard && typeof window !== 'undefined') {
@@ -103,6 +105,73 @@ export default function Proposals() {
         setShowWizard(editingProposal);
         setEditingProposal(null);
      }
+  };
+
+  const getProposalUrl = (id) => {
+     const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+     return `${baseUrl}/quote/${id}`;
+  };
+
+  const handleCopyLink = async (proposal) => {
+    try {
+      await navigator.clipboard.writeText(getProposalUrl(proposal.id));
+      toast.success('Link Copied to Clipboard!');
+      // Explicitly NOT changing status to 'Sent' just for copying a link quietly.
+    } catch (e) {
+      toast.error('Failed to copy link');
+    }
+  };
+
+  const handleCopyMessage = async (proposal) => {
+    try {
+      const url = getProposalUrl(proposal.id);
+      const message = `Hi ${proposal.customer.split(' ')[0]},\n\nI just put together your Pilar Home proposal. You can review all options here:\n\n${url}\n\nLet me know what you think when you're ready.`;
+      await navigator.clipboard.writeText(message);
+      toast.success('Message Copied to Clipboard!');
+      
+      const isNewSend = proposal.status === 'Draft';
+      if (isNewSend) await updateProposal(proposal.id, { status: 'Sent' });
+      
+      // Minimal Analytics Trail
+      if (proposal.proposal_data?.associated_opportunity_id) {
+         try {
+             const opp = await supabase.from('opportunities').select('household_id').eq('id', proposal.proposal_data.associated_opportunity_id).single();
+             if (opp.data?.household_id) {
+                 await supabase.from('activity_logs').insert({
+                     household_id: opp.data.household_id,
+                     activity_type: 'Quote Sent',
+                     description: `Proposal link copied to clipboard. Status advanced to Sent.`
+                 });
+             }
+         } catch(e) {}
+      }
+    } catch (e) {
+      toast.error('Failed to copy message');
+    }
+  };
+
+  const handleMailto = async (proposal) => {
+      const url = getProposalUrl(proposal.id);
+      const subject = encodeURIComponent(`Your Pilar Home Proposal - ${proposal.customer}`);
+      const body = encodeURIComponent(`Hi ${proposal.customer.split(' ')[0]},\n\nI just put together your Pilar Home proposal. You can review all options securely here:\n\n${url}\n\nLet me know what you think when you're ready.\n\nBest,`);
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      
+      const isNewSend = proposal.status === 'Draft';
+      if (isNewSend) await updateProposal(proposal.id, { status: 'Sent' });
+      
+      // Minimal Analytics Trail
+      if (proposal.proposal_data?.associated_opportunity_id) {
+         try {
+             const opp = await supabase.from('opportunities').select('household_id').eq('id', proposal.proposal_data.associated_opportunity_id).single();
+             if (opp.data?.household_id) {
+                 await supabase.from('activity_logs').insert({
+                     household_id: opp.data.household_id,
+                     activity_type: 'Quote Sent',
+                     description: `Proposal triggered via Mailto protocol. Status advanced to Sent.`
+                 });
+             }
+         } catch(e) {}
+      }
   };
 
   const handleInitiateAcceptance = (tierName, tierData, proposal) => {
@@ -214,8 +283,20 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
         </button>
       </header>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mt-6">
-        {activeDraft && (
+      <div className="flex gap-2 mb-6 mt-4 animate-in fade-in slide-in-from-bottom-2">
+         {['All', 'Draft', 'Sent', 'Approved'].map(mode => (
+             <button 
+                key={mode} 
+                onClick={() => setFilterMode(mode)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-colors ${filterMode === mode ? 'bg-slate-800 text-white border-slate-800 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
+             >
+                {mode}
+             </button>
+         ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+         {activeDraft && filterMode === 'All' && (
            <div className="col-span-1 border-2 border-primary-400 bg-primary-50/70 rounded-2xl p-6 shadow-md flex flex-col relative overflow-hidden group">
               <div className="flex items-center justify-between mb-4">
                  <div className="flex items-center gap-2">
@@ -245,21 +326,28 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
            </div>
         )}
         
-        {proposals.length === 0 && !activeDraft ? (
-          <div className="col-span-full border-2 border-dashed border-slate-200 bg-white/50 backdrop-blur-sm rounded-2xl p-12 flex flex-col items-center justify-center min-h-[300px]">
-            <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-4"><FileText size={32} /></div>
-            <p className="text-slate-500 font-semibold mb-6">No proposals have been generated yet.</p>
-            <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg flex items-center gap-2 transition-all hover:scale-105" onClick={() => setShowWizard(true)}>
-              <Plus size={18} /> Build First Quote
-            </button>
-          </div>
-        ) : (
-          proposals.map(proposal => {
+        {(() => {
+           const filteredProposals = proposals.filter(p => filterMode === 'All' || p.status === filterMode);
+           
+           if (filteredProposals.length === 0 && (!activeDraft || filterMode !== 'All')) {
+              return (
+                 <div className="col-span-full border-2 border-dashed border-slate-200 bg-white/50 backdrop-blur-sm rounded-2xl p-12 flex flex-col items-center justify-center min-h-[300px]">
+                   <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-4"><FileText size={32} /></div>
+                   <p className="text-slate-500 font-semibold mb-6">No proposals found {filterMode !== 'All' ? `for ${filterMode}` : 'yet'}.</p>
+                   {filterMode === 'All' && (
+                     <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg flex items-center gap-2 transition-all hover:scale-105" onClick={() => setShowWizard(true)}>
+                       <Plus size={18} /> Build First Quote
+                     </button>
+                   )}
+                 </div>
+              );
+           }
+           
+           return filteredProposals.map(proposal => {
             // Dynamic Status Badge Logic
             let badgeColors = 'bg-slate-100 text-slate-600 border-slate-200';
-            if (proposal.status === 'Sent' || proposal.status === 'Opened') badgeColors = 'bg-blue-50 text-blue-600 border-blue-200';
+            if (proposal.status === 'Sent') badgeColors = 'bg-blue-50 text-blue-600 border-blue-200';
             if (proposal.status === 'Approved') badgeColors = 'bg-emerald-50 text-emerald-600 border-emerald-200';
-            if (proposal.status === 'Declined' || proposal.status?.includes('Rejected')) badgeColors = 'bg-rose-50 text-rose-600 border-rose-200';
 
             return (
               <div key={proposal.id} className="group relative bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-1 hover:border-primary-300 transition-all duration-300 flex flex-col">
@@ -311,25 +399,38 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                     </div>
                   </div>
                   
-                  <button 
-                    className="flex items-center gap-1 text-sm font-bold text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 px-3 py-2 rounded-lg transition-colors border border-primary-100 shadow-sm"
-                    onClick={() => {
-                        if (proposal.status === 'Approved') {
-                           const matchedTierName = ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers[t]?.salesPrice === proposal.amount) || 'good';
-                           const matchedTierData = proposal.proposal_data?.tiers[matchedTierName];
-                           setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
-                        } else {
-                           setViewingProposal(proposal);
-                        }
-                    }}
-                  >
-                    View <ArrowRight size={14}/>
-                  </button>
+                  <div className="flex items-center gap-2">
+                      <div className="flex border border-slate-200 rounded-lg overflow-hidden shrink-0">
+                         <button onClick={() => handleMailto(proposal)} className="px-2.5 py-2 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors border-r border-slate-200" title="Email Client">
+                            <Mail size={14} />
+                         </button>
+                         <button onClick={() => handleCopyMessage(proposal)} className="px-2.5 py-2 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors border-r border-slate-200" title="Copy Message">
+                            <Copy size={14} />
+                         </button>
+                         <button onClick={() => handleCopyLink(proposal)} className="px-2.5 py-2 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors" title="Copy Link">
+                            <Link size={14} />
+                         </button>
+                      </div>
+                      <button 
+                        className="flex items-center gap-1 text-sm font-bold text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 px-3 py-2 rounded-lg transition-colors border border-primary-100 shadow-sm shrink-0"
+                        onClick={() => {
+                            if (proposal.status === 'Approved') {
+                               const matchedTierName = ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers[t]?.salesPrice === proposal.amount) || 'good';
+                               const matchedTierData = proposal.proposal_data?.tiers[matchedTierName];
+                               setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
+                            } else {
+                               setViewingProposal(proposal);
+                            }
+                        }}
+                      >
+                        Preview <ArrowRight size={14}/>
+                      </button>
+                  </div>
                 </div>
               </div>
-            );
+             );
           })
-        )}
+        })()}
       </div>
 
       {/* Edit Proposal Modal */}
@@ -345,9 +446,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
             <select className="input-field w-full font-semibold" value={editForm.status} onChange={e => setEditForm({...editForm, status: e.target.value})}>
               <option value="Draft">Draft</option>
               <option value="Sent">Sent</option>
-              <option value="Opened">Opened (Client Viewed)</option>
               <option value="Approved">Approved (Won Deal)</option>
-              <option value="Declined">Declined (Lost Deal)</option>
             </select>
           </div>
           <div className="modal-actions mt-6 flex-col">

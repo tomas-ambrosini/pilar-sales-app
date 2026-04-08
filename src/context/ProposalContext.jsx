@@ -57,6 +57,7 @@ export function ProposalProvider({ children }) {
         if (error) {
             console.error('Failed to create draft proposal:', error);
             return null;
+        }
         
         if (draftData.associated_opportunity_id) {
             try {
