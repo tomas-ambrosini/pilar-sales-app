@@ -344,14 +344,14 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
            }
            
            return (
-             <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col mt-4">
-               {/* CSS Grid Header */}
-               <div className="hidden md:grid grid-cols-12 gap-4 items-center px-8 py-3 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                 <div className="col-span-3 pl-2">Customer Name</div>
-                 <div className="col-span-2">Pipeline Status</div>
-                 <div className="col-span-2">Deal Value</div>
-                 <div className="col-span-2">Rep Owner</div>
-                 <div className="col-span-3 text-right">Actions</div>
+             <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col mt-4 w-full">
+               {/* Right-Anchored Table Header */}
+               <div className="hidden md:flex items-center gap-6 px-8 py-3 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                 <div className="flex-1 min-w-[250px] pl-2">Customer Name</div>
+                 <div className="w-[110px] shrink-0">Pipeline Status</div>
+                 <div className="w-[140px] shrink-0">Deal Value</div>
+                 <div className="w-[140px] shrink-0">Rep Owner</div>
+                 <div className="w-[280px] shrink-0 text-right">Actions</div>
                </div>
                
                {/* Rows */}
@@ -362,13 +362,13 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                   if (proposal.status === 'Approved') badgeColors = 'bg-emerald-50 text-emerald-600 border-emerald-200';
       
                   return (
-                    <div key={proposal.id} className="group bg-white hover:bg-slate-50 transition-colors grid grid-cols-1 md:grid-cols-12 gap-4 items-center px-8 py-4 relative">
+                    <div key={proposal.id} className="group bg-white hover:bg-slate-50 transition-colors flex flex-col md:flex-row items-center gap-6 px-8 py-4 relative">
                  
                  {/* Visual Accent Strip */}
                  <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${proposal.status === 'Approved' ? 'bg-emerald-500' : proposal.status === 'Sent' ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
 
-                 {/* COL 1: Customer & Date */}
-                 <div className="col-span-3 flex items-center gap-4 min-w-0">
+                 {/* COL 1: Customer & Date (Fills Remaining Space) */}
+                 <div className="flex-1 flex items-center gap-4 min-w-[250px] pl-2">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-black text-slate-500 bg-white border border-slate-200 shadow-sm shrink-0">
                        {proposal.customer?.charAt(0) || 'C'}
                     </div>
@@ -383,14 +383,14 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                  </div>
 
                  {/* COL 2: Status */}
-                 <div className="col-span-2">
+                 <div className="w-[110px] shrink-0">
                     <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md inline-flex shadow-sm leading-none border ${badgeColors}`}>
                       {proposal.status}
                     </span>
                  </div>
 
                  {/* COL 3: Pricing */}
-                 <div className="col-span-2 flex flex-col justify-center truncate pr-2">
+                 <div className="w-[140px] shrink-0 flex flex-col justify-center truncate pr-2">
                     {(!proposal.status || ['Draft', 'Sent', 'Opened'].includes(proposal.status)) ? (() => {
                         const tiers = proposal.proposal_data?.tiers || {};
                         const prices = [tiers.good?.salesPrice, tiers.better?.salesPrice, tiers.best?.salesPrice].filter(Boolean);
@@ -425,9 +425,9 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                  </div>
 
                  {/* COL 4: Owner */}
-                 <div className="col-span-2 hidden lg:flex items-center">
+                 <div className="w-[140px] shrink-0 hidden lg:flex items-center">
                     {proposal.user_profiles?.full_name ? (
-                       <div className="flex items-center gap-2 overflow-hidden bg-white py-1 px-2 rounded-md border border-slate-200 shadow-sm max-w-[150px]">
+                       <div className="flex items-center gap-2 overflow-hidden bg-white py-1 px-2 rounded-md border border-slate-200 shadow-sm max-w-[140px]">
                           <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-black uppercase shrink-0">
                              {proposal.user_profiles.full_name.charAt(0)}
                           </div>
@@ -439,7 +439,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                  </div>
 
                  {/* COL 5: Actions */}
-                 <div className="col-span-3 flex items-center justify-end gap-3 flex-nowrap">
+                 <div className="w-[280px] shrink-0 flex items-center justify-end gap-3 flex-nowrap">
                     {/* Hover Utilities */}
                     <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
                        {proposal.status !== 'Approved' && (
