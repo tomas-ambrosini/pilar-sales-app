@@ -9,6 +9,7 @@ import { useRole, ROLES } from '../context/RoleContext';
 import Modal from './Modal';
 import CommandMenu from './CommandMenu';
 import MessagesDrawer from './MessagesDrawer';
+import ProfileSettingsModal from './ProfileSettingsModal';
 import './Layout.css';
 
 const navGroups = [
@@ -193,8 +194,12 @@ export default function Layout() {
                <Bell size={20} />
                <span className="badge"></span>
              </button>
-             <button className="icon-btn avatar-btn" aria-label="User Profile" title={user?.name} onClick={() => handleOpenModal('Profile Settings')}>
-               <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{user?.name?.charAt(0) || 'U'}</span>
+             <button className="icon-btn avatar-btn p-0 overflow-hidden border border-slate-200" aria-label="User Profile" title={user?.full_name || user?.name || user?.email} onClick={() => handleOpenModal('Profile Settings')}>
+               {user?.avatar_url ? (
+                 <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+               ) : (
+                 <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{(user?.full_name || user?.email || 'U').charAt(0).toUpperCase()}</span>
+               )}
              </button>
              <button className="icon-btn" aria-label="Logout" onClick={logout} style={{ color: 'var(--color-danger)' }} title="Logout">
                <LogOut size={20} />
@@ -239,22 +244,18 @@ export default function Layout() {
       </nav>
 
       {/* Global Application Modals */}
-      <Modal 
-        isOpen={activeModal !== null} 
-        onClose={handleCloseModal}
-        title={activeModal}
-      >
-        <div className="modal-form" style={{ textAlign: 'center', padding: '1rem 0' }}>
-          <p style={{ color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
-            The <strong>{activeModal}</strong> feature is currently under active development.
-          </p>
-          <div className="modal-actions" style={{ justifyContent: 'center' }}>
-            <button className="btn-primary" onClick={handleCloseModal}>
-              Got it
-            </button>
-          </div>
-        </div>
-      </Modal>
+      <AnimatePresence>
+        {activeModal && activeModal !== 'Profile Settings' && (
+          <Modal title={activeModal} onClose={handleCloseModal}>
+            <div className="p-4 text-slate-500">
+              <p>Content for {activeModal} goes here.</p>
+            </div>
+          </Modal>
+        )}
+        {activeModal === 'Profile Settings' && (
+          <ProfileSettingsModal onClose={handleCloseModal} />
+        )}
+      </AnimatePresence>
       <CommandMenu isOpen={isCommandMenuOpen} setIsOpen={setCommandMenuOpen} />
       <MessagesDrawer 
         isOpen={isMessagesOpen} 
