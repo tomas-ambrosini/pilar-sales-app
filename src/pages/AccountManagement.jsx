@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { Users, Shield, UserX, UserCheck, Key, Plus, Lock, Search } from 'lucide-react';
+import { Users, Shield, UserX, UserCheck, Key, Plus, Lock, Search, Copy } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function AccountManagement() {
