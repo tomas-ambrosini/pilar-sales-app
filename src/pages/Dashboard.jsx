@@ -115,9 +115,10 @@ export default function Dashboard() {
                     >
                        <div className="flex flex-col">
                           <span className="font-bold text-slate-800 mb-1">{proposal.customer || 'Unknown Customer'}</span>
-                          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                             <Clock size={12}/> 
-                             {new Date(proposal.updated_at || proposal.created_at).toLocaleDateString()}
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mt-1">
+                             <span className="flex items-center gap-1"><Clock size={12}/> {new Date(proposal.updated_at || proposal.created_at).toLocaleDateString()}</span>
+                             <span>|</span>
+                             <span className="text-primary-600 font-black">Owner: {proposal.user_profiles?.full_name?.split(' ')[0] || 'System'}</span>
                           </span>
                        </div>
                        <div>

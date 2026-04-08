@@ -28,7 +28,7 @@ export function ProposalProvider({ children }) {
         try {
             const { data, error } = await supabase
                 .from('proposals')
-                .select('*')
+                .select('*, user_profiles(full_name)')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;

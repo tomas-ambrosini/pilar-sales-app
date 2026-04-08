@@ -382,9 +382,9 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                      <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wider">
                         <CalendarClock size={12}/> Generated: {proposal.date}
                      </p>
-                     {proposal.proposal_data?.creator && (
+                     {proposal.user_profiles?.full_name && (
                         <p className="text-[10px] font-bold text-primary-700 flex items-center gap-1.5 uppercase tracking-wider bg-primary-50 w-max px-2 py-0.5 rounded outline outline-1 outline-primary-200">
-                           Rep: {proposal.proposal_data.creator}
+                           Owner: {proposal.user_profiles.full_name.split(' ')[0]}
                         </p>
                      )}
                   </div>

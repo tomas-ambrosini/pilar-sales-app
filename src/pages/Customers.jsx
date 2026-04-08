@@ -47,6 +47,11 @@ function CustomerList() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.email && !formData.phone) {
+        toast.error("You must provide either a phone number or email address.");
+        return;
+    }
+
     const result = await addCustomer({
       name: `${formData.firstName} ${formData.lastName}`.trim(),
       email: formData.email,
