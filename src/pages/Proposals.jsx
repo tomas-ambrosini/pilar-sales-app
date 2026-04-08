@@ -345,53 +345,52 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
            
            return (
              <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col mt-4">
-               {/* Fixed Table Header */}
-               <div className="hidden md:flex items-center justify-between px-6 py-2.5 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                 <div className="w-[25%] pl-4">Customer</div>
-                 <div className="w-[12%]">Pipeline Status</div>
-                 <div className="w-[20%]">Value</div>
-                 <div className="w-[15%]">Rep Owner</div>
-                 <div className="flex-1 text-right">Actions</div>
+               {/* CSS Grid Header */}
+               <div className="hidden md:grid grid-cols-12 gap-4 items-center px-8 py-3 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                 <div className="col-span-3 pl-2">Customer Name</div>
+                 <div className="col-span-2">Pipeline Status</div>
+                 <div className="col-span-2">Deal Value</div>
+                 <div className="col-span-2">Rep Owner</div>
+                 <div className="col-span-3 text-right">Actions</div>
                </div>
                
                {/* Rows */}
                <div className="flex flex-col divide-y divide-slate-100">
                  {filteredProposals.map(proposal => {
-                  // Dynamic Status Badge Logic
                   let badgeColors = 'bg-slate-100 text-slate-500 border-slate-200';
                   if (proposal.status === 'Sent') badgeColors = 'bg-blue-50 text-blue-600 border-blue-200';
                   if (proposal.status === 'Approved') badgeColors = 'bg-emerald-50 text-emerald-600 border-emerald-200';
       
                   return (
-                    <div key={proposal.id} className="group bg-white hover:bg-slate-50 transition-colors flex items-center justify-between px-6 py-4 relative">
+                    <div key={proposal.id} className="group bg-white hover:bg-slate-50 transition-colors grid grid-cols-1 md:grid-cols-12 gap-4 items-center px-8 py-4 relative">
                  
                  {/* Visual Accent Strip */}
-                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${proposal.status === 'Approved' ? 'bg-emerald-500' : proposal.status === 'Sent' ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
+                 <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${proposal.status === 'Approved' ? 'bg-emerald-500' : proposal.status === 'Sent' ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
 
                  {/* COL 1: Customer & Date */}
-                 <div className="flex items-center gap-4 w-[26%] shrink-0 pr-4 pl-2">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black text-slate-500 bg-white border border-slate-200 shadow-sm shrink-0">
+                 <div className="col-span-3 flex items-center gap-4 min-w-0">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-black text-slate-500 bg-white border border-slate-200 shadow-sm shrink-0">
                        {proposal.customer?.charAt(0) || 'C'}
                     </div>
-                    <div className="flex flex-col min-w-0">
+                    <div className="flex flex-col min-w-0 pr-4">
                        <h3 className="text-[15px] font-black text-slate-800 truncate leading-tight mb-0.5">{proposal.customer}</h3>
                        <p className="text-xs font-semibold text-slate-500 truncate flex items-center">
                           {new Date(proposal.updated_at || proposal.created_at).toLocaleDateString()} 
                           <span className="text-slate-300 mx-1.5">•</span> 
-                          <span className="font-mono text-[9px] uppercase tracking-widest text-slate-400">{proposal.id.split('-')[0]}</span>
+                          <span className="font-mono text-[10px] uppercase tracking-widest text-slate-400 truncate">{proposal.id.split('-')[0]}</span>
                        </p>
                     </div>
                  </div>
 
                  {/* COL 2: Status */}
-                 <div className="w-[12%] shrink-0">
-                    <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-md inline-flex shadow-sm leading-none border ${badgeColors}`}>
+                 <div className="col-span-2">
+                    <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md inline-flex shadow-sm leading-none border ${badgeColors}`}>
                       {proposal.status}
                     </span>
                  </div>
 
                  {/* COL 3: Pricing */}
-                 <div className="w-[22%] shrink-0 flex flex-col justify-center">
+                 <div className="col-span-2 flex flex-col justify-center truncate pr-2">
                     {(!proposal.status || ['Draft', 'Sent', 'Opened'].includes(proposal.status)) ? (() => {
                         const tiers = proposal.proposal_data?.tiers || {};
                         const prices = [tiers.good?.salesPrice, tiers.better?.salesPrice, tiers.best?.salesPrice].filter(Boolean);
@@ -400,9 +399,9 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                             const max = Math.max(...prices);
                             return (
                                <>
-                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Est. Value</span>
-                                 <span className="text-[15px] font-black text-slate-700 leading-none truncate">
-                                    ${min.toLocaleString()} <span className="text-slate-400 mx-1">-</span> ${max.toLocaleString()}
+                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Est. Range</span>
+                                 <span className="text-[14px] font-black text-slate-700 leading-none truncate">
+                                    ${min.toLocaleString()} <span className="text-slate-300 font-normal mx-0.5">-</span> ${max.toLocaleString()}
                                  </span>
                                </>
                             );
@@ -426,9 +425,9 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                  </div>
 
                  {/* COL 4: Owner */}
-                 <div className="hidden lg:flex w-[15%] shrink-0 items-center">
+                 <div className="col-span-2 hidden lg:flex items-center">
                     {proposal.user_profiles?.full_name ? (
-                       <div className="flex items-center gap-2 overflow-hidden bg-white py-1 px-2 rounded-md border border-slate-200 shadow-sm max-w-[140px]">
+                       <div className="flex items-center gap-2 overflow-hidden bg-white py-1 px-2 rounded-md border border-slate-200 shadow-sm max-w-[150px]">
                           <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-black uppercase shrink-0">
                              {proposal.user_profiles.full_name.charAt(0)}
                           </div>
@@ -440,22 +439,22 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                  </div>
 
                  {/* COL 5: Actions */}
-                 <div className="flex items-center justify-end gap-3 flex-1 shrink-0 ml-auto flex-nowrap">
+                 <div className="col-span-3 flex items-center justify-end gap-3 flex-nowrap">
                     {/* Hover Utilities */}
                     <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
                        {proposal.status !== 'Approved' && (
                           <>
-                             <button className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors" onClick={() => handleEditOpen(proposal)} title="Edit Details"><Edit2 size={15} /></button>
-                             <button className="p-1.5 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Delete"><Trash2 size={15} /></button>
+                             <button className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors" onClick={() => handleEditOpen(proposal)} title="Edit Details"><Edit2 size={16} /></button>
+                             <button className="p-1.5 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Delete"><Trash2 size={16} /></button>
                           </>
                        )}
                     </div>
 
                     {/* Email/Copy/Link Group */}
                     <div className="flex items-center border border-slate-200 rounded-lg shrink-0 bg-white shadow-sm overflow-hidden min-w-max">
-                       <button onClick={() => handleMailto(proposal)} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors border-r border-slate-200" title="Email Client"><Mail size={15} /></button>
-                       <button onClick={() => handleCopyMessage(proposal)} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors border-r border-slate-200" title="Copy Message"><Copy size={15} /></button>
-                       <button onClick={() => handleCopyLink(proposal)} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors" title="Copy Link"><Link size={15} /></button>
+                       <button onClick={() => handleMailto(proposal)} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors border-r border-slate-200" title="Email Client"><Mail size={16} /></button>
+                       <button onClick={() => handleCopyMessage(proposal)} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors border-r border-slate-200" title="Copy Message"><Copy size={16} /></button>
+                       <button onClick={() => handleCopyLink(proposal)} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors" title="Copy Link"><Link size={16} /></button>
                     </div>
 
                     {/* Main Action Button */}
