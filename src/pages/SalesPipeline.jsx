@@ -7,13 +7,16 @@ import { useCustomers } from '../context/CustomerContext';
 import { useAuth } from '../context/AuthContext';
 import DispatchCalendar from '../components/DispatchCalendar';
 
+import { PipelineController, PIPELINE_STATES } from '../utils/pipelineControls';
+
 const PIPELINE_STAGES = [
-  { id: 'New Lead', title: 'Incoming Leads', color: '#94a3b8' },
-  { id: 'Site Survey Scheduled', title: 'Survey Scheduled', color: '#c084fc' },
-  { id: 'Proposal Building', title: 'Building Quote', color: '#60a5fa' },
-  { id: 'Proposal Sent', title: 'Proposal Sent', color: '#38bdf8' },
-  { id: 'Deal Won', title: 'Deal Won / Setup', color: '#34d399' },
-  { id: 'Lost', title: 'Lost Deal', color: '#ef4444' }
+  { id: PIPELINE_STATES.NEW_LEAD, title: 'Incoming Leads', color: '#94a3b8' },
+  { id: PIPELINE_STATES.CONTACTED, title: 'Contacted', color: '#f472b6' },
+  { id: PIPELINE_STATES.SURVEY_SCHEDULED, title: 'Survey Scheduled', color: '#c084fc' },
+  { id: PIPELINE_STATES.PROPOSAL_BUILDING, title: 'Building Quote', color: '#60a5fa' },
+  { id: PIPELINE_STATES.PROPOSAL_SENT, title: 'Proposal Sent', color: '#38bdf8' },
+  { id: PIPELINE_STATES.APPROVED, title: 'Approved Deals', color: '#34d399' },
+  { id: PIPELINE_STATES.LOST, title: 'Lost Deal', color: '#ef4444' }
 ];
 
 const initialPipeline = PIPELINE_STAGES.reduce((acc, stage) => {
@@ -90,10 +93,7 @@ export default function SalesPipeline() {
              addresses!households_service_address_id_fkey ( street_address, city )
           )
         `)
-        .eq('is_active', true)
-        .neq('status', 'Lost')
-        .neq('status', 'Deal Won')
-        .neq('status', 'Job Completed');
+        .eq('is_active', true);
       if (error) throw error;
 
       if (data) {
@@ -119,18 +119,17 @@ export default function SalesPipeline() {
             scheduled_date: opp.scheduled_date,
             scheduled_time_block: opp.scheduled_time_block,
             dispatch_notes: opp.dispatch_notes,
-            assigned_crew_id: opp.assigned_crew_id
+            assigned_crew_id: opp.assigned_crew_id,
+            created_at: opp.created_at
           };
           
-          if (opp.status === 'Contact Attempted') {
-             sortedMap['New Lead'].push(jobCard);
-          } else if (sortedMap[opp.status]) {
+          if (sortedMap[opp.status]) {
              sortedMap[opp.status].push(jobCard);
-          } else if (opp.status === 'Job Completed') {
-             // Do nothing for Kanban view
           } else {
-             // Fallback if status doesn't match enum
-             sortedMap['New Lead'].push(jobCard);
+             // Fallback for orphaned non-completed active jobs
+             if (opp.status !== PIPELINE_STATES.LOST) {
+                 sortedMap[PIPELINE_STATES.NEW_LEAD].push(jobCard);
+             }
           }
         });
         setPipeline(sortedMap);
@@ -146,13 +145,13 @@ export default function SalesPipeline() {
       if (!activeJob) return;
       const { error } = await supabase.from('opportunities').update({
          issue_description: editJobForm.issue_description,
-         urgency_level: editJobForm.urgency,
-         status: editJobForm.status
+         urgency_level: editJobForm.urgency
+         // status is strictly excluded to prevent manual spoofing
       }).eq('id', activeJob.id);
       
       if (!error) {
          fetchOpportunities();
-         const updatedJob = { ...activeJob, issue: editJobForm.issue_description, urgency: editJobForm.urgency, status: editJobForm.status };
+         const updatedJob = { ...activeJob, issue: editJobForm.issue_description, urgency: editJobForm.urgency };
          setActiveJob(updatedJob);
          setIsEditingJob(false);
       }
@@ -178,10 +177,14 @@ export default function SalesPipeline() {
       }
   };
 
-  const handleMarkContacted = async (e, jobId) => {
+  const handleMarkContacted = async (e, job) => {
     e.stopPropagation();
-    const { error } = await supabase.from('opportunities').update({ status: 'Contact Attempted' }).eq('id', jobId);
-    if (!error) fetchOpportunities();
+    try {
+        await PipelineController.markContacted(job.id, job.status);
+        fetchOpportunities();
+    } catch (err) {
+        alert(err.message);
+    }
   };
 
   const handleCreateLead = async (e) => {
@@ -194,7 +197,7 @@ export default function SalesPipeline() {
        assigned_salesperson_id: user.id,
        urgency_level: newLeadForm.urgency,
        issue_description: newLeadForm.issue_description,
-       status: 'New Lead'
+       status: PIPELINE_STATES.NEW_LEAD
     });
     
     if (error) {
@@ -209,29 +212,17 @@ export default function SalesPipeline() {
   const handleSaveLostReason = async () => {
     if (!pendingLostDeal || !lostReason) return;
     
-    // Find the job across all columns to get the household_id
-    let jobHouseholdId = null;
-    for (const col of Object.values(pipeline)) {
-       const job = col.find(j => j.id === pendingLostDeal);
-       if (job) jobHouseholdId = job.household_id;
-    }
+    let jobHouseholdId = pendingLostDeal.household_id || null;
 
-    // Log Activity (Graveyard recording)
-    if (jobHouseholdId) {
-        await supabase.from('activity_logs').insert({
-           household_id: jobHouseholdId,
-           activity_type: 'Deal Lost',
-           description: `Deal marked as lost. Reason: ${lostReason}`
-        });
+    try {
+       await PipelineController.markLost(pendingLostDeal.id, pendingLostDeal.status, jobHouseholdId, lostReason);
+       fetchOpportunities();
+       setIsLostModalOpen(false);
+       setPendingLostDeal(null);
+       setLostReason('');
+    } catch (err) {
+       alert(err.message);
     }
-
-    // Persist status
-    await supabase.from('opportunities').update({ status: 'Lost' }).eq('id', pendingLostDeal);
-    
-    fetchOpportunities();
-    setIsLostModalOpen(false);
-    setPendingLostDeal(null);
-    setLostReason('');
   };
 
   const Column = ({ title, columnId, color, jobs }) => (
@@ -247,10 +238,12 @@ export default function SalesPipeline() {
         className="pipeline-cards flex flex-col gap-2 flex-1 transition-colors relative" 
         style={{ minHeight: '100px' }}
       >
-        {jobs.map((job) => (
+         {jobs.map((job) => {
+              const isOverdue = columnId === PIPELINE_STATES.NEW_LEAD && job.created_at && (new Date() - new Date(job.created_at)) > (2 * 60 * 60 * 1000);
+              return (
               <div 
                 key={job.id}
-                className="job-card bg-white p-2 rounded shadow-sm border border-slate-200 cursor-pointer hover:border-primary-400 hover:shadow-md transition-shadow transition-colors"
+                className={`job-card p-2 rounded shadow-sm border cursor-pointer hover:shadow-md transition-all ${isOverdue ? 'bg-red-50 border-red-300 hover:border-red-500' : 'bg-white border-slate-200 hover:border-primary-400'}`}
                 onClick={() => { setActiveJob(job); setActiveTab('details'); }}
               >
                 <div className="flex justify-between items-start mb-1 gap-1">
@@ -265,21 +258,24 @@ export default function SalesPipeline() {
                 {job.issue && (
                    <div className="text-[10px] text-slate-500 truncate border-t border-slate-100 pt-1 mt-1 font-medium">"{job.issue}"</div>
                 )}
+                {isOverdue && (
+                   <div className="mt-1 flex items-center justify-between text-[9px] font-bold text-red-600 bg-red-100/50 px-1 py-0.5 rounded border border-red-200 animate-pulse">
+                      <span>⚠️ SLA VIOLATION</span>
+                      <span>{Math.floor((new Date() - new Date(job.created_at)) / (1000 * 60 * 60))}h Overdue</span>
+                   </div>
+                )}
                 
-                {/* New Lead Column Specific Actions */}
-                {columnId === 'New Lead' && (
+                {/* Flow Specific Actions Based on Pipeline Enum */}
+                {columnId === PIPELINE_STATES.NEW_LEAD && (
                    <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
-                      {job.status === 'Contact Attempted' ? (
-                         <span className="text-[9px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-1.5 py-0.5 rounded-sm uppercase tracking-wide">Contacted</span>
-                      ) : (
-                         <button onClick={(e) => handleMarkContacted(e, job.id)} className="text-[9px] font-bold text-primary-600 hover:text-primary-800 hover:bg-primary-50 px-1.5 py-0.5 rounded transition-colors uppercase tracking-wide flex items-center gap-1">
-                            Mark Contacted
-                         </button>
-                      )}
+                     <button onClick={(e) => handleMarkContacted(e, job)} className="text-[9px] font-bold text-primary-600 hover:text-primary-800 hover:bg-primary-50 px-1.5 py-0.5 rounded transition-colors uppercase tracking-wide flex items-center gap-1">
+                        Mark Contacted
+                     </button>
                    </div>
                 )}
               </div>
-        ))}
+              );
+         })}
       </div>
     </div>
   );
@@ -410,7 +406,7 @@ export default function SalesPipeline() {
                                  className="w-full border border-slate-300 p-2 rounded-md min-h-[100px]"
                               />
                            </div>
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                               <div className="form-group">
                                  <label className="text-xs font-bold text-slate-600 mb-1 block">Urgency</label>
                                  <select 
@@ -421,16 +417,6 @@ export default function SalesPipeline() {
                                     <option value="Low">Low - System Working</option>
                                     <option value="Medium">Medium - Failing / Noisy</option>
                                     <option value="High">Emergency - System Down!</option>
-                                 </select>
-                              </div>
-                              <div className="form-group">
-                                 <label className="text-xs font-bold text-slate-600 mb-1 block">Pipeline Status Override</label>
-                                 <select 
-                                    value={editJobForm.status} 
-                                    onChange={e => setEditJobForm({...editJobForm, status: e.target.value})}
-                                    className="w-full border border-slate-300 p-2 rounded-md bg-amber-50"
-                                 >
-                                    {PIPELINE_STAGES.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                                  </select>
                               </div>
                            </div>
@@ -467,9 +453,9 @@ export default function SalesPipeline() {
                                  <button onClick={() => setDeletingJob(activeJob)} className="text-red-500 hover:text-red-700 hover:bg-red-50 text-[10px] font-bold py-2 px-2 rounded flex items-center gap-1 transition-colors shrink-0">
                                     <Trash2 size={14} /> Delete 
                                  </button>
-                                 {activeJob?.status !== 'Lost' && (
+                                 {activeJob?.status !== PIPELINE_STATES.LOST && (
                                      <button 
-                                        onClick={() => { setPendingLostDeal(activeJob.id); setIsLostModalOpen(true); setActiveJob(null); }} 
+                                        onClick={() => { setPendingLostDeal(activeJob); setIsLostModalOpen(true); setActiveJob(null); }} 
                                         className="text-amber-600 hover:bg-amber-50 rounded border border-amber-200 text-[10px] font-bold py-1.5 px-2 transition-colors flex items-center gap-1"
                                      >
                                         Mark as Lost

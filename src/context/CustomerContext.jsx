@@ -24,7 +24,7 @@ export function CustomerProvider({ children }) {
 
     const fetchCustomers = async () => {
         try {
-            const { data, error } = await supabase
+            let { data, error } = await supabase
                 .from('households')
                 .select(`
                     id,
@@ -39,7 +39,30 @@ export function CustomerProvider({ children }) {
                 .eq('is_active', true)
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
+            if (error) {
+                // If it's a schema error (missing is_active), fallback to standard fetch
+                if (error.code === '42703' && error.message.includes('is_active')) {
+                    console.warn("Soft-delete 'is_active' column missing from households. Falling back to legacy query.");
+                    const legacyRes = await supabase
+                        .from('households')
+                        .select(`
+                            id,
+                            household_name,
+                            tags,
+                            created_at,
+                            addresses!addresses_household_id_fkey ( id, street_address, city, state, zip, property_details, is_primary_residence ),
+                            contacts ( id, first_name, last_name, primary_phone, email, role ),
+                            opportunities ( id, status, urgency_level, issue_description, created_at ),
+                            work_orders ( id, work_order_number, status, urgency_level, created_at )
+                        `)
+                        .order('created_at', { ascending: false });
+                        
+                    data = legacyRes.data;
+                    if (legacyRes.error) throw legacyRes.error;
+                } else {
+                    throw error;
+                }
+            }
 
             if (data) {
                 // Map relational data into the flat structure the rest of Pilar Home expects

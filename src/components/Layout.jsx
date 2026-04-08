@@ -8,7 +8,6 @@ import { supabase } from '../supabaseClient';
 import { useRole, ROLES } from '../context/RoleContext';
 import Modal from './Modal';
 import CommandMenu from './CommandMenu';
-import RoleSwitcher from './RoleSwitcher';
 import MessagesDrawer from './MessagesDrawer';
 import './Layout.css';
 
@@ -17,11 +16,11 @@ const navGroups = [
     title: 'Sales & CRM',
     allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH],
     items: [
-      { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH, ROLES.SUBCONTRACTOR] },
-      { path: '/customers', label: 'Customers', icon: Users, allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
-      { path: '/catalog', label: 'Catalog', icon: BookOpen, allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
-      { path: '/proposals', label: 'Proposals', icon: FileCheck, allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
-      { path: '/sales-pipeline', label: 'Pipeline', icon: ClipboardList, allowedRoles: [ROLES.ADMIN, ROLES.SALES] }
+      { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH] },
+      { path: '/customers', label: 'Customers', icon: Users, allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH] },
+      { path: '/catalog', label: 'Catalog', icon: BookOpen, allowedRoles: [ROLES.ADMIN] },
+      { path: '/proposals', label: 'Proposals', icon: FileCheck, allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH] },
+      { path: '/sales-pipeline', label: 'Pipeline', icon: ClipboardList, allowedRoles: [ROLES.ADMIN, ROLES.SALES, ROLES.DISPATCH] }
     ]
   },
   {
@@ -33,18 +32,18 @@ const navGroups = [
   },
   {
     title: 'Finance',
-    allowedRoles: [ROLES.ADMIN],
+    allowedRoles: [ROLES.ADMIN, ROLES.DISPATCH],
     items: [
-      { path: '/finance', label: 'Finance', icon: DollarSign, allowedRoles: [ROLES.ADMIN] }
+      { path: '/finance', label: 'Finance', icon: DollarSign, allowedRoles: [ROLES.ADMIN, ROLES.DISPATCH] }
     ]
   },
   {
     title: 'Operations',
     allowedRoles: [ROLES.ADMIN, ROLES.DISPATCH, ROLES.SUBCONTRACTOR],
     items: [
-      { path: '/tech', label: 'Field Execution', icon: Truck, allowedRoles: [ROLES.SUBCONTRACTOR, ROLES.DISPATCH] },
-      { path: '/dispatch', label: 'Dispatch Hub', icon: Truck, allowedRoles: [ROLES.ADMIN, ROLES.DISPATCH, ROLES.SUBCONTRACTOR] },
-      { path: '/operations', label: 'Settings', icon: Settings, allowedRoles: [ROLES.ADMIN] }
+      { path: '/operations', label: 'Operations', icon: Settings, allowedRoles: [ROLES.ADMIN, ROLES.DISPATCH] },
+      { path: '/dispatch', label: 'Dispatch Hub', icon: Truck, allowedRoles: [ROLES.ADMIN, ROLES.DISPATCH] },
+      { path: '/tech', label: 'Field Execution', icon: Truck, allowedRoles: [ROLES.SUBCONTRACTOR, ROLES.DISPATCH, ROLES.ADMIN] }
     ]
   }
 ];
@@ -185,7 +184,7 @@ export default function Layout() {
           </div>
           <div className="desktop-header-title flex items-center gap-4">
             <span className="company-tag hidden md:inline-flex">Home Division</span>
-            <RoleSwitcher />
+            {/* RoleSwitcher Removed per Master Plan */}
           </div>
           <div className="top-bar-actions">
              <button

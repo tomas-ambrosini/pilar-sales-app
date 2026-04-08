@@ -7,6 +7,9 @@ import { useCustomers } from '../context/CustomerContext';
 import { useProposals } from '../context/ProposalContext';
 import ProposalViewerModal from '../components/ProposalViewerModal';
 import ContractDocumentModal from '../components/ContractDocumentModal';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../supabaseClient';
+import { PIPELINE_STATES } from '../utils/pipelineControls';
 
 function CustomerList() {
   const navigate = useNavigate();
@@ -279,8 +282,12 @@ function PropertyDetailsCard({ location, index }) {
 function CustomerDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { customers, updateCustomer, deleteCustomer, addPropertyToCustomer } = useCustomers();
+  const { customers, updateCustomer, deleteCustomer, addPropertyToCustomer, refreshData } = useCustomers();
   const { proposals } = useProposals();
+  const { user } = useAuth();
+  
+  const [isStartDealOpen, setIsStartDealOpen] = useState(false);
+  const [dealForm, setDealForm] = useState({ urgency: 'Medium', issue_description: '' });
   
   const [activeQuickAction, setActiveQuickAction] = useState(null);
   const [isCreateProposalOpen, setIsCreateProposalOpen] = useState(false);
@@ -327,14 +334,38 @@ function CustomerDetail() {
   };
 
     const handleAddProperty = async (e) => {
-      e.preventDefault();
-      if (!newPropertyAddress) return;
-      await addPropertyToCustomer(customer.id, newPropertyAddress);
-      setIsAddPropertyOpen(false);
-      setNewPropertyAddress('');
-    };
+    e.preventDefault();
+    if (!newPropertyAddress.trim()) return;
+    await addPropertyToCustomer(id, newPropertyAddress);
+    setIsAddPropertyOpen(false);
+    setNewPropertyAddress('');
+  };
 
-    const handleDelete = () => {
+  const handleCreateDeal = async (e) => {
+     e.preventDefault();
+     if (!customer) return;
+     
+     const primaryLoc = customer.locations?.find((loc) => loc.is_primary_residence) || customer.locations?.[0];
+     
+     const { error } = await supabase.from('opportunities').insert({
+         household_id: customer.id,
+         service_address_id: primaryLoc ? primaryLoc.id : null,
+         assigned_salesperson_id: user?.id,
+         urgency_level: dealForm.urgency,
+         issue_description: dealForm.issue_description,
+         status: PIPELINE_STATES.NEW_LEAD
+     });
+     
+     if (error) {
+         alert("Database Error: " + error.message);
+     } else {
+         setIsStartDealOpen(false);
+         setDealForm({ urgency: 'Medium', issue_description: '' });
+         if (refreshData) refreshData();
+     }
+  };
+
+  const handleDelete = () => {
       deleteCustomer(customer.id);
       navigate('/customers');
     };
@@ -428,9 +459,15 @@ function CustomerDetail() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
              {/* Opportunities / Pipeline */}
              <div className="bg-white border rounded-lg p-5 shadow-sm border-slate-200 hover:border-primary-300 transition-colors">
-                <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 tracking-wider text-[11px] uppercase text-primary-600 flex items-center justify-between">
-                   Sales Pipeline <span className="bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full">{customer.opportunities?.length || 0}</span>
-                </h3>
+                 <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 tracking-wider text-[11px] uppercase text-primary-600 flex items-center justify-between">
+                    <span>
+                       Sales Pipeline
+                       <span className="bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full ml-2">{customer.opportunities?.length || 0}</span>
+                    </span>
+                    <button onClick={() => setIsStartDealOpen(true)} className="text-[9px] bg-primary-600 hover:bg-primary-700 text-white px-2 py-1 rounded shadow-sm flex items-center gap-1 transition-colors hover:cursor-pointer">
+                       <Plus size={10} /> Start New Deal
+                    </button>
+                 </h3>
                 <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                    {customer.opportunities?.length > 0 ? customer.opportunities.map(opp => (
                       <div key={opp.id} className="relative pl-4">
@@ -665,6 +702,42 @@ function CustomerDetail() {
         onClose={() => setViewingContract(null)}
         contractData={viewingContract}
       />
+
+      <Modal isOpen={isStartDealOpen} onClose={() => setIsStartDealOpen(false)} title="Originate New CRM Lead">
+         <form onSubmit={handleCreateDeal}>
+            <div className="p-4 bg-primary-50 border border-primary-100 rounded-lg mb-4 text-sm text-primary-800">
+               <strong className="block mb-1">Customer: {customer?.name}</strong>
+               Creating a new Lead drops it directly into the Sales Pipeline for the intake team to process.
+            </div>
+            
+            <div className="form-group mb-3">
+               <label className="text-xs font-bold text-slate-600 mb-1 block">Urgency / Severity</label>
+               <select className="w-full border p-2 rounded-lg" value={dealForm.urgency} onChange={e => setDealForm({...dealForm, urgency: e.target.value})}>
+                  <option value="Low">Low - Working Condition</option>
+                  <option value="Medium">Medium - Failing/Noisy</option>
+                  <option value="High">Emergency - System Down</option>
+               </select>
+            </div>
+            
+            <div className="form-group mb-4">
+               <label className="text-xs font-bold text-slate-600 mb-1 block">Lead Context / Reported Issue</label>
+               <textarea 
+                  required
+                  rows={4}
+                  className="w-full border p-2 rounded-lg text-sm bg-white" 
+                  placeholder="Customer called regarding AC making a loud noise..."
+                  value={dealForm.issue_description}
+                  onChange={e => setDealForm({...dealForm, issue_description: e.target.value})}
+               />
+            </div>
+            
+            <div className="flex justify-end gap-2 border-t pt-4 border-slate-200">
+               <button type="button" className="btn-secondary" onClick={() => setIsStartDealOpen(false)}>Cancel</button>
+               <button type="submit" className="btn-primary flex items-center gap-2"><Plus size={14}/> Generate Deal</button>
+            </div>
+         </form>
+      </Modal>
+
     </div>
   );
 }

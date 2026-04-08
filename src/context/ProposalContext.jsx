@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { PipelineController } from '../utils/pipelineControls';
 
 const ProposalContext = createContext(null);
 
@@ -56,10 +57,13 @@ export function ProposalProvider({ children }) {
         if (error) {
             console.error('Failed to create draft proposal:', error);
             return null;
-        }
         
         if (draftData.associated_opportunity_id) {
-            await supabase.from('opportunities').update({ status: 'Proposal Building' }).eq('id', draftData.associated_opportunity_id);
+            try {
+               await PipelineController.startProposal(draftData.associated_opportunity_id, draftData.associated_opportunity_status);
+            } catch (e) {
+               console.warn("Pipeline transition caught: ", e.message);
+            }
         }
 
         // Push secretly into local memory without triggering major UI snapping
@@ -92,7 +96,11 @@ export function ProposalProvider({ children }) {
             console.error('Failed to create proposal live:', error);
             fetchProposals(); // Revert on failure
         } else if (proposalData.associated_opportunity_id) {
-            await supabase.from('opportunities').update({ status: 'Proposal Sent' }).eq('id', proposalData.associated_opportunity_id);
+            try {
+                await PipelineController.sendProposal(proposalData.associated_opportunity_id, proposalData.associated_opportunity_status);
+            } catch (e) {
+                console.warn("Skipped transition: ", e.message);
+            }
         }
     };
 
@@ -109,16 +117,14 @@ export function ProposalProvider({ children }) {
             return;
         }
         
-        // Auto-sync status to Pipeline Opportunity
+        // Auto-sync status to Pipeline Opportunity strictly through Execution controls
         if (updatedData.status && oppId) {
-            let newOppStatus;
-            if (updatedData.status === 'Approved') newOppStatus = 'Deal Won';
-            else if (updatedData.status === 'Declined') newOppStatus = 'Lost';
-            else if (['Sent', 'Opened'].includes(updatedData.status)) newOppStatus = 'Proposal Sent';
-
-            if (newOppStatus) {
-                const { error: syncError } = await supabase.from('opportunities').update({ status: newOppStatus }).eq('id', oppId);
-                if (syncError) console.error('Pipeline Sync Error:', syncError);
+            try {
+                if (updatedData.status === 'Approved') await PipelineController.approveDeal(oppId, 'PROPOSAL_SENT');
+                else if (updatedData.status === 'Declined') await PipelineController.markLost(oppId, 'PROPOSAL_SENT', null, 'Proposal Declined');
+                else if (['Sent', 'Opened'].includes(updatedData.status)) await PipelineController.sendProposal(oppId, 'PROPOSAL_BUILDING');
+            } catch (syncError) {
+                console.warn('Pipeline Sync Warning:', syncError.message);
             }
         }
     };

@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import { Shield, CheckCircle, Activity, Laptop, HardDrive, AlertTriangle, User, DollarSign, ActivityIcon, Eye, Zap, CheckSquare, XCircle, FileText } from 'lucide-react';
 import { evaluateDealHealth } from '../utils/pricing';
 import Modal from '../components/Modal';
+import { PIPELINE_STATES, PipelineController } from '../utils/pipelineControls';
 
 export default function Operations() {
   const [activeTab, setActiveTab] = useState('approval');
@@ -21,7 +22,7 @@ export default function Operations() {
     
     // Setup Realtime Subscription
     const channel = supabase.channel('realtime_ops_deals')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'opportunities', filter: "status=eq.Deal Won" }, payload => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'opportunities' }, payload => {
             fetchWonDeals();
         })
         .subscribe();
@@ -47,7 +48,7 @@ export default function Operations() {
             household_name
           )
         `)
-        .eq('status', 'Deal Won')
+        .eq('status', PIPELINE_STATES.APPROVED)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
@@ -111,14 +112,12 @@ export default function Operations() {
   const handleRejectDeal = async () => {
       // Moves it back to Proposal Sent for rework
       if (!selectedDeal) return;
-      const { error } = await supabase
-        .from('opportunities')
-        .update({ status: 'Proposal Sent' })
-        .eq('id', selectedDeal.id);
-        
-      if (!error) {
-        setDeals(prev => prev.filter(d => d.id !== selectedDeal.id));
-        setSelectedDeal(null);
+      try {
+          await PipelineController.revertToSales(selectedDeal.id, selectedDeal.status);
+          setDeals(prev => prev.filter(d => d.id !== selectedDeal.id));
+          setSelectedDeal(null);
+      } catch (err) {
+          console.error("Failed to reject deal:", err);
       }
   };
 

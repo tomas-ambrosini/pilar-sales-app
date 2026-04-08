@@ -15,21 +15,30 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { CustomerProvider } from './context/CustomerContext';
 import { CatalogProvider } from './context/CatalogContext';
 import { ProposalProvider } from './context/ProposalContext';
-import { RoleProvider } from './context/RoleContext';
+import { RoleProvider, useRole, ROLES } from './context/RoleContext';
 
 import FieldTech from './pages/FieldTech';
 
 const RoleRoute = ({ children, allowedRoles }) => {
   const { user } = useAuth();
+  const { activeRole } = useRole();
   
   if (!user) return <Navigate to="/" replace />;
   
-  const role = user.role || 'SALES'; // Secure fallback
+  // Map simulated long role to route code
+  const roleCode = 
+      activeRole === ROLES.ADMIN ? 'ADMIN' :
+      activeRole === ROLES.DISPATCH ? 'DISPATCH' :
+      activeRole === ROLES.SUBCONTRACTOR ? 'SUBCONTRACTOR' :
+      'SALES';
   
-  if (!allowedRoles.includes(role)) {
-    // Hard rejection fallback matrices
-    if (role === 'SUBCONTRACTOR') return <Navigate to="/tech" replace />;
-    if (role === 'DISPATCH') return <Navigate to="/dispatch" replace />;
+  if (!allowedRoles.includes(roleCode)) {
+    // Hard rejection fallback matrices dictated by Master Plan Section 8
+    if (roleCode === 'ADMIN') return <Navigate to="/dashboard" replace />;
+    if (roleCode === 'SALES') return <Navigate to="/sales-pipeline" replace />;
+    if (roleCode === 'DISPATCH') return <Navigate to="/dispatch" replace />;
+    if (roleCode === 'SUBCONTRACTOR') return <Navigate to="/tech" replace />;
+    if (roleCode === 'CUSTOMER') return <Navigate to="/portal" replace />;
     return <Navigate to="/dashboard" replace />;
   }
   

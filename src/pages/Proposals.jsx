@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useProposals } from '../context/ProposalContext';
 import { useCustomers } from '../context/CustomerContext';
-import { Plus, Check, FileText, Edit2, Trash2, ArrowRight, CalendarClock, Lock } from 'lucide-react';
+import { Search, Plus, Calendar, Settings, ShieldCheck, Mail, Printer, AlertTriangle, FileText, Share, Clock, Home, PenTool, CheckCircle, Smartphone, Edit2, Trash2, ArrowRight, CalendarClock, Lock } from 'lucide-react';
 import Modal from '../components/Modal';
 import './Proposals.css';
+import { PIPELINE_STATES, PipelineController } from '../utils/pipelineControls';
 import ProposalWizard from '../components/ProposalWizard';
 import ProposalViewerModal from '../components/ProposalViewerModal';
 import ContractDocumentModal from '../components/ContractDocumentModal';
@@ -139,12 +140,32 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                  manager_approved: false // explicitly flag for Operations Queue
              };
 
-             // 3. Update Sales Pipeline Opportunity to 'Deal Won'. (It will now sit in Operations waiting for Manager Approval)
-             await supabase.from('opportunities').update({
-                 status: 'Deal Won',
-                 dispatch_notes: workOrderNotes,
-                 proposal_data: updatedOppPayload
-             }).eq('id', oppId);
+             // 3. Update Sales Pipeline Opportunity. (It will now sit in Operations waiting for Manager Approval)
+             try {
+                // If it is generated from scratch, we assume it went from PROPOSAL_SENT to APPROVED.
+                await PipelineController.approveDeal(oppId, PIPELINE_STATES.PROPOSAL_SENT, {
+                     dispatch_notes: workOrderNotes,
+                     proposal_data: updatedOppPayload
+                });
+             } catch (e) {
+                console.warn(e);
+             }
+
+             // 3b. Simultaneously auto-generate the Operational Work Order for Dispatch
+             await supabase.from('work_orders').insert({
+                 opportunity_id: oppId,
+                 household_id: oppRow?.household_id,
+                 status: 'Unscheduled',
+                 urgency_level: 'Medium',
+                 execution_payload: {
+                     tierName: tierName,
+                     systemSize: tierData.tons,
+                     brand: tierData.brand,
+                     series: tierData.series,
+                     features: tierData.features
+                 },
+                 dispatch_notes: workOrderNotes
+             });
 
              if (oppRow?.household_id) {
                  // 4. Inject Verified Paper Trail to Customer CRM File

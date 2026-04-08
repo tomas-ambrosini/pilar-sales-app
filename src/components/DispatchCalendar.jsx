@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Calendar, User, ChevronLeft, ChevronRight, Clock, MapPin } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { PIPELINE_STATES } from '../utils/pipelineControls';
 
 const getStartOfWeek = () => {
    const d = new Date();
@@ -56,16 +57,16 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick,
    const workOrderStatuses = ['Unscheduled', 'Scheduled', 'En Route', 'In Progress', 'Permit Pending', 'Pending Inspection', 'Failed Inspection'];
    
    const allInstalls = workOrderStatuses.flatMap(status => pipeline[status] || []);
-   const allLegacyInstalls = pipeline['Deal Won'] || []; // Legacy Fallback
-   const allSurveys = pipeline['Site Survey Scheduled'] || [];
-   const allNewLeads = pipeline['New Lead'] || [];
+   const allLegacyInstalls = pipeline[PIPELINE_STATES.APPROVED] || []; 
+   const allSurveys = pipeline[PIPELINE_STATES.SURVEY_SCHEDULED] || [];
+   const allNewLeads = [...(pipeline[PIPELINE_STATES.NEW_LEAD] || []), ...(pipeline[PIPELINE_STATES.CONTACTED] || [])];
 
    const allBoardJobs = [...allInstalls, ...allLegacyInstalls, ...allSurveys, ...allNewLeads].filter(j => !!j.scheduled_date);
    
    const allUnassigned = [...allInstalls, ...allLegacyInstalls, ...allNewLeads].filter(j => !j.scheduled_date);
    const unassignedJobs = allUnassigned.filter(j => {
       if (drawerFilter === 'All') return true;
-      if (drawerFilter === 'Installs') return j.type === 'work_order' || j.status === 'Deal Won';
+      if (drawerFilter === 'Installs') return j.type === 'work_order' || j.status === PIPELINE_STATES.APPROVED;
       if (drawerFilter === 'Surveys') return j.type === 'opportunity';
       return true;
    });
@@ -87,7 +88,7 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick,
    });
 
    const JobCard = ({ job, index, isMatrix }) => {
-      const isInstall = job.type === 'work_order' || job.status === 'Deal Won';
+      const isInstall = job.type === 'work_order' || job.status === PIPELINE_STATES.APPROVED;
       const themeColor = isInstall ? 'emerald' : 'purple';
       const bgMap = { emerald: 'bg-emerald-500', purple: 'bg-purple-500' };
       const textMap = { emerald: 'text-emerald-700', purple: 'text-purple-700' };
@@ -105,10 +106,14 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick,
                   {...provided.draggableProps}
                   {...provided.dragHandleProps}
                   onClick={() => onCardClick && onCardClick(job)}
-                  className={`bg-white border rounded-xl p-3 cursor-pointer active:cursor-grabbing transition-all relative overflow-hidden flex flex-col justify-between 
+                  style={{
+                     ...provided.draggableProps.style,
+                     zIndex: snapshot.isDragging ? 9999 : 'auto'
+                  }}
+                  className={`bg-white border rounded-xl p-3 cursor-pointer active:cursor-grabbing transition-all relative overflow-visible flex flex-col justify-between 
                      ${isMatrix ? 'w-full mb-2 min-h-[105px] shrink-0' : 'w-[280px] shrink-0 mx-2'} 
                      ${snapshot.isDragging 
-                        ? 'ring-4 ring-primary-500/20 shadow-2xl shadow-primary-500/30 scale-[1.03] rotate-1 z-[999] border-primary-500' 
+                        ? 'ring-4 ring-primary-500/30 shadow-2xl shadow-primary-500/50 scale-[1.03] border-primary-500' 
                         : isWarning ? 'border-amber-400 shadow-[0_2px_8px_-3px_rgba(251,191,36,0.5)]' : 'border-slate-200/80 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.06)] hover:shadow-lg hover:border-slate-300'}`}
                >
                   <div className={`absolute left-0 top-0 bottom-0 w-1 ${isWarning ? 'bg-amber-400' : bgMap[themeColor]}`}></div>
@@ -168,7 +173,7 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick,
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 overflow-auto text-sm min-h-[500px]">
            <div 
               className="grid min-w-[1400px]"
-              style={{ gridTemplateColumns: '224px repeat(7, minmax(160px, 1fr))', gridAutoRows: 'minmax(140px, auto)' }}
+              style={{ gridTemplateColumns: '224px repeat(7, minmax(160px, 1fr))', gridTemplateRows: '48px', gridAutoRows: 'minmax(140px, auto)' }}
            >
               {/* Top Left Header (Controls) */}
               <div className="h-12 border-b border-r border-slate-200 flex items-center justify-between px-2 font-bold text-slate-500 uppercase text-[11px] tracking-wider bg-slate-50 shadow-sm sticky top-0 left-0 z-30">
@@ -233,7 +238,7 @@ export default function DispatchCalendar({ pipeline, onScheduleJob, onCardClick,
         </div>
 
         {/* BOTTOM DRAWER: Horizontal Droppable Pipeline Staging Area */}
-        <div className="min-h-[180px] bg-slate-50/80 backdrop-blur-md rounded-xl border border-slate-200/80 p-4 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.05)] flex flex-col shrink-0 relative z-40">
+        <div className="min-h-[180px] bg-slate-50/80 rounded-xl border border-slate-200/80 p-4 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.05)] flex flex-col shrink-0 relative z-40">
            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200/60">
               <div className="flex items-center gap-2 font-bold text-slate-800 text-sm">
                  <Calendar size={18} className="text-primary-600" /> 

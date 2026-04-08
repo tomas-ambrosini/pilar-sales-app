@@ -6,11 +6,12 @@ import DispatchCalendar from '../components/DispatchCalendar';
 import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '../components/Modal';
 import { useRole, ROLES } from '../context/RoleContext';
+import { PIPELINE_STATES, PipelineController } from '../utils/pipelineControls';
 
 const PIPELINE_STAGES = [
-  'New Lead', 'Contact Attempted', 'Site Survey Scheduled', 
-  'Proposal Building', 'Proposal Sent', 'Deal Won', 
-  'Job Completed', 'Lost',
+  PIPELINE_STATES.NEW_LEAD, PIPELINE_STATES.CONTACTED, PIPELINE_STATES.SURVEY_SCHEDULED, 
+  PIPELINE_STATES.PROPOSAL_BUILDING, PIPELINE_STATES.PROPOSAL_SENT, PIPELINE_STATES.APPROVED, 
+  PIPELINE_STATES.LOST,
   /* Work Order Specific */
   'Unscheduled', 'Scheduled', 'En Route', 'In Progress', 
   'Permit Pending', 'Pending Inspection', 'Failed Inspection', 'Completed', 'Closed'
@@ -80,7 +81,7 @@ export default function DispatchHub() {
              scheduled_date, scheduled_time_block, dispatch_notes, assigned_crew_id, created_at,
              households ( id, household_name, addresses!households_service_address_id_fkey ( street_address, city ) )
            `)
-           .in('status', ['New Lead', 'Site Survey Scheduled'])
+           .in('status', [PIPELINE_STATES.NEW_LEAD, PIPELINE_STATES.CONTACTED, PIPELINE_STATES.SURVEY_SCHEDULED])
            .eq('is_active', true);
            
          if (oppErr) throw oppErr;
@@ -126,7 +127,7 @@ export default function DispatchHub() {
                assigned_crew_id: opp.assigned_crew_id
              };
              if (sortedMap[opp.status]) sortedMap[opp.status].push(jobCard);
-             else sortedMap['New Lead'].push(jobCard);
+             else sortedMap[PIPELINE_STATES.NEW_LEAD].push(jobCard);
            });
          }
 
@@ -186,8 +187,8 @@ export default function DispatchHub() {
                 newStatus = originalStatus;
                 
                 if (jobType === 'opportunity') {
-                    if (dateStr && originalStatus === 'New Lead') newStatus = 'Site Survey Scheduled';
-                    if (!dateStr && originalStatus === 'Site Survey Scheduled') newStatus = 'New Lead';
+                    if (dateStr && originalStatus === PIPELINE_STATES.CONTACTED) newStatus = PIPELINE_STATES.SURVEY_SCHEDULED;
+                    if (!dateStr && originalStatus === PIPELINE_STATES.SURVEY_SCHEDULED) newStatus = PIPELINE_STATES.CONTACTED;
                 } else if (jobType === 'work_order') {
                     if (dateStr && originalStatus === 'Unscheduled') newStatus = 'Scheduled';
                     if (!dateStr && originalStatus === 'Scheduled') newStatus = 'Unscheduled';
@@ -209,23 +210,43 @@ export default function DispatchHub() {
          }
          return newPipe;
       });
-      if (originalStatus && dbId && jobType) {
+      if (originalStatus && dbId && jobType && dateStr) {
          let dbUpdate = { 
             scheduled_date: dateStr, 
-            assigned_crew_id: crewId, 
-            assigned_tech_user_id: linkedUserId || null 
+            assigned_crew_id: crewId 
          };
-         
          if (jobType === 'opportunity') {
              // Ops directive: DO NOT write tech ID to opportunities natively for MVP
              let oppUpdate = { scheduled_date: dateStr, assigned_crew_id: crewId };
-             if (dateStr && originalStatus === 'New Lead') oppUpdate.status = 'Site Survey Scheduled';
-             if (!dateStr && originalStatus === 'Site Survey Scheduled') oppUpdate.status = 'New Lead';
-             await supabase.from('opportunities').update(oppUpdate).eq('id', dbId);
+             
+             if (dateStr && originalStatus === PIPELINE_STATES.CONTACTED) {
+                 try { await PipelineController.scheduleSurvey(dbId, originalStatus); } catch (e) { alert(e.message); return fetchOpportunities(); }
+                 await supabase.from('opportunities').update(oppUpdate).eq('id', dbId);
+             } else if (!dateStr && originalStatus === PIPELINE_STATES.SURVEY_SCHEDULED) {
+                 await supabase.from('opportunities').update({ status: PIPELINE_STATES.CONTACTED, ...oppUpdate }).eq('id', dbId);
+             } else {
+                 await supabase.from('opportunities').update(oppUpdate).eq('id', dbId);
+             }
          } else if (jobType === 'work_order') {
              if (dateStr && originalStatus === 'Unscheduled') dbUpdate.status = 'Scheduled';
              if (!dateStr && originalStatus === 'Scheduled') dbUpdate.status = 'Unscheduled';
              await supabase.from('work_orders').update(dbUpdate).eq('id', dbId);
+         }
+
+         // Trigger auto-open modal if dragging onto the calendar!
+         const colName = Object.keys(pipeline).find(col => pipeline[col]?.some(j => j.id === draggableId));
+         if (colName) {
+             const extractedJob = pipeline[colName].find(j => j.id === draggableId);
+             if (extractedJob) {
+                 const simulatedJob = { ...extractedJob, scheduled_date: dateStr, assigned_crew_id: crewId };
+                 if (originalStatus === PIPELINE_STATES.CONTACTED) simulatedJob.status = PIPELINE_STATES.SURVEY_SCHEDULED;
+                 if (originalStatus === 'Unscheduled') simulatedJob.status = 'Scheduled';
+                 
+                 // Force Modal Open to "Quick Edit" for immediate Time Block assignment
+                 setSelectedJob(simulatedJob);
+                 setActiveTab('details');
+                 setIsEditingJob(true);
+             }
          }
       }
    };
@@ -287,16 +308,29 @@ export default function DispatchHub() {
    const handleSaveEdit = async () => {
       if (!selectedJob) return;
       try {
-         const updates = { 
-             issue_description: editJobForm.issue_description, 
-             urgency_level: editJobForm.urgency, 
-             status: editJobForm.status 
-         };
-         
          const table = selectedJob.type === 'opportunity' ? 'opportunities' : 'work_orders';
-         await supabase.from(table).update(updates).eq('id', selectedJob.dbId);
+         let updates = {};
          
-         setSelectedJob({ ...selectedJob, issue: editJobForm.issue_description, urgency: editJobForm.urgency, status: editJobForm.status });
+         if (table === 'opportunities') {
+             updates = { 
+                 issue_description: editJobForm.issue_description, 
+                 urgency_level: editJobForm.urgency, 
+                 status: editJobForm.status,
+                 scheduled_time_block: editJobForm.scheduled_time_block || null
+             };
+         } else {
+             updates = {
+                 dispatch_notes: editJobForm.issue_description,
+                 urgency_level: editJobForm.urgency,
+                 status: editJobForm.status,
+                 scheduled_time_block: editJobForm.scheduled_time_block || null
+             };
+         }
+         
+         const { error } = await supabase.from(table).update(updates).eq('id', selectedJob.dbId);
+         if (error) throw error;
+         
+         setSelectedJob({ ...selectedJob, issue: editJobForm.issue_description, urgency: editJobForm.urgency, status: editJobForm.status, scheduled_time_block: editJobForm.scheduled_time_block });
          setIsEditingJob(false);
          fetchOpportunities();
       } catch (err) {
@@ -326,11 +360,12 @@ export default function DispatchHub() {
    
    useEffect(() => {
       if (isEditingJob && selectedJob) {
-         setEditJobForm({ 
-            issue_description: selectedJob.issue || '', 
-            urgency: selectedJob.urgency || 'Medium', 
-            status: selectedJob.status || '' 
-         });
+          setEditJobForm({ 
+             issue_description: selectedJob.type === 'work_order' ? (selectedJob.dispatch_notes || '') : (selectedJob.issue || ''), 
+             urgency: selectedJob.urgency || 'Medium', 
+             status: selectedJob.status || '',
+             scheduled_time_block: selectedJob.scheduled_time_block || ''
+          });
       }
    }, [isEditingJob, selectedJob]);
 
@@ -605,37 +640,46 @@ Details: ${formData.notes}
                      {isEditingJob ? (
                         <div className="space-y-4">
                            <h3 className="font-bold text-slate-700 border-b pb-2 mb-4">Edit {selectedJob?.type === 'work_order' ? 'Work Order' : 'Survey'} #{selectedJob?.displayId}</h3>
-                           <div className="form-group">
-                              <label className="text-xs font-bold text-slate-600 mb-1 block">Internal Notes / Issue</label>
-                              <textarea 
-                                 value={editJobForm.issue_description} 
-                                 onChange={e => setEditJobForm({...editJobForm, issue_description: e.target.value})}
-                                 className="w-full border border-slate-300 p-2 rounded-md min-h-[100px]"
-                              />
-                           </div>
+
                            <div className="grid grid-cols-2 gap-4">
-                              <div className="form-group">
+                               <div className="col-span-2 md:col-span-1 form-group">
+                                  <label className="text-xs font-bold text-slate-600 mb-1 block">Scheduled Time Block</label>
+                                  <select 
+                                     value={editJobForm.scheduled_time_block} 
+                                     onChange={e => setEditJobForm({...editJobForm, scheduled_time_block: e.target.value})}
+                                     className="w-full border-2 border-primary-200 focus:border-primary-500 bg-primary-50 text-primary-900 font-bold p-2 rounded-lg transition-colors"
+                                  >
+                                     <option value="">Unassigned Time Block</option>
+                                     <option value="Morning (8AM - 12PM)">Morning (8AM - 12PM)</option>
+                                     <option value="Afternoon (1PM - 5PM)">Afternoon (1PM - 5PM)</option>
+                                     <option value="All Day Window">All Day Window</option>
+                                     <option value="Exact Time - See Notes">Exact Time - See Notes</option>
+                                  </select>
+                               </div>
+
+                               <div className="col-span-2 md:col-span-1 form-group">
                                  <label className="text-xs font-bold text-slate-600 mb-1 block">Urgency</label>
                                  <select 
                                     value={editJobForm.urgency} 
                                     onChange={e => setEditJobForm({...editJobForm, urgency: e.target.value})}
-                                    className="w-full border border-slate-300 p-2 rounded-md"
+                                    className="w-full border border-slate-300 p-2 rounded-lg bg-white"
                                  >
                                     <option value="Low">Low - System Working</option>
                                     <option value="Medium">Medium - Failing / Noisy</option>
                                     <option value="High">Emergency - System Down!</option>
                                  </select>
                               </div>
-                              <div className="form-group">
-                                 <label className="text-xs font-bold text-slate-600 mb-1 block">Pipeline Status Override</label>
-                                 <select 
-                                    value={editJobForm.status} 
-                                    onChange={e => setEditJobForm({...editJobForm, status: e.target.value})}
-                                    className="w-full border border-slate-300 p-2 rounded-md bg-amber-50"
-                                 >
-                                    {PIPELINE_STAGES.map(s => <option key={s} value={s}>{s}</option>)}
-                                 </select>
-                              </div>
+                           </div>
+
+                           <div className="form-group mt-4">
+                              <label className="text-xs font-bold text-slate-600 mb-1 block">
+                                 {selectedJob?.type === 'work_order' ? 'Dispatch Notes & Execution Details' : 'Internal Notes / Issue'}
+                              </label>
+                              <textarea 
+                                 value={editJobForm.issue_description} 
+                                 onChange={e => setEditJobForm({...editJobForm, issue_description: e.target.value})}
+                                 className="w-full border border-slate-300 p-3 rounded-lg min-h-[120px] text-sm text-slate-700 font-mono bg-slate-50 focus:bg-white transition-colors"
+                              />
                            </div>
                            <div className="flex gap-2 justify-end pt-4">
                               <button onClick={() => setIsEditingJob(false)} className="btn-secondary">Cancel</button>
@@ -713,7 +757,53 @@ Details: ${formData.notes}
 
                {activeTab === 'proposal' && (
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="h-full">
-                     {!selectedJob?.proposalData ? (
+                     {selectedJob?.type === 'work_order' ? (
+                        /* OPERATIONS EXECUTION TRUTH: ZERO FINANCIALS LEAKED */
+                        <div className="space-y-6 h-full flex flex-col pt-2">
+                           {!selectedJob?.execution_payload || Object.keys(selectedJob.execution_payload).length === 0 ? (
+                              <div className="flex flex-col items-center justify-center p-12 bg-slate-50 rounded-xl border border-slate-200 text-center shadow-sm h-full">
+                                 <Zap size={48} className="text-slate-300 mb-4" />
+                                 <h4 className="font-bold text-slate-600 mb-2 text-lg">No Execution Payload Attached</h4>
+                                 <p className="text-sm text-slate-500 max-w-sm leading-relaxed">This work order lacks a structural hardware definition. Dispatch notes must be used manually.</p>
+                              </div>
+                           ) : (
+                              <>
+                                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex justify-between items-center shadow-sm">
+                                    <div>
+                                       <p className="text-xs font-bold text-emerald-600 mb-1 uppercase tracking-widest">Hardware Target</p>
+                                       <h3 className="text-lg font-black text-slate-800">{selectedJob.execution_payload.equipment}</h3>
+                                    </div>
+                                    <div className="text-right">
+                                       <p className="text-xs font-bold text-emerald-600 mb-1 uppercase tracking-widest">Signed Tier</p>
+                                       <span className="bg-emerald-200 text-emerald-800 px-3 py-1 rounded-md font-bold text-sm shadow-sm">{selectedJob.execution_payload.tierName?.toUpperCase() || 'CUSTOM'}</span>
+                                    </div>
+                                 </div>
+
+                                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 mt-4">
+                                    <div className="bg-slate-50 border-b border-slate-200 p-3">
+                                       <h4 className="font-bold text-slate-700 text-sm flex items-center gap-2"><CheckSquare size={16} className="text-slate-400"/> Operational Logistics & Add-ons REQUIRED</h4>
+                                    </div>
+                                    <div className="p-4">
+                                       {selectedJob.execution_payload.addons && selectedJob.execution_payload.addons.length > 0 ? (
+                                          <ul className="space-y-3">
+                                             {selectedJob.execution_payload.addons.map((addon, aIdx) => (
+                                                <li key={aIdx} className="flex items-start gap-3 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                                   <span className="w-5 h-5 shrink-0 rounded bg-emerald-100 flex items-center justify-center mt-0.5">
+                                                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                   </span>
+                                                   <span className="text-sm text-slate-700 font-bold">{addon}</span>
+                                                </li>
+                                             ))}
+                                          </ul>
+                                       ) : (
+                                          <p className="text-sm text-slate-500 italic p-4 text-center">No additional installation features or add-ons specified.</p>
+                                       )}
+                                    </div>
+                                 </div>
+                              </>
+                           )}
+                        </div>
+                     ) : !selectedJob?.proposalData ? (
                         <div className="flex flex-col items-center justify-center p-12 bg-slate-50 rounded border border-slate-200 text-center shadow-sm h-full">
                            <ShieldCheck size={48} className="text-slate-300 mb-4" />
                            <h4 className="font-bold text-slate-600 mb-2 text-lg">No Digital Proposal Generated</h4>
