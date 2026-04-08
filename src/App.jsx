@@ -5,6 +5,7 @@ import Customers from './pages/Customers';
 import Catalog from './pages/CatalogEditor';
 import Proposals from './pages/Proposals';
 import PublicQuoteView from './pages/PublicQuoteView';
+import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CustomerProvider } from './context/CustomerContext';
@@ -52,8 +53,8 @@ function MainRouter() {
           <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN']}><Catalog /></RoleRoute>} />
           
           {/* WILDCARDS / DEFAULTS */}
-          <Route index element={<Navigate to="/customers" replace />} />
-          <Route path="*" element={<Navigate to="/customers" replace />} />
+          <Route index element={<RoleRoute allowedRoles={['ADMIN', 'SALES']}><Dashboard /></RoleRoute>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       )}
     </Routes>

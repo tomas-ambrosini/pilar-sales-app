@@ -16,6 +16,7 @@ const navGroups = [
     title: 'CRM MVP',
     allowedRoles: [ROLES.ADMIN, ROLES.SALES],
     items: [
+      { path: '/', label: 'Home', icon: LayoutDashboard, allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
       { path: '/customers', label: 'Customers', icon: Users, allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
       { path: '/proposals', label: 'Proposals', icon: FileCheck, allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
       { path: '/catalog', label: 'Catalog', icon: BookOpen, allowedRoles: [ROLES.ADMIN] }
