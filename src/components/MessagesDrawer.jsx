@@ -554,9 +554,10 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     }
   };
 
-  const filteredMentions = mentionPopup.show ? allUsers.filter(u => u.full_name.replace(/\s+/g, '').toLowerCase().includes(mentionPopup.query) && u.id !== user?.id) : [];
+  const filteredMentions = mentionPopup.show ? allUsers.filter(u => (u.full_name || u.name || '').replace(/\s+/g, '').toLowerCase().includes(mentionPopup.query) && u.id !== user?.id) : [];
 
   const insertMention = (nameRaw) => {
+    if (!nameRaw) return;
     const name = nameRaw.replace(/\s+/g, '');
     const cursorPos = inputRef.current?.selectionStart || inputValue.length;
     const textBefore = inputValue.substring(0, cursorPos);
@@ -593,7 +594,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
       }
       if (e.key === 'Enter') {
         e.preventDefault();
-        insertMention(filteredMentions[mentionPopup.index].name);
+        insertMention(filteredMentions[mentionPopup.index]?.full_name || filteredMentions[mentionPopup.index]?.name || '');
         return;
       }
       if (e.key === 'Escape') {
