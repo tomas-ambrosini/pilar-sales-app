@@ -11,8 +11,11 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
 
    const { proposal, tierName, tierData, date } = contractData;
    
-   // Hydrate full customer profile
-   const fullCustomer = customers.find(c => c.id === proposal?.customer_id) || {};
+   // Hydrate full customer profile (supporting both modern ID links and legacy string-based mapping)
+   const fullCustomer = customers.find(c => 
+       (proposal?.customer_id && c.id === proposal.customer_id) || 
+       c.name === proposal?.customer
+   ) || {};
 
    const handlePrint = () => {
       window.print();
@@ -192,27 +195,37 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
 
                 {/* Signatures */}
                 <div className="grid grid-cols-2 gap-0 border border-slate-300 rounded overflow-hidden mt-6 bg-[#f8fafc]">
+                    {/* Company Signature Box */}
                     <div className="border-r border-slate-300 flex flex-col">
                         <div className="bg-[#e2e8f0] text-slate-700 font-bold px-3 py-1.5 border-b border-slate-300">Company Signature</div>
-                        <div className="p-4 h-24 relative flex-1 flex flex-col justify-between">
-                           <div className="font-[cursive] text-2xl text-slate-800 opacity-60">Pilar Home</div>
-                           <div className="flex items-end gap-2 text-slate-500 font-bold mt-4">
+                        <div className="p-4 h-28 flex flex-col justify-between">
+                           <div className="font-[cursive] text-2xl text-slate-800 opacity-60 h-10 flex items-end px-2">
+                               Pilar Home
+                           </div>
+                           <div className="flex items-end gap-2 text-slate-500 font-bold mt-2 w-48">
                                <span>Date:</span>
-                               <span className="flex-1 border-b border-slate-400"></span>
+                               <span className="flex-1 border-b border-slate-400 font-normal text-slate-600 text-center">
+                                    {proposal.status === 'Approved' ? new Date(proposal.updated_at || proposal.created_at).toLocaleDateString() : ''}
+                               </span>
                            </div>
                         </div>
                     </div>
+                    {/* Client Signature Box */}
                     <div className="flex flex-col">
                         <div className="bg-[#e2e8f0] text-slate-700 font-bold px-3 py-1.5 border-b border-slate-300">Client Signature</div>
-                        <div className="p-4 h-24 relative flex-1 flex flex-col justify-end">
-                           {(proposal.proposal_data?.signature_data || proposal.signature_data) ? (
-                               <img src={proposal.proposal_data?.signature_data || proposal.signature_data} alt="Customer Signature" className="h-12 object-contain mb-2 mix-blend-multiply absolute top-2 left-4"/>
-                           ) : (
-                               <div className="absolute top-4 left-4 text-emerald-600 font-bold bg-emerald-50 px-2 rounded border border-emerald-200 text-[9px] py-1 flex items-center gap-1"><Pen size={10}/> Legally Binding E-Signature</div>
-                           )}
-                           <div className="flex items-end gap-2 text-slate-800 font-bold relative z-10">
+                        <div className="p-4 h-28 flex flex-col justify-between">
+                           <div className="h-10 flex items-end">
+                               {(proposal.proposal_data?.signature_data || proposal.signature_data) ? (
+                                   <img src={proposal.proposal_data?.signature_data || proposal.signature_data} alt="Customer Signature" className="h-12 w-auto object-contain mix-blend-multiply -ml-2"/>
+                               ) : (
+                                   <div className="text-emerald-600 font-bold bg-emerald-50 px-2 rounded border border-emerald-200 text-[9px] py-1 flex items-center gap-1 w-fit"><Pen size={10}/> Legally Binding E-Signature</div>
+                               )}
+                           </div>
+                           <div className="flex items-end gap-2 text-slate-800 font-bold w-48 mt-2">
                                <span>Date:</span>
-                               <span className="flex-1 border-b border-slate-400 font-normal text-slate-600 px-2">{date}</span>
+                               <span className="flex-1 border-b border-slate-400 font-normal text-slate-600 text-center">
+                                    {(proposal.proposal_data?.signature_data || proposal.signature_data) ? new Date(proposal.updated_at || proposal.created_at).toLocaleDateString() : ''}
+                               </span>
                            </div>
                         </div>
                     </div>
