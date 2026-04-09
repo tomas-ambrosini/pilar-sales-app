@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { X, UploadCloud, UserCircle, Phone, AtSign, Loader2, Image as ImageIcon } from 'lucide-react';
+import { X, UploadCloud, UserCircle, Phone, AtSign, Loader2, Image as ImageIcon, Mail, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ProfileSettingsModal({ onClose }) {
@@ -12,7 +12,8 @@ export default function ProfileSettingsModal({ onClose }) {
     full_name: '',
     username: '',
     phone: '',
-    avatar_url: ''
+    avatar_url: '',
+    role: ''
   });
   
   const [loading, setLoading] = useState(true);
@@ -40,7 +41,8 @@ export default function ProfileSettingsModal({ onClose }) {
         full_name: data.full_name || '',
         username: data.username || '',
         phone: data.phone || '',
-        avatar_url: data.avatar_url || ''
+        avatar_url: data.avatar_url || '',
+        role: data.role || 'user'
       });
     } catch (err) {
       toast.error('Failed to load profile data');
@@ -237,6 +239,33 @@ export default function ProfileSettingsModal({ onClose }) {
                       placeholder="e.g. Walter Ormazabal"
                       className="w-full bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" 
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="flex items-center gap-2 text-xs font-black tracking-widest text-slate-500 uppercase mb-1.5 ml-1">
+                           <Mail size={12} className="text-slate-400"/>
+                           Email Address
+                        </label>
+                        <input 
+                          type="email" 
+                          disabled
+                          value={user?.email || ''}
+                          className="w-full bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-500 cursor-not-allowed shadow-inner" 
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center gap-2 text-xs font-black tracking-widest text-slate-500 uppercase mb-1.5 ml-1">
+                           <Shield size={12} className="text-slate-400"/>
+                           Account Role
+                        </label>
+                        <input 
+                          type="text" 
+                          disabled
+                          value={profile.role ? profile.role.toUpperCase() : 'USER'}
+                          className="w-full bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-500 cursor-not-allowed shadow-inner" 
+                        />
+                      </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
