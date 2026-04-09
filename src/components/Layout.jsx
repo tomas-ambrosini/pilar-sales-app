@@ -72,17 +72,16 @@ export default function Layout() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'chat_messages' },
         (payload) => {
-          if (payload.new.user_id !== user.id) {
+          if (payload.new.sender_id !== user.id) {
             
-            const isMentioned = Boolean(user.name) && payload.new.content.toLowerCase().includes(`@${user.name.replace(/\s+/g, '').toLowerCase()}`);
+            const isMentioned = Boolean(user.full_name) && payload.new.body.toLowerCase().includes(`@${user.full_name.replace(/\s+/g, '').toLowerCase()}`);
             const currentDrawerState = isMessagesOpenRef.current;
 
             if (!currentDrawerState || isMentioned) {
                const title = isMentioned ? '🔔 You were Mentioned' : 'New Pilar Message';
                
-               // OS Level Notification if tab is hidden
                if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
-                 new Notification(title, { body: payload.new.content });
+                 new Notification(title, { body: payload.new.body });
                }
 
                // In-app Toast popup
@@ -99,13 +98,13 @@ export default function Layout() {
                      {title}
                    </div>
                    <div style={{fontSize: '0.85rem', color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '220px'}}>
-                     {payload.new.content}
+                     {payload.new.body}
                    </div>
                  </div>
                ),
                  {
                    duration: isMentioned ? 6000 : 4000,
-                   position: 'top-right',
+                   position: 'top-center',
                    style: { 
                      borderLeft: isMentioned ? '4px solid #fcd34d' : '4px solid #38bdf8',
                      background: '#1e293b',

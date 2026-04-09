@@ -118,6 +118,31 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     }
   }, [unreadCounts, onUnreadStatusChange]);
 
+  // Global background listener to increment unread badges continuously
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const backgroundListener = supabase.channel(`drawer_bg_unreads_${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+        (payload) => {
+           // If the message is from someone else and NOT for the currently actively focused chat window
+           if (payload.new.sender_id !== user.id && payload.new.channel_id !== activeChannelRef.current) {
+             setUnreadCounts(prev => ({
+               ...prev,
+               [payload.new.channel_id]: (prev[payload.new.channel_id] || 0) + 1
+             }));
+           }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(backgroundListener);
+    };
+  }, [user?.id]);
+
   useEffect(() => {
     activeChannelRef.current = activeChannelId;
     if (activeChannelId && user?.id && isOpen) {
