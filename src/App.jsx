@@ -16,6 +16,7 @@ import { CustomerProvider } from './context/CustomerContext';
 import { CatalogProvider } from './context/CatalogContext';
 import { ProposalProvider } from './context/ProposalContext';
 import { RoleProvider, useRole, ROLES } from './context/RoleContext';
+import { NotificationsProvider } from './context/NotificationsContext';
 
 const RoleRoute = ({ children, allowedRoles }) => {
   const { user } = useAuth();
@@ -87,23 +88,25 @@ function App() {
         <CatalogProvider>
           <ProposalProvider>
               <RoleProvider>
-              <BrowserRouter>
-                <MainRouter />
-                <Toaster 
-                  position="top-right" 
-                  toastOptions={{
-                    duration: 5000,
-                    style: {
-                      background: '#334155',
-                      color: '#fff',
-                      borderRadius: '8px',
-                      fontSize: '0.9rem',
-                      fontWeight: '500',
-                      boxShadow: '0 10px 25px rgba(15, 23, 42, 0.2)'
-                    }
-                  }} 
-                />
-              </BrowserRouter>
+                <NotificationsProvider>
+                  <BrowserRouter>
+                    <MainRouter />
+                    <Toaster 
+                      position="top-right" 
+                      toastOptions={{
+                        duration: 5000,
+                        style: {
+                          background: '#334155',
+                          color: '#fff',
+                          borderRadius: '8px',
+                          fontSize: '0.9rem',
+                          fontWeight: '500',
+                          boxShadow: '0 10px 25px rgba(15, 23, 42, 0.2)'
+                        }
+                      }} 
+                    />
+                  </BrowserRouter>
+                </NotificationsProvider>
               </RoleProvider>
           </ProposalProvider>
         </CatalogProvider>

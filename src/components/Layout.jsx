@@ -10,6 +10,8 @@ import Modal from './Modal';
 import CommandMenu from './CommandMenu';
 import MessagesDrawer from './MessagesDrawer';
 import ProfileSettingsModal from './ProfileSettingsModal';
+import NotificationsPanel from './NotificationsPanel';
+import { useNotifications } from '../context/NotificationsContext';
 import './Layout.css';
 
 const navGroups = [
@@ -38,9 +40,12 @@ export default function Layout() {
   const { user, logout } = useAuth();
   const { activeRole } = useRole();
   const location = useLocation();
+  const notificationsContext = useNotifications();
+  const NotificationsUnreadCount = notificationsContext?.unreadCount || 0;
   const [activeModal, setActiveModal] = useState(null);
   const [isCommandMenuOpen, setCommandMenuOpen] = useState(false);
   const [isMessagesOpen, setMessagesOpen] = useState(false);
+  const [isNotificationsOpen, setNotificationsOpen] = useState(false);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [forceChannelId, setForceChannelId] = useState(null);
   const isMessagesOpenRef = useRef(isMessagesOpen);
@@ -190,10 +195,16 @@ export default function Layout() {
                )}
              </button>
 
-             <button className="icon-btn" aria-label="Notifications" onClick={() => handleOpenModal('Notifications')}>
-               <Bell size={20} />
-               <span className="badge"></span>
-             </button>
+             <div className="relative">
+               <button className="icon-btn relative" aria-label="Notifications" onClick={() => setNotificationsOpen(!isNotificationsOpen)}>
+                 <Bell size={20} />
+                 {NotificationsUnreadCount > 0 && (
+                   <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                 )}
+               </button>
+               <NotificationsPanel isOpen={isNotificationsOpen} onClose={() => setNotificationsOpen(false)} />
+             </div>
+
              <button className="icon-btn avatar-btn p-0 overflow-hidden border border-slate-200" aria-label="User Profile" title={user?.full_name || user?.name || user?.email} onClick={() => handleOpenModal('Profile Settings')}>
                {user?.avatar_url ? (
                  <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />

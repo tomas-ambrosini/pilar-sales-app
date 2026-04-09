@@ -3,10 +3,12 @@ import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User, Edit2, Trash2, Reply, Paperclip, FileText, Loader2, Image as ImageIcon, SmilePlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNotifications } from '../context/NotificationsContext';
 import './MessagesDrawer.css';
 
 export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearForceChannel }) {
   const { user } = useAuth();
+  const { createNotification } = useNotifications() || {};
   const [channels, setChannels] = useState([]);
   const [activeChannelId, setActiveChannelId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -443,7 +445,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     clearAttachment();
     scrollToBottom();
 
-    const { data: insertedData, error } = await supabase.from('chat_messages').insert([newMsg]).select().single();
+     const { data: insertedData, error } = await supabase.from('chat_messages').insert([newMsg]).select().single();
     if (error) {
        console.error("Error sending message", error);
        alert("Failed to send message over websocket: " + error.message);
@@ -453,6 +455,24 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
              type: 'broadcast',
              event: 'new_message',
              payload: { ...insertedData, sender: optimisticMsg.sender }
+          });
+       }
+
+       // --- GENERATE MENTION NOTIFICATIONS MVP ---
+       if (createNotification) {
+          allUsers.forEach(u => {
+              if (u.id === user.id) return;
+              const cleanName = (u.full_name || u.name || '').replace(/\s+/g, '').toLowerCase();
+              if (cleanName && newMsg.body.toLowerCase().includes(`@${cleanName}`)) {
+                  createNotification({
+                      userId: u.id,
+                      type: 'chat_mention',
+                      title: `New Mention from ${user.full_name || 'Someone'}`,
+                      message: newMsg.body,
+                      entityType: 'chat_channel',
+                      entityId: activeChannelId
+                  });
+              }
           });
        }
     }
