@@ -21,9 +21,9 @@ export default function Dashboard() {
     : [];
 
   return (
-    <div className="max-w-6xl mx-auto py-8 fade-in">
+    <div className="page-container fade-in">
       {/* Header */}
-      <header className="mb-10 flex items-center justify-between">
+      <header className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-[28px] font-bold text-slate-900 tracking-tight mb-1">
              Welcome back, {user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Team'}
@@ -36,12 +36,12 @@ export default function Dashboard() {
       </header>
 
       {/* Quick Actions (Enterprise Minimal) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
          <button 
             onClick={() => navigate('/proposals?action=new')}
-            className="group flex flex-col justify-between bg-slate-900 hover:bg-slate-800 text-white p-6 rounded-xl shadow-lg shadow-slate-900/10 transition-all focus:outline-none text-left border border-slate-800"
+            className="group flex flex-col justify-between bg-slate-900 hover:bg-slate-800 text-white p-5 rounded-xl shadow-lg shadow-slate-900/10 transition-all focus:outline-none text-left border border-slate-800"
          >
-            <div className="flex items-center justify-between w-full mb-8">
+            <div className="flex items-center justify-between w-full mb-6">
                <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-white">
                   <Plus size={20}/>
                </div>
@@ -55,9 +55,9 @@ export default function Dashboard() {
 
          <button 
             onClick={() => navigate('/customers?action=new')}
-            className="group flex flex-col justify-between bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 p-6 rounded-xl shadow-sm transition-all focus:outline-none text-left"
+            className="group flex flex-col justify-between bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 p-5 rounded-xl shadow-sm transition-all focus:outline-none text-left"
          >
-            <div className="flex items-center justify-between w-full mb-8">
+            <div className="flex items-center justify-between w-full mb-6">
                <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600">
                   <Users size={20}/>
                </div>
@@ -74,7 +74,7 @@ export default function Dashboard() {
       <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
          <FileText size={16} className="text-slate-400" /> Pipeline Stats
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
           <div className="flex items-center gap-2 mb-3">
              <Users size={16} className="text-slate-400" />
