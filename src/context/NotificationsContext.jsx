@@ -30,8 +30,16 @@ export function NotificationsProvider({ children }) {
         },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setNotifications((prev) => [payload.new, ...prev]);
-            setUnreadCount((prev) => prev + 1);
+            const resolveNotification = async () => {
+              const newNotif = { ...payload.new };
+              if (newNotif.actor_id) {
+                const { data } = await supabase.from('user_profiles').select('full_name, avatar_url').eq('id', newNotif.actor_id).maybeSingle();
+                if (data) newNotif.actor = data;
+              }
+              setNotifications((prev) => [newNotif, ...prev]);
+              setUnreadCount((prev) => prev + 1);
+            };
+            resolveNotification();
           } else if (payload.eventType === 'UPDATE') {
             setNotifications((prev) =>
               prev.map((n) => (n.id === payload.new.id ? payload.new : n))
