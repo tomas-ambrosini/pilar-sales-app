@@ -603,7 +603,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
       const ids = channel.name.replace('dm_', '').split('_');
       const targetId = ids.find(id => id !== user?.id);
       const targetUser = allUsers.find(u => u.id === targetId);
-      return targetUser ? targetUser.name : 'Unknown User';
+      return targetUser ? targetUser.full_name : 'Unknown User';
     }
     return channel.name;
   };
@@ -747,7 +747,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                                 }
                                 return (
                                   <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold mr-2 shadow-sm shadow-black/10 flex-shrink-0" style={{ background: getAvatarGradient(getChannelDisplayName(channel)) }}>
-                                      {getChannelDisplayName(channel).charAt(0).toUpperCase()}
+                                      {(getChannelDisplayName(channel) || 'Unknown').charAt(0).toUpperCase()}
                                   </div>
                                 );
                               })()}
