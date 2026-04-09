@@ -1,12 +1,18 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, Printer, ShieldCheck, Pen } from 'lucide-react';
+import { useCustomers } from '../context/CustomerContext';
 import './ContractDocumentModal.css';
 
 export default function ContractDocumentModal({ isOpen, onClose, contractData }) {
+   const { customers } = useCustomers();
+
    if (!isOpen || !contractData) return null;
 
    const { proposal, tierName, tierData, date } = contractData;
+   
+   // Hydrate full customer profile
+   const fullCustomer = customers.find(c => c.id === proposal?.customer_id) || {};
 
    const handlePrint = () => {
       window.print();
@@ -64,13 +70,13 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                                 <span className="w-16 text-slate-500">Name:</span> <span className="font-semibold text-slate-800">{proposal.customer}</span>
                             </div>
                             <div className="flex border-b border-slate-200 pb-1">
-                                <span className="w-16 text-slate-500">Address:</span> <span className="text-slate-600">(Digital Record)</span>
+                                <span className="w-16 text-slate-500">Address:</span> <span className="text-slate-600">{fullCustomer.address || '(Digital Record)'}</span>
                             </div>
                             <div className="flex border-b border-slate-200 pb-1">
-                                <span className="w-16 text-slate-500">Phone:</span> <span></span>
+                                <span className="w-16 text-slate-500">Phone:</span> <span className="text-slate-600">{fullCustomer.phone || ''}</span>
                             </div>
                             <div className="flex pb-1">
-                                <span className="w-16 text-slate-500">Email:</span> <span></span>
+                                <span className="w-16 text-slate-500">Email:</span> <span className="text-slate-600">{fullCustomer.email || ''}</span>
                             </div>
                         </div>
                     </div>
