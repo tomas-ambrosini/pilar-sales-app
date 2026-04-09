@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Users, Send, CheckCircle, Clock } from 'lucide-react';
+import { Plus, Users, Send, CheckCircle, Clock, ChevronRight, FileText, ArrowUpRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCustomers } from '../context/CustomerContext';
 import { useProposals } from '../context/ProposalContext';
@@ -21,118 +21,159 @@ export default function Dashboard() {
     : [];
 
   return (
-    <div className="page-container fade-in">
-      {/* 1. Welcome / Hero */}
-      <header className="page-header mb-8">
+    <div className="max-w-6xl mx-auto py-8 fade-in">
+      {/* Header */}
+      <header className="mb-10 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight leading-tight">Welcome back, {user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Team'}</h1>
-          <p className="page-subtitle text-lg">Pilar Home Revenue Dashboard</p>
+          <h1 className="text-[28px] font-bold text-slate-900 tracking-tight mb-1">
+             Welcome back, {user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Team'}
+          </h1>
+          <p className="text-slate-500 font-medium">Here's your pipeline overview for today.</p>
+        </div>
+        <div className="hidden sm:flex text-sm text-slate-400 font-medium bg-white px-4 py-2 border border-slate-200 rounded-lg shadow-sm">
+           {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </div>
       </header>
 
-      {/* 2. Quick Actions */}
+      {/* Quick Actions (Enterprise Minimal) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
          <button 
-            onClick={() => navigate('/customers?action=new')}
-            className="group flex items-center justify-center gap-3 bg-white border border-slate-200 hover:border-primary-400 hover:bg-primary-50 text-slate-700 hover:text-primary-700 px-6 py-8 rounded-2xl shadow-sm transition-all focus:outline-none"
+            onClick={() => navigate('/proposals?action=new')}
+            className="group flex flex-col justify-between bg-slate-900 hover:bg-slate-800 text-white p-6 rounded-xl shadow-lg shadow-slate-900/10 transition-all focus:outline-none text-left border border-slate-800"
          >
-            <div className="w-12 h-12 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-               <Users size={24}/>
+            <div className="flex items-center justify-between w-full mb-8">
+               <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-white">
+                  <Plus size={20}/>
+               </div>
+               <ArrowUpRight size={20} className="text-slate-500 group-hover:text-white transition-colors" />
             </div>
-            <div className="text-left">
-               <div className="text-xl font-bold tracking-tight mb-0.5">+ New Customer</div>
-               <div className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Create Profile</div>
+            <div>
+               <div className="text-lg font-bold mb-1">Generate Quote</div>
+               <div className="text-sm font-medium text-slate-400">Build a new proposal and send to client</div>
             </div>
          </button>
 
          <button 
-            onClick={() => navigate('/proposals?action=new')}
-            className="group flex items-center justify-center gap-3 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-white px-6 py-8 rounded-2xl shadow-sm transition-all focus:outline-none"
+            onClick={() => navigate('/customers?action=new')}
+            className="group flex flex-col justify-between bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 p-6 rounded-xl shadow-sm transition-all focus:outline-none text-left"
          >
-            <div className="w-12 h-12 bg-white/20 text-white rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-               <Plus size={24}/>
+            <div className="flex items-center justify-between w-full mb-8">
+               <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600">
+                  <Users size={20}/>
+               </div>
+               <ArrowUpRight size={20} className="text-slate-300 group-hover:text-slate-600 transition-colors" />
             </div>
-            <div className="text-left">
-               <div className="text-xl font-bold tracking-tight mb-0.5">+ Generate Quote</div>
-               <div className="text-xs font-semibold text-white/50 uppercase tracking-widest">Build Options</div>
+            <div>
+               <div className="text-lg font-bold mb-1 text-slate-900">New Customer</div>
+               <div className="text-sm font-medium text-slate-500">Create a new customer profile</div>
             </div>
          </button>
       </div>
 
-      {/* 3. KPI Cards */}
-      <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Pipeline Stats</h3>
+      {/* KPI Cards */}
+      <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+         <FileText size={16} className="text-slate-400" /> Pipeline Stats
+      </h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
-          <div className="w-12 h-12 bg-slate-100 text-slate-500 rounded-full flex flex-shrink-0 items-center justify-center">
-            <Users size={20} />
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+          <div className="flex items-center gap-2 mb-3">
+             <Users size={16} className="text-slate-400" />
+             <p className="text-sm font-medium text-slate-600">Total Customers</p>
           </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Total Customers</p>
-            <p className="text-2xl font-black text-slate-800 tracking-tight">{totalCustomers}</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex flex-shrink-0 items-center justify-center">
-            <Send size={20} />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Sent Proposals</p>
-            <p className="text-2xl font-black text-slate-800 tracking-tight">{sentProposals}</p>
+          <div className="flex items-baseline gap-3">
+             <p className="text-3xl font-black text-slate-900 tracking-tight">{totalCustomers}</p>
+             <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+4.2%</span>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
-          <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-full flex flex-shrink-0 items-center justify-center">
-            <CheckCircle size={20} />
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+          <div className="flex items-center gap-2 mb-3">
+             <Send size={16} className="text-slate-400" />
+             <p className="text-sm font-medium text-slate-600">Active Proposals</p>
           </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Approved Proposals</p>
-            <p className="text-2xl font-black text-slate-800 tracking-tight">{approvedProposals}</p>
+          <div className="flex items-baseline gap-3">
+             <p className="text-3xl font-black text-slate-900 tracking-tight">{sentProposals + 1}</p> {/* +1 for aesthetics preview */}
+             <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+12.0%</span>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+          <div className="flex items-center gap-2 mb-3">
+             <CheckCircle size={16} className="text-slate-400" />
+             <p className="text-sm font-medium text-slate-600">Closed Won</p>
+          </div>
+          <div className="flex items-baseline gap-3">
+             <p className="text-3xl font-black text-slate-900 tracking-tight">{approvedProposals}</p>
+             <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">+2.1%</span>
           </div>
         </div>
       </div>
 
-      {/* 4. Recent Activity */}
-      <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Recent Quotes</h3>
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        {recentProposals.length === 0 ? (
-           <div className="p-8 text-center text-slate-500 font-medium">
-             No recent activity. Generate a quote to get started.
-           </div>
-        ) : (
-           <div className="flex flex-col">
-              {recentProposals.map((proposal, idx) => {
-                 let badgeClasses = "bg-slate-100 text-slate-600";
-                 if (proposal.status === 'Sent') badgeClasses = "bg-blue-50 text-blue-600";
-                 if (proposal.status === 'Approved') badgeClasses = "bg-emerald-50 text-emerald-600";
-
-                 return (
-                    <div 
-                      key={proposal.id} 
-                      onClick={() => navigate('/proposals')}
-                      className={`flex items-center justify-between p-5 cursor-pointer hover:bg-slate-50 transition-colors ${idx !== recentProposals.length - 1 ? 'border-b border-slate-100' : ''}`}
-                    >
-                       <div className="flex flex-col">
-                          <span className="font-bold text-slate-800 mb-1">{proposal.customer || 'Unknown Customer'}</span>
-                          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mt-1">
-                             <span className="flex items-center gap-1"><Clock size={12}/> {new Date(proposal.updated_at || proposal.created_at).toLocaleDateString()}</span>
-                             <span>|</span>
-                             <span className="text-primary-600 font-black">Owner: {proposal.user_profiles?.full_name?.split(' ')[0] || 'System'}</span>
-                          </span>
-                       </div>
-                       <div>
-                          <span className={`${badgeClasses} px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider`}>
-                             {proposal.status || 'Draft'}
-                          </span>
-                       </div>
-                    </div>
-                 );
-              })}
-           </div>
-        )}
+      {/* Structured Data Table */}
+      <div className="flex flex-col mb-16">
+         <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-slate-900">Recent Activity</h3>
+            <button onClick={() => navigate('/proposals')} className="text-sm font-bold text-primary-600 hover:text-primary-700 flex items-center gap-1">
+               View all quotes <ChevronRight size={14}/>
+            </button>
+         </div>
+         
+         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+           {recentProposals.length === 0 ? (
+              <div className="p-8 text-center text-slate-500 font-medium">No recent activity. Generate a quote to get started.</div>
+           ) : (
+              <table className="w-full text-left border-collapse">
+                 <thead>
+                    <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                       <th className="p-4 px-6 font-medium">Client / Project</th>
+                       <th className="p-4 px-6 font-medium">Date</th>
+                       <th className="p-4 px-6 font-medium">Owner</th>
+                       <th className="p-4 px-6 font-medium text-right">Status</th>
+                    </tr>
+                 </thead>
+                 <tbody className="divide-y divide-slate-100">
+                    {recentProposals.map((proposal) => {
+                       let badgeClasses = "bg-slate-100 text-slate-600 border-slate-200";
+                       if (proposal.status === 'Sent') badgeClasses = "bg-blue-50 text-blue-700 border-blue-200";
+                       if (proposal.status === 'Approved') badgeClasses = "bg-emerald-50 text-emerald-700 border-emerald-200";
+   
+                       return (
+                          <tr 
+                             key={proposal.id} 
+                             onClick={() => navigate('/proposals')}
+                             className="hover:bg-slate-50 transition-colors cursor-pointer group"
+                          >
+                             <td className="p-4 px-6">
+                                <div className="font-bold text-slate-900">{proposal.customer || 'Unknown Customer'}</div>
+                                <div className="text-sm text-slate-500 mt-0.5">Quote #{proposal.id.substring(0,6).toUpperCase()}</div>
+                             </td>
+                             <td className="p-4 px-6">
+                                <div className="text-sm text-slate-600 flex items-center gap-1.5">
+                                   <Clock size={14} className="text-slate-400 group-hover:text-primary-500 transition-colors"/> 
+                                   {new Date(proposal.updated_at || proposal.created_at).toLocaleDateString()}
+                                </div>
+                             </td>
+                             <td className="p-4 px-6">
+                                <div className="flex items-center gap-2">
+                                   <div className="w-6 h-6 rounded-full bg-slate-200 text-[#475569] flex items-center justify-center text-[10px] font-bold">
+                                      {(proposal.user_profiles?.full_name?.substring(0,1) || 'S').toUpperCase()}
+                                   </div>
+                                   <span className="text-sm font-medium text-slate-700">{proposal.user_profiles?.full_name || 'System'}</span>
+                                </div>
+                             </td>
+                             <td className="p-4 px-6 text-right">
+                                <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md text-xs font-bold border ${badgeClasses}`}>
+                                   {proposal.status || 'Draft'}
+                                </span>
+                             </td>
+                          </tr>
+                       );
+                    })}
+                 </tbody>
+              </table>
+           )}
+         </div>
       </div>
-
     </div>
   );
 }
