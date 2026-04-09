@@ -655,12 +655,19 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                            <ArrowLeft size={18} strokeWidth={2.5} />
                         </motion.button>
                         <div className="drawer-channel-title">
-                           {activeChannel?.channel_type === 'direct' ? (
-                              <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold mr-1 flex-shrink-0" style={{ background: getAvatarGradient(getChannelDisplayName(activeChannel)) }}>
-                                  {(getChannelDisplayName(activeChannel) || 'Unknown').charAt(0).toUpperCase()}
-                              </div>
-                           ) : (
-                              <Hash size={18} className="text-slate-400" />
+                           {activeChannel?.channel_type === 'direct' ? (() => {
+                              const otherId = activeChannel.name.replace('dm_', '').split('_').find(id => id !== user?.id);
+                              const otherUser = allUsers.find(u => u.id === otherId);
+                              if (otherUser?.avatar_url) {
+                                return <img src={otherUser.avatar_url} alt="Avatar" className="w-6 h-6 rounded-full object-cover mr-2 flex-shrink-0 shadow-sm shadow-black/10" />;
+                              }
+                              return (
+                                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold mr-2 flex-shrink-0 shadow-sm shadow-black/10" style={{ background: getAvatarGradient(getChannelDisplayName(activeChannel)) }}>
+                                    {(getChannelDisplayName(activeChannel) || 'Unknown').charAt(0).toUpperCase()}
+                                </div>
+                              );
+                           })() : (
+                              <Hash size={18} className="text-slate-400 mr-2" />
                            )}
                            {activeChannel ? (activeChannel.channel_type === 'direct' ? getChannelDisplayName(activeChannel) : activeChannel.name) : 'Loading...'}
                         </div>
