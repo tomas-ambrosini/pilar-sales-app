@@ -68,7 +68,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
 
         if (user?.id) {
           // Ensure user exists physically in channel_members for public channels so Unread Notifications trigger properly
-          const publicChannelsRaw = channelData.filter(c => !c.is_private).map(c => ({
+          const publicChannelsRaw = channelData.filter(c => c.channel_type !== 'direct').map(c => ({
             channel_id: c.id,
             user_id: user.id
           }));
@@ -84,7 +84,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
 
       // Fetch All Users for DM creation & Mentions
       const { data: usersData, error: usersError } = await supabase
-        .from('users')
+        .from('user_profiles')
         .select('*');
       if (!usersError && usersData) {
         setAllUsers(usersData.filter(u => u.id !== user?.id)); // exclude self
@@ -128,17 +128,15 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
         .from('chat_messages')
         .select(`
           id,
-          content,
+          body,
           created_at,
           updated_at,
-          user_id,
+          sender_id,
+          is_deleted,
           reply_to_id,
           attachment_url,
           attachment_type,
-          users (
-            name,
-            role
-          ),
+          sender:user_profiles ( full_name, role, avatar_url ),
           chat_reactions (
             id,
             user_id,
@@ -166,18 +164,18 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
           console.log("🔥 REALTIME WEBSOCKET TEXT PAYLOAD 🔥", payload);
           if (payload.event === 'INSERT') {
             const newMessage = payload.new;
-            if (newMessage.user_id === user?.id) return; 
+            if (newMessage.sender_id === user?.id) return; 
 
             // Active channel UI append
             if (newMessage.channel_id === activeChannelRef.current) {
               const { data: userData } = await supabase
-                .from('users')
-                .select('name, role')
-                .eq('id', newMessage.user_id)
+                .from('user_profiles')
+                .select('full_name, role, avatar_url')
+                .eq('id', newMessage.sender_id)
                 .maybeSingle();
 
               if (userData) {
-                newMessage.users = userData;
+                newMessage.sender = userData;
               }
 
               setMessages(prev => [...prev, newMessage]);
@@ -286,7 +284,8 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     if (!newChannelName.trim()) return;
     const { data, error } = await supabase.from('chat_channels').insert([{
       name: newChannelName.toLowerCase().replace(/\s+/g, '-'),
-      is_private: newChannelIsPrivate
+      channel_type: newChannelIsPrivate ? 'direct' : 'group',
+      created_by: user.id
     }]).select();
 
     if (!error && data) {
@@ -312,7 +311,8 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     if (!existingChannel) {
       const { data, error } = await supabase.from('chat_channels').insert([{
         name: dmName,
-        is_private: true
+        channel_type: 'direct',
+        created_by: user.id
       }]).select();
 
       if (!error && data) {
@@ -365,18 +365,18 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
        if (!originalMsg) return;
 
        const updatedContent = inputValue.trim();
-       setMessages(prev => prev.map(m => m.id === editingMsgId ? { ...m, content: updatedContent } : m));
+       setMessages(prev => prev.map(m => m.id === editingMsgId ? { ...m, body: updatedContent } : m));
        setInputValue('');
        setEditingMsgId(null);
 
-       const { error } = await supabase.from('chat_messages').update({ content: updatedContent, updated_at: new Date().toISOString() }).eq('id', editingMsgId);
+       const { error } = await supabase.from('chat_messages').update({ body: updatedContent, updated_at: new Date().toISOString() }).eq('id', editingMsgId);
        if (error) console.error("Error editing msg", error);
        return;
     }
 
     // INSERT FLOW
     if (presenceChannelRef.current && user) {
-      presenceChannelRef.current.track({ userId: user.id, userName: user.name, isTyping: false });
+      presenceChannelRef.current.track({ userId: user.id, userName: user.full_name, isTyping: false });
     }
     
     setIsUploading(true);
@@ -408,8 +408,8 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
 
     const newMsg = {
       channel_id: activeChannelId,
-      user_id: user.id,
-      content: inputValue.trim(),
+      sender_id: user.id,
+      body: inputValue.trim(),
       reply_to_id: replyingToMsg ? replyingToMsg.id : null,
       attachment_url: uploadedUrl,
       attachment_type: uploadedType
@@ -419,7 +419,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
       ...newMsg,
       id: `temp-${Date.now()}`,
       created_at: new Date().toISOString(),
-      users: { name: user.name, role: user.role }
+      sender: { full_name: user?.full_name || user?.email, role: user?.role, avatar_url: user?.avatar_url }
     };
     
     setMessages(prev => [...prev, optimisticMsg]);
@@ -470,7 +470,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
   const startEditing = (msg) => {
     setEditingMsgId(msg.id);
     setReplyingToMsg(null);
-    setInputValue(msg.content);
+    setInputValue(msg.body);
   };
 
   const startReplying = (msg) => {
@@ -485,7 +485,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     return parts.map((part, i) => {
       if (part.startsWith('@')) {
         const username = part.slice(1);
-        const isSelf = user?.name && username.toLowerCase() === user.name.replace(/\s+/g, '').toLowerCase();
+        const isSelf = user?.name && username.toLowerCase() === user.full_name.replace(/\s+/g, '').toLowerCase();
         return (
           <span key={i} className={isSelf ? 'mention-highlight-self' : 'mention-highlight'}>
             {part}
@@ -502,10 +502,10 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     
     // Phase 6 Live Typing Logic
     if (presenceChannelRef.current && user) {
-      presenceChannelRef.current.track({ userId: user.id, userName: user.name, isTyping: true });
+      presenceChannelRef.current.track({ userId: user.id, userName: user.full_name, isTyping: true });
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = setTimeout(() => {
-        presenceChannelRef.current?.track({ userId: user.id, userName: user.name, isTyping: false });
+        presenceChannelRef.current?.track({ userId: user.id, userName: user.full_name, isTyping: false });
       }, 3000);
     }
     
@@ -521,7 +521,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     }
   };
 
-  const filteredMentions = mentionPopup.show ? allUsers.filter(u => u.name.replace(/\s+/g, '').toLowerCase().includes(mentionPopup.query) && u.id !== user?.id) : [];
+  const filteredMentions = mentionPopup.show ? allUsers.filter(u => u.full_name.replace(/\s+/g, '').toLowerCase().includes(mentionPopup.query) && u.id !== user?.id) : [];
 
   const insertMention = (nameRaw) => {
     const name = nameRaw.replace(/\s+/g, '');
@@ -705,7 +705,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                               transition={{ delay: i * 0.05 }}
                               whileHover={{ x: 4, backgroundColor: 'var(--color-slate-100)' }}
                             >
-                              {channel.is_private ? <Lock size={16} className={`mr-2 ${activeChannelId === channel.id ? 'text-primary-600' : 'text-slate-400'}`} /> : <Hash size={16} className={`mr-2 ${activeChannelId === channel.id ? 'text-primary-600' : 'text-slate-400'}`} />}
+                              {channel.channel_type === 'direct' ? <Lock size={16} className={`mr-2 ${activeChannelId === channel.id ? 'text-primary-600' : 'text-slate-400'}`} /> : <Hash size={16} className={`mr-2 ${activeChannelId === channel.id ? 'text-primary-600' : 'text-slate-400'}`} />}
                               <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">{channel.name}</span>
                               {unreadCounts[channel.id] > 0 && activeChannelId !== channel.id && (
                                 <span className="drawer-channel-unread">{unreadCounts[channel.id]}</span>
@@ -732,9 +732,18 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                               transition={{ delay: (channels.length + i) * 0.05 }}
                               whileHover={{ x: 4, backgroundColor: 'var(--color-slate-100)' }}
                             >
-                              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold mr-2 shadow-sm shadow-black/10 flex-shrink-0" style={{ background: getAvatarGradient(getChannelDisplayName(channel)) }}>
-                                  {getChannelDisplayName(channel).charAt(0).toUpperCase()}
-                              </div>
+                              {(() => {
+                                const otherId = channel.name.replace('dm_', '').split('_').find(id => id !== user.id);
+                                const otherUser = allUsers.find(u => u.id === otherId);
+                                if (otherUser?.avatar_url) {
+                                  return <img src={otherUser.avatar_url} className="w-6 h-6 rounded-full object-cover mr-2 shadow-sm shadow-black/10 flex-shrink-0" alt="Avatar" />;
+                                }
+                                return (
+                                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold mr-2 shadow-sm shadow-black/10 flex-shrink-0" style={{ background: getAvatarGradient(getChannelDisplayName(channel)) }}>
+                                      {getChannelDisplayName(channel).charAt(0).toUpperCase()}
+                                  </div>
+                                );
+                              })()}
                               <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">{getChannelDisplayName(channel)}</span>
                               {unreadCounts[channel.id] > 0 && activeChannelId !== channel.id && (
                                 <span className="drawer-channel-unread">{unreadCounts[channel.id]}</span>
@@ -803,11 +812,15 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                                   transition={{ delay: i * 0.05 }}
                                   onClick={() => handleStartDM(u)}
                                 >
-                                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold shadow-sm" style={{ background: getAvatarGradient(u.name) }}>
-                                    {u.name.charAt(0).toUpperCase()}
-                                  </div>
+                                  {u.avatar_url ? (
+                                    <img src={u.avatar_url} alt={u.full_name} className="w-8 h-8 rounded-full object-cover shadow-sm" />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold shadow-sm" style={{ background: getAvatarGradient(u.full_name) }}>
+                                      {u.full_name?.charAt(0).toUpperCase() || 'U'}
+                                    </div>
+                                  )}
                                   <div className="flex flex-col">
-                                    <span className="font-bold text-slate-800">{u.name}</span>
+                                    <span className="font-bold text-slate-800">{u.full_name}</span>
                                     <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-bold uppercase w-fit">{u.role}</span>
                                   </div>
                                 </motion.div>
@@ -834,9 +847,9 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                           ) : (
                             messages.map((msg, idx) => {
                               const prevMsg = messages[idx - 1];
-                              const isOwn = msg.user_id === user?.id;
-                              const isGrouped = Boolean(msg.user_id) && prevMsg && prevMsg.user_id === msg.user_id && (new Date(msg.created_at) - new Date(prevMsg.created_at)) < 300000;
-                              const isMentioned = Boolean(user?.name) && msg.content.toLowerCase().includes(`@${user.name.replace(/\s+/g, '').toLowerCase()}`);
+                              const isOwn = msg.sender_id === user?.id;
+                              const isGrouped = Boolean(msg.sender_id) && prevMsg && prevMsg.sender_id === msg.sender_id && (new Date(msg.created_at) - new Date(prevMsg.created_at)) < 300000;
+                              const isMentioned = Boolean(user?.name) && msg.body.toLowerCase().includes(`@${user.full_name.replace(/\s+/g, '').toLowerCase()}`);
                               
                               return (
                                 <motion.div 
@@ -847,12 +860,16 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                                   transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                                 >
                                   {!isGrouped ? (
-                                    <div 
-                                      className="drawer-msg-avatar"
-                                      style={{ background: getAvatarGradient(msg.users?.name) }}
-                                    >
-                                      {msg.users?.name ? msg.users.name.charAt(0).toUpperCase() : 'U'}
-                                    </div>
+                                    msg.sender?.avatar_url ? (
+                                      <img src={msg.sender.avatar_url} alt={msg.sender.full_name} className="drawer-msg-avatar object-cover flex-shrink-0" />
+                                    ) : (
+                                      <div 
+                                        className="drawer-msg-avatar"
+                                        style={{ background: getAvatarGradient(msg.sender?.full_name || msg.sender?.name) }}
+                                      >
+                                        {(msg.sender?.full_name || msg.sender?.name) ? (msg.sender?.full_name || msg.sender?.name).charAt(0).toUpperCase() : 'U'}
+                                      </div>
+                                    )
                                   ) : (
                                     <div className="drawer-msg-avatar-spacer">
                                       <span className="drawer-msg-time-hover">{new Date(msg.created_at).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'})}</span>
@@ -862,7 +879,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                                   <div className="drawer-msg-content">
                                     {!isGrouped && (
                                       <div className="drawer-msg-meta">
-                                        <span className="drawer-msg-author">{msg.users?.name || 'Unknown User'}</span>
+                                        <span className="drawer-msg-author">{msg.sender?.full_name || msg.sender?.name || 'Unknown User'}</span>
                                         <span className="drawer-msg-time">
                                           {formatTimestamp(msg.created_at)}
                                           {msg.updated_at && msg.updated_at !== msg.created_at && <span className="ml-1 text-[0.6rem] text-slate-400 italic">(edited)</span>}
@@ -875,10 +892,10 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                                       }}>
                                         <div className="drawer-msg-quote-author">
                                           <Reply size={10} className="mr-1 inline -mt-0.5" /> 
-                                          {messages.find(m => m.id === msg.reply_to_id)?.users?.name || 'Unknown User'}
+                                          {messages.find(m => m.id === msg.reply_to_id)?.sender?.full_name || messages.find(m => m.id === msg.reply_to_id)?.sender?.name || 'Unknown User'}
                                         </div>
                                         <div className="drawer-msg-quote-text truncate">
-                                          {renderTextWithMentions(messages.find(m => m.id === msg.reply_to_id)?.content || 'Original message was deleted')}
+                                          {renderTextWithMentions(messages.find(m => m.id === msg.reply_to_id)?.body || 'Original message was deleted')}
                                         </div>
                                       </div>
                                     )}
@@ -907,8 +924,8 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                                         </div>
                                       )}
                                       
-                                      {msg.content.trim() ? (
-                                        renderTextWithMentions(msg.content)
+                                      {msg.body.trim() ? (
+                                        renderTextWithMentions(msg.body)
                                       ) : (
                                         !msg.attachment_url && <span className="italic text-slate-400">Empty message</span>
                                       )}
@@ -1020,7 +1037,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                             <div className={`drawer-input-reply-banner absolute ${attachmentFile ? '-top-[6.5rem]' : '-top-8'} left-6 right-6 bg-slate-100 border border-slate-200 border-b-0 rounded-t-lg px-3 py-1.5 flex justify-between items-center shadow-sm z-0 transition-all`}>
                               <span className="text-xs font-semibold text-slate-600 truncate">
                                 <Reply size={12} className="inline mr-1" />
-                                Replying to <span className="font-bold">{replyingToMsg.users?.name || 'Unknown User'}</span>
+                                Replying to <span className="font-bold">{replyingToMsg.sender?.full_name || replyingToMsg.sender?.name || 'Unknown User'}</span>
                               </span>
                               <button className="text-slate-400 hover:text-slate-700" onClick={() => setReplyingToMsg(null)}>
                                 <X size={14} />
@@ -1033,12 +1050,16 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                                 <div 
                                   key={u.id} 
                                   className={`mention-popup-item ${i === mentionPopup.index ? 'active' : ''}`}
-                                  onClick={() => insertMention(u.name)}
+                                  onClick={() => insertMention(u.full_name)}
                                 >
-                                  <div className="w-5 h-5 rounded-md flex items-center justify-center text-white text-[10px]" style={{background: getAvatarGradient(u.name)}}>
-                                    {u.name.charAt(0).toUpperCase()}
-                                  </div>
-                                  <span>{u.name}</span>
+                                  {u.avatar_url ? (
+                                    <img src={u.avatar_url} alt={u.full_name} className="w-5 h-5 rounded-md object-cover" />
+                                  ) : (
+                                    <div className="w-5 h-5 rounded-md flex items-center justify-center text-white text-[10px]" style={{background: getAvatarGradient(u.full_name)}}>
+                                      {u.full_name?.charAt(0).toUpperCase() || 'U'}
+                                    </div>
+                                  )}
+                                  <span>{u.full_name}</span>
                                 </div>
                               ))}
                             </div>
@@ -1100,7 +1121,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
       
       {expandedImage && (
         <motion.div 
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm cursor-zoom-out"
+          className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm cursor-zoom-out"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -1118,7 +1139,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
               onClick={(e) => e.stopPropagation()}
            />
            <button 
-             className="absolute top-6 right-6 text-white hover:text-red-400 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors z-[101]"
+             className="absolute top-6 right-6 text-white hover:text-red-400 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors z-[2001]"
              onClick={() => setExpandedImage(null)}
            >
              <X size={24} />

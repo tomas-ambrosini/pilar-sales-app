@@ -45,7 +45,19 @@ export function AuthProvider({ children }) {
         setIsLoading(false);
         return;
       }
-      setUser({ ...authUser, ...data });
+      
+      let mergedAvatar = data.avatar_url || authUser?.user_metadata?.avatar_url;
+      let mergedName = data.full_name || authUser?.user_metadata?.full_name;
+      
+      // Passively heal user_profiles so public chat UI syncs
+      if ((!data.avatar_url && authUser?.user_metadata?.avatar_url) || (!data.full_name && authUser?.user_metadata?.full_name)) {
+         supabase.from('user_profiles').update({ 
+           avatar_url: mergedAvatar,
+           full_name: mergedName 
+         }).eq('id', authUser.id).then(()=>{});
+      }
+
+      setUser({ ...authUser, ...data, avatar_url: mergedAvatar, full_name: mergedName });
     } else {
       // In the new architecture, accounts are provisioned via Edge Functions, so a profile should always exist.
       // If it doesn't exist yet (legacy dev), simulate a safe minimal record in-memory.

@@ -22,7 +22,7 @@ DROP POLICY IF EXISTS "Users can update their own avatar" ON storage.objects;
 DROP POLICY IF EXISTS "Users can delete their own avatar" ON storage.objects;
 
 -- Enable RLS on storage.objects (if not already enabled)
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- (Skipped: Supabase natively manages this, running ALTER TABLE throws a permissions error)
 
 -- Policy: Allow public to view any file in the "avatars" bucket
 CREATE POLICY "Public avatars are viewable by everyone"
