@@ -31,9 +31,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
   const [expandedImage, setExpandedImage] = useState(null);
   const hiddenFileInput = useRef(null);
 
-  // Phase 6 Live Typing States
-  const [typingUsers, setTypingUsers] = useState([]);
-  const typingTimeoutRef = useRef(null);
+  // Broadcast Channel Ref
   const presenceChannelRef = useRef(null);
 
   // Generate a deterministic gradient for an avatar based on a string (name)
@@ -247,23 +245,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
              }, { onConflict: 'channel_id,user_id' }).then();
          }
       })
-      .on('presence', { event: 'sync' }, () => {
-        const state = presenceChannel.presenceState();
-        const currentlyTyping = [];
-        for (const [key, users] of Object.entries(state)) {
-            users.forEach(u => {
-               if (u.isTyping && u.userId !== user?.id && u.userName) {
-                 currentlyTyping.push(u.userName);
-               }
-            });
-        }
-        setTypingUsers([...new Set(currentlyTyping)]);
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await presenceChannel.track({ userId: user?.id, userName: user?.name, isTyping: false });
-        }
-      });
+      .subscribe();
       
     presenceChannelRef.current = presenceChannel;
 
@@ -393,10 +375,6 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     }
 
     // INSERT FLOW
-    if (presenceChannelRef.current && user) {
-      presenceChannelRef.current.track({ userId: user.id, userName: user.full_name, isTyping: false });
-    }
-    
     setIsUploading(true);
     let uploadedUrl = null;
     let uploadedType = null;
@@ -525,15 +503,6 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
   const handleInputChange = (e) => {
     const val = e.target.value;
     setInputValue(val);
-    
-    // Phase 6 Live Typing Logic
-    if (presenceChannelRef.current && user) {
-      presenceChannelRef.current.track({ userId: user.id, userName: user.full_name, isTyping: true });
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      typingTimeoutRef.current = setTimeout(() => {
-        presenceChannelRef.current?.track({ userId: user.id, userName: user.full_name, isTyping: false });
-      }, 3000);
-    }
     
     // Detect if user is typing a mention
     const cursorPos = e.target.selectionStart;
@@ -1023,14 +992,6 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                         </div>
 
                         <div className="drawer-input-area relative">
-                          {/* Live Typing Indicator */}
-                          {typingUsers.length > 0 && (
-                            <div className="absolute -top-5 left-6 text-[11px] text-primary-600 font-bold italic animate-pulse transition-all bg-slate-50 px-3 pb-2 pt-1.5 rounded-t-lg border border-b-0 border-slate-200 z-0">
-                              <Loader2 size={10} className="inline animate-spin mr-1.5 -mt-0.5" />
-                              {typingUsers.join(', ')} {typingUsers.length > 1 ? 'are typing...' : 'is typing...'}
-                            </div>
-                          )}
-
                           <input 
                             type="file" 
                             ref={hiddenFileInput} 
