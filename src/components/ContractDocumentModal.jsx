@@ -123,8 +123,8 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                <div className="flex justify-between items-end border-t border-slate-300 pt-10 pb-10">
                    <div className="flex-1 max-w-sm">
                       <div className="relative mb-2 h-20 flex items-end">
-                         {proposal.signature_data ? (
-                             <img src={proposal.signature_data} alt="Customer Signature" className="absolute bottom-0 left-0 h-24 w-auto object-contain mix-blend-multiply" />
+                         {(proposal.proposal_data?.signature_data || proposal.signature_data) ? (
+                             <img src={proposal.proposal_data?.signature_data || proposal.signature_data} alt="Customer Signature" className="absolute bottom-0 left-0 h-24 w-auto object-contain mix-blend-multiply" />
                          ) : (
                              <>
                                 <div className="absolute inset-0 flex items-center justify-center opacity-10 font-[cursive] text-4xl whitespace-nowrap overflow-hidden pointer-events-none text-slate-900 w-[200%] -ml-[50%]">

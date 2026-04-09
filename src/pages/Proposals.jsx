@@ -250,18 +250,21 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
          }
      }
 
-     // 5. Update Proposal Status, Lock Amount, and Save Signature!
+     // 5. Update Proposal Status, Lock Amount, and Save Signature in JSON Payload!
      const finalDbObj = { 
          status: 'Approved',
          amount: tierData.salesPrice,
-         signature_data: signatureData
+         proposal_data: {
+             ...(proposal.proposal_data || {}),
+             signature_data: signatureData
+         }
      };
      
      await updateProposal(proposal.id, finalDbObj);
 
      // Move to the View Contract state
      const finalContractData = { ...signingContract };
-     finalContractData.proposal.signature_data = signatureData;
+     finalContractData.proposal.proposal_data = { ...(finalContractData.proposal.proposal_data || {}), signature_data: signatureData };
      setSigningContract(null);
      setViewingContract(finalContractData);
   };

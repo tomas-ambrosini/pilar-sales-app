@@ -30,7 +30,7 @@ export default function PublicQuoteView() {
                 // If it is already approved, we just show a Read-Only state
                 if (data.status === 'Approved') {
                     setAccepted(true);
-                    setSignature(data.signature_data || 'Signed Electronically');
+                    setSignature(data.proposal_data?.signature_data || data.signature_data || 'Signed Electronically');
                 }
             } catch (err) {
                 setError("This proposal link is invalid or has expired.");
@@ -75,14 +75,14 @@ export default function PublicQuoteView() {
 
             const updatedPayload = { 
                 ...proposal.proposal_data, 
-                approval_snapshot: snapshot 
+                approval_snapshot: snapshot,
+                signature_data: signature
             };
 
             const { error } = await supabase
                 .from('proposals')
                 .update({ 
                     status: 'Approved',
-                    signature_data: signature,
                     proposal_data: updatedPayload
                 })
                 .eq('id', id);
@@ -90,7 +90,7 @@ export default function PublicQuoteView() {
             if (error) throw error;
             
             setAccepted(true);
-            setProposal(prev => ({...prev, status: 'Approved', signature_data: signature, proposal_data: updatedPayload}));
+            setProposal(prev => ({...prev, status: 'Approved', proposal_data: updatedPayload}));
             toast.success("Proposal Accepted! Thank you.");
             
         } catch (err) {
