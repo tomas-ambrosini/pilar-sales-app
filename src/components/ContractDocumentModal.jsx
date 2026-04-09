@@ -18,7 +18,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm print:hidden" onClick={onClose}></div>
          
          {/* Top Action Bar (Hidden on print) */}
-         <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 print:hidden bg-slate-900/80 backdrop-blur border-b border-slate-700 shadow-xl">
+         <div className="action-bar absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 print:hidden bg-slate-900/80 backdrop-blur border-b border-slate-700 shadow-xl">
              <div className="text-white flex items-center gap-2">
                 <ShieldCheck className="text-emerald-400" />
                 <span className="font-bold tracking-widest text-sm uppercase">Official Contract Generated</span>
