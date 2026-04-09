@@ -58,10 +58,14 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
         .order('name');
       
       if (!channelError && channelData) {
-        setChannels(channelData);
-        if (!activeChannelId && channelData.length > 0) {
-          const general = channelData.find(c => c.name === 'general');
-          setActiveChannelId(general ? general.id : channelData[0].id);
+        // Deduplicate channels by name to hide any parallel-insertion DMs
+        const uniqueChannels = channelData.filter((c, index, self) => 
+          index === self.findIndex((t) => t.name === c.name)
+        );
+        setChannels(uniqueChannels);
+        if (!activeChannelId && uniqueChannels.length > 0) {
+          const general = uniqueChannels.find(c => c.name === 'general');
+          setActiveChannelId(general ? general.id : uniqueChannels[0].id);
         }
 
         if (user?.id) {
@@ -649,8 +653,14 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                            <ArrowLeft size={18} strokeWidth={2.5} />
                         </motion.button>
                         <div className="drawer-channel-title">
-                           <Hash size={18} className="text-slate-400" />
-                           {activeChannel ? (activeChannel.is_private ? getChannelDisplayName(activeChannel) : activeChannel.name) : 'Loading...'}
+                           {activeChannel?.channel_type === 'direct' ? (
+                              <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold mr-1 flex-shrink-0" style={{ background: getAvatarGradient(getChannelDisplayName(activeChannel)) }}>
+                                  {(getChannelDisplayName(activeChannel) || 'Unknown').charAt(0).toUpperCase()}
+                              </div>
+                           ) : (
+                              <Hash size={18} className="text-slate-400" />
+                           )}
+                           {activeChannel ? (activeChannel.channel_type === 'direct' ? getChannelDisplayName(activeChannel) : activeChannel.name) : 'Loading...'}
                         </div>
                      </div>
                   ) : viewState === 'create-channel' ? (
@@ -849,7 +859,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                             <div className="drawer-empty-state">
                               <MessageSquare size={48} strokeWidth={1} className="mb-4 text-slate-300" />
                               <p className="font-semibold text-lg text-slate-800">No messages yet</p>
-                              <p className="text-sm text-slate-500 mt-1">Start the conversation in #{activeChannel?.name}.</p>
+                              <p className="text-sm text-slate-500 mt-1">Start the conversation in {activeChannel?.channel_type === 'direct' ? getChannelDisplayName(activeChannel) : `#${activeChannel?.name}`}.</p>
                             </div>
                           ) : (
                             messages.map((msg, idx) => {
@@ -1067,7 +1077,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                             <textarea 
                               ref={inputRef}
                               className="drawer-input custom-scrollbar"
-                              placeholder={replyingToMsg ? "Type a reply..." : `Message #${activeChannel?.name || '...'}`}
+                              placeholder={replyingToMsg ? "Type a reply..." : `Message ${activeChannel?.channel_type === 'direct' ? getChannelDisplayName(activeChannel) : '#' + (activeChannel?.name || '...')}`}
                               value={inputValue}
                               onChange={handleInputChange}
                               onKeyDown={handleKeyDown}
