@@ -142,10 +142,11 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                       <p className="text-[10px] text-slate-500 font-mono mt-1">IP: 104.28.192.1 • {new Date().toLocaleString()}</p>
                    </div>
                    
-                   <div className="flex-1 max-w-sm text-right pl-12">
+                   <div className="flex-1 max-w-sm text-right pl-12 flex flex-col justify-end">
                       <div className="font-[cursive] text-3xl text-slate-800 opacity-60 mb-2">Pilar Home</div>
                       <div className="h-0.5 bg-slate-800 w-full mb-2"></div>
                       <p className="text-xs font-bold text-slate-800">Contractor Execution</p>
+                      <p className="text-[10px] text-slate-500 font-mono mt-1 opacity-0 pointer-events-none select-none">Alignment Filler</p>
                    </div>
                </div>
             </div>

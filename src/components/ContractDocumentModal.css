@@ -19,8 +19,8 @@
 
   /* Force the portal contract into natural document flow for perfect pagination */
   .printable-contract {
-    zoom: 0.94;
-    transform: scale(0.94);
+    zoom: 0.97;
+    transform: scale(0.97);
     transform-origin: top center;
     position: static !important;
     display: block !important;
