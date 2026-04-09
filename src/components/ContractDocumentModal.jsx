@@ -12,7 +12,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
    };
 
    return (
-      <div className={`fixed inset-0 z-[100] flex items-center justify-center transition-all duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`fixed inset-0 z-[100] flex items-center justify-center transition-all duration-300 print:static print:block print:inset-auto ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
          {/* Print Backdrop */}
          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm print:hidden" onClick={onClose}></div>
          
@@ -33,7 +33,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
          </div>
 
          {/* The 8.5x11 Paper Container */}
-         <div className="printable-contract relative bg-white shadow-2xl overflow-y-auto max-h-[85vh] mt-16 print:mt-0 print:max-h-max print:shadow-none print:w-full w-full max-w-[850px] mx-auto flex flex-col">
+         <div className="printable-contract relative bg-white shadow-2xl overflow-y-auto max-h-[85vh] mt-16 print:mt-0 print:max-h-none print:h-auto print:overflow-visible print:shadow-none print:w-full w-full max-w-[850px] mx-auto flex flex-col print:block">
             
             {/* Header / Letterhead */}
             <div className="flex justify-between items-start border-b-4 border-slate-800 p-10 pb-6 mb-8">
