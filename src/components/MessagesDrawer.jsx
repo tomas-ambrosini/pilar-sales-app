@@ -331,7 +331,9 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
 
       if (!error) {
         await supabase.from('channel_members').insert([
-          { channel_id: newId, user_id: user.id },
+          { channel_id: newId, user_id: user.id }
+        ]);
+        await supabase.from('channel_members').insert([
           { channel_id: newId, user_id: targetUser.id }
         ]);
         existingChannel = { id: newId, name: dmName, channel_type: 'direct', created_by: user.id };
