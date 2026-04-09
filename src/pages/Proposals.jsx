@@ -348,142 +348,155 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
            
            return (
              <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col mt-4 w-full">
-               {/* Right-Anchored Table Header */}
-               <div className="hidden md:flex items-center gap-6 px-8 py-3 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                 <div className="flex-1 min-w-[250px] pl-2">Customer Name</div>
-                 <div className="w-[110px] shrink-0">Pipeline Status</div>
-                 <div className="w-[140px] shrink-0">Deal Value</div>
-                 <div className="w-[140px] shrink-0">Rep Owner</div>
-                 <div className="w-[280px] shrink-0 text-right">Actions</div>
-               </div>
-               
-               {/* Rows */}
-               <div className="flex flex-col divide-y divide-slate-100">
-                 {filteredProposals.map(proposal => {
-                  let badgeColors = 'bg-slate-100 text-slate-500 border-slate-200';
-                  if (proposal.status === 'Sent') badgeColors = 'bg-blue-50 text-blue-600 border-blue-200';
-                  if (proposal.status === 'Approved') badgeColors = 'bg-emerald-50 text-emerald-600 border-emerald-200';
-      
-                  return (
-                    <div key={proposal.id} className="group bg-white hover:bg-slate-50 transition-colors flex flex-col md:flex-row items-center gap-6 px-8 py-4 relative">
-                 
-                 {/* Visual Accent Strip */}
-                 <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${proposal.status === 'Approved' ? 'bg-emerald-500' : proposal.status === 'Sent' ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
-
-                 {/* COL 1: Customer & Date (Fills Remaining Space) */}
-                 <div className="flex-1 flex items-center gap-4 min-w-[250px] pl-2">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-black text-slate-500 bg-white border border-slate-200 shadow-sm shrink-0">
-                       {proposal.customer?.charAt(0) || 'C'}
-                    </div>
-                    <div className="flex flex-col min-w-0 pr-4">
-                       <h3 className="text-[15px] font-black text-slate-800 truncate leading-tight mb-0.5">{proposal.customer}</h3>
-                       <p className="text-xs font-semibold text-slate-500 truncate flex items-center">
-                          {new Date(proposal.updated_at || proposal.created_at).toLocaleDateString()} 
-                          <span className="text-slate-300 mx-1.5">•</span> 
-                          <span className="font-mono text-[10px] uppercase tracking-widest text-slate-400 truncate">{proposal.id.split('-')[0]}</span>
-                       </p>
-                    </div>
-                 </div>
-
-                 {/* COL 2: Status */}
-                 <div className="w-[110px] shrink-0">
-                    <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md inline-flex shadow-sm leading-none border ${badgeColors}`}>
-                      {proposal.status}
-                    </span>
-                 </div>
-
-                 {/* COL 3: Pricing */}
-                 <div className="w-[140px] shrink-0 flex flex-col justify-center truncate pr-2">
-                    {(!proposal.status || ['Draft', 'Sent', 'Opened'].includes(proposal.status)) ? (() => {
-                        const tiers = proposal.proposal_data?.tiers || {};
-                        const prices = [tiers.good?.salesPrice, tiers.better?.salesPrice, tiers.best?.salesPrice].filter(Boolean);
-                        if (prices.length > 0) {
-                            const min = Math.min(...prices);
-                            const max = Math.max(...prices);
-                            return (
-                               <>
-                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Est. Range</span>
-                                 <span className="text-[14px] font-black text-slate-700 leading-none truncate">
-                                    ${min.toLocaleString()} <span className="text-slate-300 font-normal mx-0.5">-</span> ${max.toLocaleString()}
-                                 </span>
-                               </>
-                            );
+               <div className="overflow-x-auto">
+                 <table className="w-full text-left border-collapse">
+                   <thead>
+                     <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                       <th className="p-4 px-6 font-medium">Customer / ID</th>
+                       <th className="p-4 px-6 font-medium">Status</th>
+                       <th className="p-4 px-6 font-medium">Est. Value</th>
+                       <th className="p-4 px-6 font-medium hidden lg:table-cell">Rep Owner</th>
+                       <th className="p-4 px-6 font-medium text-right">Actions</th>
+                     </tr>
+                   </thead>
+                   <tbody className="divide-y divide-slate-100">
+                     {filteredProposals.map(proposal => {
+                        let badgeColors = 'bg-slate-100 text-slate-600 border-slate-200';
+                        let borderAccent = 'border-transparent';
+                        if (proposal.status === 'Sent') {
+                           badgeColors = 'bg-blue-50 text-blue-700 border-blue-200';
+                           borderAccent = 'border-l-[3px] border-l-blue-500';
+                        } else if (proposal.status === 'Approved') {
+                           badgeColors = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                           borderAccent = 'border-l-[3px] border-l-emerald-500';
                         }
+            
                         return (
-                             <>
-                               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Est. Value</span>
-                               <span className="text-[15px] font-black text-slate-700 leading-none truncate">
-                                  ${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                               </span>
-                             </>
+                          <tr key={proposal.id} className={`group bg-white hover:bg-slate-50 transition-colors ${borderAccent}`}>
+                            {/* COL 1: Customer & Date */}
+                            <td className="p-4 px-6">
+                              <div className="flex items-center gap-4 min-w-[250px]">
+                                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-black text-slate-500 bg-white border border-slate-200 shadow-sm shrink-0">
+                                    {proposal.customer?.charAt(0) || 'C'}
+                                 </div>
+                                 <div className="flex flex-col min-w-0 pr-4">
+                                    <h3 className="text-[15px] font-black text-slate-900 truncate leading-tight mb-0.5">{proposal.customer}</h3>
+                                    <p className="text-xs font-semibold text-slate-500 truncate flex items-center">
+                                       {new Date(proposal.updated_at || proposal.created_at).toLocaleDateString()} 
+                                       <span className="text-slate-300 mx-1.5">•</span> 
+                                       <span className="font-mono text-[10px] uppercase tracking-widest text-slate-400 truncate">{proposal.id.split('-')[0]}</span>
+                                    </p>
+                                 </div>
+                              </div>
+                            </td>
+
+                            {/* COL 2: Status */}
+                            <td className="p-4 px-6">
+                              <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md text-xs font-bold border ${badgeColors}`}>
+                                {proposal.status}
+                              </span>
+                            </td>
+
+                            {/* COL 3: Pricing */}
+                            <td className="p-4 px-6">
+                              <div className="flex flex-col justify-center truncate">
+                                 {(!proposal.status || ['Draft', 'Sent', 'Opened'].includes(proposal.status)) ? (() => {
+                                     const tiers = proposal.proposal_data?.tiers || {};
+                                     const prices = [tiers.good?.salesPrice, tiers.better?.salesPrice, tiers.best?.salesPrice].filter(Boolean);
+                                     if (prices.length > 0) {
+                                         const min = Math.min(...prices);
+                                         const max = Math.max(...prices);
+                                         return (
+                                            <>
+                                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Est. Range</span>
+                                              <span className="text-sm font-black text-slate-700 truncate">
+                                                 ${min.toLocaleString()} <span className="text-slate-300 font-normal mx-0.5">-</span> ${max.toLocaleString()}
+                                              </span>
+                                            </>
+                                         );
+                                     }
+                                     return (
+                                          <>
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Est. Value</span>
+                                            <span className="text-sm font-black text-slate-700 truncate">
+                                               ${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                            </span>
+                                          </>
+                                     );
+                                 })() : (
+                                    <>
+                                      <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">Accepted</span>
+                                      <span className="text-sm font-black text-emerald-700 truncate">
+                                         ${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                      </span>
+                                    </>
+                                 )}
+                              </div>
+                            </td>
+
+                            {/* COL 4: Owner */}
+                            <td className="p-4 px-6 hidden lg:table-cell">
+                              <div className="flex items-center">
+                                 {proposal.user_profiles?.full_name ? (
+                                    <div className="flex items-center gap-2 bg-white py-1.5 px-3 rounded-lg border border-slate-200 shadow-sm max-w-[150px]">
+                                       <div className="w-5 h-5 rounded flex items-center justify-center text-[10px] font-black uppercase shrink-0 text-slate-700 bg-slate-100">
+                                          {proposal.user_profiles.full_name.charAt(0)}
+                                       </div>
+                                       <span className="text-xs font-bold text-slate-700 uppercase tracking-wide truncate">{proposal.user_profiles.full_name.split('@')[0]}</span>
+                                    </div>
+                                 ) : (
+                                    <span className="text-xs font-medium text-slate-400 italic">Unassigned</span>
+                                 )}
+                              </div>
+                            </td>
+
+                            {/* COL 5: Actions */}
+                            <td className="p-4 px-6 text-right">
+                              <div className="flex items-center justify-end gap-3 flex-nowrap">
+                                 {/* Hover Utilities */}
+                                 <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
+                                    {proposal.status !== 'Approved' && (
+                                       <>
+                                          <button className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors" onClick={() => handleEditOpen(proposal)} title="Edit Details"><Edit2 size={16} /></button>
+                                          <button className="p-2 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Delete"><Trash2 size={16} /></button>
+                                       </>
+                                    )}
+                                 </div>
+
+                                 {/* Email/Copy/Link Group */}
+                                 <div className="flex items-center border border-slate-200 rounded-lg shrink-0 bg-white shadow-sm overflow-hidden min-w-max">
+                                    <button onClick={() => handleMailto(proposal)} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors border-r border-slate-200" title="Email Client"><Mail size={16} /></button>
+                                    <button onClick={() => handleCopyMessage(proposal)} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors border-r border-slate-200" title="Copy Message"><Copy size={16} /></button>
+                                    <button onClick={() => handleCopyLink(proposal)} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors" title="Copy Link"><Link size={16} /></button>
+                                 </div>
+
+                                 {/* Main Action Button */}
+                                 <button 
+                                   className={`flex items-center justify-center gap-1.5 text-xs font-black py-2.5 rounded-lg shrink-0 w-[110px] shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none ${proposal.status === 'Approved' ? 'bg-emerald-500 text-white hover:bg-emerald-600 focus:ring-emerald-500 border border-emerald-600' : 'bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900 border border-slate-900'}`}
+                                   onClick={() => {
+                                       if (proposal.status === 'Approved') {
+                                          const matchedTierName = ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers[t]?.salesPrice === proposal.amount) || 'good';
+                                          const matchedTierData = proposal.proposal_data?.tiers[matchedTierName];
+                                          setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
+                                       } else {
+                                          setViewingProposal(proposal);
+                                       }
+                                   }}
+                                 >
+                                    {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : 'Resume'}
+                                 </button>
+                              </div>
+                            </td>
+                          </tr>
                         );
-                    })() : (
-                       <>
-                         <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1">Accepted</span>
-                         <span className="text-[15px] font-black text-emerald-700 leading-none truncate">
-                            ${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                         </span>
-                       </>
-                    )}
-                 </div>
-
-                 {/* COL 4: Owner */}
-                 <div className="w-[140px] shrink-0 hidden lg:flex items-center">
-                    {proposal.user_profiles?.full_name ? (
-                       <div className="flex items-center gap-2 overflow-hidden bg-white py-1 px-2 rounded-md border border-slate-200 shadow-sm max-w-[140px]">
-                          <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-black uppercase shrink-0">
-                             {proposal.user_profiles.full_name.charAt(0)}
-                          </div>
-                          <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wide truncate">{proposal.user_profiles.full_name.split('@')[0]}</span>
-                       </div>
-                    ) : (
-                       <span className="text-[11px] font-bold text-slate-400 italic">Unassigned</span>
-                    )}
-                 </div>
-
-                 {/* COL 5: Actions */}
-                 <div className="w-[280px] shrink-0 flex items-center justify-end gap-3 flex-nowrap">
-                    {/* Hover Utilities */}
-                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
-                       {proposal.status !== 'Approved' && (
-                          <>
-                             <button className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors" onClick={() => handleEditOpen(proposal)} title="Edit Details"><Edit2 size={16} /></button>
-                             <button className="p-1.5 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Delete"><Trash2 size={16} /></button>
-                          </>
-                       )}
-                    </div>
-
-                    {/* Email/Copy/Link Group */}
-                    <div className="flex items-center border border-slate-200 rounded-lg shrink-0 bg-white shadow-sm overflow-hidden min-w-max">
-                       <button onClick={() => handleMailto(proposal)} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors border-r border-slate-200" title="Email Client"><Mail size={16} /></button>
-                       <button onClick={() => handleCopyMessage(proposal)} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors border-r border-slate-200" title="Copy Message"><Copy size={16} /></button>
-                       <button onClick={() => handleCopyLink(proposal)} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors" title="Copy Link"><Link size={16} /></button>
-                    </div>
-
-                    {/* Main Action Button */}
-                    <button 
-                      className={`flex items-center justify-center gap-1.5 text-[13px] font-black py-2.5 rounded-lg shrink-0 w-[110px] shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none ${proposal.status === 'Approved' ? 'bg-emerald-500 text-white hover:bg-emerald-600 focus:ring-emerald-500 border border-emerald-600' : 'bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900 border border-slate-900'}`}
-                      onClick={() => {
-                          if (proposal.status === 'Approved') {
-                             const matchedTierName = ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers[t]?.salesPrice === proposal.amount) || 'good';
-                             const matchedTierData = proposal.proposal_data?.tiers[matchedTierName];
-                             setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
-                          } else {
-                             setViewingProposal(proposal);
-                          }
-                      }}
-                    >
-                       {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : 'Resume'}
-                    </button>
-                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  })()}
-</div>
+                      })}
+                   </tbody>
+                 </table>
+               </div>
+             </div>
+           );
+         })()}
+       </div>
 
       {/* Edit Proposal Modal */}
       <Modal isOpen={!!editingProposal} onClose={() => setEditingProposal(null)} title={`Edit Proposal ${editingProposal?.id}`}>

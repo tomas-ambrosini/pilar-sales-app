@@ -97,49 +97,74 @@ function CustomerList() {
         />
       </div>
 
-      <div className="customers-list">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-6 mb-16">
         {customers.length === 0 ? (
-          <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ marginBottom: '1rem', color: 'var(--color-slate-300)', background: 'var(--color-slate-50)', padding: '1rem', borderRadius: '50%' }}>
-              <UserIcon size={48} />
+          <div className="p-12 text-center flex flex-col items-center">
+            <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
+              <UserIcon size={32} />
             </div>
-            <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-slate-800)', fontSize: '1.25rem', fontWeight: 'bold' }}>No customers yet</h3>
-            <p style={{ color: 'var(--color-slate-500)', marginBottom: '2rem', fontSize: '0.95rem' }}>Create your first customer profile to start generating quotes.</p>
-            <button className="primary-action-btn" onClick={() => setIsAddCustomerOpen(true)}>
-              <Plus size={18} /> Add Your First Customer
+            <h3 className="text-lg font-bold text-slate-900 mb-1">No customers yet</h3>
+            <p className="text-slate-500 mb-6">Create your first customer profile to start generating quotes.</p>
+            <button className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2" onClick={() => setIsAddCustomerOpen(true)}>
+              <Plus size={16} /> Add Your First Customer
             </button>
           </div>
         ) : (
-          customers
-           .filter(c => {
-               const sq = searchQuery.toLowerCase();
-             return (
-                 (c.name && c.name.toLowerCase().includes(sq)) || 
-                 (c.address && c.address.toLowerCase().includes(sq)) || 
-                 (c.phone && c.phone.includes(sq)) ||
-                 (c.email && c.email.toLowerCase().includes(sq))
-             );
-         })
-         .sort((a,b) => a.name.localeCompare(b.name))
-         .map(customer => (
-          <div
-            key={customer.id}
-            className="customer-card glass-panel"
-            onClick={() => navigate(`/customers/${customer.id}`)}
-          >
-            <div className="customer-avatar">
-              {customer.name.charAt(0)}
-            </div>
-            <div className="customer-info" style={{ flex: 1 }}>
-              <h3 className="customer-name">{customer.name}</h3>
-              <div className="customer-meta">
-                <MapPin size={14} />
-                <span>{customer.address}</span>
-              </div>
-            </div>
-            <ChevronRight size={20} className="chevron-icon" />
-          </div>
-        )))}
+          <table className="w-full text-left border-collapse">
+            <thead>
+               <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  <th className="p-4 px-6 font-medium">Customer Name</th>
+                  <th className="p-4 px-6 font-medium">Contact</th>
+                  <th className="p-4 px-6 font-medium">Service Address</th>
+                  <th className="p-4 px-6 font-medium text-right"></th>
+               </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+               {customers
+                 .filter(c => {
+                     const sq = searchQuery.toLowerCase();
+                     return (
+                         (c.name && c.name.toLowerCase().includes(sq)) || 
+                         (c.address && c.address.toLowerCase().includes(sq)) || 
+                         (c.phone && c.phone.includes(sq)) ||
+                         (c.email && c.email.toLowerCase().includes(sq))
+                     );
+                 })
+                 .sort((a,b) => a.name.localeCompare(b.name))
+                 .map(customer => (
+                 <tr
+                   key={customer.id}
+                   className="hover:bg-slate-50 transition-colors cursor-pointer group"
+                   onClick={() => navigate(`/customers/${customer.id}`)}
+                 >
+                   <td className="p-4 px-6">
+                     <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs">
+                          {(customer.name?.charAt(0) || 'C').toUpperCase()}
+                       </div>
+                       <div className="font-bold text-slate-900">{customer.name}</div>
+                     </div>
+                   </td>
+                   <td className="p-4 px-6">
+                     <div className="flex flex-col gap-1">
+                        {customer.phone && <div className="text-sm text-slate-600 flex items-center gap-1.5"><Phone size={12} className="text-slate-400"/> {customer.phone}</div>}
+                        {customer.email && <div className="text-sm text-slate-600 flex items-center gap-1.5"><Mail size={12} className="text-slate-400"/> {customer.email}</div>}
+                     </div>
+                   </td>
+                   <td className="p-4 px-6">
+                      <div className="text-sm text-slate-600 flex items-center gap-1.5">
+                         <MapPin size={14} className="text-slate-400 group-hover:text-primary-500 transition-colors"/> 
+                         {customer.address || <span className="italic text-slate-400">No address recorded</span>}
+                      </div>
+                   </td>
+                   <td className="p-4 px-6 text-right">
+                     <ChevronRight size={16} className="text-slate-300 group-hover:text-primary-600 transition-colors inline-block" />
+                   </td>
+                 </tr>
+               ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       <Modal
