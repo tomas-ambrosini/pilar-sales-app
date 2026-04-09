@@ -19,9 +19,11 @@
     visibility: visible;
   }
   
-  /* Position natively inside the physical paper */
+  /* Position it perfectly at the top left of the physical paper */
   .printable-contract {
-    position: relative;
+    position: absolute;
+    left: 0;
+    top: 0;
     width: 100%;
     margin: 0;
     padding: 0;
