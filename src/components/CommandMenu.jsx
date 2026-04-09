@@ -4,15 +4,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Settings, LogOut, ArrowRight, UserCheck } from 'lucide-react';
 import { useCustomers } from '../context/CustomerContext';
 import { useProposals } from '../context/ProposalContext';
+import { useRole, ROLES } from '../context/RoleContext';
 
 const STATIC_COMMANDS = [
-  { id: 'dash', name: 'Go to Dashboard', icon: LayoutDashboard, route: '/dashboard', section: 'Navigation' },
-  { id: 'pipe', name: 'Open Sales Pipeline', icon: ClipboardList, route: '/sales-pipeline', section: 'Navigation' },
-  { id: 'cust', name: 'View Customers', icon: Users, route: '/customers', section: 'Navigation' },
-  { id: 'cat', name: 'Equipment Catalog', icon: BookOpen, route: '/catalog', section: 'Navigation' },
-  { id: 'prop', name: 'Create New Proposal', icon: FileCheck, route: '/proposals?action=new', section: 'Actions' },
-  { id: 'addcust', name: 'Add New Customer', icon: Users, route: '/customers?action=new', section: 'Actions' },
-  { id: 'settings', name: 'Operations & Settings', icon: Settings, route: '/operations', section: 'System' },
+  { id: 'dash', name: 'Go to Home', icon: LayoutDashboard, route: '/', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
+  { id: 'cust', name: 'View Customers', icon: Users, route: '/customers', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
+  { id: 'addcust', name: 'Add New Customer', icon: Users, route: '/customers?action=new', section: 'Actions', allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
+  { id: 'prop_list', name: 'View Proposals', icon: FileCheck, route: '/proposals', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
+  { id: 'prop', name: 'Create New Proposal', icon: FileCheck, route: '/proposals?action=new', section: 'Actions', allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
+  { id: 'cat', name: 'Equipment Catalog', icon: BookOpen, route: '/catalog', section: 'Navigation', allowedRoles: [ROLES.ADMIN] },
+  { id: 'pipe', name: 'Pipeline Ops (Legacy)', icon: ClipboardList, route: '/pipeline', section: 'Navigation', allowedRoles: [ROLES.ADMIN] },
+  { id: 'settings', name: 'Account Management', icon: Settings, route: '/account-management', section: 'System', allowedRoles: [ROLES.ADMIN] },
 ];
 
 export default function CommandMenu({ isOpen, setIsOpen }) {
@@ -21,6 +23,7 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
   const inputRef = useRef(null);
   const { customers } = useCustomers();
   const { proposals } = useProposals();
+  const { activeRole } = useRole();
   const navigate = useNavigate();
 
   // Keyboard Event Listeners for Cmd+K and Navigation
@@ -52,10 +55,13 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
   }, [isOpen]);
 
   const getDynamicResults = () => {
-    if (!query) return STATIC_COMMANDS;
+    // Filter statically allowed commands based on active role
+    const availableStatic = STATIC_COMMANDS.filter(cmd => cmd.allowedRoles.includes(activeRole));
+    
+    if (!query) return availableStatic;
     
     const q = query.toLowerCase();
-    const staticMatches = STATIC_COMMANDS.filter(cmd => cmd.name.toLowerCase().includes(q));
+    const staticMatches = availableStatic.filter(cmd => cmd.name.toLowerCase().includes(q));
     
     const customerMatches = customers
       .filter(c => c.name.toLowerCase().includes(q) || (c.phone && c.phone.includes(q)))
