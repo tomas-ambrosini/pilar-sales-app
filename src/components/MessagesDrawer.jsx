@@ -282,22 +282,30 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
 
   const handleCreateChannel = async () => {
     if (!newChannelName.trim()) return;
-    const { data, error } = await supabase.from('chat_channels').insert([{
+    
+    const newId = crypto.randomUUID();
+    const isDirect = newChannelIsPrivate;
+    const channelPayload = {
+      id: newId,
       name: newChannelName.toLowerCase().replace(/\s+/g, '-'),
-      channel_type: newChannelIsPrivate ? 'direct' : 'group',
+      channel_type: isDirect ? 'direct' : 'group',
       created_by: user.id
-    }]).select();
+    };
 
-    if (!error && data) {
-      if (newChannelIsPrivate) {
+    const { error } = await supabase.from('chat_channels').insert([channelPayload]);
+
+    if (!error) {
+      if (isDirect) {
         await supabase.from('channel_members').insert([
-          { channel_id: data[0].id, user_id: user.id }
+          { channel_id: newId, user_id: user.id }
         ]);
       }
-      setChannels(prev => [...prev, data[0]]);
-      setActiveChannelId(data[0].id);
+      setChannels(prev => [...prev, channelPayload]);
+      setActiveChannelId(newId);
       setViewState('chat');
       setNewChannelName('');
+    } else {
+      console.error("Error creating channel", error);
     }
   };
 
@@ -309,19 +317,23 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     let existingChannel = channels.find(c => c.name === dmName);
     
     if (!existingChannel) {
-      const { data, error } = await supabase.from('chat_channels').insert([{
+      const newId = crypto.randomUUID();
+      const { error } = await supabase.from('chat_channels').insert([{
+        id: newId,
         name: dmName,
         channel_type: 'direct',
         created_by: user.id
-      }]).select();
+      }]);
 
-      if (!error && data) {
+      if (!error) {
         await supabase.from('channel_members').insert([
-          { channel_id: data[0].id, user_id: user.id },
-          { channel_id: data[0].id, user_id: targetUser.id }
+          { channel_id: newId, user_id: user.id },
+          { channel_id: newId, user_id: targetUser.id }
         ]);
-        existingChannel = data[0];
+        existingChannel = { id: newId, name: dmName, channel_type: 'direct', created_by: user.id };
         setChannels(prev => [...prev, existingChannel]);
+      } else {
+        console.error("error creating dm", error);
       }
     }
 
