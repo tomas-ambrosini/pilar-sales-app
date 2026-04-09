@@ -198,13 +198,13 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                     {/* Company Signature Box */}
                     <div className="border-r border-slate-300 flex flex-col">
                         <div className="bg-[#e2e8f0] text-slate-700 font-bold px-3 py-1.5 border-b border-slate-300">Company Signature</div>
-                        <div className="p-4 h-28 flex flex-col justify-between">
-                           <div className="font-[cursive] text-2xl text-slate-800 opacity-60 h-10 flex items-end px-2">
-                               Pilar Home
+                        <div className="p-4 pt-6 h-36 flex flex-col justify-end">
+                           <div className="relative w-full border-b border-slate-400 mb-4 h-16 flex items-end pb-1">
+                               <span className="font-[cursive] text-2xl text-slate-800 opacity-60 px-2 absolute bottom-0">Pilar Home</span>
                            </div>
-                           <div className="flex items-end gap-2 text-slate-500 font-bold mt-2 w-48">
+                           <div className="flex items-end gap-2 text-slate-500 font-bold w-full">
                                <span>Date:</span>
-                               <span className="flex-1 border-b border-slate-400 font-normal text-slate-600 text-center">
+                               <span className="flex-1 border-b border-slate-400 font-normal text-slate-600 text-center px-2">
                                     {proposal.status === 'Approved' ? new Date(proposal.updated_at || proposal.created_at).toLocaleDateString() : ''}
                                </span>
                            </div>
@@ -213,17 +213,17 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                     {/* Client Signature Box */}
                     <div className="flex flex-col">
                         <div className="bg-[#e2e8f0] text-slate-700 font-bold px-3 py-1.5 border-b border-slate-300">Client Signature</div>
-                        <div className="p-4 h-28 flex flex-col justify-between">
-                           <div className="h-10 flex items-end">
+                        <div className="p-4 pt-6 h-36 flex flex-col justify-end">
+                           <div className="relative w-full border-b border-slate-400 mb-4 h-16 flex items-end pb-1">
                                {(proposal.proposal_data?.signature_data || proposal.signature_data) ? (
-                                   <img src={proposal.proposal_data?.signature_data || proposal.signature_data} alt="Customer Signature" className="h-12 w-auto object-contain mix-blend-multiply -ml-2"/>
+                                   <img src={proposal.proposal_data?.signature_data || proposal.signature_data} alt="Customer Signature" className="h-10 w-auto object-contain mix-blend-multiply absolute bottom-0 left-2"/>
                                ) : (
-                                   <div className="text-emerald-600 font-bold bg-emerald-50 px-2 rounded border border-emerald-200 text-[9px] py-1 flex items-center gap-1 w-fit"><Pen size={10}/> Legally Binding E-Signature</div>
+                                   <div className="text-emerald-600 font-bold bg-emerald-50 px-2 rounded border border-emerald-200 text-[9px] py-1 flex items-center gap-1 w-fit absolute bottom-1 left-2"><Pen size={10}/> Legally Binding E-Signature</div>
                                )}
                            </div>
-                           <div className="flex items-end gap-2 text-slate-800 font-bold w-48 mt-2">
+                           <div className="flex items-end gap-2 text-slate-800 font-bold w-full">
                                <span>Date:</span>
-                               <span className="flex-1 border-b border-slate-400 font-normal text-slate-600 text-center">
+                               <span className="flex-1 border-b border-slate-400 font-normal text-slate-600 text-center px-2">
                                     {(proposal.proposal_data?.signature_data || proposal.signature_data) ? new Date(proposal.updated_at || proposal.created_at).toLocaleDateString() : ''}
                                </span>
                            </div>
