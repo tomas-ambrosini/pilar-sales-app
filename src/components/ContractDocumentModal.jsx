@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, Printer, ShieldCheck, Pen } from 'lucide-react';
 import './ContractDocumentModal.css';
 
@@ -11,7 +12,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
       window.print();
    };
 
-   return (
+   return createPortal(
       <div className={`fixed inset-0 z-[100] flex items-center justify-center transition-all duration-300 print:static print:block print:inset-auto ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
          {/* Print Backdrop */}
          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm print:hidden" onClick={onClose}></div>
@@ -149,6 +150,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                </div>
             </div>
          </div>
-      </div>
+      </div>,
+      document.body
    );
 }
