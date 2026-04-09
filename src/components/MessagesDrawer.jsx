@@ -178,7 +178,10 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                 newMessage.sender = userData;
               }
 
-              setMessages(prev => [...prev, newMessage]);
+              setMessages(prev => {
+                if (prev.some(m => m.id === newMessage.id)) return prev;
+                return [...prev, newMessage];
+              });
               scrollToBottom();
 
               // Mark as read immediately
@@ -225,10 +228,25 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
       .subscribe();
 
     const presenceChannel = supabase.channel(`presence_${activeChannelId}`, {
-      config: { presence: { key: user?.id } }
+      config: { presence: { key: user?.id }, broadcast: { self: false } }
     });
 
     presenceChannel
+      .on('broadcast', { event: 'new_message' }, ({ payload }) => {
+         console.log("🔥 NATIVE BROADCAST RECEIVED 🔥", payload);
+         if (payload.sender_id !== user?.id) {
+             setMessages(prev => {
+                if (prev.some(m => m.id === payload.id)) return prev;
+                return [...prev, payload];
+             });
+             scrollToBottom();
+             supabase.from('channel_members').upsert({ 
+               channel_id: activeChannelId, 
+               user_id: user.id,
+               last_read_at: new Date().toISOString() 
+             }, { onConflict: 'channel_id,user_id' }).then();
+         }
+      })
       .on('presence', { event: 'sync' }, () => {
         const state = presenceChannel.presenceState();
         const currentlyTyping = [];
@@ -429,10 +447,18 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     clearAttachment();
     scrollToBottom();
 
-    const { error } = await supabase.from('chat_messages').insert([newMsg]);
+    const { data: insertedData, error } = await supabase.from('chat_messages').insert([newMsg]).select().single();
     if (error) {
        console.error("Error sending message", error);
        alert("Failed to send message over websocket: " + error.message);
+    } else {
+       if (presenceChannelRef.current) {
+          presenceChannelRef.current.send({
+             type: 'broadcast',
+             event: 'new_message',
+             payload: { ...insertedData, sender: optimisticMsg.sender }
+          });
+       }
     }
     setIsUploading(false);
     
