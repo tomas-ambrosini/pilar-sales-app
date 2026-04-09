@@ -13,12 +13,12 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
    };
 
    return createPortal(
-      <div className={`fixed inset-0 z-[100] flex flex-col items-center transition-all duration-300 print:static print:block print:inset-auto ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-300 print:static print:block print:inset-auto ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
          {/* Print Backdrop */}
          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm print:hidden" onClick={onClose}></div>
          
          {/* Top Action Bar (Hidden on print) */}
-         <div className="w-full shrink-0 p-4 flex justify-between items-center z-10 print:hidden bg-slate-900/80 backdrop-blur border-b border-slate-700 shadow-xl">
+         <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 print:hidden bg-slate-900/80 backdrop-blur border-b border-slate-700 shadow-xl">
              <div className="text-white flex items-center gap-2">
                 <ShieldCheck className="text-emerald-400" />
                 <span className="font-bold tracking-widest text-sm uppercase">Official Contract Generated</span>
@@ -34,10 +34,10 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
          </div>
 
          {/* The 8.5x11 Paper Container */}
-         <div className="printable-contract relative bg-white shadow-2xl overflow-y-auto w-full max-w-[850px] mx-auto flex flex-col print:block my-6 print:m-0 shrink">
+         <div className="printable-contract relative bg-white shadow-2xl overflow-y-auto w-full max-w-[850px] mx-auto flex flex-col print:block mt-24 mb-12 shrink max-h-[calc(100vh-140px)] print:max-h-none print:m-0">
             
             {/* Header / Letterhead */}
-            <div className="flex justify-between items-start border-b-4 border-slate-800 p-8 pb-4 mb-6">
+            <div className="flex justify-between items-start border-b-4 border-slate-800 p-8 pb-4 mb-4">
                 <div>
                    <h1 className="text-4xl font-black text-slate-900 tracking-tighter margin-0 leading-none">Pilar Home</h1>
                    <h2 className="text-lg font-bold text-primary-600 uppercase tracking-widest mt-1">Services Inc.</h2>
@@ -52,7 +52,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
 
             <div className="px-8 flex-1">
                {/* Client Info Grid */}
-               <div className="flex gap-8 mb-6">
+               <div className="flex gap-6 mb-4">
                    <div className="flex-1">
                       <h4 className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 border-b border-slate-200 pb-1">Billed To</h4>
                       <p className="font-bold text-slate-800 text-lg mb-1">{proposal.customer}</p>
@@ -68,7 +68,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                {/* Itemized Scope of Work */}
                <h4 className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 border-b border-slate-200 pb-1">Scope of Work: System Replacement</h4>
                
-               <table className="w-full text-left mb-4">
+               <table className="w-full text-left mb-2">
                    <thead>
                       <tr className="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider">
                          <th className="py-2 px-3 font-bold">Description</th>
@@ -96,7 +96,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                    </tbody>
                </table>
 
-               <div className="flex justify-end mb-6">
+               <div className="flex justify-end mb-4">
                    <div className="w-64">
                        <div className="flex justify-between py-2 border-b border-slate-200 text-sm font-bold text-slate-600">
                           <span>Subtotal</span>
@@ -114,14 +114,14 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                </div>
 
                {/* Legal & Warranty */}
-               <div className="bg-slate-50 p-4 rounded text-[9px] text-slate-500 space-y-1.5 mb-6 leading-relaxed border border-slate-200">
+               <div className="bg-slate-50 p-4 rounded text-[9px] text-slate-500 space-y-1 mb-4 leading-relaxed border border-slate-200">
                   <p><strong>STANDARD WARRANTY:</strong> Pilar Services Inc. provides a 1-year comprehensive labor warranty on all new installations. Manufacturer warranties apply (typically 10-year parts on registered equipment). Liability for circumstantial property damage due to pre-existing conditions (e.g., electrical faults, structural rot) is expressly waived.</p>
                   <p><strong>EPA COMPLIANCE:</strong> All refrigerant handling strictly follows Section 608 of the Clean Air Act. Equipment sizing is based on Manual J calculations standard to Florida Building Code.</p>
                   <p><strong>AUTHORIZATION:</strong> By digital acceptance, the authorizing party represents authority to contract improvements on the specified property. A mechanic's lien may be executed for failure to remit final payment.</p>
                </div>
                
                {/* Digital Signature Block */}
-               <div className="flex justify-between items-end border-t border-slate-300 pt-6 pb-6">
+               <div className="flex justify-between items-end border-t border-slate-300 pt-4 pb-4">
                    <div className="flex-1 max-w-sm">
                       <div className="relative mb-2 h-20 flex items-end">
                          {(proposal.proposal_data?.signature_data || proposal.signature_data) ? (
