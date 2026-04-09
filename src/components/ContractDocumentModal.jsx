@@ -34,121 +34,184 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
          </div>
 
          {/* The 8.5x11 Paper Container */}
-         <div className="printable-contract relative bg-white shadow-2xl overflow-y-auto w-full max-w-[850px] mx-auto flex flex-col print:block mt-24 mb-12 shrink max-h-[calc(100vh-140px)] print:max-h-none print:m-0">
+         <div className="printable-contract relative bg-white shadow-2xl overflow-y-auto w-full max-w-[850px] mx-auto flex flex-col print:block mt-24 mb-12 shrink max-h-[calc(100vh-140px)] print:max-h-none print:m-0 text-slate-800 text-[11px] leading-relaxed">
+            {/* Page padding */}
+            <div className="p-8">
             
-            {/* Header / Letterhead */}
-            <div className="flex justify-between items-start border-b-4 border-slate-800 p-8 pb-4 mb-4">
-                <div>
-                   <h1 className="text-4xl font-black text-slate-900 tracking-tighter margin-0 leading-none">Pilar Home</h1>
-                   <h2 className="text-lg font-bold text-primary-600 uppercase tracking-widest mt-1">Services Inc.</h2>
-                   <p className="text-xs text-slate-500 mt-2">123 Corporate Blvd, Ste 100<br/>Miami, FL 33132<br/>Lic #CAC18192348</p>
+                {/* Header Section */}
+                <div className="flex justify-between items-start mb-6">
+                    <div>
+                        <h1 className="text-3xl font-bold mb-2 text-slate-800">Quote # <span className="font-normal text-slate-600 underline decoration-slate-300 underline-offset-4">{proposal?.id?.substring(0, 8).toUpperCase() || '        '}</span></h1>
+                        <div className="flex gap-4 mt-4 font-bold text-slate-700">
+                            <span>Quote #: <span className="border-b border-slate-300 font-normal px-4 text-slate-600">{proposal?.id || '                    '}</span></span>
+                            <span>Date: <span className="border-b border-slate-300 font-normal px-4 text-slate-600">{date}</span></span>
+                        </div>
+                    </div>
+                    <div className="text-right flex items-center justify-end">
+                         <div className="text-primary-600 font-black text-2xl flex items-center gap-1 tracking-tighter">
+                              <span className="text-3xl relative -top-1">^</span> PILAR HOME
+                         </div>
+                    </div>
                 </div>
-                <div className="text-right">
-                   <div className="text-3xl font-black text-slate-200 uppercase tracking-widest mb-2">Contract</div>
-                   <p className="text-sm font-bold text-slate-800">Date: <span className="font-normal text-slate-600">{date}</span></p>
-                   <p className="text-sm font-bold text-slate-800">Job Reference: <span className="font-normal text-slate-600">{proposal?.id || 'N/A'}</span></p>
+
+                {/* Customer / Company Info Grid */}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                    {/* Customer Box */}
+                    <div className="border border-slate-300 rounded overflow-hidden">
+                        <div className="bg-[#e2e8f0] text-slate-700 font-bold px-3 py-1.5 border-b border-slate-300">Customer Info</div>
+                        <div className="p-3 bg-[#f8fafc] flex flex-col gap-2">
+                            <div className="flex border-b border-slate-200 pb-1">
+                                <span className="w-16 text-slate-500">Name:</span> <span className="font-semibold text-slate-800">{proposal.customer}</span>
+                            </div>
+                            <div className="flex border-b border-slate-200 pb-1">
+                                <span className="w-16 text-slate-500">Address:</span> <span className="text-slate-600">(Digital Record)</span>
+                            </div>
+                            <div className="flex border-b border-slate-200 pb-1">
+                                <span className="w-16 text-slate-500">Phone:</span> <span></span>
+                            </div>
+                            <div className="flex pb-1">
+                                <span className="w-16 text-slate-500">Email:</span> <span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Company Box */}
+                    <div className="border border-slate-300 rounded overflow-hidden">
+                        <div className="bg-[#e2e8f0] text-slate-700 font-bold px-3 py-1.5 border-b border-slate-300">Company Info</div>
+                        <div className="p-3 bg-[#f8fafc] flex flex-col gap-2">
+                            <div className="flex border-b border-slate-200 pb-1">
+                                <span className="font-bold text-slate-800">Pilar Home Services Inc.</span>
+                            </div>
+                            <div className="flex border-b border-slate-200 pb-1">
+                                <span className="w-16 text-slate-500">Address:</span> <span className="text-slate-600">123 Corporate Blvd, Ste 100</span>
+                            </div>
+                            <div className="flex border-b border-slate-200 pb-1">
+                                <span className="w-16 text-slate-500">Phone:</span> <span className="text-slate-600">Miami, FL 33132</span>
+                            </div>
+                            <div className="flex pb-1">
+                                <span className="w-16 text-slate-500">Email:</span> <span className="text-slate-600">Lic #CAC18192348</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div className="px-8 flex-1">
-               {/* Client Info Grid */}
-               <div className="flex gap-6 mb-4">
-                   <div className="flex-1">
-                      <h4 className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 border-b border-slate-200 pb-1">Billed To</h4>
-                      <p className="font-bold text-slate-800 text-lg mb-1">{proposal.customer}</p>
-                      <p className="text-sm text-slate-600 block w-48">Service Address strictly binds to customer profile. (Digital Record)</p>
-                   </div>
-                   <div className="flex-1">
-                      <h4 className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 border-b border-slate-200 pb-1">Payment Mechanics</h4>
-                      <p className="font-bold text-slate-800 text-sm">Due On Receipt</p>
-                      <p className="text-sm text-slate-600">Balance required at Completion</p>
-                   </div>
-               </div>
-
-               {/* Itemized Scope of Work */}
-               <h4 className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 border-b border-slate-200 pb-1">Scope of Work: System Replacement</h4>
-               
-               <table className="w-full text-left mb-2">
-                   <thead>
-                      <tr className="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider">
-                         <th className="py-2 px-3 font-bold">Description</th>
-                         <th className="py-2 px-3 font-bold w-24">Qty</th>
-                         <th className="py-2 px-3 font-bold text-right">Amount</th>
-                      </tr>
-                   </thead>
-                   <tbody>
-                      <tr className="border-b border-slate-100">
-                         <td className="py-2 px-3">
-                             <p className="font-bold text-slate-800 text-lg">{tierName} Package Installation</p>
-                             <p className="text-sm text-slate-600 mt-1 font-semibold">{tierData.brand} {tierData.series} • {tierData.tons} Ton System</p>
-                             <ul className="mt-2 pl-4 list-disc text-xs text-slate-500 space-y-1">
-                                {(tierData.features || []).map((feat, i) => (
-                                   <li key={i}>{feat}</li>
-                                ))}
-                                <li>Removal and eco-friendly disposal of existing split system</li>
-                                <li>Refrigerant charging up to 15ft lineset factory specification</li>
-                                <li>Permitting administrative fees (Municipal)</li>
-                             </ul>
-                         </td>
-                         <td className="py-2 px-3 align-top font-bold text-slate-700 pt-2">1</td>
-                         <td className="py-2 px-3 align-top text-right font-bold text-slate-800 pt-2">${(tierData.salesPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                      </tr>
-                   </tbody>
-               </table>
-
-               <div className="flex justify-end mb-4">
-                   <div className="w-64">
-                       <div className="flex justify-between py-2 border-b border-slate-200 text-sm font-bold text-slate-600">
-                          <span>Subtotal</span>
-                          <span>${(tierData.salesPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                       </div>
-                       <div className="flex justify-between py-2 border-b border-slate-200 text-sm font-bold text-slate-600">
-                          <span>Tax (Exempt/Included)</span>
-                          <span>$0.00</span>
-                       </div>
-                       <div className="flex justify-between py-3 text-2xl font-black text-slate-900">
-                          <span>Total</span>
-                          <span>${(tierData.salesPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                       </div>
-                   </div>
-               </div>
-
-               {/* Legal & Warranty */}
-               <div className="bg-slate-50 p-4 rounded text-[9px] text-slate-500 space-y-1 mb-4 leading-relaxed border border-slate-200">
-                  <p><strong>STANDARD WARRANTY:</strong> Pilar Services Inc. provides a 1-year comprehensive labor warranty on all new installations. Manufacturer warranties apply (typically 10-year parts on registered equipment). Liability for circumstantial property damage due to pre-existing conditions (e.g., electrical faults, structural rot) is expressly waived.</p>
-                  <p><strong>EPA COMPLIANCE:</strong> All refrigerant handling strictly follows Section 608 of the Clean Air Act. Equipment sizing is based on Manual J calculations standard to Florida Building Code.</p>
-                  <p><strong>AUTHORIZATION:</strong> By digital acceptance, the authorizing party represents authority to contract improvements on the specified property. A mechanic's lien may be executed for failure to remit final payment.</p>
-               </div>
-               
-               {/* Digital Signature Block */}
-               <div className="flex justify-between items-end border-t border-slate-300 pt-4 pb-4">
-                   <div className="flex-1 max-w-sm">
-                      <div className="relative mb-2 h-20 flex items-end">
-                         {(proposal.proposal_data?.signature_data || proposal.signature_data) ? (
-                             <img src={proposal.proposal_data?.signature_data || proposal.signature_data} alt="Customer Signature" className="absolute bottom-0 left-0 h-24 w-auto object-contain mix-blend-multiply" />
-                         ) : (
-                             <>
-                                <div className="absolute inset-0 flex items-center justify-center opacity-10 font-[cursive] text-4xl whitespace-nowrap overflow-hidden pointer-events-none text-slate-900 w-[200%] -ml-[50%]">
-                                    {proposal.customer} {proposal.customer}
+                {/* Unit Info Box */}
+                <div className="border border-slate-300 rounded overflow-hidden mb-4">
+                    <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
+                        <div className="flex-1 px-3 py-1.5 border-r border-slate-300">Unit Info</div>
+                        <div className="w-32 px-3 py-1.5 text-center">Price</div>
+                    </div>
+                    <div className="flex bg-[#f8fafc]">
+                        <div className="flex-1 p-3 flex">
+                            <div className="flex-1 flex flex-col justify-between pr-4">
+                                <div className="flex border-b border-slate-200 pb-1">
+                                    <span className="w-20 text-slate-500">Model:</span> <span className="font-bold text-slate-800">{tierName} Package</span>
                                 </div>
-                                <div className="relative z-10 flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 w-fit px-3 py-1 rounded border border-emerald-200 mb-2">
-                                   <Pen size={14} /> Legally Binding E-Signature
+                                <div className="flex border-b border-slate-200 pb-1">
+                                    <span className="w-20 text-slate-500">Serial:</span> <span></span>
                                 </div>
-                             </>
-                         )}
-                      </div>
-                      <div className="h-0.5 bg-slate-800 w-full mb-2"></div>
-                      <p className="text-xs font-bold text-slate-800">Customer Authorization</p>
-                      <p className="text-[10px] text-slate-500 font-mono mt-1">IP: 104.28.192.1 • {new Date().toLocaleString()}</p>
+                                <div className="flex border-b border-slate-200 pb-1">
+                                    <span className="w-20 text-slate-500">Efficiency:</span> <span className="text-slate-600">Highest Ratings</span>
+                                </div>
+                                <div className="flex border-b border-slate-200 pb-1">
+                                    <span className="w-20 text-slate-500">Brand:</span> <span className="text-slate-600">{tierData.brand} {tierData.series}</span>
+                                </div>
+                                <div className="flex border-b border-slate-200 pb-1">
+                                    <span className="w-20 text-slate-500">Dimensions:</span> <span className="text-slate-600">{tierData.tons} Ton System</span>
+                                </div>
+                                <div className="flex pb-1">
+                                    <span className="w-20 text-slate-500">Type of Unit:</span> <span className="text-slate-600">System Replacement</span>
+                                </div>
+                            </div>
+                            {/* Photo Placeholder */}
+                            <div className="w-40 border border-slate-300 bg-[#e2e8f0]/40 flex items-center justify-center text-slate-400 font-bold tracking-widest rounded mx-2 my-1">
+                                PHOTO
+                            </div>
+                        </div>
+                        <div className="w-32 border-l border-slate-300 flex flex-col justify-end pb-3 text-center bg-[#f8fafc]">
+                            <div className="px-3 flex items-center text-slate-500 gap-1 font-bold">
+                                $ <span className="flex-1 border-b border-slate-400"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Materials & Labor */}
+                <div className="border border-slate-300 rounded overflow-hidden mb-4">
+                     <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
+                        <div className="flex-1 px-3 py-1.5 border-r border-slate-300">Materials & Labor / Subs needed</div>
+                        <div className="w-32 px-3 py-1.5 text-center">Price</div>
+                    </div>
+                    <div className="flex flex-col bg-[#f8fafc]">
+                         {[...(tierData.features || []), 'Removal / Disposal', 'Refrigerant', 'Permitting']
+                          .slice(0, 4)
+                          .map((f, i) => (
+                            <div key={i} className="flex border-b border-slate-200">
+                                 <div className="flex-1 px-3 py-2 border-r border-slate-300 flex items-center gap-2 text-slate-600">
+                                     <div className="w-1 h-1 bg-slate-500 rounded-full shrink-0"></div>
+                                     {f}
+                                 </div>
+                                 <div className="w-32 px-3 py-2 flex items-center justify-start gap-1 font-bold text-slate-500">
+                                     $ <span className="flex-1 border-b border-slate-300"></span>
+                                 </div>
+                            </div>
+                         ))}
+                         
+                         {/* Total Row */}
+                         <div className="flex font-bold text-slate-800">
+                              <div className="flex-1 px-3 py-2 border-r border-slate-300 text-right uppercase text-[10px] tracking-wider text-slate-600">Total:</div>
+                              <div className="w-32 px-3 py-2 flex items-center justify-start gap-1 bg-[#e2e8f0]/30 border-t border-slate-300">
+                                  $ <span className="flex-1 border-b border-transparent">{(tierData.salesPrice || 0).toLocaleString()}</span>
+                              </div>
+                         </div>
+                    </div>
+                </div>
+
+                {/* Exclusions / Legal */}
+                <div className="font-bold text-slate-800 mb-2 mt-4 px-1">Exclusions / Legal:</div>
+                <div className="flex border-b border-slate-200 pb-1 mb-1 text-[9px] text-slate-500">
+                    <span className="w-2 text-center mr-1">•</span> <span className="flex-1">STANDARD WARRANTY: Pilar Services Inc. provides a 1-year comprehensive labor warranty on all new installations. Liability for circumstantial property damage due to pre-existing conditions is expressly waived.</span>
+                </div>
+                <div className="flex border-b border-slate-200 pb-1 mb-1 text-[9px] text-slate-500">
+                    <span className="w-2 text-center mr-1">•</span> <span className="flex-1">EPA COMPLIANCE: All refrigerant handling strictly follows Section 608 of the Clean Air Act. Equipment sizing is based on Manual J calculations standard to Florida Building Code.</span>
+                </div>
+                <div className="flex border-b border-slate-200 pb-1 mb-1 text-[9px] text-slate-500 items-end">
+                   <div className="flex flex-1">
+                      <span className="w-2 text-center mr-1">•</span> <span className="flex-1">AUTHORIZATION: By digital acceptance, the authorizing party represents authority to contract improvements on the specified property. A mechanic's lien may be executed for failure to remit final payment.</span>
                    </div>
-                   
-                   <div className="flex-1 max-w-sm text-right pl-12 flex flex-col justify-end">
-                      <div className="font-[cursive] text-3xl text-slate-800 opacity-60 mb-2">Pilar Home</div>
-                      <div className="h-0.5 bg-slate-800 w-full mb-2"></div>
-                      <p className="text-xs font-bold text-slate-800">Contractor Execution</p>
-                      <p className="text-[10px] text-slate-500 font-mono mt-1 opacity-0 pointer-events-none select-none">Alignment Filler</p>
+                   <div className="w-48 text-right font-bold text-[12px] text-slate-800 shrink-0 ml-4 pb-1">
+                       Total Price: ${(tierData.salesPrice || 0).toLocaleString()}
                    </div>
-               </div>
+                </div>
+
+                {/* Signatures */}
+                <div className="grid grid-cols-2 gap-0 border border-slate-300 rounded overflow-hidden mt-6 bg-[#f8fafc]">
+                    <div className="border-r border-slate-300 flex flex-col">
+                        <div className="bg-[#e2e8f0] text-slate-700 font-bold px-3 py-1.5 border-b border-slate-300">Company Signature</div>
+                        <div className="p-4 h-24 relative flex-1 flex flex-col justify-between">
+                           <div className="font-[cursive] text-2xl text-slate-800 opacity-60">Pilar Home</div>
+                           <div className="flex items-end gap-2 text-slate-500 font-bold mt-4">
+                               <span>Date:</span>
+                               <span className="flex-1 border-b border-slate-400"></span>
+                           </div>
+                        </div>
+                    </div>
+                    <div className="flex flex-col">
+                        <div className="bg-[#e2e8f0] text-slate-700 font-bold px-3 py-1.5 border-b border-slate-300">Client Signature</div>
+                        <div className="p-4 h-24 relative flex-1 flex flex-col justify-end">
+                           {(proposal.proposal_data?.signature_data || proposal.signature_data) ? (
+                               <img src={proposal.proposal_data?.signature_data || proposal.signature_data} alt="Customer Signature" className="h-12 object-contain mb-2 mix-blend-multiply absolute top-2 left-4"/>
+                           ) : (
+                               <div className="absolute top-4 left-4 text-emerald-600 font-bold bg-emerald-50 px-2 rounded border border-emerald-200 text-[9px] py-1 flex items-center gap-1"><Pen size={10}/> Legally Binding E-Signature</div>
+                           )}
+                           <div className="flex items-end gap-2 text-slate-800 font-bold relative z-10">
+                               <span>Date:</span>
+                               <span className="flex-1 border-b border-slate-400 font-normal text-slate-600 px-2">{date}</span>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
          </div>
       </div>,
