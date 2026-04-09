@@ -202,7 +202,15 @@ export default function Layout() {
                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
                  )}
                </button>
-               <NotificationsPanel isOpen={isNotificationsOpen} onClose={() => setNotificationsOpen(false)} />
+               <NotificationsPanel 
+                 isOpen={isNotificationsOpen} 
+                 onClose={() => setNotificationsOpen(false)} 
+                 onOpenChat={(channelId) => {
+                   setForceChannelId(channelId);
+                   setMessagesOpen(true);
+                   setNotificationsOpen(false);
+                 }}
+               />
              </div>
 
              <button className="icon-btn avatar-btn p-0 overflow-hidden border border-slate-200" aria-label="User Profile" title={user?.full_name || user?.name || user?.email} onClick={() => handleOpenModal('Profile Settings')}>

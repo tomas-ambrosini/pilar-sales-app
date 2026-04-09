@@ -21,7 +21,7 @@ function timeAgo(dateString) {
   return Math.floor(seconds) + " secs ago";
 }
 
-export default function NotificationsPanel({ isOpen, onClose }) {
+export default function NotificationsPanel({ isOpen, onClose, onOpenChat }) {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const navigate = useNavigate();
 
@@ -36,11 +36,8 @@ export default function NotificationsPanel({ isOpen, onClose }) {
     if (notification.link) {
       navigate(notification.link);
       onClose();
-    } else if (notification.entity_type === 'chat_channel') {
-      // In MVP, we might broadcast a global event or rely on the user opening the drawer manually if route is complex.
-      // But typically, we navigate to home or maintain a specific chat route if that exists.
-      toast.success("Opening chat...");
-      onClose();
+    } else if (notification.entity_type === 'chat_channel' && onOpenChat) {
+      onOpenChat(notification.entity_id);
     }
   };
 
