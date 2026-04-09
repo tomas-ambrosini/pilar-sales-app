@@ -104,16 +104,23 @@ export default function NotificationsPanel({ isOpen, onClose, onOpenChat }) {
                   <div className="flex-shrink-0 mt-1 relative">
                     {notif.actor?.avatar_url ? (
                       <img src={notif.actor.avatar_url} alt="actor" className="w-10 h-10 rounded-full object-cover shadow-sm border border-slate-200" />
+                    ) : !notif.actor_id ? (
+                      <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-200 shadow-sm">
+                        {getIcon(notif.type)}
+                      </div>
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 shadow-sm">
                         <span className="text-sm font-bold text-slate-400">
-                           {notif.actor?.full_name?.charAt(0) || 'S'}
+                           {notif.actor?.full_name?.charAt(0) || 'U'}
                         </span>
                       </div>
                     )}
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100">
-                      {getIcon(notif.type)}
-                    </div>
+                    
+                    {notif.actor_id && (
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100">
+                        {getIcon(notif.type)}
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex-1 min-w-0">
