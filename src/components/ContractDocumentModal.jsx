@@ -194,39 +194,45 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                 </div>
 
                 {/* Signatures */}
-                <div className="grid grid-cols-2 gap-0 border border-slate-300 rounded overflow-hidden mt-6 bg-[#f8fafc]">
-                    {/* Company Signature Box */}
-                    <div className="border-r border-slate-300 flex flex-col">
-                        <div className="bg-[#e2e8f0] text-slate-700 font-bold px-3 py-1.5 border-b border-slate-300">Company Signature</div>
-                        <div className="p-4 pt-6 h-36 flex flex-col justify-end">
-                           <div className="relative w-full border-b border-slate-400 mb-4 h-16 flex items-end pb-1">
-                               <span className="font-[cursive] text-2xl text-slate-800 opacity-60 px-2 absolute bottom-0">Pilar Home</span>
-                           </div>
-                           <div className="flex items-end gap-2 text-slate-500 font-bold w-full">
-                               <span>Date:</span>
-                               <span className="flex-1 border-b border-slate-400 font-normal text-slate-600 text-center px-2">
-                                    {proposal.status === 'Approved' ? new Date(proposal.updated_at || proposal.created_at).toLocaleDateString() : ''}
-                               </span>
-                           </div>
+                <div className="border border-slate-300 rounded overflow-hidden mt-6 bg-white">
+                    {/* Header Row */}
+                    <div className="grid grid-cols-2 bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
+                        <div className="px-3 py-1.5 border-r border-slate-300">Company Signature</div>
+                        <div className="px-3 py-1.5">Client Signature</div>
+                    </div>
+
+                    {/* Signature Area Row */}
+                    <div className="grid grid-cols-2 border-b border-slate-300 bg-[#f8fafc]">
+                        {/* Company Signature Cell */}
+                        <div className="h-32 border-r border-slate-300 relative flex items-center justify-center p-4 overflow-hidden">
+                           <span className="font-[cursive] text-4xl text-slate-800 opacity-20 transform -rotate-[5deg] select-none">Pilar Home Services</span>
+                        </div>
+                        
+                        {/* Client Signature Cell */}
+                        <div className="h-32 relative flex items-center justify-center p-4">
+                           {(proposal.proposal_data?.signature_data || proposal.signature_data) ? (
+                               <img src={proposal.proposal_data?.signature_data || proposal.signature_data} alt="Customer Signature" className="h-24 w-full object-contain mix-blend-multiply"/>
+                           ) : (
+                               <div className="text-emerald-600 font-bold bg-emerald-50 px-3 rounded border border-emerald-200 text-xs py-1.5 flex items-center gap-1"><Pen size={12}/> Legally Binding E-Signature</div>
+                           )}
                         </div>
                     </div>
-                    {/* Client Signature Box */}
-                    <div className="flex flex-col">
-                        <div className="bg-[#e2e8f0] text-slate-700 font-bold px-3 py-1.5 border-b border-slate-300">Client Signature</div>
-                        <div className="p-4 pt-6 h-36 flex flex-col justify-end">
-                           <div className="relative w-full border-b border-slate-400 mb-4 h-16 flex items-end pb-1">
-                               {(proposal.proposal_data?.signature_data || proposal.signature_data) ? (
-                                   <img src={proposal.proposal_data?.signature_data || proposal.signature_data} alt="Customer Signature" className="h-10 w-auto object-contain mix-blend-multiply absolute bottom-0 left-2"/>
-                               ) : (
-                                   <div className="text-emerald-600 font-bold bg-emerald-50 px-2 rounded border border-emerald-200 text-[9px] py-1 flex items-center gap-1 w-fit absolute bottom-1 left-2"><Pen size={10}/> Legally Binding E-Signature</div>
-                               )}
-                           </div>
-                           <div className="flex items-end gap-2 text-slate-800 font-bold w-full">
-                               <span>Date:</span>
-                               <span className="flex-1 border-b border-slate-400 font-normal text-slate-600 text-center px-2">
-                                    {(proposal.proposal_data?.signature_data || proposal.signature_data) ? new Date(proposal.updated_at || proposal.created_at).toLocaleDateString() : ''}
-                               </span>
-                           </div>
+
+                    {/* Date Block Row */}
+                    <div className="grid grid-cols-2 bg-white">
+                        {/* Company Date Cell */}
+                        <div className="px-4 py-3 border-r border-slate-300 flex items-end gap-2">
+                             <span className="font-bold text-slate-700 text-sm">Date:</span>
+                             <span className="flex-1 border-b border-slate-400 text-center font-bold text-slate-800 text-sm px-2 pb-0.5">
+                                  {proposal.status === 'Approved' ? new Date(proposal.updated_at || proposal.created_at).toLocaleDateString() : ''}
+                             </span>
+                        </div>
+                        {/* Client Date Cell */}
+                        <div className="px-4 py-3 flex items-end gap-2">
+                             <span className="font-bold text-slate-700 text-sm">Date:</span>
+                             <span className="flex-1 border-b border-slate-400 text-center font-bold text-slate-800 text-sm px-2 pb-0.5">
+                                  {(proposal.proposal_data?.signature_data || proposal.signature_data) ? new Date(proposal.updated_at || proposal.created_at).toLocaleDateString() : ''}
+                             </span>
                         </div>
                     </div>
                 </div>
