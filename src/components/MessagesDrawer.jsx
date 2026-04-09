@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNotifications } from '../context/NotificationsContext';
 import './MessagesDrawer.css';
 
-export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearForceChannel }) {
+export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearForceChannel, onUnreadStatusChange }) {
   const { user } = useAuth();
   const { createNotification } = useNotifications() || {};
   const [channels, setChannels] = useState([]);
@@ -109,6 +109,14 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     
     fetchInitialData();
   }, [isOpen, activeChannelId, user?.id]);
+
+  // Sync global unread status up to `<Layout />`
+  useEffect(() => {
+    if (onUnreadStatusChange) {
+      const hasUnread = Object.values(unreadCounts).some(count => count > 0);
+      onUnreadStatusChange(hasUnread);
+    }
+  }, [unreadCounts, onUnreadStatusChange]);
 
   useEffect(() => {
     activeChannelRef.current = activeChannelId;
@@ -755,7 +763,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                               {channel.channel_type === 'direct' ? <Lock size={16} className={`mr-2 ${activeChannelId === channel.id ? 'text-primary-600' : 'text-slate-400'}`} /> : <Hash size={16} className={`mr-2 ${activeChannelId === channel.id ? 'text-primary-600' : 'text-slate-400'}`} />}
                               <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">{channel.name}</span>
                               {unreadCounts[channel.id] > 0 && activeChannelId !== channel.id && (
-                                <span className="drawer-channel-unread">{unreadCounts[channel.id]}</span>
+                                <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{unreadCounts[channel.id]}</span>
                               )}
                             </motion.div>
                          ))}
@@ -793,7 +801,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                               })()}
                               <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">{getChannelDisplayName(channel)}</span>
                               {unreadCounts[channel.id] > 0 && activeChannelId !== channel.id && (
-                                <span className="drawer-channel-unread">{unreadCounts[channel.id]}</span>
+                                <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{unreadCounts[channel.id]}</span>
                               )}
                             </motion.div>
                          ))}

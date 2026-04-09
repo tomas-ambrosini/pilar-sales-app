@@ -281,6 +281,7 @@ export default function Layout() {
         onClose={() => setMessagesOpen(false)} 
         forceChannel={forceChannelId}
         onClearForceChannel={() => setForceChannelId(null)}
+        onUnreadStatusChange={setHasUnreadMessages}
       />
     </div>
   );
