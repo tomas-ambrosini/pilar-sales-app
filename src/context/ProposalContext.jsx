@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { PipelineController } from '../utils/pipelineControls';
+import toast from 'react-hot-toast';
 
 const ProposalContext = createContext(null);
 
@@ -146,16 +147,23 @@ export function ProposalProvider({ children }) {
 
         setProposals(prev => prev.filter(p => p.id !== id));
         
-        // Fully wipe proposal and its generated constraints as requested by testing
+        // Explicitly scrape any nested comments before deleting to bypass newly introduced Postgres foreign key restrictions
+        await supabase.from('proposal_comments').delete().eq('proposal_id', id);
+
+        // Fully wipe proposal first to free up any other foreign key locks
+        const { error } = await supabase.from('proposals').delete().eq('id', id);
+
+        if (error) {
+            console.error('Failed to delete proposal:', error);
+            toast.error(`Database Error: ${error.message}`);
+            fetchProposals();
+            return;
+        }
+
+        // Wipe generated constraints as requested by testing
         if (oppId) {
             await supabase.from('work_orders').delete().eq('opportunity_id', oppId);
             await supabase.from('opportunities').delete().eq('id', oppId);
-        }
-
-        const { error } = await supabase.from('proposals').delete().eq('id', id);
-        if (error) {
-            console.error('Failed to delete proposal:', error);
-            fetchProposals();
         }
     };
 
