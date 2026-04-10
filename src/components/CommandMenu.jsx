@@ -23,6 +23,27 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
   const { proposals } = useProposals();
   const { activeRole } = useRole();
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Clear search on open/close
+  useEffect(() => {
+     if (!isOpen) setSearchQuery('');
+  }, [isOpen]);
+
+  const isSearching = searchQuery.trim().length > 0;
+  const q = searchQuery.toLowerCase();
+
+  const filteredStatic = STATIC_COMMANDS
+     .filter(cmd => cmd.allowedRoles.includes(activeRole))
+     .filter(cmd => !isSearching || cmd.name.toLowerCase().includes(q) || cmd.section.toLowerCase().includes(q));
+
+  const filteredCustomers = isSearching 
+    ? customers.filter(c => c.name?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q)).slice(0, 5)
+    : [];
+
+  const filteredProposals = isSearching
+    ? proposals.filter(p => p.customer?.toLowerCase().includes(q) || p.id?.toLowerCase().includes(q)).slice(0, 5)
+    : [];
 
   // Global Keyboard Event Listener for Cmd+K and Navigation
   useEffect(() => {
@@ -70,6 +91,7 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
             <Command 
                className="flex flex-col w-full h-full text-slate-800 bg-white" 
                loop 
+               shouldFilter={false}
                onKeyDown={(e) => {
                  if (e.key === 'Escape') setIsOpen(false);
                }}
@@ -79,6 +101,8 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
                 <Command.Input 
                   className="w-full bg-transparent text-slate-800 text-lg py-4 border-none outline-none placeholder:text-slate-400 font-medium h-14" 
                   placeholder="What do you need? (e.g. Add Customer...)" 
+                  value={searchQuery}
+                  onValueChange={setSearchQuery}
                 />
                 <div className="hidden sm:flex text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded border border-slate-200 uppercase tracking-widest pointer-events-none shrink-0 ml-2">
                   ESC to close
@@ -93,62 +117,73 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
                   <p className="text-slate-500 font-medium">No results found.</p>
                 </Command.Empty>
 
-                <Command.Group heading="Navigation & Actions" className="px-2 py-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-slate-400 [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest">
-                   {STATIC_COMMANDS.filter(cmd => cmd.allowedRoles.includes(activeRole)).map(cmd => (
-                      <Command.Item
-                         key={cmd.id}
-                         onSelect={() => handleSelect(cmd)}
-                         className="flex items-center gap-3 px-3 py-3 text-sm rounded-lg cursor-pointer data-[selected=true]:bg-primary-50 data-[selected=true]:text-primary-900 text-slate-700 hover:bg-slate-50 transition-colors my-0.5 font-semibold group"
-                      >
-                         <div className="p-1.5 rounded-md bg-slate-100/80 text-slate-500 group-data-[selected=true]:bg-primary-100 group-data-[selected=true]:text-primary-600 transition-colors">
-                            <cmd.icon size={16} />
-                         </div>
-                         <div className="flex flex-col flex-1">
-                            <span>{cmd.name}</span>
-                         </div>
-                      </Command.Item>
-                   ))}
-                </Command.Group>
+                {filteredStatic.length > 0 && (
+                  <Command.Group heading="Navigation & Actions" className="px-2 py-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-slate-400 [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest">
+                     {filteredStatic.map(cmd => (
+                        <Command.Item
+                           key={cmd.id}
+                           value={cmd.id}
+                           onSelect={() => handleSelect(cmd)}
+                           className="flex items-center gap-3 px-3 py-3 text-sm rounded-lg cursor-pointer data-[selected=true]:bg-primary-50 data-[selected=true]:text-primary-900 text-slate-700 hover:bg-slate-50 transition-colors my-0.5 font-semibold group"
+                        >
+                           <div className="p-1.5 rounded-md bg-slate-100/80 text-slate-500 group-data-[selected=true]:bg-primary-100 group-data-[selected=true]:text-primary-600 transition-colors">
+                              <cmd.icon size={16} />
+                           </div>
+                           <div className="flex flex-col flex-1">
+                              <span>{cmd.name}</span>
+                           </div>
+                        </Command.Item>
+                     ))}
+                  </Command.Group>
+                )}
 
-                <Command.Separator className="h-px bg-slate-100 mx-[-8px] my-2" />
-
-                <Command.Group heading="Customers" className="px-2 py-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-slate-400 [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest">
-                   {customers.map(c => (
-                      <Command.Item
-                         key={`c_${c.id}`}
-                         onSelect={() => handleSelect({ route: `/customers/${c.id}` })}
-                         className="flex items-center gap-3 px-3 py-3 text-sm rounded-lg cursor-pointer data-[selected=true]:bg-primary-50 data-[selected=true]:text-primary-900 text-slate-700 hover:bg-slate-50 transition-colors my-0.5 font-semibold group"
-                      >
-                         <div className="p-1.5 rounded-md bg-slate-100/80 text-slate-500 group-data-[selected=true]:bg-primary-100 group-data-[selected=true]:text-primary-600 transition-colors">
-                            <UserCheck size={16} />
-                         </div>
-                         <div className="flex flex-col flex-1">
-                            <span>{c.name}</span>
-                            <span className="text-[10px] font-medium text-slate-400">{c.email || c.phone || 'No contact info'}</span>
-                         </div>
-                      </Command.Item>
-                   ))}
-                </Command.Group>
-
-                <Command.Separator className="h-px bg-slate-100 mx-[-8px] my-2" />
+                {filteredCustomers.length > 0 && (
+                  <>
+                    <Command.Separator className="h-px bg-slate-100 mx-[-8px] my-2" />
+                    <Command.Group heading="Customers" className="px-2 py-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-slate-400 [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest">
+                       {filteredCustomers.map(c => (
+                          <Command.Item
+                             key={`c_${c.id}`}
+                             value={`c_${c.id}`}
+                             onSelect={() => handleSelect({ route: `/customers/${c.id}` })}
+                             className="flex items-center gap-3 px-3 py-3 text-sm rounded-lg cursor-pointer data-[selected=true]:bg-primary-50 data-[selected=true]:text-primary-900 text-slate-700 hover:bg-slate-50 transition-colors my-0.5 font-semibold group"
+                          >
+                             <div className="p-1.5 rounded-md bg-slate-100/80 text-slate-500 group-data-[selected=true]:bg-primary-100 group-data-[selected=true]:text-primary-600 transition-colors">
+                                <UserCheck size={16} />
+                             </div>
+                             <div className="flex flex-col flex-1">
+                                <span>{c.name}</span>
+                                <span className="text-[10px] font-medium text-slate-400">{c.email || c.phone || 'No contact info'}</span>
+                             </div>
+                          </Command.Item>
+                       ))}
+                    </Command.Group>
+                  </>
+                )}
                 
-                <Command.Group heading="Proposals" className="px-2 py-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-slate-400 [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest">
-                   {proposals.map(p => (
-                      <Command.Item
-                         key={`p_${p.id}`}
-                         onSelect={() => handleSelect({ route: `/proposals` })}
-                         className="flex items-center gap-3 px-3 py-3 text-sm rounded-lg cursor-pointer data-[selected=true]:bg-primary-50 data-[selected=true]:text-primary-900 text-slate-700 hover:bg-slate-50 transition-colors my-0.5 font-semibold group"
-                      >
-                         <div className="p-1.5 rounded-md bg-slate-100/80 text-slate-500 group-data-[selected=true]:bg-primary-100 group-data-[selected=true]:text-primary-600 transition-colors">
-                            <FileCheck size={16} />
-                         </div>
-                         <div className="flex flex-col flex-1">
-                            <span>Quote for {p.customer}</span>
-                            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">${p.amount} • {p.status}</span>
-                         </div>
-                      </Command.Item>
-                   ))}
-                </Command.Group>
+                {filteredProposals.length > 0 && (
+                  <>
+                    <Command.Separator className="h-px bg-slate-100 mx-[-8px] my-2" />
+                    <Command.Group heading="Proposals" className="px-2 py-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-slate-400 [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest">
+                       {filteredProposals.map(p => (
+                          <Command.Item
+                             key={`p_${p.id}`}
+                             value={`p_${p.id}`}
+                             onSelect={() => handleSelect({ route: `/proposals` })}
+                             className="flex items-center gap-3 px-3 py-3 text-sm rounded-lg cursor-pointer data-[selected=true]:bg-primary-50 data-[selected=true]:text-primary-900 text-slate-700 hover:bg-slate-50 transition-colors my-0.5 font-semibold group"
+                          >
+                             <div className="p-1.5 rounded-md bg-slate-100/80 text-slate-500 group-data-[selected=true]:bg-primary-100 group-data-[selected=true]:text-primary-600 transition-colors">
+                                <FileCheck size={16} />
+                             </div>
+                             <div className="flex flex-col flex-1">
+                                <span>Quote for {p.customer}</span>
+                                <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">${p.amount} • {p.status}</span>
+                             </div>
+                          </Command.Item>
+                       ))}
+                    </Command.Group>
+                  </>
+                )}
               </Command.List>
 
               {/* Footer Toolbar */}
