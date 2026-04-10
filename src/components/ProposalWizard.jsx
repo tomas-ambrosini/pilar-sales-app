@@ -736,7 +736,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {[ {k: 'best', l: 'Premium (BestTier)', m: margins.best_margin}, {k: 'better', l: 'Core (BetterTier)', m: margins.better_margin}, {k: 'good', l: 'Baseline (GoodTier)', m: margins.good_margin} ].map(tier => {
+                  {[ {k: 'best', l: 'Premium (Best Tier)', m: margins.best_margin}, {k: 'better', l: 'Core (Better Tier)', m: margins.better_margin}, {k: 'good', l: 'Baseline (Good Tier)', m: margins.good_margin} ].map(tier => {
                      const isActive = systems.some(sys => sys.selectedTiers[tier.k]);
                      if (!isActive) return null;
                      
@@ -778,6 +778,26 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                           <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1">Target Retail Baseline</label>
                           <div className="text-2xl font-black text-slate-800">${totalBaselineRetail.toLocaleString()}</div>
                           <div className="text-xs font-bold text-emerald-600 mt-1">Algorithmic Commission: ${baseComm.toLocaleString()}</div>
+                       </div>
+
+                       <div className="space-y-1 mt-2 border-t border-slate-100 pt-3">
+                          <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-2 text-center">Included Systems</label>
+                          {systems.map(sys => {
+                              if (!sys.selectedTiers[tier.k]) return null;
+                              const equip = sys.selectedTiers[tier.k];
+                              return (
+                                  <div key={sys.id} className="bg-slate-50 p-2 rounded border border-slate-200 flex justify-between items-center text-xs">
+                                      <div className="flex flex-col">
+                                          <span className="font-bold text-slate-700">{sys.name}</span>
+                                          <span className="text-[10px] text-slate-500">{equip.brand} - {equip.series}</span>
+                                      </div>
+                                      <div className="text-right flex flex-col items-end">
+                                          <span className="font-mono font-bold text-slate-600">${equip.system_cost?.toLocaleString()}</span>
+                                          <span className="font-mono text-[9px] bg-slate-200 text-slate-500 px-1 py-0.5 rounded leading-none mt-0.5">{equip.tons}T</span>
+                                      </div>
+                                  </div>
+                              )
+                          })}
                        </div>
 
                        <div className="mt-auto pt-4 border-t border-slate-100 relative">
