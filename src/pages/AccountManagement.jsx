@@ -68,15 +68,15 @@ export default function AccountManagement() {
     }
   };
 
-  const handleUpdateStatusRole = async (targetUser, newRole, newStatus) => {
-     if (targetUser.id === user.id && newStatus === 'inactive') {
+  const handleUpdateUser = async (targetUser, fdObj) => {
+     if (targetUser.id === user.id && fdObj.status === 'inactive') {
         toast.error("You cannot deactivate yourself.");
         return;
      }
      
      try {
        toast.loading('Updating account...', { id: 'update' });
-       await invokeAdminAction('updateUser', { targetUserId: targetUser.id, role: newRole, status: newStatus });
+       await invokeAdminAction('updateUser', { targetUserId: targetUser.id, ...fdObj });
        toast.success('Account updated!', { id: 'update' });
        setShowEditModal(null);
        fetchUsers();
@@ -233,8 +233,17 @@ export default function AccountManagement() {
                <form onSubmit={(e) => {
                   e.preventDefault();
                   const fd = new FormData(e.target);
-                  handleUpdateStatusRole(showEditModal, fd.get('role'), fd.get('status'));
+                  const fdObj = Object.fromEntries(fd.entries());
+                  handleUpdateUser(showEditModal, fdObj);
                }} className="space-y-4">
+                  <div>
+                     <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
+                     <input type="text" name="full_name" defaultValue={showEditModal.full_name} required className="w-full border rounded p-2 text-sm font-semibold" />
+                  </div>
+                  <div>
+                     <label className="text-xs font-bold text-slate-500 uppercase">Username (Optional)</label>
+                     <input type="text" name="username" defaultValue={showEditModal.username || ''} className="w-full border rounded p-2 text-sm font-semibold" />
+                  </div>
                   <div>
                      <label className="text-xs font-bold text-slate-500 uppercase">Account Role</label>
                      <select name="role" defaultValue={showEditModal.role} className="w-full border rounded p-2 text-sm font-bold">

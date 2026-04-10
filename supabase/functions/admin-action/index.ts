@@ -79,15 +79,19 @@ serve(async (req) => {
     }
 
     if (action === 'updateUser') {
-       const { targetUserId, role, status } = payload;
+       const { targetUserId, role, status, full_name, username } = payload;
 
        // Safeguard: Cannot deactivate self
        if (targetUserId === user.id && status === 'inactive') {
           throw new Error('Self-lockout safeguard: You cannot deactivate your own account.');
        }
 
+       const updatePayload: any = { role, status };
+       if (full_name !== undefined) updatePayload.full_name = full_name;
+       if (username !== undefined) updatePayload.username = username;
+
        const { error: updateError } = await supabaseAdmin.from('user_profiles')
-          .update({ role, status })
+          .update(updatePayload)
           .eq('id', targetUserId);
           
        if (updateError) throw updateError;
