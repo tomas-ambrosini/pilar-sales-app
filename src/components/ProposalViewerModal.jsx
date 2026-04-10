@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, CheckCircle, Shield, Wind, Droplets, ArrowRight, FileText } from 'lucide-react';
+import { X, CheckCircle, Shield, Wind, Droplets, ArrowRight, FileText, AlertTriangle } from 'lucide-react';
 import Modal from './Modal';
 
 export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccept, onViewContract }) {
