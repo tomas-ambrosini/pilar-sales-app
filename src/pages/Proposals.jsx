@@ -355,7 +355,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                        <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
                          <th className="p-4 px-6 font-medium text-left">Customer / ID</th>
                          <th className="p-4 px-6 font-medium text-center">Status</th>
-                         <th className="p-4 px-6 font-medium text-right">Est. Value</th>
+                         <th className="p-4 px-6 font-medium text-left">Est. Value</th>
                          <th className="p-4 px-6 font-medium text-left hidden lg:table-cell">Rep Owner</th>
                          <th className="p-4 px-6 font-medium text-right">Actions</th>
                        </tr>
@@ -398,7 +398,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                      <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
                        <th className="p-4 px-6 font-medium text-left">Customer / ID</th>
                        <th className="p-4 px-6 font-medium text-center">Status</th>
-                       <th className="p-4 px-6 font-medium text-right">Est. Value</th>
+                       <th className="p-4 px-6 font-medium text-left">Est. Value</th>
                        <th className="p-4 px-6 font-medium text-left hidden lg:table-cell">Rep Owner</th>
                        <th className="p-4 px-6 font-medium text-right">Actions</th>
                      </tr>
@@ -439,8 +439,8 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                             </td>
 
                             {/* COL 3: Pricing */}
-                            <td className="p-4 px-6 text-right">
-                              <div className="flex flex-col items-end justify-center truncate">
+                            <td className="p-4 px-6 text-left">
+                              <div className="flex flex-col items-start justify-center truncate">
                                  {(!proposal.status || ['Draft', 'Sent', 'Opened'].includes(proposal.status)) ? (() => {
                                      const tiers = proposal.proposal_data?.tiers || {};
                                      const prices = [tiers.good?.salesPrice, tiers.better?.salesPrice, tiers.best?.salesPrice].filter(Boolean);
