@@ -262,7 +262,9 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
          amount: tierData.salesPrice,
          proposal_data: {
              ...(proposal.proposal_data || {}),
-             signature_data: signatureData
+             signature_data: signatureData,
+             accepted_tier_data: tierData,
+             accepted_tier_name: tierName
          }
      };
      
@@ -523,8 +525,8 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                    className={`flex items-center justify-center gap-1.5 text-xs font-black py-2.5 rounded-lg shrink-0 w-[110px] shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none ${proposal.status === 'Approved' ? 'bg-emerald-500 text-white hover:bg-emerald-600 focus:ring-emerald-500 border border-emerald-600' : 'bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900 border border-slate-900'}`}
                                    onClick={() => {
                                        if (proposal.status === 'Approved') {
-                                          const matchedTierName = ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers[t]?.salesPrice === proposal.amount) || 'good';
-                                          const matchedTierData = proposal.proposal_data?.tiers[matchedTierName];
+                                          const matchedTierName = proposal.proposal_data?.accepted_tier_name || ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers?.[t]?.salesPrice === proposal.amount) || 'good';
+                                          const matchedTierData = proposal.proposal_data?.accepted_tier_data || proposal.proposal_data?.tiers?.[matchedTierName];
                                           setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
                                        } else {
                                           setViewingProposal(proposal);
@@ -620,8 +622,8 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
         onViewContract={(proposalData) => {
            setViewingProposal(null);
            // Build a dummy state to view past contracts natively
-           const matchedTierName = ['good', 'better', 'best'].find(t => proposalData.proposal_data?.tiers[t]?.salesPrice === proposalData.amount);
-           const matchedTierData = proposalData.proposal_data?.tiers[matchedTierName];
+           const matchedTierName = proposalData.proposal_data?.accepted_tier_name || ['good', 'better', 'best'].find(t => proposalData.proposal_data?.tiers?.[t]?.salesPrice === proposalData.amount) || 'good';
+           const matchedTierData = proposalData.proposal_data?.accepted_tier_data || proposalData.proposal_data?.tiers?.[matchedTierName];
            setViewingContract({ proposal: proposalData, tierName: matchedTierName?.toUpperCase(), tierData: matchedTierData, date: proposalData.date });
         }}
       />

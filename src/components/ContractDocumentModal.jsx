@@ -116,45 +116,88 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                 </div>
 
                 {/* Unit Info Box */}
-                <div className="border border-slate-300 rounded overflow-hidden mb-4">
-                    <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
-                        <div className="flex-1 px-3 py-1.5 border-r border-slate-300">Unit Info</div>
-                        <div className="w-32 px-3 py-1.5 text-center">Price</div>
-                    </div>
-                    <div className="flex bg-[#f8fafc]">
-                        <div className="flex-1 p-3 flex">
-                            <div className="flex-1 flex flex-col justify-between pr-4">
-                                <div className="flex border-b border-slate-200 pb-1">
-                                    <span className="w-20 text-slate-500">Model:</span> <span className="font-bold text-slate-800">{tierName} Package</span>
-                                </div>
-                                <div className="flex border-b border-slate-200 pb-1">
-                                    <span className="w-20 text-slate-500">Serial:</span> <span></span>
-                                </div>
-                                <div className="flex border-b border-slate-200 pb-1">
-                                    <span className="w-20 text-slate-500">Efficiency:</span> <span className="text-slate-600">Highest Ratings</span>
-                                </div>
-                                <div className="flex border-b border-slate-200 pb-1">
-                                    <span className="w-20 text-slate-500">Brand:</span> <span className="text-slate-600">{tierData.brand} {tierData.series}</span>
-                                </div>
-                                <div className="flex border-b border-slate-200 pb-1">
-                                    <span className="w-20 text-slate-500">Dimensions:</span> <span className="text-slate-600">{tierData.tons} Ton System</span>
-                                </div>
-                                <div className="flex pb-1">
-                                    <span className="w-20 text-slate-500">Type of Unit:</span> <span className="text-slate-600">System Replacement</span>
-                                </div>
+                {(tierData.systemsList && tierData.systemsList.length > 0) ? (
+                    tierData.systemsList.map((sys, idx) => (
+                        <div key={idx} className="border border-slate-300 rounded overflow-hidden mb-4">
+                            <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
+                                <div className="flex-1 px-3 py-1.5 border-r border-slate-300">{sys.systemName} - Unit Info</div>
+                                <div className="w-32 px-3 py-1.5 text-center">Price</div>
                             </div>
-                            {/* Photo Placeholder */}
-                            <div className="w-40 border border-slate-300 bg-[#e2e8f0]/40 flex items-center justify-center text-slate-400 font-bold tracking-widest rounded mx-2 my-1">
-                                PHOTO
+                            <div className="flex bg-[#f8fafc]">
+                                <div className="flex-1 p-3 flex">
+                                    <div className="flex-1 flex flex-col justify-between pr-4">
+                                        <div className="flex border-b border-slate-200 pb-1">
+                                            <span className="w-20 text-slate-500">Model:</span> <span className="font-bold text-slate-800">{sys.tierName} Package</span>
+                                        </div>
+                                        <div className="flex border-b border-slate-200 pb-1">
+                                            <span className="w-20 text-slate-500">Serial:</span> <span></span>
+                                        </div>
+                                        <div className="flex border-b border-slate-200 pb-1">
+                                            <span className="w-20 text-slate-500">Efficiency:</span> <span className="text-slate-600">Standard Ratings</span>
+                                        </div>
+                                        <div className="flex border-b border-slate-200 pb-1">
+                                            <span className="w-20 text-slate-500">Brand:</span> <span className="text-slate-600">{sys.tierData?.brand} {sys.tierData?.series}</span>
+                                        </div>
+                                        <div className="flex border-b border-slate-200 pb-1">
+                                            <span className="w-20 text-slate-500">Dimensions:</span> <span className="text-slate-600">{sys.tierData?.tons} Ton System</span>
+                                        </div>
+                                        <div className="flex pb-1">
+                                            <span className="w-20 text-slate-500">Type of Unit:</span> <span className="text-slate-600">System Replacement</span>
+                                        </div>
+                                    </div>
+                                    <div className="w-40 border border-slate-300 bg-[#e2e8f0]/40 flex items-center justify-center text-slate-400 font-bold tracking-widest rounded mx-2 my-1">
+                                        PHOTO
+                                    </div>
+                                </div>
+                                <div className="w-32 border-l border-slate-300 flex flex-col justify-end pb-3 text-center bg-[#f8fafc]">
+                                    <div className="px-3 flex items-center text-slate-500 gap-1 font-bold">
+                                        $ <span className="flex-1 border-b border-slate-400 text-slate-800 text-right pr-2">{(sys.tierData?.salesPrice || 0).toLocaleString()}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div className="w-32 border-l border-slate-300 flex flex-col justify-end pb-3 text-center bg-[#f8fafc]">
-                            <div className="px-3 flex items-center text-slate-500 gap-1 font-bold">
-                                $ <span className="flex-1 border-b border-slate-400"></span>
+                    ))
+                ) : (
+                    <div className="border border-slate-300 rounded overflow-hidden mb-4">
+                        <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
+                            <div className="flex-1 px-3 py-1.5 border-r border-slate-300">Unit Info</div>
+                            <div className="w-32 px-3 py-1.5 text-center">Price</div>
+                        </div>
+                        <div className="flex bg-[#f8fafc]">
+                            <div className="flex-1 p-3 flex">
+                                <div className="flex-1 flex flex-col justify-between pr-4">
+                                    <div className="flex border-b border-slate-200 pb-1">
+                                        <span className="w-20 text-slate-500">Model:</span> <span className="font-bold text-slate-800">{tierName} Package</span>
+                                    </div>
+                                    <div className="flex border-b border-slate-200 pb-1">
+                                        <span className="w-20 text-slate-500">Serial:</span> <span></span>
+                                    </div>
+                                    <div className="flex border-b border-slate-200 pb-1">
+                                        <span className="w-20 text-slate-500">Efficiency:</span> <span className="text-slate-600">Standard Ratings</span>
+                                    </div>
+                                    <div className="flex border-b border-slate-200 pb-1">
+                                        <span className="w-20 text-slate-500">Brand:</span> <span className="text-slate-600">{tierData?.brand} {tierData?.series}</span>
+                                    </div>
+                                    <div className="flex border-b border-slate-200 pb-1">
+                                        <span className="w-20 text-slate-500">Dimensions:</span> <span className="text-slate-600">{tierData?.tons} Ton System</span>
+                                    </div>
+                                    <div className="flex pb-1">
+                                        <span className="w-20 text-slate-500">Type of Unit:</span> <span className="text-slate-600">System Replacement</span>
+                                    </div>
+                                </div>
+                                {/* Photo Placeholder */}
+                                <div className="w-40 border border-slate-300 bg-[#e2e8f0]/40 flex items-center justify-center text-slate-400 font-bold tracking-widest rounded mx-2 my-1">
+                                    PHOTO
+                                </div>
+                            </div>
+                            <div className="w-32 border-l border-slate-300 flex flex-col justify-end pb-3 text-center bg-[#f8fafc]">
+                                <div className="px-3 flex items-center text-slate-500 gap-1 font-bold">
+                                    $ <span className="flex-1 border-b border-slate-400 text-slate-800 text-right pr-2">{(tierData?.salesPrice || 0).toLocaleString()}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Materials & Labor */}
                 <div className="border border-slate-300 rounded overflow-hidden mb-4">

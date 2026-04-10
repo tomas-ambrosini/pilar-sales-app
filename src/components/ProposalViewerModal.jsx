@@ -166,10 +166,11 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
                  let totalSalesPrice = 0;
                  let totalTons = 0;
                  const combinedFeatures = [];
+                 const systemsList = [];
                  
                  proposal_data.systemTiers.forEach(sys => {
                      const tierName = localSelections[sys.systemId];
-                     const td = sys.tiers[tierName];
+                     const td = sys.tiers[tierName.toLowerCase()];
                      if (td) {
                          totalSalesPrice += td.salesPrice || 0;
                          totalTons += td.tons || 0;
@@ -177,6 +178,11 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
                          if (td.features) {
                              td.features.forEach(f => { if (!combinedFeatures.includes(f)) combinedFeatures.push(f); });
                          }
+                         systemsList.push({
+                             systemName: sys.systemName,
+                             tierName: tierName,
+                             tierData: td
+                         });
                      }
                  });
                  
@@ -185,7 +191,8 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
                      tons: totalTons,
                      brand: 'Multi-System',
                      series: 'Configuration',
-                     features: combinedFeatures
+                     features: combinedFeatures,
+                     systemsList: systemsList
                  };
                  
                  onAccept && onAccept('Custom Network', combinedData, proposal);
