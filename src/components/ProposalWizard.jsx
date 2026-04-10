@@ -387,7 +387,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                 {systems.map(sys => {
                    const isSysValidStep2 = !!(sys.survey.systemType && sys.survey.currentTonnage);
                    const isSysValidStep3 = !!(sys.selectedTiers.good || sys.selectedTiers.better || sys.selectedTiers.best);
-                   const showWarning = (step === 2 && !isSysValidStep2) || (step === 3 && !isSysValidStep3);
+                   const isSysValidStep4 = Object.keys(sys.addons).some(k => sys.addons[k]);
+                   const showWarning = (step === 2 && !isSysValidStep2) || (step === 3 && !isSysValidStep3) || (step === 4 && !isSysValidStep4);
 
                    return (
                     <button 
@@ -695,9 +696,12 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                 ))}
              </div>
 
-             <div className="flex justify-between mt-8 pt-4 border-t border-slate-100">
+             <div className="flex justify-between items-center mt-8 pt-4 border-t border-slate-100">
                <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(3)}><ArrowLeft size={16}/> Back</button>
-               <button className="btn-primary flex items-center gap-2" onClick={() => setStep(5)}><DollarSign size={16}/> View Global Margins <ArrowRight size={16}/></button>
+               <div className="flex items-center gap-3">
+                 {!systems.every(s => Object.keys(s.addons).some(k => s.addons[k])) && <span className="text-xs font-bold text-amber-600">Please select at least one labor/add-on item for all units.</span>}
+                 <button className="btn-primary flex items-center gap-2" disabled={!systems.every(s => Object.keys(s.addons).some(k => s.addons[k]))} onClick={() => setStep(5)}><DollarSign size={16}/> View Global Margins <ArrowRight size={16}/></button>
+               </div>
             </div>
           </div>
         )}
