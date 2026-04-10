@@ -735,87 +735,86 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                    <button className="bg-red-600 text-white font-bold py-2 px-6 rounded mt-6 mx-auto block hover:bg-red-700 transition" onClick={() => setStep(3)}>Return to Step 3</button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {[ {k: 'best', l: 'Premium (Best Tier)', m: margins.best_margin}, {k: 'better', l: 'Core (Better Tier)', m: margins.better_margin}, {k: 'good', l: 'Baseline (Good Tier)', m: margins.good_margin} ].map(tier => {
-                     const isActive = systems.some(sys => sys.selectedTiers[tier.k]);
-                     if (!isActive) return null;
+                <div className="space-y-12">
+                  {systems.map(sys => {
+                     const isActiveSys = sys.selectedTiers.best || sys.selectedTiers.better || sys.selectedTiers.good;
+                     if (!isActiveSys) return null;
+
+                     return (
+                        <div key={sys.id} className="border-t border-slate-200 pt-8 first:border-0 first:pt-0">
+                           <h4 className="font-black text-xl text-slate-800 mb-6">{sys.name} Pricing</h4>
+                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                              {[ {k: 'best', l: 'Premium (Best Tier)', m: margins.best_margin}, {k: 'better', l: 'Core (Better Tier)', m: margins.better_margin}, {k: 'good', l: 'Baseline (Good Tier)', m: margins.good_margin} ].map(tier => {
+                                 if (!sys.selectedTiers[tier.k]) return null;
+                                 
+                                 const raw = sys.selectedTiers[tier.k].system_cost || 0;
+                                 const floorCost = getSystemHardCostOnly(sys, raw);
+                                 const baselineRetail = calculateSystemBaselineRetail(sys, raw, tier.k.charAt(0).toUpperCase() + tier.k.slice(1));
                      
-                     let totalRawEquip = 0;
-                     let totalFloorCost = 0;
-                     let totalBaselineRetail = 0;
-
-                     systems.forEach(sys => {
-                        if (sys.selectedTiers[tier.k]) {
-                           const raw = sys.selectedTiers[tier.k].system_cost || 0;
-                           totalRawEquip += raw;
-                           totalFloorCost += getSystemHardCostOnly(sys, raw);
-                           totalBaselineRetail += calculateSystemBaselineRetail(sys, raw, tier.k.charAt(0).toUpperCase() + tier.k.slice(1));
-                        }
-                     });
-
-                     const absoluteTotalFloor = totalFloorCost * (1 + (margins.service_reserve || 0.05));
-                     const baselineCommBase = systems.reduce((acc, sys) => acc + calculateSystemBaselineRetail(sys, sys.selectedTiers.best?.system_cost || sys.selectedTiers[tier.k]?.system_cost, 'Best'), 0);
-                     const baseComm = computeCommission(totalBaselineRetail, getRetailFromBest(baselineCommBase));
+                                 const absoluteTotalFloor = floorCost * (1 + (margins.service_reserve || 0.05));
                      
-                     const discountAmount = totalBaselineRetail * (discountPercent / 100);
-                     const finalPrice = totalBaselineRetail - discountAmount;
-                     const isBelowFloor = finalPrice < absoluteTotalFloor;
+                                 const baselineCommBase = calculateSystemBaselineRetail(sys, sys.selectedTiers.best?.system_cost || raw, 'Best');
+                                 const baseComm = computeCommission(baselineRetail, getRetailFromBest(baselineCommBase));
+                                 
+                                 const discountAmount = baselineRetail * (discountPercent / 100);
+                                 const finalPrice = baselineRetail - discountAmount;
+                                 const isBelowFloor = finalPrice < absoluteTotalFloor;
+                                 
+                                 const equip = sys.selectedTiers[tier.k];
 
-                 return (
-                 <div key={tier.k} className="bg-white border-2 border-slate-200 rounded-xl overflow-hidden shadow-md flex flex-col">
-                    <div className="bg-slate-100 py-3 px-4 border-b border-slate-200 font-bold text-sm text-center uppercase tracking-wider text-slate-600">{tier.l}</div>
-                    <div className="p-5 flex-1 flex flex-col gap-4">
-                       
-                       <div className="bg-slate-50 border border-slate-100 rounded p-3 text-xs space-y-1.5 font-mono">
-                          <div className="flex justify-between text-slate-500"><span>Raw System/Mat:</span><span>${totalRawEquip.toFixed(2)}</span></div>
-                          <div className="flex justify-between text-slate-500 border-b border-slate-200 pb-1.5"><span>V-Labor Addons:</span><span>+ ${(totalFloorCost - totalRawEquip).toFixed(2)}</span></div>
-                          <div className="flex justify-between font-bold text-slate-700"><span>Hard Cost Total:</span><span>${totalFloorCost.toFixed(2)}</span></div>
-                          <div className="flex justify-between text-slate-500 pt-1.5"><span>1st Yr Reserve:</span><span>+ {((margins.service_reserve || 0.05)*100).toFixed(1)}%</span></div>
-                          <div className="flex justify-between text-slate-500"><span>Target Markup:</span><span>/ {((1 - tier.m)*100).toFixed(1)}% Par</span></div>
-                       </div>
-
-                       <div className="text-center pt-2">
-                          <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1">Target Retail Baseline</label>
-                          <div className="text-2xl font-black text-slate-800">${totalBaselineRetail.toLocaleString()}</div>
-                          <div className="text-xs font-bold text-emerald-600 mt-1">Algorithmic Commission: ${baseComm.toLocaleString()}</div>
-                       </div>
-
-                       <div className="space-y-1 mt-2 border-t border-slate-100 pt-3">
-                          <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-2 text-center">Included Systems</label>
-                          {systems.map(sys => {
-                              if (!sys.selectedTiers[tier.k]) return null;
-                              const equip = sys.selectedTiers[tier.k];
-                              return (
-                                  <div key={sys.id} className="bg-slate-50 p-2 rounded border border-slate-200 flex justify-between items-center text-xs">
-                                      <div className="flex flex-col">
-                                          <span className="font-bold text-slate-700">{sys.name}</span>
-                                          <span className="text-[10px] text-slate-500">{equip.brand} - {equip.series}</span>
-                                      </div>
-                                      <div className="text-right flex flex-col items-end">
-                                          <span className="font-mono font-bold text-slate-600">${equip.system_cost?.toLocaleString()}</span>
-                                          <span className="font-mono text-[9px] bg-slate-200 text-slate-500 px-1 py-0.5 rounded leading-none mt-0.5">{equip.tons}T</span>
-                                      </div>
-                                  </div>
-                              )
-                          })}
-                       </div>
-
-                       <div className="mt-auto pt-4 border-t border-slate-100 relative">
-                          <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1 text-center">Global Discount Application</label>
-                          <div className="text-center mb-4 text-danger font-black">
-                             - ${discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} (-{discountPercent}%)
-                          </div>
-
-                          <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1 text-center">Final Presentable Price</label>
-                          <div className={`text-3xl font-black text-center ${isBelowFloor ? 'text-danger bg-red-100 animate-pulse rounded py-1' : 'text-primary-700'}`}>${finalPrice.toLocaleString()}</div>
-                          {isBelowFloor && <p className="text-[10px] font-bold text-danger mt-2 text-center">ERROR: Dropping below absolute internal hard costs (${absoluteTotalFloor.toFixed(2)}).</p>}
-                       </div>
-
-                    </div>
-                 </div>
-                 );
-              })}
-            </div>
+                                 return (
+                                 <div key={tier.k} className="bg-white border-2 border-slate-200 rounded-xl overflow-hidden shadow-md flex flex-col">
+                                    <div className="bg-slate-100 py-3 px-4 border-b border-slate-200 font-bold text-sm text-center uppercase tracking-wider text-slate-600">{tier.l}</div>
+                                    <div className="p-5 flex-1 flex flex-col gap-4">
+                                       
+                                       <div className="bg-slate-50 border border-slate-100 rounded p-3 text-xs space-y-1.5 font-mono">
+                                          <div className="flex justify-between text-slate-500"><span>Raw System/Mat:</span><span>${raw.toFixed(2)}</span></div>
+                                          <div className="flex justify-between text-slate-500 border-b border-slate-200 pb-1.5"><span>V-Labor Addons:</span><span>+ ${(floorCost - raw).toFixed(2)}</span></div>
+                                          <div className="flex justify-between font-bold text-slate-700"><span>Hard Cost Total:</span><span>${floorCost.toFixed(2)}</span></div>
+                                          <div className="flex justify-between text-slate-500 pt-1.5"><span>1st Yr Reserve:</span><span>+ {((margins.service_reserve || 0.05)*100).toFixed(1)}%</span></div>
+                                          <div className="flex justify-between text-slate-500"><span>Target Markup:</span><span>/ {((1 - tier.m)*100).toFixed(1)}% Par</span></div>
+                                       </div>
+               
+                                       <div className="text-center pt-2">
+                                          <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1">Target Retail Baseline</label>
+                                          <div className="text-2xl font-black text-slate-800">${baselineRetail.toLocaleString()}</div>
+                                          <div className="text-xs font-bold text-emerald-600 mt-1">Algorithmic Commission: ${baseComm.toLocaleString()}</div>
+                                       </div>
+               
+                                       <div className="space-y-1 mt-2 border-t border-slate-100 pt-3">
+                                          <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-2 text-center">Selected Equipment</label>
+                                          <div className="bg-slate-50 p-2 rounded border border-slate-200 flex justify-between items-center text-xs">
+                                              <div className="flex flex-col">
+                                                  <span className="font-bold text-slate-700">{equip.brand}</span>
+                                                  <span className="text-[10px] text-slate-500">{equip.series}</span>
+                                              </div>
+                                              <div className="text-right flex flex-col items-end">
+                                                  <span className="font-mono font-bold text-slate-600">${equip.system_cost?.toLocaleString()}</span>
+                                                  <span className="font-mono text-[9px] bg-slate-200 text-slate-500 px-1 py-0.5 rounded leading-none mt-0.5">{equip.tons}T</span>
+                                              </div>
+                                          </div>
+                                       </div>
+               
+                                       <div className="mt-auto pt-4 border-t border-slate-100 relative">
+                                          <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1 text-center">Global Discount Application</label>
+                                          <div className="text-center mb-4 text-danger font-black">
+                                             - ${discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} (-{discountPercent}%)
+                                          </div>
+               
+                                          <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1 text-center">Final Presentable Price</label>
+                                          <div className={`text-3xl font-black text-center ${isBelowFloor ? 'text-danger bg-red-100 animate-pulse rounded py-1' : 'text-primary-700'}`}>${finalPrice.toLocaleString()}</div>
+                                          {isBelowFloor && <p className="text-[10px] font-bold text-danger mt-2 text-center">ERROR: Dropping below absolute internal hard costs (${absoluteTotalFloor.toFixed(2)}).</p>}
+                                       </div>
+               
+                                    </div>
+                                 </div>
+                                 );
+                              })}
+                           </div>
+                        </div>
+                     );
+                  })}
+                </div>
             )}
 
             <div className="flex justify-between mt-10 pt-4 border-t border-slate-100">
