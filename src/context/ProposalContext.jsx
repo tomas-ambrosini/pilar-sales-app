@@ -53,7 +53,11 @@ export function ProposalProvider({ children }) {
             updated_at: new Date().toISOString()
         };
         
-        const { data, error } = await supabase.from('proposals').insert([newDraft]).select().single();
+        const { data, error } = await supabase.from('proposals')
+            .insert([newDraft])
+            .select('*, user_profiles(full_name)')
+            .single();
+            
         if (error) {
             console.error('Failed to create draft proposal:', error);
             return null;
@@ -87,20 +91,26 @@ export function ProposalProvider({ children }) {
             updated_at: new Date().toISOString()
         };
 
-        // Optimistic UI update
-        setProposals(prev => [newProposal, ...prev]);
-
-        // Push to live Supabase database
-        const { error } = await supabase.from('proposals').insert([newProposal]);
+        // Insert to live Supabase database and retrieve joined profile data
+        const { data, error } = await supabase.from('proposals')
+            .insert([newProposal])
+            .select('*, user_profiles(full_name)')
+            .single();
         
         if (error) {
             console.error('Failed to create proposal live:', error);
-            fetchProposals(); // Revert on failure
-        } else if (proposalData.associated_opportunity_id) {
-            try {
-                await PipelineController.sendProposal(proposalData.associated_opportunity_id, proposalData.associated_opportunity_status);
-            } catch (e) {
-                console.warn("Skipped transition: ", e.message);
+            // Revert on failure by refreshing the real list
+            fetchProposals(); 
+        } else {
+            // Update local UI state with the exact database response (so user_profiles is included)
+            setProposals(prev => [data, ...prev]);
+
+            if (proposalData.associated_opportunity_id) {
+                try {
+                    await PipelineController.sendProposal(proposalData.associated_opportunity_id, proposalData.associated_opportunity_status);
+                } catch (e) {
+                    console.warn("Skipped transition: ", e.message);
+                }
             }
         }
     };
