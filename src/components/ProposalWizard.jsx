@@ -306,11 +306,46 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     const selectedProp = cust.locations?.find(l => l.id.toString() === selectedLocationId.toString()) || cust.locations?.[0];
     const propAddressString = selectedProp ? `${selectedProp.street_address}${selectedProp.city ? ', ' + selectedProp.city : ''}` : 'Unknown Address';
 
+    const systemTiers = systems.map(sys => {
+       const sysTiers = { good: null, better: null, best: null };
+       ['best', 'better', 'good'].forEach(tierKey => {
+           if (!sys.selectedTiers[tierKey]) return;
+           
+           const raw = sys.selectedTiers[tierKey].system_cost || 0;
+           const baselinePrice = calculateSystemBaselineRetail(sys, raw, tierKey.charAt(0).toUpperCase() + tierKey.slice(1));
+           const discountAmount = baselinePrice * (discountPercent / 100);
+           const finalPrice = baselinePrice - discountAmount;
+           
+           let features = [];
+           if (tierKey === 'best') features = ["Variable Speed Ultra Quiet", "Highest Efficiency Ratings", "Premium 12-Year Parts Warranty", "Advanced Dehumidification Control"];
+           if (tierKey === 'better') features = ["Two-Stage Enhanced Comfort", "High Efficiency SEER2", "10-Year Parts Warranty", "Consistent Temperature Control"];
+           if (tierKey === 'good') features = ["Single-Stage Operation", "Base Efficiency Standard", "5-Year Parts Warranty", "Cost-Effective Reliable Cooling"];
+           
+           sysTiers[tierKey] = {
+               id: tierKey,
+               brand: sys.selectedTiers[tierKey].brand,
+               series: sys.selectedTiers[tierKey].series,
+               tons: sys.selectedTiers[tierKey].tons,
+               baselinePrice: baselinePrice,
+               saleDiscount: discountAmount,
+               salesPrice: finalPrice,
+               features: features
+           };
+       });
+       
+       return {
+           systemId: sys.id,
+           systemName: sys.name,
+           tiers: sysTiers
+       };
+    });
+
     const finalProposalData = {
       generatedAt: new Date().toISOString(),
       creator: user ? user.name || user.email : 'Unknown Sales Rep',
       systems: systems,
-      tiers: finalTiers
+      tiers: finalTiers,
+      systemTiers: systemTiers
     };
 
     const wizardState = { step: 6, selectedCustomerId, selectedLocationId, systems, discountPercent };

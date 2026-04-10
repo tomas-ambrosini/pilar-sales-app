@@ -3,16 +3,29 @@ import { X, CheckCircle, Shield, Wind, Droplets, ArrowRight, FileText } from 'lu
 import Modal from './Modal';
 
 export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccept, onViewContract }) {
+  const [localSelections, setLocalSelections] = React.useState({});
+
   if (!proposal) return null;
 
   const { proposal_data } = proposal;
 
-  const renderTier = (tierName, tierData, isBest) => {
+  const renderTier = (tierName, tierData, isBest, systemId = null) => {
     if (!tierData) return null;
     
+    // Multi-System Logic Check
+    const isMultiSys = systemId !== null;
+    const isSelected = isMultiSys && localSelections[systemId] === tierName;
+    
+    const borderClass = isMultiSys 
+         ? (isSelected ? 'border-primary-500 ring-4 ring-primary-500/20 bg-white scale-[1.02] shadow-xl z-20' : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-primary-300')
+         : (isBest ? 'border-primary-500 shadow-xl bg-white scale-105 z-10' : 'border-slate-200 bg-slate-50');
+
     return (
-       <div className={`relative flex flex-col p-6 rounded-xl border-2 ${isBest ? 'border-primary-500 shadow-xl bg-white scale-105 z-10' : 'border-slate-200 bg-slate-50'}`}>
-          {isBest && (
+       <div 
+          className={`relative flex flex-col p-6 rounded-xl border-2 transition-all duration-200 ${isMultiSys ? 'cursor-pointer' : ''} ${borderClass}`}
+          onClick={() => isMultiSys && setLocalSelections(p => ({...p, [systemId]: tierName}))}
+       >
+          {((isBest && !isMultiSys) || (isMultiSys && tierName === 'Best')) && (
              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-500 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-sm">
                  Recommended
              </div>
@@ -58,16 +71,23 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
           </div>
           
           <div className="mt-auto pt-4">
-             {proposal.status !== 'Approved' ? (
+             {isMultiSys ? (
                  <button 
-                    onClick={() => onAccept && onAccept(tierName, tierData, proposal)}
+                    disabled
+                    className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${isSelected ? 'bg-primary-500 text-white shadow-md' : 'bg-slate-200 text-slate-400 cursor-not-allowed border-2 border-transparent'}`}
+                 >
+                    {isSelected ? <><CheckCircle size={16}/> Option Selected</> : 'Select Option'}
+                 </button>
+             ) : proposal.status !== 'Approved' ? (
+                 <button 
+                    onClick={(e) => { e.stopPropagation(); onAccept && onAccept(tierName, tierData, proposal); }}
                     className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${isBest ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-md' : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300'}`}
                  >
                     Accept {tierName} Quote
                  </button>
              ) : (
                  <button 
-                    onClick={() => onViewContract && onViewContract(proposal)} 
+                    onClick={(e) => { e.stopPropagation(); onViewContract && onViewContract(proposal); }} 
                     className={`w-full py-3 rounded font-bold flex items-center justify-center gap-2 transition-all ${isBest ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl scale-105' : 'bg-emerald-50 border-2 border-emerald-200 text-emerald-700 hover:bg-emerald-100'}`}
                  >
                     <FileText size={16}/> View Signed Contract
@@ -113,6 +133,22 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
                    <h3 className="text-xl font-bold text-slate-800 mb-2">Legacy Quote Detected</h3>
                    <p className="text-slate-500 max-w-md">This proposal was generated before the digital matrix engine was implemented. The system only cataloged the total gross amount: <strong>${(proposal.amount || 0).toLocaleString()}</strong>. To view digital tiers, please generate a new quote for this customer.</p>
                 </div>
+             ) : proposal_data.systemTiers && proposal_data.systemTiers.length > 0 ? (
+                <div className="space-y-16 max-w-5xl mx-auto pt-4 pb-12">
+                   {proposal_data.systemTiers.map(sys => (
+                      <div key={sys.systemId} className="border-t-2 border-slate-100 pt-8 first:border-0 first:pt-0">
+                         <div className="mb-6 text-center">
+                            <h3 className="text-3xl font-black text-slate-800">{sys.systemName}</h3>
+                            <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Select Tier Option</p>
+                         </div>
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end">
+                            {renderTier('Good', sys.tiers?.good, false, sys.systemId)}
+                            {renderTier('Best', sys.tiers?.best, true, sys.systemId)}
+                            {renderTier('Better', sys.tiers?.better, false, sys.systemId)}
+                         </div>
+                      </div>
+                   ))}
+                </div>
              ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end max-w-5xl mx-auto pt-4 pb-8">
                    {renderTier('Good', proposal_data.tiers?.good, false)}
@@ -123,10 +159,22 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
           </div>
           
           {/* Footer Actions */}
-          <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-             <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors" onClick={onClose}>Close Viewer</button>
-
-          </div>
+          {proposal_data?.systemTiers && proposal_data.systemTiers.length > 0 && proposal.status !== 'Approved' ? (
+             <div className="p-5 border-t border-slate-200 bg-slate-50 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="text-xs font-bold text-slate-500 bg-slate-200/50 px-4 py-2 rounded-lg flex items-center">
+                    <AlertTriangle size={14} className="text-amber-500 mr-2 flex-shrink-0" />
+                    Multi-System Checkout Infrastructure Pending Phase 2 Deployment
+                </div>
+                <div className="flex gap-3 w-full md:w-auto">
+                    <button className="px-6 py-2.5 font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-colors rounded" onClick={onClose}>Close Planner</button>
+                    <button disabled className="px-6 py-2.5 font-bold bg-slate-300 text-slate-500 rounded cursor-not-allowed">Finalize Presentation</button>
+                </div>
+             </div>
+          ) : (
+             <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors" onClick={onClose}>Close Viewer</button>
+             </div>
+          )}
        </div>
     </div>
   );
