@@ -354,8 +354,8 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                      <thead>
                        <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
                          <th className="p-4 px-6 font-medium text-left">Customer / ID</th>
-                         <th className="p-4 px-6 font-medium text-left">Status</th>
-                         <th className="p-4 px-6 font-medium text-left">Est. Value</th>
+                         <th className="p-4 px-6 font-medium text-center">Status</th>
+                         <th className="p-4 px-6 font-medium text-right">Est. Value</th>
                          <th className="p-4 px-6 font-medium text-left hidden lg:table-cell">Rep Owner</th>
                          <th className="p-4 px-6 font-medium text-right">Actions</th>
                        </tr>
@@ -397,8 +397,8 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                    <thead>
                      <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
                        <th className="p-4 px-6 font-medium text-left">Customer / ID</th>
-                       <th className="p-4 px-6 font-medium text-left">Status</th>
-                       <th className="p-4 px-6 font-medium text-left">Est. Value</th>
+                       <th className="p-4 px-6 font-medium text-center">Status</th>
+                       <th className="p-4 px-6 font-medium text-right">Est. Value</th>
                        <th className="p-4 px-6 font-medium text-left hidden lg:table-cell">Rep Owner</th>
                        <th className="p-4 px-6 font-medium text-right">Actions</th>
                      </tr>
@@ -432,15 +432,15 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                             </td>
 
                             {/* COL 2: Status */}
-                            <td className="p-4 px-6">
+                            <td className="p-4 px-6 text-center">
                               <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md text-xs font-bold border ${badgeColors}`}>
                                 {proposal.status}
                               </span>
                             </td>
 
                             {/* COL 3: Pricing */}
-                            <td className="p-4 px-6">
-                              <div className="flex flex-col justify-center truncate">
+                            <td className="p-4 px-6 text-right">
+                              <div className="flex flex-col items-end justify-center truncate">
                                  {(!proposal.status || ['Draft', 'Sent', 'Opened'].includes(proposal.status)) ? (() => {
                                      const tiers = proposal.proposal_data?.tiers || {};
                                      const prices = [tiers.good?.salesPrice, tiers.better?.salesPrice, tiers.best?.salesPrice].filter(Boolean);
