@@ -159,18 +159,57 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
           </div>
           
           {/* Footer Actions */}
-          {proposal_data?.systemTiers && proposal_data.systemTiers.length > 0 && proposal.status !== 'Approved' ? (
-             <div className="p-5 border-t border-slate-200 bg-slate-50 flex flex-col md:flex-row justify-between items-center gap-4">
-                <div className="text-xs font-bold text-slate-500 bg-slate-200/50 px-4 py-2 rounded-lg flex items-center">
-                    <AlertTriangle size={14} className="text-amber-500 mr-2 flex-shrink-0" />
-                    Multi-System Checkout Infrastructure Pending Phase 2 Deployment
-                </div>
-                <div className="flex gap-3 w-full md:w-auto">
-                    <button className="px-6 py-2.5 font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-colors rounded" onClick={onClose}>Close Planner</button>
-                    <button disabled className="px-6 py-2.5 font-bold bg-slate-300 text-slate-500 rounded cursor-not-allowed">Finalize Presentation</button>
-                </div>
-             </div>
-          ) : (
+          {proposal_data?.systemTiers && proposal_data.systemTiers.length > 0 && proposal.status !== 'Approved' ? (() => {
+             const isCartComplete = Object.keys(localSelections).length === proposal_data.systemTiers.length;
+             
+             const handleFinalize = () => {
+                 let totalSalesPrice = 0;
+                 let totalTons = 0;
+                 const combinedFeatures = [];
+                 
+                 proposal_data.systemTiers.forEach(sys => {
+                     const tierName = localSelections[sys.systemId];
+                     const td = sys.tiers[tierName];
+                     if (td) {
+                         totalSalesPrice += td.salesPrice || 0;
+                         totalTons += td.tons || 0;
+                         combinedFeatures.push(`[${sys.systemName}]: ${td.brand} ${td.series} (${tierName} Tier)`);
+                         if (td.features) {
+                             td.features.forEach(f => { if (!combinedFeatures.includes(f)) combinedFeatures.push(f); });
+                         }
+                     }
+                 });
+                 
+                 const combinedData = {
+                     salesPrice: totalSalesPrice,
+                     tons: totalTons,
+                     brand: 'Multi-System',
+                     series: 'Configuration',
+                     features: combinedFeatures
+                 };
+                 
+                 onAccept && onAccept('Custom Network', combinedData, proposal);
+             };
+
+             return (
+                 <div className="p-5 border-t border-slate-200 bg-slate-50 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div className="text-xs font-bold text-slate-500 bg-slate-200/50 px-4 py-2 rounded-lg flex items-center">
+                        <AlertTriangle size={14} className="text-amber-500 mr-2 flex-shrink-0" />
+                        Please select an equipment tier for all units above.
+                    </div>
+                    <div className="flex gap-3 w-full md:w-auto">
+                        <button className="px-6 py-2.5 font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-colors rounded" onClick={onClose}>Close Planner</button>
+                        <button 
+                           disabled={!isCartComplete} 
+                           onClick={handleFinalize}
+                           className={`px-6 py-2.5 font-bold rounded shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none ${isCartComplete ? 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-600' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`}
+                        >
+                           {isCartComplete ? 'Finalize Presentation' : 'Select All Options'}
+                        </button>
+                    </div>
+                 </div>
+             );
+          })() : (
              <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
                 <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors" onClick={onClose}>Close Viewer</button>
              </div>
