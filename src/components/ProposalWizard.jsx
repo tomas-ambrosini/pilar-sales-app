@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
 import { useAuth } from '../context/AuthContext';
 import { useProposals } from '../context/ProposalContext';
-import { Check, Image as ImageIcon, Layers, Tag, DollarSign, Calculator, AlertTriangle, ArrowRight, ArrowLeft, Save, Clock, RefreshCcw } from 'lucide-react';
+import { Check, Image as ImageIcon, Layers, Tag, DollarSign, Calculator, AlertTriangle, ArrowRight, ArrowLeft, Save, Clock, RefreshCcw, Edit2 } from 'lucide-react';
 
 export default function ProposalWizard({ onComplete, addProposal, updateProposal, editModeData }) {
   const hasPreloadedData = typeof editModeData === 'object' && editModeData !== null;
@@ -38,6 +38,11 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
   const [systems, setSystems] = useState([generateEmptySystem(1)]);
   const [activeSystemId, setActiveSystemId] = useState(1);
+  const [editingSystemNameId, setEditingSystemNameId] = useState(null);
+
+  const handleSystemNameChange = (id, newName) => {
+     setSystems(prev => prev.map(sys => sys.id === id ? { ...sys, name: newName } : sys));
+  };
   const [discountPercent, setDiscountPercent] = useState(0); 
   const [uploadingPhoto, setUploadingPhoto] = useState(null);
 
@@ -391,14 +396,28 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                    const showWarning = (step === 2 && !isSysValidStep2) || (step === 3 && !isSysValidStep3) || (step === 4 && !isSysValidStep4);
 
                    return (
-                    <button 
-                      key={sys.id} 
-                      onClick={() => setActiveSystemId(sys.id)}
-                      className={`px-4 py-2 font-bold text-sm rounded-t-lg transition-colors whitespace-nowrap flex items-center justify-center gap-2 ${activeSystemId === sys.id ? 'bg-primary-50 text-primary-700 border-b-2 border-primary-500' : 'text-slate-500 hover:bg-slate-50'}`}
-                    >
-                       {sys.name}
-                       {showWarning && <AlertTriangle size={14} className="text-amber-500" />}
-                    </button>
+                    <div key={sys.id} className="relative group">
+                      {editingSystemNameId === sys.id ? (
+                          <input 
+                              autoFocus
+                              className="px-4 py-2 font-bold text-sm rounded-t-lg transition-colors bg-white border-x border-t border-primary-300 outline-none w-32 focus:ring-0"
+                              value={sys.name}
+                              onChange={(e) => handleSystemNameChange(sys.id, e.target.value)}
+                              onBlur={() => setEditingSystemNameId(null)}
+                              onKeyDown={(e) => e.key === 'Enter' && setEditingSystemNameId(null)}
+                          />
+                      ) : (
+                          <button 
+                            onClick={() => setActiveSystemId(sys.id)}
+                            onDoubleClick={() => setEditingSystemNameId(sys.id)}
+                            className={`px-4 py-2 font-bold text-sm rounded-t-lg transition-colors whitespace-nowrap flex items-center justify-center gap-2 pr-8 ${activeSystemId === sys.id ? 'bg-primary-50 text-primary-700 border-b-2 border-primary-500' : 'text-slate-500 hover:bg-slate-50'}`}
+                          >
+                             {sys.name}
+                             {showWarning && <AlertTriangle size={14} className="text-amber-500" />}
+                             <Edit2 size={12} className="opacity-0 group-hover:opacity-50 hover:!opacity-100 transition-opacity absolute top-3 right-2" onClick={(e) => { e.stopPropagation(); setEditingSystemNameId(sys.id); }} />
+                          </button>
+                      )}
+                    </div>
                  )})}
                 {step === 2 && (
                   <>
