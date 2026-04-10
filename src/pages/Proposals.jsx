@@ -508,12 +508,10 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                  {/* Hover Utilities */}
                                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
                                     {proposal.status !== 'Approved' && (
-                                       <>
-                                          <button className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors" onClick={() => handleEditOpen(proposal)} title="Edit Details"><Edit2 size={16} /></button>
-                                          {user?.role === 'super_admin' && (
-                                             <button className="p-2 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Delete"><Trash2 size={16} /></button>
-                                          )}
-                                       </>
+                                       <button className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors" onClick={() => handleEditOpen(proposal)} title="Edit Details"><Edit2 size={16} /></button>
+                                    )}
+                                    {['super_admin', 'admin', 'sales'].includes((user?.role || '').toLowerCase()) && (
+                                       <button className="p-2 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Force Delete"><Trash2 size={16} /></button>
                                     )}
                                  </div>
 
