@@ -146,8 +146,11 @@ export function ProposalProvider({ children }) {
 
         setProposals(prev => prev.filter(p => p.id !== id));
         
-        // Caution Rule Followed: Discarding a quote draft should NEVER destroy actual Deals or Work Orders.
-        // A proposal is a disposable document, we explicitly only delete the proposal.
+        // Fully wipe proposal and its generated constraints as requested by testing
+        if (oppId) {
+            await supabase.from('work_orders').delete().eq('opportunity_id', oppId);
+            await supabase.from('opportunities').delete().eq('id', oppId);
+        }
 
         const { error } = await supabase.from('proposals').delete().eq('id', id);
         if (error) {

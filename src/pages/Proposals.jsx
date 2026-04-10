@@ -15,8 +15,10 @@ import ContractDocumentModal from '../components/ContractDocumentModal';
 import SignaturePad from '../components/SignaturePad';
 import ProposalComments from '../components/ProposalComments';
 import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Proposals() {
+  const { user } = useAuth();
   const { proposals, addProposal, updateProposal, deleteProposal, loading } = useProposals();
   const { customers } = useCustomers();
   const [searchParams] = useSearchParams();
@@ -508,7 +510,9 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                     {proposal.status !== 'Approved' && (
                                        <>
                                           <button className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors" onClick={() => handleEditOpen(proposal)} title="Edit Details"><Edit2 size={16} /></button>
-                                          <button className="p-2 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Delete"><Trash2 size={16} /></button>
+                                          {user?.role === 'super_admin' && (
+                                             <button className="p-2 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Delete"><Trash2 size={16} /></button>
+                                          )}
                                        </>
                                     )}
                                  </div>
