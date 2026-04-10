@@ -9,7 +9,7 @@ export default function ProposalComments({ proposalId }) {
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
-    const bottomRef = useRef(null);
+    const containerRef = useRef(null);
 
     useEffect(() => {
         let subscription;
@@ -62,8 +62,9 @@ export default function ProposalComments({ proposalId }) {
 
     // Fast scroll to bottom
     useEffect(() => {
-        if (bottomRef.current) {
-            bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+        if (containerRef.current) {
+            // Safe manual scroll that doesn't trigger parent window jumping
+            containerRef.current.scrollTop = containerRef.current.scrollHeight;
         }
     }, [comments]);
 
@@ -111,7 +112,7 @@ export default function ProposalComments({ proposalId }) {
             </div>
 
             {/* Comments List */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            <div ref={containerRef} className="flex-1 overflow-y-auto p-5 space-y-4">
                 {comments.length === 0 ? (
                     <div className="text-center py-8">
                         <MessageSquare size={24} className="text-slate-300 mx-auto mb-2 opacity-50" />
@@ -154,7 +155,6 @@ export default function ProposalComments({ proposalId }) {
                         )
                     })
                 )}
-                <div ref={bottomRef} />
             </div>
 
             {/* Input Wrapper */}
