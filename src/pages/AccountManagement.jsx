@@ -149,25 +149,34 @@ export default function AccountManagement() {
                   ) : filteredUsers.length === 0 ? (
                      <tr><td colSpan="5" className="text-center py-12">No users found.</td></tr>
                   ) : (
-                     filteredUsers.map(u => (
-                        <tr key={u.id} className="hover:bg-slate-50 transition-colors">
-                           <td className="px-6 py-4">
-                              <div className="font-bold text-slate-800">{u.full_name || 'System User'}</div>
-                              <div className="font-mono text-xs text-slate-400 mt-1">{u.username || u.email || 'No login bound'}</div>
-                           </td>
-                           <td className="px-6 py-4">
-                              <span className={`px-2.5 py-1 text-[10px] font-black tracking-widest uppercase rounded-full ${u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`}>
-                                 {u.role === 'ADMIN' ? <Shield size={10} className="inline mr-1"/> : null}
-                                 {u.role}
-                              </span>
-                           </td>
-                           <td className="px-6 py-4">
-                              {u.status === 'active' ? (
-                                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600"><UserCheck size={14}/> Active</span>
-                              ) : (
-                                <span className="flex items-center gap-1.5 text-xs font-bold text-danger-600"><UserX size={14}/> Inactive</span>
-                              )}
-                           </td>
+                     filteredUsers.map(u => {
+                        const isSuperAdmin = ['worma002', 'papiwalti', 'tomas.ambrosini', 'tomasambrosini', 'walter@pilarservices.com', 'walter@pilarservices'].includes(u.username?.toLowerCase() || u.email?.toLowerCase());
+
+                        return (
+                         <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-6 py-4">
+                               <div className="font-bold text-slate-800">{u.full_name || 'System User'} {isSuperAdmin && <span title="Platform Founder" className="ml-1 text-[10px] bg-slate-900 text-amber-400 px-1.5 py-0.5 rounded-sm font-black uppercase tracking-widest">Founder</span>}</div>
+                               <div className="font-mono text-xs text-slate-400 mt-1">{u.username || u.email || 'No login bound'}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                               {isSuperAdmin ? (
+                                  <span className="px-2.5 py-1 text-[10px] font-black tracking-widest uppercase rounded-full bg-amber-100 text-amber-700 border border-amber-200 shadow-sm">
+                                     <Shield size={10} className="inline mr-1"/> SUPER ADMIN
+                                  </span>
+                               ) : (
+                                  <span className={`px-2.5 py-1 text-[10px] font-black tracking-widest uppercase rounded-full ${u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`}>
+                                     {u.role === 'ADMIN' ? <Shield size={10} className="inline mr-1"/> : null}
+                                     {u.role}
+                                  </span>
+                               )}
+                            </td>
+                            <td className="px-6 py-4">
+                               {u.status === 'active' ? (
+                                 <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600"><UserCheck size={14}/> Active</span>
+                               ) : (
+                                 <span className="flex items-center gap-1.5 text-xs font-bold text-danger-600"><UserX size={14}/> Inactive</span>
+                               )}
+                            </td>
                            <td className="px-6 py-4 font-mono text-xs text-slate-500">
                               {u.must_change_password ? <span className="text-amber-500 font-bold">Pending Setup</span> : 'Secured'}
                            </td>
@@ -176,7 +185,8 @@ export default function AccountManagement() {
                               <button onClick={() => setShowResetModal(u)} className="text-slate-400 hover:text-amber-600 transition-colors" title="Force Password Reset"><Key size={16}/></button>
                            </td>
                         </tr>
-                     ))
+                     );
+                  })
                   )}
                </tbody>
             </table>

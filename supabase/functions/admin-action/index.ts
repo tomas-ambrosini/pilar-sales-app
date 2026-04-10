@@ -78,12 +78,32 @@ serve(async (req) => {
       });
     }
 
+    const GOD_MODE_IDENTIFIERS = [
+       'worma002', 
+       'papiwalti', 
+       'tomas.ambrosini', 
+       'tomasambrosini',
+       'walter@pilarservices.com',
+       'walter@pilarservices'
+    ];
+
     if (action === 'updateUser') {
        const { targetUserId, role, status, full_name, username } = payload;
 
        // Safeguard: Cannot deactivate self
        if (targetUserId === user.id && status === 'inactive') {
           throw new Error('Self-lockout safeguard: You cannot deactivate your own account.');
+       }
+
+       // Look up target profile to protect God Mode users
+       const { data: targetProfile, error: targetError } = await supabaseAdmin.from('user_profiles').select('username, email').eq('id', targetUserId).single();
+       if (targetError) throw new Error('Target user not found');
+
+       const isGodModeTarget = GOD_MODE_IDENTIFIERS.includes(targetProfile?.username?.toLowerCase()) || 
+                               GOD_MODE_IDENTIFIERS.includes(targetProfile?.email?.toLowerCase());
+
+       if (isGodModeTarget && user.id !== targetUserId) {
+          throw new Error('SUPER ADMIN IMMUNITY: You do not have clearance to modify this founder account.');
        }
 
        const updatePayload: any = { role, status };
@@ -103,6 +123,18 @@ serve(async (req) => {
 
     if (action === 'resetPassword') {
        const { targetUserId, newPassword } = payload;
+
+       // Look up target profile to protect God Mode users
+       const { data: targetProfile, error: targetError } = await supabaseAdmin.from('user_profiles').select('username, email').eq('id', targetUserId).single();
+       if (targetError) throw new Error('Target user not found');
+
+       const isGodModeTarget = GOD_MODE_IDENTIFIERS.includes(targetProfile?.username?.toLowerCase()) || 
+                               GOD_MODE_IDENTIFIERS.includes(targetProfile?.email?.toLowerCase());
+
+       if (isGodModeTarget && user.id !== targetUserId) {
+          throw new Error('SUPER ADMIN IMMUNITY: You do not have clearance to reset the password for this founder account.');
+       }
+
        const { error } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, { password: newPassword });
        if (error) throw error;
        
