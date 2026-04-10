@@ -1,15 +1,14 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, Printer, ShieldCheck, Pen } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomers } from '../context/CustomerContext';
 import './ContractDocumentModal.css';
 
 export default function ContractDocumentModal({ isOpen, onClose, contractData }) {
    const { customers } = useCustomers();
 
-   if (!isOpen || !contractData) return null;
-
-   const { proposal, tierName, tierData, date } = contractData;
+   const { proposal, tierName, tierData, date } = contractData || {};
    
    // Hydrate full customer profile (supporting both modern ID links and legacy string-based mapping)
    const fullCustomer = customers.find(c => 
@@ -22,7 +21,13 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
    };
 
    return createPortal(
-      <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-300 print:static print:block print:inset-auto ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+      <AnimatePresence>
+         {isOpen && contractData && (
+            <motion.div 
+               initial={{ opacity: 0 }} 
+               animate={{ opacity: 1 }} 
+               exit={{ opacity: 0 }} 
+               className="fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-300 print:static print:block print:inset-auto opacity-100 pointer-events-auto">
          {/* Print Backdrop */}
          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm print:hidden" onClick={onClose}></div>
          
@@ -43,7 +48,13 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
          </div>
 
          {/* The 8.5x11 Paper Container */}
-         <div className="printable-contract relative bg-white shadow-2xl overflow-y-auto w-full max-w-[850px] mx-auto flex flex-col print:block mt-24 mb-12 shrink max-h-[calc(100vh-140px)] print:max-h-none print:m-0 text-slate-800 text-[11px] leading-relaxed">
+         <motion.div 
+            initial={{ scale: 0.95, y: 10, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            exit={{ scale: 0.95, y: 10, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="printable-contract relative bg-white shadow-2xl overflow-y-auto w-full max-w-[850px] mx-auto flex flex-col print:block mt-24 mb-12 shrink max-h-[calc(100vh-140px)] print:max-h-none print:m-0 text-slate-800 text-[11px] leading-relaxed"
+         >
             {/* Page padding */}
             <div className="p-8">
             
@@ -238,8 +249,10 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                 </div>
 
             </div>
-         </div>
-      </div>,
+         </motion.div>
+            </motion.div>
+         )}
+      </AnimatePresence>,
       document.body
    );
 }

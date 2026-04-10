@@ -13,7 +13,7 @@ import { PIPELINE_STATES } from '../utils/pipelineControls';
 
 function CustomerList() {
   const navigate = useNavigate();
-  const { customers, addCustomer } = useCustomers();
+  const { customers, loading, addCustomer } = useCustomers();
   const [searchParams] = useSearchParams();
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(() => searchParams.get('action') === 'new');
 
@@ -98,7 +98,41 @@ function CustomerList() {
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-6 mb-16">
-        {customers.length === 0 ? (
+        {loading ? (
+           <table className="w-full text-left border-collapse">
+             <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                   <th className="p-4 px-6 font-medium">Customer Name</th>
+                   <th className="p-4 px-6 font-medium">Contact</th>
+                   <th className="p-4 px-6 font-medium">Service Address</th>
+                   <th className="p-4 px-6"></th>
+                </tr>
+             </thead>
+             <tbody className="divide-y divide-slate-100">
+               {[1, 2, 3, 4, 5].map((i) => (
+                 <tr key={i} className="animate-pulse">
+                   <td className="p-4 px-6">
+                     <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-full bg-slate-200"></div>
+                       <div className="h-4 bg-slate-200 rounded w-32"></div>
+                     </div>
+                   </td>
+                   <td className="p-4 px-6">
+                     <div className="h-4 bg-slate-200 rounded w-24 mb-1.5"></div>
+                     <div className="h-3 bg-slate-200 rounded w-32"></div>
+                   </td>
+                   <td className="p-4 px-6">
+                     <div className="h-4 bg-slate-200 rounded w-48 mb-1.5"></div>
+                     <div className="h-3 bg-slate-200 rounded w-24"></div>
+                   </td>
+                   <td className="p-4 px-6 text-right">
+                     <div className="h-4 bg-slate-200 rounded w-4 inline-block"></div>
+                   </td>
+                 </tr>
+               ))}
+             </tbody>
+           </table>
+        ) : customers.length === 0 ? (
           <div className="p-12 text-center flex flex-col items-center">
             <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
               <UserIcon size={32} />

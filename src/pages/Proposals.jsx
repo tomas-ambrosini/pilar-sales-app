@@ -349,6 +349,50 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
            return (
              <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col mt-4 w-full">
                <div className="overflow-x-auto">
+                 {loading ? (
+                   <table className="w-full text-left border-collapse">
+                     <thead>
+                       <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                         <th className="p-4 px-6 font-medium">Customer / ID</th>
+                         <th className="p-4 px-6 font-medium">Status</th>
+                         <th className="p-4 px-6 font-medium">Est. Value</th>
+                         <th className="p-4 px-6 font-medium hidden lg:table-cell">Rep Owner</th>
+                         <th className="p-4 px-6 font-medium text-right">Actions</th>
+                       </tr>
+                     </thead>
+                     <tbody className="divide-y divide-slate-100">
+                       {[1, 2, 3, 4, 5].map((i) => (
+                         <tr key={i} className="animate-pulse">
+                           <td className="p-4 px-6">
+                             <div className="flex items-center gap-4">
+                               <div className="w-10 h-10 rounded-full bg-slate-200 shrink-0"></div>
+                               <div className="flex flex-col">
+                                 <div className="h-4 bg-slate-200 rounded w-32 mb-1.5"></div>
+                                 <div className="h-3 bg-slate-200 rounded w-24"></div>
+                               </div>
+                             </div>
+                           </td>
+                           <td className="p-4 px-6">
+                             <div className="h-6 bg-slate-200 rounded-md w-20"></div>
+                           </td>
+                           <td className="p-4 px-6">
+                             <div className="h-4 bg-slate-200 rounded w-24 mb-1.5"></div>
+                             <div className="h-3 bg-slate-200 rounded w-16"></div>
+                           </td>
+                           <td className="p-4 px-6 hidden lg:table-cell">
+                             <div className="flex items-center gap-2">
+                               <div className="w-6 h-6 rounded-full bg-slate-200"></div>
+                               <div className="h-4 bg-slate-200 rounded w-24"></div>
+                             </div>
+                           </td>
+                           <td className="p-4 px-6 text-right">
+                             <div className="h-8 bg-slate-200 rounded w-24 ml-auto"></div>
+                           </td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 ) : (
                  <table className="w-full text-left border-collapse">
                    <thead>
                      <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -492,6 +536,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                       })}
                    </tbody>
                  </table>
+                 )}
                </div>
              </div>
            );

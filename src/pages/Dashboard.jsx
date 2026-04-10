@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Users, Send, CheckCircle, Clock, ChevronRight, FileText, ArrowUpRight } from 'lucide-react';
+import { AreaChart, Area, ResponsiveContainer } from 'recharts';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useCustomers } from '../context/CustomerContext';
 import { useProposals } from '../context/ProposalContext';
@@ -20,10 +22,20 @@ export default function Dashboard() {
     ? [...proposals].sort((a,b) => new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0)).slice(0, 5)
     : [];
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] } }
+  };
+
   return (
-    <div className="page-container fade-in">
+    <motion.div variants={containerVariants} initial="hidden" animate="show" className="page-container fade-in">
       {/* Header */}
-      <header className="mb-6 flex items-center justify-between">
+      <motion.header variants={itemVariants} className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-[28px] font-bold text-slate-900 tracking-tight mb-1">
              Welcome back, {user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Team'}
@@ -33,10 +45,10 @@ export default function Dashboard() {
         <div className="hidden sm:flex text-sm text-slate-400 font-medium bg-white px-4 py-2 border border-slate-200 rounded-lg shadow-sm">
            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </div>
-      </header>
+      </motion.header>
 
       {/* Quick Actions (Enterprise Minimal) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
          <button 
             onClick={() => navigate('/proposals?action=new')}
             className="group flex flex-col justify-between bg-slate-900 hover:bg-slate-800 text-white p-5 rounded-xl shadow-lg shadow-slate-900/10 transition-all focus:outline-none text-left border border-slate-800"
@@ -68,49 +80,75 @@ export default function Dashboard() {
                <div className="text-sm font-medium text-slate-500">Create a new customer profile</div>
             </div>
          </button>
-      </div>
+      </motion.div>
 
-      {/* KPI Cards */}
-      <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+      <motion.h3 variants={itemVariants} className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
          <FileText size={16} className="text-slate-400" /> Pipeline Stats
-      </h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
-          <div className="flex items-center gap-2 mb-3">
-             <Users size={16} className="text-slate-400" />
-             <p className="text-sm font-medium text-slate-600">Total Customers</p>
+      </motion.h3>
+      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between">
+          <div className="p-5 pb-0">
+            <div className="flex items-center gap-2 mb-3">
+               <Users size={16} className="text-slate-400" />
+               <p className="text-sm font-medium text-slate-600">Total Customers</p>
+            </div>
+            <div className="flex items-baseline gap-3 mb-1">
+               <p className="text-3xl font-black text-slate-900 tracking-tight">{totalCustomers}</p>
+               <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full z-10">+4.2%</span>
+            </div>
           </div>
-          <div className="flex items-baseline gap-3">
-             <p className="text-3xl font-black text-slate-900 tracking-tight">{totalCustomers}</p>
-             <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+4.2%</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
-          <div className="flex items-center gap-2 mb-3">
-             <Send size={16} className="text-slate-400" />
-             <p className="text-sm font-medium text-slate-600">Active Proposals</p>
-          </div>
-          <div className="flex items-baseline gap-3">
-             <p className="text-3xl font-black text-slate-900 tracking-tight">{sentProposals + 1}</p> {/* +1 for aesthetics preview */}
-             <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+12.0%</span>
+          <div className="h-12 w-full mt-2 pointer-events-none">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={[{v:10},{v:11},{v:11},{v:12},{v:14},{v:15},{v:18}]} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                 <Area type="monotone" dataKey="v" stroke="#10b981" fill="#10b981" fillOpacity={0.1} strokeWidth={2} isAnimationActive={false} />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
-          <div className="flex items-center gap-2 mb-3">
-             <CheckCircle size={16} className="text-slate-400" />
-             <p className="text-sm font-medium text-slate-600">Closed Won</p>
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between">
+          <div className="p-5 pb-0">
+            <div className="flex items-center gap-2 mb-3">
+               <Send size={16} className="text-slate-400" />
+               <p className="text-sm font-medium text-slate-600">Active Proposals</p>
+            </div>
+            <div className="flex items-baseline gap-3 mb-1">
+               <p className="text-3xl font-black text-slate-900 tracking-tight">{sentProposals + 1}</p>
+               <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full z-10">+12.0%</span>
+            </div>
           </div>
-          <div className="flex items-baseline gap-3">
-             <p className="text-3xl font-black text-slate-900 tracking-tight">{approvedProposals}</p>
-             <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">+2.1%</span>
+          <div className="h-12 w-full mt-2 pointer-events-none">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={[{v:2},{v:4},{v:3},{v:5},{v:6},{v:6},{v:9}]} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                 <Area type="monotone" dataKey="v" stroke="#10b981" fill="#10b981" fillOpacity={0.1} strokeWidth={2} isAnimationActive={false} />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
-      </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between">
+          <div className="p-5 pb-0">
+            <div className="flex items-center gap-2 mb-3">
+               <CheckCircle size={16} className="text-slate-400" />
+               <p className="text-sm font-medium text-slate-600">Closed Won</p>
+            </div>
+            <div className="flex items-baseline gap-3 mb-1">
+               <p className="text-3xl font-black text-slate-900 tracking-tight">{approvedProposals}</p>
+               <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full z-10">+2.1%</span>
+            </div>
+          </div>
+          <div className="h-12 w-full mt-2 pointer-events-none">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={[{v:1},{v:1},{v:2},{v:2},{v:3},{v:3},{v:5}]} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                 <Area type="monotone" dataKey="v" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} strokeWidth={2} isAnimationActive={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </motion.div>
 
       {/* Structured Data Table */}
-      <div className="flex flex-col mb-16">
+      <motion.div variants={itemVariants} className="flex flex-col mb-16">
          <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-slate-900">Recent Activity</h3>
             <button onClick={() => navigate('/proposals')} className="text-sm font-bold text-primary-600 hover:text-primary-700 flex items-center gap-1">
@@ -173,7 +211,7 @@ export default function Dashboard() {
               </table>
            )}
          </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
