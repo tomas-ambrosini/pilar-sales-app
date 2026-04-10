@@ -143,27 +143,45 @@ export function ProposalProvider({ children }) {
 
     const deleteProposal = async (id) => {
         const oldProposal = proposals.find(p => p.id === id);
+        if (!oldProposal) return;
         const oppId = oldProposal?.proposal_data?.associated_opportunity_id;
 
+        // Optimistic UI update
         setProposals(prev => prev.filter(p => p.id !== id));
         
-        // Explicitly scrape any nested comments before deleting to bypass newly introduced Postgres foreign key restrictions
-        await supabase.from('proposal_comments').delete().eq('proposal_id', id);
+        try {
+            // Explicitly scrape any nested comments before deleting
+            await supabase.from('proposal_comments').delete().eq('proposal_id', id);
 
-        // Fully wipe proposal first to free up any other foreign key locks
-        const { error } = await supabase.from('proposals').delete().eq('id', id);
+            // Fully wipe proposal first
+            const { data, error } = await supabase.from('proposals').delete().eq('id', id).select();
 
-        if (error) {
-            console.error('Failed to delete proposal:', error);
-            toast.error(`Database Error: ${error.message}`);
+            if (error) {
+                console.error('Failed to delete proposal (Error object):', error);
+                alert(`Supabase Error: ${error.message}`);
+                fetchProposals();
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                console.warn('Failed to delete proposal: 0 rows affected (RLS constraint)');
+                alert('Database Warning: Deletion failed because the row was locked or access was restricted by Postgres RLS.');
+                fetchProposals();
+                return;
+            }
+
+            // Wipe generated architectural constraints in downstream systems
+            if (oppId) {
+                await supabase.from('work_orders').delete().eq('opportunity_id', oppId);
+                const { error: oppError } = await supabase.from('opportunities').delete().eq('id', oppId);
+                if (oppError) {
+                    console.log('Opportunity cleanup deferred:', oppError.message);
+                }
+            }
+        } catch (err) {
+            console.error('Fatal Javascript Exception during deletion:', err);
+            alert(`JS Error: ${err.message}`);
             fetchProposals();
-            return;
-        }
-
-        // Wipe generated constraints as requested by testing
-        if (oppId) {
-            await supabase.from('work_orders').delete().eq('opportunity_id', oppId);
-            await supabase.from('opportunities').delete().eq('id', oppId);
         }
     };
 
