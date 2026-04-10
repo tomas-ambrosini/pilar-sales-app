@@ -155,8 +155,22 @@ export default function AccountManagement() {
                         return (
                          <tr key={u.id} className="hover:bg-slate-50 transition-colors">
                             <td className="px-6 py-4">
-                               <div className="font-bold text-slate-800">{u.full_name || 'System User'} {isSuperAdmin && <span title="Platform Founder" className="ml-1 text-[10px] bg-slate-900 text-amber-400 px-1.5 py-0.5 rounded-sm font-black uppercase tracking-widest">Founder</span>}</div>
-                               <div className="font-mono text-xs text-slate-400 mt-1">{u.username || u.email || 'No login bound'}</div>
+                               <div className="flex items-center gap-3">
+                                  {u.avatar_url ? (
+                                     <img src={u.avatar_url} alt={u.full_name || 'User'} className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0" />
+                                  ) : (
+                                     <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-black text-sm border border-slate-200 uppercase shrink-0">
+                                        {(u.full_name?.charAt(0) || u.email?.charAt(0) || 'U')}
+                                     </div>
+                                  )}
+                                  <div className="flex flex-col min-w-0">
+                                     <div className="font-bold text-slate-800 flex items-center flex-wrap gap-1">
+                                        <span className="truncate">{u.full_name || 'System User'}</span>
+                                        {isSuperAdmin && <span title="Platform Founder" className="text-[10px] bg-slate-900 text-amber-400 px-1.5 py-0.5 rounded-sm font-black uppercase tracking-widest shrink-0">Founder</span>}
+                                     </div>
+                                     <div className="font-mono text-xs text-slate-400 mt-0.5 truncate">{u.username || u.email || 'No login bound'}</div>
+                                  </div>
+                               </div>
                             </td>
                             <td className="px-6 py-4">
                                {isSuperAdmin ? (
