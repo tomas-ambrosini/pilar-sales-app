@@ -13,6 +13,7 @@ import ProposalWizard from '../components/ProposalWizard';
 import ProposalViewerModal from '../components/ProposalViewerModal';
 import ContractDocumentModal from '../components/ContractDocumentModal';
 import SignaturePad from '../components/SignaturePad';
+import ProposalComments from '../components/ProposalComments';
 import { useSearchParams } from 'react-router-dom';
 
 export default function Proposals() {
@@ -21,6 +22,7 @@ export default function Proposals() {
   const [searchParams] = useSearchParams();
   const [showWizard, setShowWizard] = useState(false);
   const [wizardConfig, setWizardConfig] = useState(null);
+  const [expandedProposalId, setExpandedProposalId] = useState(null);
 
   useEffect(() => {
      const draftCustStr = localStorage.getItem('pilar_draft_customer');
@@ -53,6 +55,10 @@ export default function Proposals() {
   const [editForm, setEditForm] = useState({ customer: '', amount: '', status: '' });
   const [activeDraft, setActiveDraft] = useState(null);
   const [filterMode, setFilterMode] = useState('All');
+
+  const handleRowClick = (id) => {
+      setExpandedProposalId(prev => prev === id ? null : id);
+  };
 
   useEffect(() => {
      if (!showWizard && typeof window !== 'undefined') {
@@ -413,7 +419,8 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                         }
             
                         return (
-                          <tr key={proposal.id} className="group bg-white hover:bg-slate-50 transition-colors">
+                          <React.Fragment key={proposal.id}>
+                          <tr className="group bg-white hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleRowClick(proposal.id)}>
                             {/* COL 1: Customer & Date */}
                             <td className="p-4 px-6">
                               <div className="flex items-center gap-4 min-w-[250px]">
@@ -492,7 +499,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                             </td>
 
                             {/* COL 5: Actions */}
-                            <td className="p-4 px-6 text-right">
+                            <td className="p-4 px-6 text-right" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-3 flex-nowrap">
                                  {/* Hover Utilities */}
                                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
@@ -529,6 +536,16 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                               </div>
                             </td>
                           </tr>
+                          {expandedProposalId === proposal.id && (
+                             <tr>
+                                <td colSpan="5" className="p-0 border-b border-slate-200 bg-slate-100/50">
+                                    <div className="px-6 py-4 mx-auto w-full">
+                                        <ProposalComments proposalId={proposal.id} />
+                                    </div>
+                                </td>
+                             </tr>
+                          )}
+                          </React.Fragment>
                         );
                       })}
                    </tbody>
