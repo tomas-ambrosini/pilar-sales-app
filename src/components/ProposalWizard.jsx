@@ -203,6 +203,23 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     });
   };
 
+  const handleAutofillStep2 = () => {
+     setSystems(prev => prev.map(sys => ({
+        ...sys,
+        survey: {
+           ...sys.survey,
+           systemType: "Split AC & Furnace",
+           currentTonnage: "3.0",
+           gasRefrigerant: "R410A",
+           existingBrand: "Trane",
+           condenserLocation: "Ground",
+           ahuLocation: "Closet",
+           disconnectCondition: "Pass"
+        }
+     })));
+     setAddons({});
+  };
+
   const calculateSystemBaselineRetail = (sys, rawEquipCost, tierType = 'Good') => {
     if (!rawEquipCost) return 0;
     const activeAddons = laborRates.filter(l => sys.addons[l.id]);
@@ -460,7 +477,10 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
         {step === 2 && (
           <div>
-            <h3 className="font-bold mb-4 text-slate-700">2. Pre-installation Site Constraints</h3>
+            <div className="flex items-center gap-4 mb-4">
+               <h3 className="font-bold text-slate-700 m-0">2. Pre-installation Site Constraints</h3>
+               <button onClick={handleAutofillStep2} className="px-3 py-1 bg-amber-100 text-amber-700 hover:bg-amber-200 text-xs font-bold rounded-full transition-colors border border-amber-300">Autofill Temp Data</button>
+            </div>
             <div className="bg-slate-50 p-6 rounded border border-slate-200 mb-6 font-medium text-sm">
                <h4 className="text-sm font-bold border-b pb-2 mb-4 text-primary-600 uppercase">A. Current Equipment</h4>
                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
