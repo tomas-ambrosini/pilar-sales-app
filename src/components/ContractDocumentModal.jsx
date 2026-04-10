@@ -116,7 +116,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                 </div>
 
                 {/* Unit Info Box */}
-                {(tierData.systemsList && tierData.systemsList.length > 0) ? (
+                {(tierData?.systemsList && tierData.systemsList.length > 0) ? (
                     tierData.systemsList.map((sys, idx) => (
                         <div key={idx} className="border border-slate-300 rounded overflow-hidden mb-4">
                             <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
