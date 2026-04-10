@@ -356,7 +356,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                          <th className="p-4 px-6 font-medium text-left">Customer / ID</th>
                          <th className="p-4 px-6 font-medium text-center">Status</th>
                          <th className="p-4 px-6 font-medium text-left">Est. Value</th>
-                         <th className="p-4 px-6 font-medium text-left hidden lg:table-cell">Rep Owner</th>
+                         <th className="p-4 px-6 font-medium text-center hidden lg:table-cell">Rep Owner</th>
                          <th className="p-4 px-6 font-medium text-right">Actions</th>
                        </tr>
                      </thead>
@@ -399,7 +399,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                        <th className="p-4 px-6 font-medium text-left">Customer / ID</th>
                        <th className="p-4 px-6 font-medium text-center">Status</th>
                        <th className="p-4 px-6 font-medium text-left">Est. Value</th>
-                       <th className="p-4 px-6 font-medium text-left hidden lg:table-cell">Rep Owner</th>
+                       <th className="p-4 px-6 font-medium text-center hidden lg:table-cell">Rep Owner</th>
                        <th className="p-4 px-6 font-medium text-right">Actions</th>
                      </tr>
                    </thead>
@@ -477,7 +477,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
 
                             {/* COL 4: Owner */}
                             <td className="p-4 px-6 hidden lg:table-cell">
-                              <div className="flex items-center">
+                              <div className="flex items-center justify-center">
                                  {proposal.user_profiles?.full_name ? (
                                     <div className="flex items-center gap-2 bg-white py-1.5 px-3 rounded-lg border border-slate-200 shadow-sm max-w-[150px]">
                                        <div className="w-5 h-5 rounded flex items-center justify-center text-[10px] font-black uppercase shrink-0 text-slate-700 bg-slate-100">
