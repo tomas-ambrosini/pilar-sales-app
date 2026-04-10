@@ -406,17 +406,14 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                    <tbody className="divide-y divide-slate-100">
                      {filteredProposals.map(proposal => {
                         let badgeColors = 'bg-slate-100 text-slate-600 border-slate-200';
-                        let borderAccent = 'border-transparent';
                         if (proposal.status === 'Sent') {
                            badgeColors = 'bg-blue-50 text-blue-700 border-blue-200';
-                           borderAccent = 'border-l-[3px] border-l-blue-500';
                         } else if (proposal.status === 'Approved') {
                            badgeColors = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                           borderAccent = 'border-l-[3px] border-l-emerald-500';
                         }
             
                         return (
-                          <tr key={proposal.id} className={`group bg-white hover:bg-slate-50 transition-colors ${borderAccent}`}>
+                          <tr key={proposal.id} className="group bg-white hover:bg-slate-50 transition-colors">
                             {/* COL 1: Customer & Date */}
                             <td className="p-4 px-6">
                               <div className="flex items-center gap-4 min-w-[250px]">
