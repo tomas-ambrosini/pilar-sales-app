@@ -83,7 +83,6 @@ export default function Proposals() {
   };
 
   const handleDeleteOpen = (proposal) => {
-    if (proposal.status === 'Approved') return;
     setDeletingProposal(proposal);
   };
 
