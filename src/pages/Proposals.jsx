@@ -417,8 +417,8 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                             {/* COL 1: Customer & Date */}
                             <td className="p-4 px-6">
                               <div className="flex items-center gap-4 min-w-[250px]">
-                                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-black text-slate-500 bg-white border border-slate-200 shadow-sm shrink-0">
-                                    {proposal.customer?.charAt(0) || 'C'}
+                                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-slate-600 bg-slate-100 shrink-0">
+                                    {proposal.customer?.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'C'}
                                  </div>
                                  <div className="flex flex-col min-w-0 pr-4">
                                     <h3 className="text-[15px] font-black text-slate-900 truncate leading-tight mb-0.5">{proposal.customer}</h3>

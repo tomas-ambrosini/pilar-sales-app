@@ -173,8 +173,8 @@ function CustomerList() {
                  >
                    <td className="p-4 px-6">
                      <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs">
-                          {(customer.name?.charAt(0) || 'C').toUpperCase()}
+                       <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0">
+                          {customer.name?.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'C'}
                        </div>
                        <div className="font-bold text-slate-900">{customer.name}</div>
                      </div>
