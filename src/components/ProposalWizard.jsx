@@ -367,15 +367,21 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
           {step >= 2 && step <= 4 && (
              <div className="flex items-center gap-2 mb-6 border-b border-slate-200 pb-2 overflow-x-auto">
-                {systems.map(sys => (
-                   <button 
-                     key={sys.id} 
-                     onClick={() => setActiveSystemId(sys.id)}
-                     className={`px-4 py-2 font-bold text-sm rounded-t-lg transition-colors whitespace-nowrap ${activeSystemId === sys.id ? 'bg-primary-50 text-primary-700 border-b-2 border-primary-500' : 'text-slate-500 hover:bg-slate-50'}`}
-                   >
-                      {sys.name}
-                   </button>
-                ))}
+                {systems.map(sys => {
+                   const isSysValidStep2 = !!(sys.survey.systemType && sys.survey.currentTonnage);
+                   const isSysValidStep3 = !!(sys.selectedTiers.good || sys.selectedTiers.better || sys.selectedTiers.best);
+                   const showWarning = (step === 2 && !isSysValidStep2) || (step === 3 && !isSysValidStep3);
+
+                   return (
+                    <button 
+                      key={sys.id} 
+                      onClick={() => setActiveSystemId(sys.id)}
+                      className={`px-4 py-2 font-bold text-sm rounded-t-lg transition-colors whitespace-nowrap flex items-center justify-center gap-2 ${activeSystemId === sys.id ? 'bg-primary-50 text-primary-700 border-b-2 border-primary-500' : 'text-slate-500 hover:bg-slate-50'}`}
+                    >
+                       {sys.name}
+                       {showWarning && <AlertTriangle size={14} className="text-amber-500" />}
+                    </button>
+                 )})}
                 {step === 2 && (
                   <>
                     <button 
@@ -581,10 +587,13 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                  ))}
                </div>
             </div>
-            <div className="flex justify-between mt-8 pt-4 border-t border-slate-100">
+             <div className="flex justify-between items-center mt-8 pt-4 border-t border-slate-100">
                <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(1)}><ArrowLeft size={16}/> Back</button>
-               <button className="btn-primary flex items-center justify-center gap-2 w-max" onClick={() => setStep(3)}>Next: Select Equipment <ArrowRight size={16}/></button>
-            </div>
+               <div className="flex items-center gap-3">
+                 {!systems.every(s => s.survey.systemType && s.survey.currentTonnage) && <span className="text-xs font-bold text-amber-600">Please complete required fields (System Type & Tonnage) for all units.</span>}
+                 <button className="btn-primary flex items-center justify-center gap-2 w-max" onClick={() => setStep(3)} disabled={!systems.every(s => s.survey.systemType && s.survey.currentTonnage)}>Next: Select Equipment <ArrowRight size={16}/></button>
+               </div>
+             </div>
           </div>
         )}
 
@@ -638,9 +647,12 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                </div>
             )}
 
-            <div className="flex justify-between mt-10 pt-4 border-t border-slate-100">
+            <div className="flex justify-between items-center mt-10 pt-4 border-t border-slate-100">
                <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(2)}><ArrowLeft size={16}/> Back</button>
-               <button className="btn-primary flex items-center justify-center gap-2 w-max" onClick={() => setStep(4)} disabled={!selectedTiers.good && !selectedTiers.better && !selectedTiers.best}>Next: Map Subcontracting <ArrowRight size={16}/></button>
+               <div className="flex items-center gap-3">
+                 {!systems.every(s => s.selectedTiers.good || s.selectedTiers.better || s.selectedTiers.best) && <span className="text-xs font-bold text-amber-600">Please map equipment tiers for all units.</span>}
+                 <button className="btn-primary flex items-center justify-center gap-2 w-max" onClick={() => setStep(4)} disabled={!systems.every(s => s.selectedTiers.good || s.selectedTiers.better || s.selectedTiers.best)}>Next: Map Subcontracting <ArrowRight size={16}/></button>
+               </div>
             </div>
           </div>
         )}
