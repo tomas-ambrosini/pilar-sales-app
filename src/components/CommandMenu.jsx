@@ -85,7 +85,7 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
                 </div>
               </div>
 
-              <Command.List className="max-h-[350px] overflow-y-auto overflow-x-hidden p-2 transition-all">
+              <Command.List className="max-h-[550px] overflow-y-auto overflow-x-hidden p-2 transition-all">
                 <Command.Empty className="py-14 text-center text-sm">
                   <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-50 text-slate-300 mb-4">
                      <Search size={24} />
