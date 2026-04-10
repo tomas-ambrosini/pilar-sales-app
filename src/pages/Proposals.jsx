@@ -353,10 +353,10 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                    <table className="w-full text-left border-collapse">
                      <thead>
                        <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                         <th className="p-4 px-6 font-medium">Customer / ID</th>
-                         <th className="p-4 px-6 font-medium">Status</th>
-                         <th className="p-4 px-6 font-medium">Est. Value</th>
-                         <th className="p-4 px-6 font-medium hidden lg:table-cell">Rep Owner</th>
+                         <th className="p-4 px-6 font-medium text-left">Customer / ID</th>
+                         <th className="p-4 px-6 font-medium text-left">Status</th>
+                         <th className="p-4 px-6 font-medium text-left">Est. Value</th>
+                         <th className="p-4 px-6 font-medium text-left hidden lg:table-cell">Rep Owner</th>
                          <th className="p-4 px-6 font-medium text-right">Actions</th>
                        </tr>
                      </thead>
@@ -396,10 +396,10 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                  <table className="w-full text-left border-collapse">
                    <thead>
                      <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                       <th className="p-4 px-6 font-medium">Customer / ID</th>
-                       <th className="p-4 px-6 font-medium">Status</th>
-                       <th className="p-4 px-6 font-medium">Est. Value</th>
-                       <th className="p-4 px-6 font-medium hidden lg:table-cell">Rep Owner</th>
+                       <th className="p-4 px-6 font-medium text-left">Customer / ID</th>
+                       <th className="p-4 px-6 font-medium text-left">Status</th>
+                       <th className="p-4 px-6 font-medium text-left">Est. Value</th>
+                       <th className="p-4 px-6 font-medium text-left hidden lg:table-cell">Rep Owner</th>
                        <th className="p-4 px-6 font-medium text-right">Actions</th>
                      </tr>
                    </thead>
