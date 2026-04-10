@@ -536,15 +536,25 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                               </div>
                             </td>
                           </tr>
+                          <AnimatePresence initial={false}>
                           {expandedProposalId === proposal.id && (
-                             <tr>
-                                <td colSpan="5" className="p-0 border-b border-slate-200 bg-slate-100/50">
-                                    <div className="px-6 py-4 mx-auto w-full">
-                                        <ProposalComments proposalId={proposal.id} />
-                                    </div>
+                             <tr key={`expand-${proposal.id}`}>
+                                <td colSpan="5" className="p-0 border-slate-200 bg-slate-100/50 relative">
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: "auto", opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ duration: 0.3, ease: 'easeOut' }}
+                                        className="overflow-hidden border-b border-slate-200"
+                                    >
+                                        <div className="px-6 py-4 mx-auto w-full">
+                                            <ProposalComments proposalId={proposal.id} />
+                                        </div>
+                                    </motion.div>
                                 </td>
                              </tr>
                           )}
+                          </AnimatePresence>
                           </React.Fragment>
                         );
                       })}
