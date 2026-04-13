@@ -101,7 +101,7 @@ export default function ProposalComments({ proposalId }) {
     }
 
     return (
-        <div className="bg-slate-50 border border-slate-200/60 rounded-xl overflow-hidden shadow-inner my-2 flex flex-col relative max-h-[500px]">
+        <div className="h-full bg-slate-50 border border-slate-200/60 rounded-xl overflow-hidden shadow-inner flex flex-col relative">
             {/* Header */}
             <div className="bg-white border-b border-slate-200 py-3 px-5 flex items-center gap-2 sticky top-0 z-10 shadow-sm">
                 <MessageSquare size={14} className="text-primary-600" />

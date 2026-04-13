@@ -225,11 +225,10 @@ export default function ProposalDetailsModal({ proposal, onClose }) {
 
                 </div>
 
-                {/* Fixed Bottom Chat Area (20% Split) */}
-                <div className="flex-[2] min-h-[250px] shrink-0 border-t-2 border-slate-200 bg-white">
+                {/* Fixed Bottom Chat Area */}
+                <div className="h-[280px] shrink-0 border-t-2 border-slate-200 bg-white p-2">
                     <ProposalComments proposalId={proposal.id} />
                 </div>
-
             </div>
         </Modal>
     );
