@@ -16,7 +16,6 @@
 .modal-container {
   background: var(--bg-card);
   width: 100%;
-  max-width: 500px;
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
   display: flex;
