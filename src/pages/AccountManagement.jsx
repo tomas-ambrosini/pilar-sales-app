@@ -39,16 +39,12 @@ export default function AccountManagement() {
   };
 
   const invokeAdminAction = async (action, payload) => {
-     try {
-        const { data, error } = await supabase.functions.invoke('admin-action', {
-           body: { action, payload }
-        });
-        if (error) throw error;
-        if (data?.error) throw new Error(data.error);
-        return data;
-     } catch (e) {
-        throw e;
-     }
+    const { data, error } = await supabase.functions.invoke('admin-action', {
+       body: { action, payload }
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data;
   };
 
   const handleCreateUser = async (e) => {
@@ -216,6 +212,7 @@ export default function AccountManagement() {
                </tbody>
             </table>
          </div>
+      </div>
       </div>
 
       {/* CREATE MODAL */}

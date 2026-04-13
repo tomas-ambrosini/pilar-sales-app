@@ -4,6 +4,7 @@ import { Search, Plus, Phone, Mail, MapPin, ChevronRight, User as UserIcon, User
 import Modal from '../components/Modal';
 import './Customers.css';
 import { useCustomers } from '../context/CustomerContext';
+import toast from 'react-hot-toast';
 import { useProposals } from '../context/ProposalContext';
 import ProposalViewerModal from '../components/ProposalViewerModal';
 import ContractDocumentModal from '../components/ContractDocumentModal';
@@ -395,17 +396,17 @@ function CustomerDetail() {
   // Cross-pollinate data
   const customerProposals = proposals?.filter(p => p.customer?.trim().toLowerCase() === customer?.name?.trim().toLowerCase()) || [];
 
-  if (!customer) {
-    return <div className="page-container flex-center"><h3>Customer Not Found or Deleted</h3><button className="primary-action-btn mt-4" onClick={() => navigate('/customers')}>Go Back</button></div>;
-  }
-
   const [editFormData, setEditFormData] = useState({
-    name: customer.name,
-    email: customer.email,
-    phone: customer.phone,
-    address: customer.address,
-    tags: customer.tags ? customer.tags.join(', ') : ''
+    name: customer?.name || '',
+    email: customer?.email || '',
+    phone: customer?.phone || '',
+    address: customer?.address || '',
+    tags: customer?.tags ? customer.tags.join(', ') : ''
   });
+
+  if (!customer) {
+    return <div className="page-container flex-center"><h3>Customer Not Found or Deleted</h3><button className="bg-primary-600 font-bold text-white px-5 py-2.5 rounded-xl shadow-md mt-4" onClick={() => navigate('/customers')}>Go Back</button></div>;
+  }
 
   const handleEditChange = (e) => {
     const { id, value } = e.target;

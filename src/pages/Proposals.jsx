@@ -118,7 +118,7 @@ export default function Proposals() {
       const url = getProposalUrl(proposal.id);
       const subject = encodeURIComponent(`Your Pilar Home Proposal - ${proposal.customer}`);
       const body = encodeURIComponent(`Hi ${proposal.customer.split(' ')[0]},\n\nI just put together your Pilar Home proposal. You can review all options securely here:\n\n${url}\n\nLet me know what you think when you're ready.\n\nBest,`);
-      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      window.location.assign(`mailto:?subject=${subject}&body=${body}`);
       
       const isNewSend = proposal.status === 'Draft';
       if (isNewSend) await updateProposal(proposal.id, { status: 'Sent' });
