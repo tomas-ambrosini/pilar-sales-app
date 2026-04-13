@@ -505,30 +505,29 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     <div className="page-container fade-in">
       <div className="glass-panel" style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
         <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
-          <div className="flex flex-col">
-            <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-               <Calculator className="text-primary-600"/> 
-               {isEditing ? `Editing Proposal: ${editingId}` : 'Estimate & Proposal Generator'}
-            </h2>
+          <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+             <Calculator className="text-primary-600"/> 
+             {isEditing ? `Editing Proposal: ${editingId}` : 'Estimate & Proposal Generator'}
+          </h2>
+          <div className="flex items-center gap-6">
             {step > 0 && (
               <button 
-                className={`text-[11px] font-bold mt-3 px-3 py-1.5 rounded-full border shadow-sm transition-all flex items-center gap-1.5 w-max ${
+                className={`text-[11px] font-bold px-4 py-2.5 rounded-lg border shadow-sm transition-all flex items-center gap-2 ${
                     manualSaveStatus === 'error' 
                       ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100' 
                       : manualSaveStatus === 'saving'
-                      ? 'bg-primary-50 text-primary-600 border-primary-200 opacity-70 cursor-wait'
-                      : 'bg-primary-50 text-primary-700 border-primary-200 hover:bg-primary-100 hover:text-primary-800 hover:border-primary-300'
+                      ? 'bg-slate-100 text-slate-500 border-slate-200 opacity-70 cursor-wait'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900 shadow-sm'
                 }`} 
                 onClick={handleManualSave} 
                 disabled={manualSaveStatus === 'saving'} 
                 title="Your progress is automatically saved to the cloud"
               >
-                <Save size={13}/> 
-                {manualSaveStatus === 'saving' ? 'Saving to Cloud...' : manualSaveStatus === 'error' ? 'Save Failed! Click to Retry' : 'Save Draft & Exit'}
+                {manualSaveStatus === 'saving' ? <RefreshCcw size={14} className="animate-spin" /> : <Save size={14}/>}
+                {manualSaveStatus === 'saving' ? 'Saving...' : manualSaveStatus === 'error' ? 'Save Failed! Try Again' : 'Save Draft & Exit'}
               </button>
             )}
-          </div>
-          <div className="flex gap-1.5">
+            <div className="flex gap-1.5">
              {[1,2,3,4,5,6].map(num => (
                 <button 
                   key={num} 
