@@ -109,7 +109,7 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
              <div>
-                <p className="text-xs font-bold text-primary-600 uppercase tracking-wider mb-1">Interactive Digital Proposal • {proposal.id}</p>
+                <p className="text-xs font-bold text-primary-600 uppercase tracking-wider mb-1" title={proposal.proposal_number ? `Legacy ID: ${proposal.id}` : ''}>Interactive Digital Proposal • {proposal.proposal_number || `Quote ${proposal.id.substring(0,8).toUpperCase()}`}</p>
                 <h2 className="text-2xl font-black text-slate-800">{proposal.customer}</h2>
                 <div className="flex items-center gap-4 text-xs font-semibold text-slate-500 mt-2">
                    <span>Generated: {proposal.date}</span>

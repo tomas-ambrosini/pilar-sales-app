@@ -183,7 +183,9 @@ export default function Dashboard() {
                           >
                              <td className="p-4 px-6">
                                 <div className="font-bold text-slate-900">{proposal.customer || 'Unknown Customer'}</div>
-                                <div className="text-sm text-slate-500 mt-0.5">Quote #{proposal.id.substring(0,6).toUpperCase()}</div>
+                                <div className="text-sm text-slate-500 mt-0.5" title={proposal.proposal_number ? `Legacy ID: ${proposal.id}` : ''}>
+                                   Quote {proposal.proposal_number || `#${proposal.id.substring(0,6).toUpperCase()}`}
+                                </div>
                              </td>
                              <td className="p-4 px-6">
                                 <div className="text-sm text-slate-600 flex items-center gap-1.5">

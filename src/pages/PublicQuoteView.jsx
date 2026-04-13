@@ -225,7 +225,7 @@ export default function PublicQuoteView() {
                                 </p>
                                 <div className="inline-block bg-slate-50 border border-slate-200 px-6 py-3 rounded-xl">
                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Reference ID</p>
-                                    <p className="font-mono font-bold text-slate-700">PH-{proposal.id.substring(0,8).toUpperCase()}</p>
+                                    <p className="font-mono font-bold text-slate-700" title={proposal.proposal_number ? `Legacy ID: ${proposal.id}` : ''}>{proposal.proposal_number || `PH-${proposal.id.substring(0,8).toUpperCase()}`}</p>
                                 </div>
                             </div>
                         ) : (

@@ -435,7 +435,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                     <p className="text-xs font-semibold text-slate-500 truncate flex items-center">
                                        {new Date(proposal.updated_at || proposal.created_at).toLocaleDateString()} 
                                        <span className="text-slate-300 mx-1.5">•</span> 
-                                       <span className="font-mono text-[10px] uppercase tracking-widest text-slate-400 truncate">{proposal.id.split('-')[0]}</span>
+                                       <span className="font-mono text-[10px] uppercase tracking-widest text-slate-400 truncate" title={proposal.proposal_number ? `Legacy ID: ${proposal.id}` : ''}>{proposal.proposal_number || proposal.id.split('-')[0]}</span>
                                     </p>
                                  </div>
                               </div>
