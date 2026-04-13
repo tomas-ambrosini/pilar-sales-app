@@ -510,7 +510,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                     {proposal.status !== 'Approved' && (
                                        <button className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors" onClick={() => handleEditOpen(proposal)} title="Edit Details"><Edit2 size={16} /></button>
                                     )}
-                                    {['super_admin'].includes((user?.role || '').toLowerCase()) && (
+                                    {['super_admin', 'admin'].includes((user?.role || '').toLowerCase()) && (
                                        <button className="p-2 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Force Delete"><Trash2 size={16} /></button>
                                     )}
                                  </div>
