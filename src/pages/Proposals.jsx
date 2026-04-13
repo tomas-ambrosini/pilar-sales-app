@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import './Proposals.css';
 import { PIPELINE_STATES, PipelineController } from '../utils/pipelineControls';
 import ProposalWizard from '../components/ProposalWizard';
+import ProposalDetailsModal from '../components/ProposalDetailsModal';
 import ProposalViewerModal from '../components/ProposalViewerModal';
 import ContractDocumentModal from '../components/ContractDocumentModal';
 import SignaturePad from '../components/SignaturePad';
@@ -25,7 +26,7 @@ export default function Proposals() {
   const [searchParams] = useSearchParams();
   const [showWizard, setShowWizard] = useState(false);
   const [wizardConfig, setWizardConfig] = useState(null);
-  const [expandedProposalId, setExpandedProposalId] = useState(null);
+  const [inspectingProposal, setInspectingProposal] = useState(null);
 
   useEffect(() => {
      const draftCustStr = localStorage.getItem('pilar_draft_customer');
@@ -56,8 +57,8 @@ export default function Proposals() {
   const [deletingProposal, setDeletingProposal] = useState(null);
   const [filterMode, setFilterMode] = useState('All');
 
-  const handleRowClick = (id) => {
-      setExpandedProposalId(prev => prev === id ? null : id);
+  const handleRowClick = (proposal) => {
+      setInspectingProposal(proposal);
   };
 
   if (loading && proposals.length === 0) return <div className="page-container flex-center"><h3>Loading Proposals...</h3></div>;
@@ -350,7 +351,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
             
                         return (
                           <React.Fragment key={proposal.id}>
-                          <tr className="group bg-white hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleRowClick(proposal.id)}>
+                          <tr className="group bg-white hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleRowClick(proposal)}>
                             {/* COL 1: Customer & Date */}
                             <td className="p-4 px-6">
                               <div className="flex items-center gap-4 min-w-[250px]">
@@ -466,25 +467,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                               </div>
                             </td>
                           </tr>
-                          <AnimatePresence initial={false}>
-                          {expandedProposalId === proposal.id && (
-                             <tr key={`expand-${proposal.id}`}>
-                                <td colSpan="5" className="p-0 border-slate-200 bg-slate-100/50 relative">
-                                    <motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: "auto", opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        transition={{ duration: 0.3, ease: 'easeOut' }}
-                                        className="overflow-hidden border-b border-slate-200"
-                                    >
-                                        <div className="px-6 py-4 mx-auto w-full">
-                                            <ProposalComments proposalId={proposal.id} />
-                                        </div>
-                                    </motion.div>
-                                </td>
-                             </tr>
-                          )}
-                          </AnimatePresence>
+                          
                           </React.Fragment>
                         );
                       })}
@@ -510,6 +493,12 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
           </div>
         </div>
       </Modal>
+
+      {/* Internal Proposal Details Modal */}
+      <ProposalDetailsModal
+        proposal={inspectingProposal}
+        onClose={() => setInspectingProposal(null)}
+      />
 
       {/* Digital Quote Viewer Modal */}
       <ProposalViewerModal
