@@ -192,17 +192,20 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
                                                 // Resolve System Data
                                                 let targetSystems = [];
                                                 if (matchedTierData.systemsList && matchedTierData.systemsList.length > 0) {
-                                                    const sysData = matchedTierData.systemsList.find(s => s.systemId === sys.id || s.systemName === (sys.systemName || `System ${idx+1}`));
-                                                    if (sysData) targetSystems.push({ name: sysData.systemName, ...sysData.tierData });
+                                                    let sysData = matchedTierData.systemsList.find(s => s.systemId && s.systemId === sys.id) 
+                                                               || matchedTierData.systemsList.find(s => s.systemName && s.systemName === sys.systemName)
+                                                               || matchedTierData.systemsList[idx];
+                                                               
+                                                    if (sysData) targetSystems.push({ name: sysData.systemName, specificTierName: sysData.tierName, ...sysData.tierData });
                                                 } else {
-                                                    targetSystems.push({ name: `${matchedTierNameUpperCase} Package`, ...matchedTierData });
+                                                    targetSystems.push({ name: `${matchedTierNameUpperCase} Package`, specificTierName: matchedTierNameUpperCase, ...matchedTierData });
                                                 }
                                                 
                                                 return targetSystems.map((sData, sIdx) => (
                                                     <div key={sIdx}>
-                                                        <div className="flex items-center gap-2 mb-4 border-b border-primary-100 pb-2">
+                                                        <div className="flex items-center gap-2 mb-4 border-b border-primary-100 pb-2 mt-4">
                                                             <h4 className="font-black text-primary-700 text-sm tracking-wide uppercase">Approved New Equipment</h4>
-                                                            <span className="text-[10px] font-bold bg-primary-100 text-primary-800 px-2 py-0.5 rounded ml-2">{matchedTierNameUpperCase}</span>
+                                                            <span className="text-[10px] font-bold bg-primary-100 text-primary-800 px-2 py-0.5 rounded ml-2">{(sData.specificTierName || matchedTierNameUpperCase).toUpperCase()}</span>
                                                         </div>
                                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-6">
                                                             <div className="flex flex-col">
@@ -215,7 +218,7 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
                                                             </div>
                                                             <div className="flex flex-col">
                                                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">System Architecture</span>
-                                                                <span className="text-sm font-bold text-slate-800">{sData.type || 'Standard Efficiency'}</span>
+                                                                <span className="text-sm font-bold text-slate-800">System Replacement</span>
                                                             </div>
                                                             <div className="flex flex-col">
                                                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">System Price</span>
