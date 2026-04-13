@@ -73,9 +73,53 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const [draftServerId, setDraftServerId] = useState(isEditing ? editModeData.id : null);
   const syncTimer = React.useRef(null);
   const isInitializingDraft = React.useRef(false);
+  const [manualSaveStatus, setManualSaveStatus] = useState(null);
+
+  const handleManualSave = async () => {
+    if (!selectedCustomerId) {
+      onComplete();
+      return;
+    }
+    
+    setManualSaveStatus('saving');
+    
+    const draftPayload = {
+        wizard_state: { step, selectedCustomerId, selectedLocationId, systems, appliedPromo },
+        associated_opportunity_id: editModeData?.associated_opportunity_id || null
+    };
+    
+    const customerName = selectedCustomerId 
+        ? customers.find(c => c.id === selectedCustomerId)?.name || 'Unknown' 
+        : 'Unknown Customer';
+
+    try {
+        if (!draftServerId) {
+            const newDraft = await createDraft({
+                customer: customerName,
+                amount: 0,
+                associated_opportunity_id: draftPayload.associated_opportunity_id,
+                proposal_data: draftPayload
+            });
+            if (newDraft && newDraft.id) {
+                setDraftServerId(newDraft.id);
+            }
+        } else {
+            await updateProposal(draftServerId, {
+                customer: customerName,
+                proposal_data: draftPayload,
+                associated_opportunity_id: draftPayload.associated_opportunity_id,
+                updated_at: new Date().toISOString()
+            });
+        }
+        
+        onComplete();
+    } catch (err) {
+        setManualSaveStatus('error');
+    }
+  };
 
   useEffect(() => {
-    if (selectedCustomerId !== '' && dbReady && !isEditing) {
+    if (selectedCustomerId !== '' && dbReady) {
       if (syncTimer.current) clearTimeout(syncTimer.current);
 
       syncTimer.current = setTimeout(async () => {
@@ -459,7 +503,17 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                <Calculator className="text-primary-600"/> 
                {isEditing ? `Editing Proposal: ${editingId}` : 'Estimate & Proposal Generator'}
             </h2>
-            {step > 0 && <button className="text-[10px] font-bold text-slate-400 hover:text-primary-600 transition flex items-center gap-1 mt-1 w-max" onClick={onComplete} title="Your progress is automatically saved"><Save size={12}/> {isEditing ? 'Discard Edits & Exit' : 'Save Draft & Exit'}</button>}
+            {step > 0 && (
+              <button 
+                className={`text-[10px] font-bold transition flex items-center gap-1 mt-1 w-max ${manualSaveStatus === 'error' ? 'text-red-500' : 'text-slate-400 hover:text-primary-600'}`} 
+                onClick={handleManualSave} 
+                disabled={manualSaveStatus === 'saving'} 
+                title="Your progress is automatically saved to the cloud"
+              >
+                <Save size={12}/> 
+                {manualSaveStatus === 'saving' ? 'Saving...' : manualSaveStatus === 'error' ? 'Save Failed! Try again' : 'Save Draft & Exit'}
+              </button>
+            )}
           </div>
           <div className="flex gap-1.5">
              {[1,2,3,4,5,6].map(num => (

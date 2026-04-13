@@ -56,24 +56,12 @@ export default function Proposals() {
   const [editingProposal, setEditingProposal] = useState(null);
   const [deletingProposal, setDeletingProposal] = useState(null);
   const [editForm, setEditForm] = useState({ customer: '', amount: '', status: '' });
-  const [activeDraft, setActiveDraft] = useState(null);
   const [filterMode, setFilterMode] = useState('All');
 
   const handleRowClick = (id) => {
       setExpandedProposalId(prev => prev === id ? null : id);
   };
 
-  useEffect(() => {
-     if (!showWizard && typeof window !== 'undefined') {
-         const draftStr = localStorage.getItem('pilar_wizard_draft');
-         if (draftStr) {
-             try { setActiveDraft(JSON.parse(draftStr)); } catch(e){}
-         } else {
-             setActiveDraft(null);
-         }
-     }
-  }, [showWizard]);
-  
   if (loading && proposals.length === 0) return <div className="page-container flex-center"><h3>Loading Proposals...</h3></div>;
   if (showWizard) return <ProposalWizard onComplete={() => setShowWizard(false)} addProposal={addProposal} updateProposal={updateProposal} editModeData={wizardConfig} />;
 
@@ -342,7 +330,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
         {(() => {
            const filteredProposals = proposals.filter(p => filterMode === 'All' || p.status === filterMode);
            
-           if (filteredProposals.length === 0 && (!activeDraft || filterMode !== 'All')) {
+           if (filteredProposals.length === 0) {
               return (
                  <div className="border-2 border-dashed border-slate-200 bg-white/50 backdrop-blur-sm rounded-2xl p-12 flex flex-col items-center justify-center min-h-[300px]">
                    <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-4"><FileText size={32} /></div>
@@ -530,6 +518,9 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                           const matchedTierName = proposal.proposal_data?.accepted_tier_name || ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers?.[t]?.salesPrice === proposal.amount) || 'good';
                                           const matchedTierData = proposal.proposal_data?.accepted_tier_data || proposal.proposal_data?.tiers?.[matchedTierName];
                                           setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
+                                       } else if (proposal.status === 'Draft') {
+                                          setWizardConfig({ id: proposal.id, ...proposal });
+                                          setShowWizard(true);
                                        } else {
                                           setViewingProposal(proposal);
                                        }
