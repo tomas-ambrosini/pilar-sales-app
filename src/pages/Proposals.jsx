@@ -53,9 +53,7 @@ export default function Proposals() {
   const [viewingProposal, setViewingProposal] = useState(null);
   const [viewingContract, setViewingContract] = useState(null);
   const [signingContract, setSigningContract] = useState(null);
-  const [editingProposal, setEditingProposal] = useState(null);
   const [deletingProposal, setDeletingProposal] = useState(null);
-  const [editForm, setEditForm] = useState({ customer: '', amount: '', status: '' });
   const [filterMode, setFilterMode] = useState('All');
 
   const handleRowClick = (id) => {
@@ -65,45 +63,12 @@ export default function Proposals() {
   if (loading && proposals.length === 0) return <div className="page-container flex-center"><h3>Loading Proposals...</h3></div>;
   if (showWizard) return <ProposalWizard onComplete={() => setShowWizard(false)} addProposal={addProposal} updateProposal={updateProposal} editModeData={wizardConfig} />;
 
-  const handleEditOpen = (proposal) => {
-    if (proposal.status === 'Approved') return;
-    setEditingProposal(proposal);
-    setEditForm({ customer: proposal.customer, amount: proposal.amount, status: proposal.status });
-  };
 
   const handleDeleteOpen = (proposal) => {
     setDeletingProposal(proposal);
   };
 
-  const handleEditSubmit = (e) => {
-    e.preventDefault();
-    updateProposal(editingProposal.id, {
-       customer: editForm.customer,
-       amount: parseFloat(editForm.amount) || 0,
-       status: editForm.status
-    });
-    setEditingProposal(null);
-  };
 
-  const handleReopenInWizard = () => {
-     if (['Sent', 'Opened', 'Approved'].includes(editingProposal.status)) {
-        // Automatically Clone to prevent state pollution on active/won deals
-        // Only mark as 'Rejected' if it was in active negotiations, not if it was already won
-        if (editingProposal.status !== 'Approved') {
-            updateProposal(editingProposal.id, { status: 'Rejected (Replaced)' });
-        }
-        
-        // Force clone by stripping ID
-        const clonedData = { ...editingProposal };
-        delete clonedData.id;
-        clonedData.status = 'Draft';
-        setShowWizard(clonedData);
-        setEditingProposal(null);
-     } else {
-        setShowWizard(editingProposal);
-        setEditingProposal(null);
-     }
-  };
 
   const getProposalUrl = (id) => {
      const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
@@ -469,7 +434,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                  {/* Hover Utilities */}
                                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
                                     {proposal.status !== 'Approved' && (
-                                       <button className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors" onClick={() => handleEditOpen(proposal)} title="Edit Details"><Edit2 size={16} /></button>
+                                       
                                     )}
                                     {['super_admin', 'admin'].includes((user?.role || '').toLowerCase()) && (
                                        <button className="p-2 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Force Delete"><Trash2 size={16} /></button>
@@ -535,36 +500,6 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
          })()}
        </div>
 
-      {/* Edit Proposal Modal */}
-      <Modal isOpen={!!editingProposal} onClose={() => setEditingProposal(null)} title={`Edit Proposal ${editingProposal ? formatQuoteId(editingProposal) : ''}`}>
-        <form className="modal-form" onSubmit={handleEditSubmit}>
-          <div className="bg-slate-50 border border-slate-200 rounded p-4 mb-4">
-             <p className="text-sm mb-2"><strong className="text-slate-500 uppercase text-xs">Customer Name:</strong><br/>{editForm.customer}</p>
-             <p className="text-sm"><strong className="text-slate-500 uppercase text-xs">Generated Quote Amount:</strong><br/>${parseFloat(editForm.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-          </div>
-          <div className="form-group">
-            <label className="font-bold text-slate-700">Proposal Status</label>
-            <p className="text-xs text-slate-500 mb-2">Changing the status here will automatically update the corresponding Deal in the Sales Pipeline.</p>
-            <select className="input-field w-full font-semibold" value={editForm.status} onChange={e => setEditForm({...editForm, status: e.target.value})}>
-              <option value="Draft">Draft</option>
-              <option value="Sent">Sent</option>
-              <option value="Approved">Approved (Won Deal)</option>
-            </select>
-          </div>
-          <div className="modal-actions mt-6 flex-col">
-            <div className="flex w-full gap-4">
-              <button type="button" className="btn-secondary flex-1" onClick={() => setEditingProposal(null)}>Cancel</button>
-              <button type="submit" className="btn-primary flex-1">Update Status</button>
-            </div>
-            <div className="w-full mt-4 pt-4 border-t border-slate-200">
-               <p className="text-xs text-slate-500 mb-2 font-bold uppercase tracking-wider">Modify Equipment</p>
-               <button type="button" onClick={handleReopenInWizard} className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-lg transition text-sm flex items-center justify-center gap-2 shadow-sm">
-                 <Edit2 size={16}/> {['Sent', 'Opened', 'Approved'].includes(editingProposal?.status) ? "Clone to New Revision" : "Reconfigure Quote in Wizard"}
-               </button>
-            </div>
-          </div>
-        </form>
-      </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal isOpen={!!deletingProposal} onClose={() => setDeletingProposal(null)} title="Delete Proposal">
