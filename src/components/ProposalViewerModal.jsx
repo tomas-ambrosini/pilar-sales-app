@@ -212,7 +212,7 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
                            onClick={handleFinalize}
                            className={`px-6 py-2.5 font-bold rounded shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none ${isCartComplete ? 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-600' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`}
                         >
-                           {isCartComplete ? 'Accept Configuration Package' : 'Select All Options'}
+                           {isCartComplete ? 'Accept Configuration Package' : 'Select a Tier for Each System'}
                         </button>
                     </div>
                  </div>
