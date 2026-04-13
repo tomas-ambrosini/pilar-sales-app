@@ -432,10 +432,10 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                  </div>
                                  <div className="flex flex-col min-w-0 pr-4">
                                     <h3 className="text-[15px] font-black text-slate-900 truncate leading-tight mb-0.5">{proposal.customer}</h3>
-                                    <p className="text-xs font-semibold text-slate-500 truncate flex items-center">
-                                       {new Date(proposal.updated_at || proposal.created_at).toLocaleDateString()} 
-                                       <span className="text-slate-300 mx-1.5">•</span> 
-                                       <span className="font-mono text-[10px] uppercase tracking-widest text-slate-400 truncate" title={proposal.proposal_number ? `Legacy ID: ${proposal.id}` : ''}>{proposal.proposal_number || proposal.id.split('-')[0]}</span>
+                                    <p className="text-xs font-semibold text-slate-500 flex items-center flex-wrap">
+                                       <span className="whitespace-nowrap">{new Date(proposal.updated_at || proposal.created_at).toLocaleDateString()}</span> 
+                                       <span className="text-slate-300 mx-1.5 whitespace-nowrap">•</span> 
+                                       <span className="font-mono text-[10px] uppercase tracking-widest text-slate-400 whitespace-nowrap" title={proposal.proposal_number ? `Legacy ID: ${proposal.id}` : ''}>{proposal.proposal_number || proposal.id.substring(0,8).toUpperCase()}</span>
                                     </p>
                                  </div>
                               </div>
