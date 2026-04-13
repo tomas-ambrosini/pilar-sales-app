@@ -353,7 +353,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
       systemTiers: systemTiers
     };
 
-    const wizardState = { step: 6, selectedCustomerId, selectedLocationId, systems, discountPercent };
+    const wizardState = { step: 6, selectedCustomerId, selectedLocationId, systems, appliedPromo };
 
     if (isEditing) {
        const oppId = editModeData.proposal_data?.associated_opportunity_id;
@@ -773,17 +773,34 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                <p className="text-xs text-red-800 font-medium"><strong>Confidential Dashboard:</strong> This data reflects absolute floor costs and backend margin protections. Your base commission algorithm operates against the <span className="underline font-bold">Target System Par</span>. Providing a retail discount strictly lowers the final transaction price, not your proportional algorithmic baseline.</p>
             </div>
 
-            <div className="mb-6 flex justify-between items-center bg-white border border-primary-200 rounded-lg p-4 shadow-sm">
-               <div>
-                  <h4 className="font-bold text-slate-700">Global Customer Discount</h4>
-                  <p className="text-xs text-slate-500">Applies equally to all configured systems and tiers.</p>
-               </div>
-               <div className="flex items-center gap-3">
-                  <div className="relative w-32">
-                     <span className="absolute inset-y-0 right-0 pr-4 flex items-center text-primary-600 font-black pointer-events-none">%</span>
-                     <input type="number" step="1" min="0" max="100" className="input-field w-full text-right pr-8 font-mono font-black text-primary-700 text-xl" value={discountPercent || ''} onChange={e => setDiscountPercent(parseFloat(e.target.value) || 0)} placeholder="0"/>
-                  </div>
-               </div>
+            <div className="mb-6 flex flex-col gap-2 bg-white border border-primary-200 rounded-lg p-4 shadow-sm">
+                 <div>
+                    <h4 className="font-bold text-slate-700">Global Customer Discount</h4>
+                    <p className="text-xs text-slate-500 mb-2">Apply an authorized promo code to grant a global discount.</p>
+                 </div>
+                 <div className="flex flex-col gap-2 max-w-[350px]">
+                    {!appliedPromo ? (
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                        <div className="flex-1 w-full">
+                          <input type="text" className="input-field w-full font-mono uppercase" value={promoInput} onChange={e => setPromoInput(e.target.value.toUpperCase())} placeholder="PROMO CODE" onKeyDown={e => e.key === 'Enter' && handleApplyPromo()}/>
+                          {promoError && <p className="text-xs text-red-500 font-bold mt-1">{promoError}</p>}
+                        </div>
+                        <button onClick={handleApplyPromo} disabled={validatingPromo} className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold px-4 py-2.5 rounded-xl transition-colors w-full sm:w-auto">
+                          {validatingPromo ? '...' : 'Apply'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex justify-between items-center w-full">
+                         <div>
+                           <p className="text-xs font-bold text-emerald-800 uppercase tracking-widest mb-0.5">Applied Promo</p>
+                           <p className="font-mono font-black text-emerald-600 text-lg flex items-center gap-2"><Tag size={16}/> {appliedPromo.code} <span className="text-emerald-500 text-sm ml-1">({appliedPromo.discount_percent}%)</span></p>
+                         </div>
+                         <button onClick={() => setAppliedPromo(null)} className="text-emerald-700 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 p-2 rounded-lg transition-colors border border-transparent hover:border-emerald-300 shadow-sm ml-4">
+                           <X size={16} />
+                         </button>
+                      </div>
+                    )}
+                 </div>
             </div>
 
             {(!systems.some(s => s.selectedTiers.best || s.selectedTiers.better || s.selectedTiers.good)) ? (
