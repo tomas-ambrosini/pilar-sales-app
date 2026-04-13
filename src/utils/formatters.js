@@ -1,6 +1,6 @@
 export const formatQuoteId = (proposal) => {
     if (!proposal) return 'UNKNOWN';
-    if (proposal.proposal_number) return proposal.proposal_number;
+    if (proposal.proposal_number) return String(proposal.proposal_number);
     
     // Fallback for legacy IDs that don't have a proposal_number yet
     const idSafe = proposal.id ? String(proposal.id) : '';
