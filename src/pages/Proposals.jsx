@@ -86,10 +86,12 @@ export default function Proposals() {
   };
 
   const handleReopenInWizard = () => {
-     if (editingProposal?.status === 'Approved') return; // Additional security lock
-     if (['Sent', 'Opened'].includes(editingProposal.status)) {
-        // Automatically Clone to prevent state pollution on active deals
-        updateProposal(editingProposal.id, { status: 'Rejected (Replaced)' });
+     if (['Sent', 'Opened', 'Approved'].includes(editingProposal.status)) {
+        // Automatically Clone to prevent state pollution on active/won deals
+        // Only mark as 'Rejected' if it was in active negotiations, not if it was already won
+        if (editingProposal.status !== 'Approved') {
+            updateProposal(editingProposal.id, { status: 'Rejected (Replaced)' });
+        }
         
         // Force clone by stripping ID
         const clonedData = { ...editingProposal };
