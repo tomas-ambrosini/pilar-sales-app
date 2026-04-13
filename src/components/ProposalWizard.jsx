@@ -517,7 +517,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                       ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100' 
                       : manualSaveStatus === 'saving'
                       ? 'bg-primary-50 text-primary-600 border-primary-200 opacity-70 cursor-wait'
-                      : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-300'
+                      : 'bg-primary-50 text-primary-700 border-primary-200 hover:bg-primary-100 hover:text-primary-800 hover:border-primary-300'
                 }`} 
                 onClick={handleManualSave} 
                 disabled={manualSaveStatus === 'saving'} 
