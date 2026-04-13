@@ -831,13 +831,13 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                  </div>
                  <div className="flex flex-col gap-2 max-w-[350px]">
                     {!appliedPromo ? (
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                        <div className="flex-1 w-full">
-                          <input type="text" className="input-field w-full font-mono uppercase" value={promoInput} onChange={e => setPromoInput(e.target.value.toUpperCase())} placeholder="PROMO CODE" onKeyDown={e => e.key === 'Enter' && handleApplyPromo()}/>
-                          {promoError && <p className="text-xs text-red-500 font-bold mt-1">{promoError}</p>}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-3 w-full max-w-sm">
+                        <div className="flex-1 w-full relative">
+                          <input type="text" className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 font-mono uppercase text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 shadow-sm transition-all text-sm" value={promoInput} onChange={e => setPromoInput(e.target.value.toUpperCase())} placeholder="ENTER PROMO CODE" onKeyDown={e => e.key === 'Enter' && handleApplyPromo()}/>
+                          {promoError && <p className="absolute -bottom-5 left-1 text-[10px] text-red-500 font-bold">{promoError}</p>}
                         </div>
-                        <button onClick={handleApplyPromo} disabled={validatingPromo} className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold px-4 py-2.5 rounded-xl transition-colors w-full sm:w-auto">
-                          {validatingPromo ? '...' : 'Apply'}
+                        <button onClick={handleApplyPromo} disabled={validatingPromo} className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold px-5 py-2.5 rounded-xl shadow-sm transition-colors w-full sm:w-auto shrink-0 flex-none self-stretch flex items-center justify-center">
+                          {validatingPromo ? 'Validating...' : 'Apply'}
                         </button>
                       </div>
                     ) : (
