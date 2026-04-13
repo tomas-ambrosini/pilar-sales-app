@@ -16,6 +16,7 @@ import SignaturePad from '../components/SignaturePad';
 import ProposalComments from '../components/ProposalComments';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { formatQuoteId } from '../utils/formatters';
 
 export default function Proposals() {
   const { user } = useAuth();
@@ -435,7 +436,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                     <p className="text-xs font-semibold text-slate-500 flex items-center flex-wrap">
                                        <span className="whitespace-nowrap">{new Date(proposal.updated_at || proposal.created_at).toLocaleDateString()}</span> 
                                        <span className="text-slate-300 mx-1.5 whitespace-nowrap">•</span> 
-                                       <span className="font-mono text-[10px] uppercase tracking-widest text-slate-400 whitespace-nowrap" title={proposal.proposal_number ? `Legacy ID: ${proposal.id}` : ''}>{proposal.proposal_number || proposal.id.substring(0,8).toUpperCase()}</span>
+                                       <span className="font-mono text-[10px] uppercase tracking-widest text-slate-400 whitespace-nowrap" title={proposal.proposal_number ? `Legacy ID: ${proposal.id}` : ''}>{formatQuoteId(proposal)}</span>
                                     </p>
                                  </div>
                               </div>

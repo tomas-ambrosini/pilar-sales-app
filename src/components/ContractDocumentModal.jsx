@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, Printer, ShieldCheck, Pen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomers } from '../context/CustomerContext';
+import { formatQuoteId } from '../utils/formatters';
 import './ContractDocumentModal.css';
 
 export default function ContractDocumentModal({ isOpen, onClose, contractData }) {
@@ -66,9 +67,9 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                 {/* Header Section */}
                 <div className="flex justify-between items-start mb-6">
                     <div>
-                        <h1 className="text-3xl font-bold mb-2 text-slate-800" title={proposal?.proposal_number ? `Legacy ID: ${proposal?.id}` : ''}>Quote # <span className="font-normal text-slate-600 underline decoration-slate-300 underline-offset-4">{proposal?.proposal_number || proposal?.id?.substring(0, 8).toUpperCase() || '        '}</span></h1>
+                        <h1 className="text-3xl font-bold mb-2 text-slate-800" title={proposal?.proposal_number ? `Legacy ID: ${proposal?.id}` : ''}>Quote # <span className="font-normal text-slate-600 underline decoration-slate-300 underline-offset-4">{formatQuoteId(proposal).replace('Quote ', '').replace('#', '')}</span></h1>
                         <div className="flex gap-4 mt-4 font-bold text-slate-700">
-                            <span>Quote #: <span className="border-b border-slate-300 font-normal px-4 text-slate-600 truncate max-w-[250px] inline-block align-bottom">{proposal?.proposal_number || proposal?.id || '                    '}</span></span>
+                            <span>Quote #: <span className="border-b border-slate-300 font-normal px-4 text-slate-600 truncate max-w-[250px] inline-block align-bottom">{formatQuoteId(proposal).replace('Quote ', '').replace('#', '')}</span></span>
                             <span>Date: <span className="border-b border-slate-300 font-normal px-4 text-slate-600">{date}</span></span>
                         </div>
                     </div>
