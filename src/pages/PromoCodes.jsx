@@ -237,8 +237,7 @@ export default function PromoCodes() {
         </div>
       </div>
 
-      {isModalOpen && (
-        <Modal title={editingPromo ? 'Edit Promo Code' : 'Create Promo Code'} onClose={() => setIsModalOpen(false)}>
+      <Modal isOpen={isModalOpen} title={editingPromo ? 'Edit Promo Code' : 'Create Promo Code'} onClose={() => setIsModalOpen(false)}>
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-1">
@@ -288,8 +287,7 @@ export default function PromoCodes() {
               </button>
             </div>
           </form>
-        </Modal>
-      )}
+      </Modal>
 
     </div>
   );
