@@ -297,36 +297,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
       </div>
 
       <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
-         {activeDraft && filterMode === 'All' && (
-           <div className="border border-primary-200 bg-primary-50 rounded-xl p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden group">
-              <div className="flex items-center gap-4">
-                 <div className="w-10 h-10 bg-white shadow-sm text-primary-600 rounded-full flex items-center justify-center font-bold shrink-0">
-                    <PenTool size={18} />
-                 </div>
-                 <div>
-                    <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
-                       Unsaved Session 
-                       <span className="text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded border bg-white text-primary-700 border-primary-200">
-                          Draft Saved
-                       </span>
-                    </h3>
-                    <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                       {activeDraft.selectedCustomerId && customers && customers.length > 0 ? `Customer: ${customers.find(c => c.id.toString() === activeDraft.selectedCustomerId?.toString())?.name || 'Unknown'}` : 'Pick up right where you left off.'}
-                    </p>
-                 </div>
-              </div>
-              <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-                 <button onClick={() => { localStorage.removeItem('pilar_wizard_draft'); setActiveDraft(null); }} className="text-xs text-slate-400 hover:text-danger-600 font-bold transition-colors px-2 py-1">Discard</button>
-                 <button 
-                   className="flex items-center gap-2 text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-lg transition-colors shadow-sm shrink-0"
-                   onClick={() => setShowWizard({ isDraft: true, ...activeDraft })}
-                 >
-                    Resume Quote <ArrowRight size={14}/>
-                 </button>
-              </div>
-           </div>
-         )}
-        
+
         {(() => {
            const filteredProposals = proposals.filter(p => filterMode === 'All' || p.status === filterMode);
            
