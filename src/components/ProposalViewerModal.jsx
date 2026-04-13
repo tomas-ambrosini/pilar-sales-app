@@ -81,10 +81,11 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
                  </button>
              ) : proposal.status !== 'Approved' ? (
                  <button 
-                    onClick={(e) => { e.stopPropagation(); onAccept && onAccept(tierName, tierData, proposal); }}
-                    className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${isBest ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-md' : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300'}`}
+                    disabled={proposal.isReadOnly}
+                    onClick={(e) => { e.stopPropagation(); !proposal.isReadOnly && onAccept && onAccept(tierName, tierData, proposal); }}
+                    className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${proposal.isReadOnly ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : isBest ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-md' : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300'}`}
                  >
-                    Accept {tierName} Quote
+                    {proposal.isReadOnly ? 'Preview Only' : `Accept ${tierName} Quote`}
                  </button>
              ) : (
                  <button 
@@ -208,17 +209,22 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
                     <div className="flex gap-3 w-full md:w-auto">
                         <button className="px-6 py-2.5 font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-colors rounded" onClick={onClose}>Close Planner</button>
                         <button 
-                           disabled={!isCartComplete} 
+                           disabled={proposal?.isReadOnly || !isCartComplete} 
                            onClick={handleFinalize}
-                           className={`px-6 py-2.5 font-bold rounded shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none ${isCartComplete ? 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-600' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`}
+                           className={`px-6 py-2.5 font-bold rounded shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none ${proposal?.isReadOnly ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : isCartComplete ? 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-600' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`}
                         >
-                           {isCartComplete ? 'Accept Configuration Package' : 'Select a Tier for Each System'}
+                           {proposal?.isReadOnly ? 'Preview Mode Active' : isCartComplete ? 'Accept Configuration Package' : 'Select a Tier for Each System'}
                         </button>
                     </div>
                  </div>
              );
           })() : (
-             <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+             <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 items-center">
+                {proposal?.isReadOnly && (
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded mr-auto">
+                        <AlertTriangle size={14}/> Preview Only Mode
+                    </div>
+                )}
                 <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors" onClick={onClose}>Close Viewer</button>
              </div>
           )}

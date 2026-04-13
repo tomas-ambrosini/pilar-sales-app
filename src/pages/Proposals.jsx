@@ -498,6 +498,16 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
       <ProposalDetailsModal
         proposal={inspectingProposal}
         onClose={() => setInspectingProposal(null)}
+        onLaunchViewer={(proposal) => {
+            setInspectingProposal(null);
+            if (proposal.status === 'Approved') {
+               const matchedTierName = proposal.proposal_data?.accepted_tier_name || ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers?.[t]?.salesPrice === proposal.amount) || 'good';
+               const matchedTierData = proposal.proposal_data?.accepted_tier_data || proposal.proposal_data?.tiers?.[matchedTierName];
+               setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
+            } else {
+               setViewingProposal({ ...proposal, isReadOnly: true });
+            }
+        }}
       />
 
       {/* Digital Quote Viewer Modal */}

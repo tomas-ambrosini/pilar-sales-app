@@ -30,7 +30,7 @@ const PHOTO_LABELS = {
     electrical_panel_open: "Electrical Panel",
 };
 
-export default function ProposalDetailsModal({ proposal, onClose }) {
+export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer }) {
     const { customers } = useCustomers();
     if (!proposal) return null;
 
@@ -81,9 +81,20 @@ export default function ProposalDetailsModal({ proposal, onClose }) {
                                 <span>Updated: {proposal.updated_at ? new Date(proposal.updated_at).toLocaleDateString() : new Date(proposal.created_at || proposal.date).toLocaleDateString()}</span>
                             </div>
                         </div>
-                        <div className="text-left md:text-right">
-                            <span className="text-xs font-bold text-slate-400 block uppercase tracking-widest mb-0.5">Gross Value</span>
-                            <span className="font-black text-emerald-600 text-2xl tracking-tight">${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        <div className="text-left md:text-right flex flex-col md:items-end gap-2">
+                            <div>
+                                <span className="text-xs font-bold text-slate-400 block uppercase tracking-widest mb-0.5">Gross Value</span>
+                                <span className="font-black text-emerald-600 text-2xl tracking-tight">${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            </div>
+                            {(proposal.status === 'Approved' || proposal.status === 'Sent') && (
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); onLaunchViewer && onLaunchViewer(proposal); }}
+                                    className="px-4 py-1.5 bg-slate-800 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg shadow-sm hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+                                >
+                                    <FileText size={14} />
+                                    {proposal.status === 'Approved' ? 'View Contract' : 'Preview Quote'}
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -134,7 +145,7 @@ export default function ProposalDetailsModal({ proposal, onClose }) {
                                             {/* Survey Specs */}
                                             <div>
                                                 <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
-                                                    <h4 className="font-black text-slate-800 text-sm tracking-wide uppercase">Core Survey Specs</h4>
+                                                    <h4 className="font-black text-slate-800 text-sm tracking-wide uppercase">Existing System Specs</h4>
                                                 </div>
                                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6">
                                                     
@@ -170,6 +181,50 @@ export default function ProposalDetailsModal({ proposal, onClose }) {
 
                                                 </div>
                                             </div>
+
+                                            {/* Approved Equipment Matrix */}
+                                            {proposal.status === 'Approved' && (() => {
+                                                const matchedTierName = data?.accepted_tier_name || ['good', 'better', 'best'].find(t => data?.tiers?.[t]?.salesPrice === proposal.amount) || 'good';
+                                                const matchedTierData = data?.accepted_tier_data || data?.tiers?.[matchedTierName];
+                                                if (!matchedTierData) return null;
+                                                
+                                                const matchedTierNameUpperCase = (matchedTierName || '').toUpperCase();
+                                                // Resolve System Data
+                                                let targetSystems = [];
+                                                if (matchedTierData.systemsList && matchedTierData.systemsList.length > 0) {
+                                                    const sysData = matchedTierData.systemsList.find(s => s.systemId === sys.id || s.systemName === (sys.systemName || `System ${idx+1}`));
+                                                    if (sysData) targetSystems.push({ name: sysData.systemName, ...sysData.tierData });
+                                                } else {
+                                                    targetSystems.push({ name: `${matchedTierNameUpperCase} Package`, ...matchedTierData });
+                                                }
+                                                
+                                                return targetSystems.map((sData, sIdx) => (
+                                                    <div key={sIdx}>
+                                                        <div className="flex items-center gap-2 mb-4 border-b border-primary-100 pb-2">
+                                                            <h4 className="font-black text-primary-700 text-sm tracking-wide uppercase">Approved New Equipment</h4>
+                                                            <span className="text-[10px] font-bold bg-primary-100 text-primary-800 px-2 py-0.5 rounded ml-2">{matchedTierNameUpperCase}</span>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-6">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Contracted Brand</span>
+                                                                <span className="text-sm font-bold text-slate-800">{sData.brand || 'N/A'} {sData.series || ''}</span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Dimensions</span>
+                                                                <span className="text-sm font-bold text-slate-800">{sData.tons ? `${sData.tons} TON` : 'N/A'}</span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">System Architecture</span>
+                                                                <span className="text-sm font-bold text-slate-800">{sData.type || 'Standard Efficiency'}</span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">System Price</span>
+                                                                <span className="text-sm font-bold text-emerald-600">${((sData.salesPrice || 0)).toLocaleString()}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ));
+                                            })()}
 
                                             {/* Grouped Measurements */}
                                             <div>
