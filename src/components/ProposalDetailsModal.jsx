@@ -138,7 +138,6 @@ export default function ProposalDetailsModal({ proposal, onClose }) {
                                                 </div>
                                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6">
                                                     
-                                                    {/* Equipment Profile */}
                                                     <div className="flex flex-col">
                                                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">System Type</span>
                                                         <span className="text-sm font-bold text-slate-800">{survey.systemType || 'N/A'}</span>
@@ -148,15 +147,14 @@ export default function ProposalDetailsModal({ proposal, onClose }) {
                                                         <span className="text-sm font-bold text-slate-800">{survey.currentTonnage ? `${survey.currentTonnage} TON` : 'N/A'}</span>
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Refrigerant & Brand</span>
-                                                        <span className="text-sm font-bold text-slate-800 truncate">{survey.gasRefrigerant || 'N/A'} / {survey.existingBrand || 'N/A'}</span>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Refrigerant</span>
+                                                        <span className="text-sm font-bold text-slate-800">{survey.gasRefrigerant || 'N/A'}</span>
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Thermostat</span>
-                                                        <span className="text-sm font-bold text-slate-800">{survey.thermostat || 'N/A'}</span>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Existing Brand</span>
+                                                        <span className="text-sm font-bold text-slate-800">{survey.existingBrand || 'N/A'}</span>
                                                     </div>
 
-                                                    {/* Physical Constraints */}
                                                     <div className="flex flex-col">
                                                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Condenser Location</span>
                                                         <span className="text-sm font-bold text-slate-800">{survey.condenserLocation || 'N/A'}</span>
@@ -166,12 +164,8 @@ export default function ProposalDetailsModal({ proposal, onClose }) {
                                                         <span className="text-sm font-bold text-slate-800">{survey.ahuLocation || 'N/A'}</span>
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Duct / Condensate Type</span>
-                                                        <span className="text-sm font-bold text-slate-800 truncate">{survey.ductCondition || 'N/A'} / {survey.condensateType || 'N/A'}</span>
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Disconnect / Whip</span>
-                                                        <span className="text-sm font-bold text-slate-800">{survey.disconnectCondition || 'N/A'} / {survey.whipCondition || 'N/A'}</span>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Disconnect Box</span>
+                                                        <span className="text-sm font-bold text-slate-800">{survey.disconnectCondition || 'N/A'}</span>
                                                     </div>
 
                                                 </div>
