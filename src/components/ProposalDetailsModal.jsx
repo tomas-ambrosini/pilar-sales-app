@@ -197,6 +197,16 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
                                                                || matchedTierData.systemsList[idx];
                                                                
                                                     if (sysData) targetSystems.push({ name: sysData.systemName, specificTierName: sysData.tierName, ...sysData.tierData });
+                                                } else if (data?.systemTiers && data.systemTiers.length > 0) {
+                                                    let sysData = data.systemTiers.find(s => s.systemId && s.systemId === sys.id)
+                                                               || data.systemTiers.find(s => s.systemName && s.systemName === (sys.systemName || sys.name))
+                                                               || data.systemTiers[idx];
+                                                               
+                                                    if (sysData && sysData.tiers && sysData.tiers[matchedTierName]) {
+                                                        targetSystems.push({ name: sysData.systemName || sys.name, specificTierName: matchedTierNameUpperCase, ...sysData.tiers[matchedTierName] });
+                                                    } else {
+                                                        targetSystems.push({ name: `${matchedTierNameUpperCase} Package`, specificTierName: matchedTierNameUpperCase, ...matchedTierData });
+                                                    }
                                                 } else {
                                                     targetSystems.push({ name: `${matchedTierNameUpperCase} Package`, specificTierName: matchedTierNameUpperCase, ...matchedTierData });
                                                 }
