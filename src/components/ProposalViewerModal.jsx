@@ -23,8 +23,8 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
 
     return (
        <div 
-          className={`relative flex flex-col p-6 rounded-xl border-2 transition-all duration-200 ${isMultiSys ? 'cursor-pointer' : ''} ${borderClass}`}
-          onClick={() => isMultiSys && setLocalSelections(p => ({...p, [systemId]: tierName}))}
+          className={`relative flex flex-col p-6 rounded-xl border-2 transition-all duration-200 ${isMultiSys && !proposal?.isReadOnly ? 'cursor-pointer hover:border-primary-300' : ''} ${borderClass}`}
+          onClick={() => isMultiSys && !proposal?.isReadOnly && setLocalSelections(p => ({...p, [systemId]: tierName}))}
        >
           {((isBest && !isMultiSys) || (isMultiSys && tierName === 'Best')) && (
              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-500 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-sm">
