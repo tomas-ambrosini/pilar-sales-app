@@ -32,12 +32,7 @@ export default function ProposalDetailsModal({ proposal, onClose }) {
     const systems = data.systemTiers || data.systems || [];
 
     return (
-        <Modal 
-            isOpen={!!proposal} 
-            onClose={onClose} 
-            title={`Proposal Details: ${formatQuoteId(proposal)}`}
-            width="w-[95vw] max-w-6xl"
-        >
+        <Modal isOpen={!!proposal} onClose={onClose} title={`Proposal Details: ${formatQuoteId(proposal)}`} width="w-[95vw] max-w-7xl" bodyClassName="p-0">
             <div className="flex flex-col h-[85vh] overflow-hidden bg-slate-50">
                 {/* Scrollable Data Area (80% Split) */}
                 <div className="flex-[8] overflow-y-auto p-6 space-y-8">

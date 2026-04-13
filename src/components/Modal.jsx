@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './Modal.css';
 
-export default function Modal({ isOpen, onClose, title, children }) {
+export default function Modal({ isOpen, onClose, title, children, width = "max-w-lg", bodyClassName = "p-5 max-h-[80vh] overflow-y-auto" }) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -21,7 +21,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="modal-container bg-white border border-slate-200 shadow-2xl relative z-10 w-full max-w-lg rounded-2xl overflow-hidden flex flex-col" 
+            className={`modal-container bg-white border border-slate-200 shadow-2xl relative z-10 w-full ${width} rounded-2xl overflow-hidden flex flex-col`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50">
@@ -34,7 +34,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
                 <X size={20} />
               </button>
             </div>
-            <div className="p-5 max-h-[80vh] overflow-y-auto">
+            <div className={bodyClassName}>
               {children}
             </div>
           </motion.div>
