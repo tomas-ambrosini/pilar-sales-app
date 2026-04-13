@@ -44,13 +44,13 @@ export default function ProposalDetailsModal({ proposal, onClose }) {
             isOpen={!!proposal} 
             onClose={onClose} 
             title={`Proposal Details: ${formatQuoteId(proposal)}`}
-            width="w-[95vw] max-w-7xl"
-            bodyClassName="p-0"
+            width="w-[95vw] max-w-[1400px]"
+            bodyClassName="flex-1 overflow-hidden flex flex-col p-0"
         >
-            <div className="flex flex-col h-[88vh] overflow-hidden bg-slate-100">
+            <div className="flex flex-col h-full overflow-hidden bg-slate-100">
                 
                 {/* Top Section (Scrollable Data Area) */}
-                <div className="flex-[8] overflow-y-auto p-4 md:p-8 space-y-8 min-h-0">
+                <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 min-h-0 bg-slate-100">
                     
                     {/* Header Strip - Proposal Metadata */}
                     <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
