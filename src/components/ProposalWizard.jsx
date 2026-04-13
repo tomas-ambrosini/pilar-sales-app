@@ -77,7 +77,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const [dbReady, setDbReady] = useState(false);
   
   const { createDraft } = useProposals();
-  const [draftServerId, setDraftServerId] = useState(isEditing ? editModeData.id : null);
+  const [draftServerId, setDraftServerId] = useState((isEditing || isDraftLaunch) ? editModeData.id : null);
   const syncTimer = React.useRef(null);
   const isInitializingDraft = React.useRef(false);
   const [manualSaveStatus, setManualSaveStatus] = useState(null);
