@@ -38,9 +38,9 @@ export default function ProposalDetailsModal({ proposal, onClose }) {
             title={`Proposal Details: ${formatQuoteId(proposal)}`}
             width="w-[95vw] max-w-6xl"
         >
-            <div className="flex flex-col max-h-[85vh] overflow-hidden bg-slate-50">
-                {/* Scrollable Data Area */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-8">
+            <div className="flex flex-col h-[85vh] overflow-hidden bg-slate-50">
+                {/* Scrollable Data Area (80% Split) */}
+                <div className="flex-[8] overflow-y-auto p-6 space-y-8">
                     
                     {/* Header Strip */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -213,8 +213,8 @@ export default function ProposalDetailsModal({ proposal, onClose }) {
 
                 </div>
 
-                {/* Fixed Bottom Chat Area */}
-                <div className="h-[350px] shrink-0 border-t border-slate-200 bg-white">
+                {/* Fixed Bottom Chat Area (20% Split) */}
+                <div className="flex-[2] min-h-[200px] border-t border-slate-200 bg-white">
                     <ProposalComments proposalId={proposal.id} />
                 </div>
             </div>
