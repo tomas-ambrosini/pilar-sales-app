@@ -248,8 +248,13 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                    <div className="flex flex-1">
                       <span className="w-2 text-center mr-1">•</span> <span className="flex-1">AUTHORIZATION: By digital acceptance, the authorizing party represents authority to contract improvements on the specified property. A mechanic's lien may be executed for failure to remit final payment.</span>
                    </div>
-                   <div className="w-48 text-right font-bold text-[12px] text-slate-800 shrink-0 ml-4 pb-1">
-                       Total Price: ${(tierData.salesPrice || 0).toLocaleString()}
+                   <div className="w-48 text-right font-bold text-[12px] text-slate-800 shrink-0 ml-4 pb-1 flex flex-col justify-end">
+                       {proposal?.applied_promo_code && (
+                           <div className="text-[10px] text-emerald-600 mb-0.5">
+                              Promo: {proposal.applied_promo_code} (-{proposal.applied_discount_percent}%)
+                           </div>
+                       )}
+                       <div>Total Price: ${(tierData.salesPrice || 0).toLocaleString()}</div>
                    </div>
                 </div>
 

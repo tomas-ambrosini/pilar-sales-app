@@ -8,6 +8,7 @@ import PublicQuoteView from './pages/PublicQuoteView';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import FirstSetup from './pages/FirstSetup';
+import PromoCodes from './pages/PromoCodes';
 import AccountManagement from './pages/AccountManagement';
 import SalesPipeline from './pages/SalesPipeline';
 import DispatchHub from './pages/DispatchHub';
@@ -64,6 +65,7 @@ function MainRouter() {
           
           {/* GLOBAL EXECUTIVE ADMIN */}
           <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN']}><Catalog /></RoleRoute>} />
+          <Route path="promo-codes/*" element={<RoleRoute allowedRoles={['ADMIN']}><PromoCodes /></RoleRoute>} />
           <Route path="account-management/*" element={<RoleRoute allowedRoles={['ADMIN']}><AccountManagement /></RoleRoute>} />
           
           {/* LEGACY OPERATIONS ERP */}

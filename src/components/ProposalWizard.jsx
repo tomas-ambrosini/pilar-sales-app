@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
 import { useAuth } from '../context/AuthContext';
 import { useProposals } from '../context/ProposalContext';
-import { Check, Image as ImageIcon, Layers, Tag, DollarSign, Calculator, AlertTriangle, ArrowRight, ArrowLeft, Save, Clock, RefreshCcw, Edit2 } from 'lucide-react';
+import { Check, Image as ImageIcon, Layers, Tag, DollarSign, Calculator, AlertTriangle, ArrowRight, ArrowLeft, Save, Clock, RefreshCcw, Edit2, X } from 'lucide-react';
 
 export default function ProposalWizard({ onComplete, addProposal, updateProposal, editModeData }) {
   const hasPreloadedData = typeof editModeData === 'object' && editModeData !== null;
@@ -43,7 +43,10 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const handleSystemNameChange = (id, newName) => {
      setSystems(prev => prev.map(sys => sys.id === id ? { ...sys, name: newName } : sys));
   };
-  const [discountPercent, setDiscountPercent] = useState(0); 
+  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [promoInput, setPromoInput] = useState('');
+  const [promoError, setPromoError] = useState('');
+  const [validatingPromo, setValidatingPromo] = useState(false); 
   const [uploadingPhoto, setUploadingPhoto] = useState(null);
 
   const activeSystem = systems.find(s => s.id === activeSystemId) || systems[0];
@@ -77,7 +80,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
       syncTimer.current = setTimeout(async () => {
          const draftPayload = {
-            wizard_state: { step, selectedCustomerId, selectedLocationId, systems, discountPercent },
+            wizard_state: { step, selectedCustomerId, selectedLocationId, systems, appliedPromo },
             associated_opportunity_id: editModeData?.associated_opportunity_id || null
          };
          
@@ -116,7 +119,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     }
     
     return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
-  }, [step, selectedCustomerId, selectedLocationId, systems, discountPercent, dbReady, isEditing, draftServerId]);
+  }, [step, selectedCustomerId, selectedLocationId, systems, appliedPromo, dbReady, isEditing, draftServerId]);
 
   // Handle Edit/Clone Mode Rehydration
   useEffect(() => {
@@ -135,7 +138,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                        selectedTiers: draft.selectedTiers || { best: null, better: null, good: null }, addons: draft.addons || {}
                    }]);
                }
-               if (draft.discountPercent !== undefined) setDiscountPercent(draft.discountPercent);
+               if (draft.appliedPromo !== undefined) setAppliedPromo(draft.appliedPromo);
             } catch(e) {}
         } else {
             // Failsafe
@@ -274,7 +277,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
           }
        });
 
-       const discountAmount = totalBaseline * (discountPercent / 100);
+       const percent = appliedPromo ? appliedPromo.discount_percent : 0;
+       const discountAmount = totalBaseline * (percent / 100);
        const finalPrice = totalBaseline - discountAmount;
        const commission = computeCommission(totalBaseline, approximateRetailForComm);
 
@@ -313,7 +317,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
            
            const raw = sys.selectedTiers[tierKey].system_cost || 0;
            const baselinePrice = calculateSystemBaselineRetail(sys, raw, tierKey.charAt(0).toUpperCase() + tierKey.slice(1));
-           const discountAmount = baselinePrice * (discountPercent / 100);
+           const percent = appliedPromo ? appliedPromo.discount_percent : 0;
+           const discountAmount = baselinePrice * (percent / 100);
            const finalPrice = baselinePrice - discountAmount;
            
            let features = [];
@@ -810,7 +815,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                  const baselineCommBase = calculateSystemBaselineRetail(sys, sys.selectedTiers.best?.system_cost || raw, 'Best');
                                  const baseComm = computeCommission(baselineRetail, getRetailFromBest(baselineCommBase));
                                  
-                                 const discountAmount = baselineRetail * (discountPercent / 100);
+                                 const percent = appliedPromo ? appliedPromo.discount_percent : 0;
+                                 const discountAmount = baselineRetail * (percent / 100);
                                  const finalPrice = baselineRetail - discountAmount;
                                  const isBelowFloor = finalPrice < absoluteTotalFloor;
                                  
@@ -852,7 +858,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                        <div className="mt-auto pt-4 border-t border-slate-100 relative">
                                           <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1 text-center">Global Discount Application</label>
                                           <div className="text-center mb-4 text-danger font-black">
-                                             - ${discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} (-{discountPercent}%)
+                                             - ${discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} (-{percent}%)
                                           </div>
                
                                           <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1 text-center">Final Presentable Price</label>

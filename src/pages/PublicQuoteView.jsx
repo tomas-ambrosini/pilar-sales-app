@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { CheckCircle, Zap, Shield, HelpCircle, HardDrive } from 'lucide-react';
+import { CheckCircle, Zap, Shield, HelpCircle, HardDrive, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatQuoteId } from '../utils/formatters';
 
@@ -146,6 +146,14 @@ export default function PublicQuoteView() {
                             <div className="text-5xl font-black tracking-tighter text-white">
                                 ${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </div>
+                            {proposal.applied_promo_code && (
+                                <div className="mt-4 inline-flex items-center gap-2 bg-emerald-500/20 border border-emerald-500/30 px-3 py-1.5 rounded-lg">
+                                    <Tag size={14} className="text-emerald-300" />
+                                    <span className="text-sm font-bold text-emerald-100 uppercase tracking-wide">
+                                        {proposal.applied_promo_code} ({proposal.applied_discount_percent}% Off)
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
