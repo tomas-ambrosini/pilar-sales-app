@@ -1,4 +1,6 @@
-import React from 'react';
+import re
+
+content = """import React from 'react';
 import Modal from './Modal';
 import ProposalComments from './ProposalComments';
 import { formatQuoteId, generateMList } from '../utils/formatters';
@@ -221,3 +223,8 @@ export default function ProposalDetailsModal({ proposal, onClose }) {
         </Modal>
     );
 }
+"""
+
+with open("src/components/ProposalDetailsModal.jsx", "w") as f:
+    f.write(content)
+print("Updated modal")
