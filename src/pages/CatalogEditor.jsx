@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Plus, Edit2, Trash2, Box, Pen, Layers, Calculator, UploadCloud, RefreshCw, Component, Check, Search, Filter } from 'lucide-react';
+import { Plus, Edit2, Trash2, Box, Pen, Layers, Calculator, UploadCloud, RefreshCw, Component, Check, Search, Filter, Package } from 'lucide-react';
 import Modal from '../components/Modal';
 
 export default function CatalogEditor() {
@@ -196,65 +196,73 @@ export default function CatalogEditor() {
   });
 
   return (
-    <div className="page-container fade-in">
-      <header className="page-header">
+    <div className="page-container">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 px-4 sm:px-8 pt-8">
         <div>
-          <h1 className="page-title">Catalog & Subcontractors</h1>
-          <p className="page-subtitle">Manage internal equipment SKUs and baseline labor capabilities.</p>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+            <Package className="text-primary-600" size={32} />
+            Catalog & Subcontractors
+          </h1>
+          <p className="text-slate-500 font-medium mt-1">Manage internal equipment SKUs and baseline labor capabilities.</p>
         </div>
         {activeTab === 'equipment' ? (
-           <button className="primary-action-btn flex items-center gap-2" onClick={() => { setActiveEquip(initialEquipState); setIsEquipModalOpen(true); }}>
+           <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95" onClick={() => { setActiveEquip(initialEquipState); setIsEquipModalOpen(true); }}>
               <Plus size={18} /> New System
            </button>
         ) : (
-           <button className="primary-action-btn flex items-center gap-2" onClick={() => { setActiveLabor(initialLaborState); setIsLaborModalOpen(true); }}>
+           <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95" onClick={() => { setActiveLabor(initialLaborState); setIsLaborModalOpen(true); }}>
               <Plus size={18} /> New Service Item
            </button>
         )}
-      </header>
-
-      {/* Primary Module Navigation Tabs */}
-      <div className="flex gap-1 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm w-max mb-6">
-        <button onClick={() => handleTabChange('equipment')} className={`px-5 py-2.5 font-bold text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'equipment' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>
-          <Box size={16} className={activeTab === 'equipment' ? 'text-primary-300' : ''} /> Central Equipment Database
-        </button>
-        <button onClick={() => handleTabChange('labor')} className={`px-5 py-2.5 font-bold text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'labor' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>
-          <Pen size={16} className={activeTab === 'labor' ? 'text-primary-300' : ''} /> Add-ons & Labor Rates
-        </button>
       </div>
 
-      {/* Sleek Toolbar for Search and Filtering */}
-      <div className="flex justify-between items-center mb-6 gap-4 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-         <div className="relative flex-1 max-w-md">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-               <Search size={18} className="text-slate-400" />
-            </div>
-            <input 
-               type="text" 
-               className="block w-full pl-10 pr-3 py-2 border-none rounded-lg bg-slate-50 focus:bg-primary-50 focus:ring-2 focus:ring-primary-500 focus:outline-none sm:text-sm font-medium transition-colors" 
-               placeholder={activeTab === 'equipment' ? "Search brand, series, or model codes..." : "Search services, materials, or subcontractors..."} 
-               value={searchTerm}
-               onChange={(e) => setSearchTerm(e.target.value)}
-            />
-         </div>
-         <div className="flex items-center gap-2">
-            <Filter size={18} className="text-slate-400" />
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider hidden sm:inline-block">Filter:</span>
-            <select 
-               className="border-none bg-slate-50 focus:ring-2 focus:ring-primary-500 rounded-lg py-2 pl-3 pr-8 text-sm font-bold text-slate-700 outline-none cursor-pointer"
-               value={filterValue}
-               onChange={(e) => setFilterValue(e.target.value)}
-            >
-               <option value="All">All {activeTab === 'equipment' ? 'Brands' : 'Categories'}</option>
-               {activeTab === 'equipment' 
-                 ? uniqueBrands.map(b => <option key={b} value={b}>{b}</option>)
-                 : uniqueLaborCategories.map(c => <option key={c} value={c}>{c}</option>)
-               }
-            </select>
-         </div>
-      </div>
+      <div className="px-4 sm:px-8 pb-12 overflow-x-hidden w-full">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
+          
+          {/* Action Bar Inside Card */}
+          <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50">
+             
+             {/* Primary Module Navigation Tabs */}
+             <div className="flex gap-2 overflow-x-auto custom-scrollbar w-full sm:w-auto">
+                <button onClick={() => handleTabChange('equipment')} className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-colors whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'equipment' ? 'bg-slate-800 text-white border-slate-800 shadow-sm' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}>
+                  <Box size={14} className={activeTab === 'equipment' ? 'text-primary-300' : ''} /> Central Equipment Database
+                </button>
+                <button onClick={() => handleTabChange('labor')} className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-colors whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'labor' ? 'bg-slate-800 text-white border-slate-800 shadow-sm' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}>
+                  <Pen size={14} className={activeTab === 'labor' ? 'text-primary-300' : ''} /> Add-ons & Labor Rates
+                </button>
+             </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+             {/* Sleek Toolbar for Search and Filtering */}
+             <div className="flex items-center gap-3 w-full sm:w-auto">
+                 <div className="relative w-full sm:w-64">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                       <Search size={14} className="text-slate-400" />
+                    </div>
+                    <input 
+                       type="text" 
+                       className="block w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:outline-none sm:text-xs font-semibold transition-colors" 
+                       placeholder={activeTab === 'equipment' ? "Search codes..." : "Search services..."} 
+                       value={searchTerm}
+                       onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                 </div>
+                 <div className="flex items-center gap-2 border border-slate-200 bg-white rounded-lg px-2 shrink-0">
+                    <Filter size={14} className="text-slate-400" />
+                    <select 
+                       className="border-none bg-transparent focus:ring-0 py-1.5 text-xs font-bold text-slate-700 outline-none cursor-pointer"
+                       value={filterValue}
+                       onChange={(e) => setFilterValue(e.target.value)}
+                    >
+                       <option value="All">All {activeTab === 'equipment' ? 'Brands' : 'Categories'}</option>
+                       {activeTab === 'equipment' 
+                         ? uniqueBrands.map(b => <option key={b} value={b}>{b}</option>)
+                         : uniqueLaborCategories.map(c => <option key={c} value={c}>{c}</option>)
+                       }
+                    </select>
+                 </div>
+             </div>
+          </div>
          {activeTab === 'equipment' && (
             <div className="w-full overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
@@ -359,6 +367,7 @@ export default function CatalogEditor() {
             </div>
          )}
       </div>
+     </div>
 
       {/* EQUIPMENT MODAL COMPONENT */}
       <Modal isOpen={isEquipModalOpen} onClose={() => setIsEquipModalOpen(false)} title={activeEquip?.id ? "Edit Equipment SKU" : "New System Profile"}>
