@@ -433,9 +433,6 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                               <div className="flex items-center justify-end gap-3 flex-nowrap">
                                  {/* Hover Utilities */}
                                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
-                                    {proposal.status !== 'Approved' && (
-                                       
-                                    )}
                                     {['super_admin', 'admin'].includes((user?.role || '').toLowerCase()) && (
                                        <button className="p-2 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Force Delete"><Trash2 size={16} /></button>
                                     )}
