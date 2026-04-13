@@ -136,23 +136,44 @@ export default function ProposalDetailsModal({ proposal, onClose }) {
                                                 <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
                                                     <h4 className="font-black text-slate-800 text-sm tracking-wide uppercase">Core Survey Specs</h4>
                                                 </div>
-                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6">
+                                                    
+                                                    {/* Equipment Profile */}
                                                     <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Location</span>
-                                                        <span className="text-sm font-bold text-slate-800">{survey.systemLocation || 'N/A'}</span>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">System Type</span>
+                                                        <span className="text-sm font-bold text-slate-800">{survey.systemType || 'N/A'}</span>
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Thermostats</span>
-                                                        <span className="text-sm font-bold text-slate-800">{survey.thermostatCount || 'N/A'}</span>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Current Tonnage</span>
+                                                        <span className="text-sm font-bold text-slate-800">{survey.currentTonnage ? `${survey.currentTonnage} TON` : 'N/A'}</span>
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ductwork Type</span>
-                                                        <span className="text-sm font-bold text-slate-800 truncate">{survey.ductwork || 'N/A'}</span>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Refrigerant & Brand</span>
+                                                        <span className="text-sm font-bold text-slate-800 truncate">{survey.gasRefrigerant || 'N/A'} / {survey.existingBrand || 'N/A'}</span>
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Lineset (Sup / Liq)</span>
-                                                        <span className="text-sm font-bold text-slate-800">{survey.lineSetSupply || 'N/A'} / {survey.lineSetLiquid || 'N/A'}</span>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Thermostat</span>
+                                                        <span className="text-sm font-bold text-slate-800">{survey.thermostat || 'N/A'}</span>
                                                     </div>
+
+                                                    {/* Physical Constraints */}
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Condenser Location</span>
+                                                        <span className="text-sm font-bold text-slate-800">{survey.condenserLocation || 'N/A'}</span>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">AHU Location</span>
+                                                        <span className="text-sm font-bold text-slate-800">{survey.ahuLocation || 'N/A'}</span>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Duct / Condensate Type</span>
+                                                        <span className="text-sm font-bold text-slate-800 truncate">{survey.ductCondition || 'N/A'} / {survey.condensateType || 'N/A'}</span>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Disconnect / Whip</span>
+                                                        <span className="text-sm font-bold text-slate-800">{survey.disconnectCondition || 'N/A'} / {survey.whipCondition || 'N/A'}</span>
+                                                    </div>
+
                                                 </div>
                                             </div>
 
