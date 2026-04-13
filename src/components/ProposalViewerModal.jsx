@@ -71,31 +71,33 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
              </div>
           </div>
           
-          <div className="mt-auto pt-4">
-             {isMultiSys ? (
-                 <button 
-                    disabled
-                    className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${isSelected ? 'bg-primary-500 text-white shadow-md' : 'bg-slate-200 text-slate-400 cursor-not-allowed border-2 border-transparent'}`}
-                 >
-                    {isSelected ? <><CheckCircle size={16}/> Option Selected</> : 'Select Option'}
-                 </button>
-             ) : proposal.status !== 'Approved' ? (
-                 <button 
-                    disabled={proposal.isReadOnly}
-                    onClick={(e) => { e.stopPropagation(); !proposal.isReadOnly && onAccept && onAccept(tierName, tierData, proposal); }}
-                    className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${proposal.isReadOnly ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : isBest ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-md' : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300'}`}
-                 >
-                    {proposal.isReadOnly ? 'Preview Only' : `Accept ${tierName} Quote`}
-                 </button>
-             ) : (
-                 <button 
-                    onClick={(e) => { e.stopPropagation(); onViewContract && onViewContract(proposal); }} 
-                    className={`w-full py-3 rounded font-bold flex items-center justify-center gap-2 transition-all ${isBest ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl scale-105' : 'bg-emerald-50 border-2 border-emerald-200 text-emerald-700 hover:bg-emerald-100'}`}
-                 >
-                    <FileText size={16}/> View Signed Contract
-                 </button>
-             )}
-          </div>
+          {!proposal?.isReadOnly && (
+              <div className="mt-auto pt-4">
+                 {isMultiSys ? (
+                     <button 
+                        disabled
+                        className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${isSelected ? 'bg-primary-500 text-white shadow-md' : 'bg-slate-200 text-slate-400 cursor-not-allowed border-2 border-transparent'}`}
+                     >
+                        {isSelected ? <><CheckCircle size={16}/> Option Selected</> : 'Select Option'}
+                     </button>
+                 ) : proposal.status !== 'Approved' ? (
+                     <button 
+                        disabled={proposal.isReadOnly}
+                        onClick={(e) => { e.stopPropagation(); !proposal.isReadOnly && onAccept && onAccept(tierName, tierData, proposal); }}
+                        className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${proposal.isReadOnly ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : isBest ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-md' : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300'}`}
+                     >
+                        {proposal.isReadOnly ? 'Preview Only' : `Accept ${tierName} Quote`}
+                     </button>
+                 ) : (
+                     <button 
+                        onClick={(e) => { e.stopPropagation(); onViewContract && onViewContract(proposal); }} 
+                        className={`w-full py-3 rounded font-bold flex items-center justify-center gap-2 transition-all ${isBest ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl scale-105' : 'bg-emerald-50 border-2 border-emerald-200 text-emerald-700 hover:bg-emerald-100'}`}
+                     >
+                        <FileText size={16}/> View Signed Contract
+                     </button>
+                 )}
+              </div>
+          )}
        </div>
     );
   };
@@ -200,6 +202,17 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
                  onAccept && onAccept('Custom Network', combinedData, proposal);
              };
 
+             if (proposal?.isReadOnly) {
+                 return (
+                     <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 items-center">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded mr-auto">
+                            <AlertTriangle size={14}/> Preview Only Mode
+                        </div>
+                        <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors" onClick={onClose}>Close Viewer</button>
+                     </div>
+                 );
+             }
+
              return (
                  <div className="p-5 border-t border-slate-200 bg-slate-50 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="text-xs font-bold text-slate-500 bg-slate-200/50 px-4 py-2 rounded-lg flex items-center">
@@ -209,11 +222,11 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
                     <div className="flex gap-3 w-full md:w-auto">
                         <button className="px-6 py-2.5 font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-colors rounded" onClick={onClose}>Close Planner</button>
                         <button 
-                           disabled={proposal?.isReadOnly || !isCartComplete} 
+                           disabled={!isCartComplete} 
                            onClick={handleFinalize}
-                           className={`px-6 py-2.5 font-bold rounded shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none ${proposal?.isReadOnly ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : isCartComplete ? 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-600' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`}
+                           className={`px-6 py-2.5 font-bold rounded shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none ${isCartComplete ? 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-600' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`}
                         >
-                           {proposal?.isReadOnly ? 'Preview Mode Active' : isCartComplete ? 'Accept Configuration Package' : 'Select a Tier for Each System'}
+                           {isCartComplete ? 'Accept Configuration Package' : 'Select a Tier for Each System'}
                         </button>
                     </div>
                  </div>
