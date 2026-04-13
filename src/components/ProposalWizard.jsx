@@ -9,11 +9,18 @@ import { Check, Image as ImageIcon, Layers, Tag, DollarSign, Calculator, AlertTr
 
 export default function ProposalWizard({ onComplete, addProposal, updateProposal, editModeData }) {
   const hasPreloadedData = typeof editModeData === 'object' && editModeData !== null;
-  const isEditing = hasPreloadedData && editModeData.id != null;
+  const isDraftLaunch = hasPreloadedData && (editModeData.isDraft === true || editModeData.status === 'Draft');
+  const isEditing = hasPreloadedData && editModeData.id != null && !isDraftLaunch;
   const editingId = isEditing ? editModeData.id : null;
-  const isDraftLaunch = hasPreloadedData && editModeData.isDraft === true;
   
-  const [step, setStep] = useState(isEditing ? 6 : (isDraftLaunch ? (editModeData.step > 0 ? editModeData.step : 1) : 1));
+  const [step, setStep] = useState(() => {
+     if (isEditing) return 6;
+     if (isDraftLaunch) {
+         const savedStep = editModeData.proposal_data?.wizard_state?.step;
+         return typeof savedStep === 'number' && savedStep > 0 ? savedStep : 1;
+     }
+     return 1;
+  });
   const { customers } = useCustomers();
   const { user } = useAuth();
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
