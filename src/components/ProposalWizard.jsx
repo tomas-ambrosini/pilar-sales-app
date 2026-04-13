@@ -512,13 +512,19 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
             </h2>
             {step > 0 && (
               <button 
-                className={`text-[10px] font-bold transition flex items-center gap-1 mt-1 w-max ${manualSaveStatus === 'error' ? 'text-red-500' : 'text-slate-400 hover:text-primary-600'}`} 
+                className={`text-[11px] font-bold mt-3 px-3 py-1.5 rounded-full border shadow-sm transition-all flex items-center gap-1.5 w-max ${
+                    manualSaveStatus === 'error' 
+                      ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100' 
+                      : manualSaveStatus === 'saving'
+                      ? 'bg-primary-50 text-primary-600 border-primary-200 opacity-70 cursor-wait'
+                      : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-300'
+                }`} 
                 onClick={handleManualSave} 
                 disabled={manualSaveStatus === 'saving'} 
                 title="Your progress is automatically saved to the cloud"
               >
-                <Save size={12}/> 
-                {manualSaveStatus === 'saving' ? 'Saving...' : manualSaveStatus === 'error' ? 'Save Failed! Try again' : 'Save Draft & Exit'}
+                <Save size={13}/> 
+                {manualSaveStatus === 'saving' ? 'Saving to Cloud...' : manualSaveStatus === 'error' ? 'Save Failed! Click to Retry' : 'Save Draft & Exit'}
               </button>
             )}
           </div>
