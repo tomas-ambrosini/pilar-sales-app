@@ -824,37 +824,68 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                <p className="text-xs text-red-800 font-medium"><strong>Confidential Dashboard:</strong> This data reflects absolute floor costs and backend margin protections. Your base commission algorithm operates against the <span className="underline font-bold">Target System Par</span>. Providing a retail discount strictly lowers the final transaction price, not your proportional algorithmic baseline.</p>
             </div>
 
-            <div className="mb-6 flex flex-col gap-2 bg-white border border-primary-200 rounded-lg p-4 shadow-sm">
-                 <div>
-                    <h4 className="font-bold text-slate-700">Global Customer Discount</h4>
-                    <p className="text-xs text-slate-500 mb-2">Apply an authorized promo code to grant a global discount.</p>
-                 </div>
-                 <div className="flex flex-col gap-2 max-w-[450px]">
-                    {!appliedPromo ? (
-                      <div className="flex flex-col gap-3 mt-4 w-full bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <label className="text-xs font-black tracking-widest uppercase text-slate-500">Secure Discount Code</label>
-                        <div className="w-full flex">
-                           <div className="flex-grow">
-                             <input type="text" className="w-full bg-white border border-slate-300 rounded-l-lg px-4 font-mono uppercase text-slate-800 placeholder:text-slate-300 focus:outline-none focus:border-primary-500 shadow-sm" value={promoInput} onChange={e => setPromoInput(e.target.value.toUpperCase())} placeholder="PROMO CODE..." onKeyDown={e => e.key === 'Enter' && handleApplyPromo()} style={{ display: 'block', height: '48px' }}/>
+            <div className="mb-6 bg-white border border-slate-200 rounded-xl p-5 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] hover:shadow-md transition-all relative overflow-hidden group">
+               <div className="absolute -top-10 -right-10 opacity-5 pointer-events-none group-hover:scale-110 group-hover:opacity-10 transition-all duration-700">
+                  <Tag size={180} />
+               </div>
+
+               <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="max-w-md">
+                     <h4 className="font-black text-slate-800 text-lg flex items-center gap-2 mb-1">Global Customer Discount</h4>
+                     <p className="text-sm text-slate-500 font-medium">Apply a pre-authorized organization promo code to seamlessly distribute a global margin discount evenly across all pricing tiers.</p>
+                  </div>
+
+                  <div className="flex-1 w-full max-w-[420px]">
+                     {!appliedPromo ? (
+                        <div className="flex flex-col gap-1 w-full relative">
+                           <div className="flex shadow-sm rounded-xl overflow-hidden focus-within:ring-[3px] focus-within:ring-primary-500/20 transition-all border border-slate-300 focus-within:border-primary-500 bg-white group/input">
+                             <div className="pl-4 flex items-center justify-center bg-white text-slate-400 group-focus-within/input:text-primary-500 transition-colors">
+                               <Tag size={18} />
+                             </div>
+                             <input 
+                               type="text" 
+                               className="w-full bg-white px-3 py-3 font-mono uppercase text-slate-800 font-bold placeholder:text-slate-300 placeholder:font-medium focus:outline-none" 
+                               value={promoInput} 
+                               onChange={e => setPromoInput(e.target.value.toUpperCase())} 
+                               placeholder="ENTER PROMO CODE..." 
+                               onKeyDown={e => e.key === 'Enter' && handleApplyPromo()} 
+                               style={{ minHeight: '52px' }}
+                             />
+                             <button 
+                               onClick={handleApplyPromo} 
+                               disabled={validatingPromo} 
+                               className="bg-slate-900 hover:bg-black disabled:opacity-50 text-white font-bold px-7 flex items-center justify-center transition-colors whitespace-nowrap"
+                               style={{ minHeight: '52px' }}
+                             >
+                               {validatingPromo ? 'WAIT...' : 'APPLY CODE'}
+                             </button>
                            </div>
-                           <button onClick={handleApplyPromo} disabled={validatingPromo} className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold px-6 shadow-sm flex items-center justify-center transition-all whitespace-nowrap rounded-r-lg border border-primary-600" style={{ height: '48px', width: 'auto' }}>
-                             {validatingPromo ? 'Wait...' : 'Verify'}
-                           </button>
+                           {promoError && <p className="text-[10px] text-red-500 font-bold ml-1 flex items-center gap-1 mt-1 pb-1 absolute -bottom-5"><AlertTriangle size={10}/> {promoError}</p>}
                         </div>
-                        {promoError && <p className="text-xs text-red-500 font-bold">{promoError}</p>}
-                      </div>
-                    ) : (
-                      <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex justify-between items-center w-full mt-2">
-                         <div>
-                           <p className="text-xs font-bold text-emerald-800 uppercase tracking-widest mb-0.5">Applied Promo</p>
-                           <p className="font-mono font-black text-emerald-600 text-lg flex items-center gap-2"><Tag size={16}/> {appliedPromo.code} <span className="text-emerald-500 text-sm ml-1">({appliedPromo.discount_percent}%)</span></p>
-                         </div>
-                         <button onClick={() => setAppliedPromo(null)} className="text-emerald-700 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 p-2 rounded-lg transition-colors border border-transparent hover:border-emerald-300 shadow-sm ml-4">
-                           <X size={16} />
-                         </button>
-                      </div>
-                    )}
-                 </div>
+                     ) : (
+                        <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-0.5 shadow-sm transform transition-all hover:scale-[1.01]">
+                           <div className="bg-emerald-50 rounded-[10px] p-4 flex justify-between items-center w-full relative overflow-hidden">
+                              <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
+                                <Check size={80}/>
+                              </div>
+                              <div className="relative z-10">
+                                 <div className="flex items-center gap-1.5 mb-0.5">
+                                    <Check className="text-emerald-500" size={16}/>
+                                    <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Active Application</p>
+                                 </div>
+                                 <p className="font-mono font-black text-emerald-600 text-xl flex items-center gap-2">
+                                     {appliedPromo.code} 
+                                     <span className="bg-emerald-200 text-emerald-900 font-bold tracking-tight text-xs px-2 py-0.5 rounded-full ml-1">-{appliedPromo.discount_percent}% global</span>
+                                 </p>
+                              </div>
+                              <button onClick={() => setAppliedPromo(null)} className="text-emerald-700 hover:text-white bg-emerald-100 hover:bg-emerald-500 p-2.5 rounded-lg transition-colors shadow-sm ml-4 border border-transparent relative z-10" title="Remove Promo Code">
+                                 <RefreshCcw size={18} />
+                              </button>
+                           </div>
+                        </div>
+                     )}
+                  </div>
+               </div>
             </div>
 
             {(!systems.some(s => s.selectedTiers.best || s.selectedTiers.better || s.selectedTiers.good)) ? (
