@@ -534,7 +534,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
        </div>
 
       {/* Edit Proposal Modal */}
-      <Modal isOpen={!!editingProposal} onClose={() => setEditingProposal(null)} title={`Edit Proposal ${editingProposal?.id}`}>
+      <Modal isOpen={!!editingProposal} onClose={() => setEditingProposal(null)} title={`Edit Proposal ${editingProposal ? formatQuoteId(editingProposal) : ''}`}>
         <form className="modal-form" onSubmit={handleEditSubmit}>
           <div className="bg-slate-50 border border-slate-200 rounded p-4 mb-4">
              <p className="text-sm mb-2"><strong className="text-slate-500 uppercase text-xs">Customer Name:</strong><br/>{editForm.customer}</p>
@@ -568,7 +568,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
       <Modal isOpen={!!deletingProposal} onClose={() => setDeletingProposal(null)} title="Delete Proposal">
         <div className="modal-form" style={{ textAlign: 'center', padding: '1rem 0' }}>
           <p style={{ color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
-            Are you sure you want to delete proposal <strong>{deletingProposal?.id}</strong> for <strong>{deletingProposal?.customer}</strong>? This action cannot be undone.
+            Are you sure you want to delete proposal <strong>{deletingProposal ? formatQuoteId(deletingProposal) : ''}</strong> for <strong>{deletingProposal?.customer}</strong>? This action cannot be undone.
           </p>
           <div className="modal-actions" style={{ justifyContent: 'center', gap: '1rem' }}>
             <button className="btn-secondary" onClick={() => setDeletingProposal(null)}>Cancel</button>
