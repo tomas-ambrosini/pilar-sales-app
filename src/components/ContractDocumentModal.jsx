@@ -8,8 +8,13 @@ import './ContractDocumentModal.css';
 export default function ContractDocumentModal({ isOpen, onClose, contractData }) {
    const { customers } = useCustomers();
 
-   const { proposal, tierName, tierData, date } = contractData || {};
+   let { proposal, tierName, tierData, date } = contractData || {};
    
+   if (!date) {
+       date = proposal?.updated_at || proposal?.created_at 
+          ? new Date(proposal.updated_at || proposal.created_at).toLocaleDateString() 
+          : new Date().toLocaleDateString();
+   }
    // Hydrate full customer profile (supporting both modern ID links and legacy string-based mapping)
    const fullCustomer = customers.find(c => 
        (proposal?.customer_id && c.id === proposal.customer_id) || 
