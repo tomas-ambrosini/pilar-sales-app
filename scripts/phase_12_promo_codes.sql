@@ -27,9 +27,9 @@ CREATE POLICY "Admins can manage promos" ON public.promo_codes
     FOR ALL
     USING (
         EXISTS (
-            SELECT 1 FROM public.user_roles 
-            WHERE user_roles.user_id = auth.uid() 
-            AND user_roles.role IN ('super_admin', 'admin')
+            SELECT 1 FROM public.user_profiles 
+            WHERE user_profiles.id = auth.uid() 
+            AND user_profiles.role IN ('super_admin', 'admin', 'ADMIN', 'SUPER_ADMIN')
         )
     );
 
