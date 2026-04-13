@@ -44,7 +44,7 @@ export default function ProposalDetailsModal({ proposal, onClose }) {
             isOpen={!!proposal} 
             onClose={onClose} 
             title={`Proposal Details: ${formatQuoteId(proposal)}`}
-            width="w-[98%] max-w-6xl mx-auto"
+            width="w-[98%] max-w-[1500px] mx-auto"
             bodyClassName="flex-1 overflow-hidden flex flex-col p-0"
         >
             <div className="flex flex-col h-full overflow-hidden bg-slate-100">
