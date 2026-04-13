@@ -238,50 +238,74 @@ export default function PromoCodes() {
       </div>
 
       <Modal isOpen={isModalOpen} title={editingPromo ? 'Edit Promo Code' : 'Create Promo Code'} onClose={() => setIsModalOpen(false)}>
-          <form onSubmit={handleSubmit} className="p-6 space-y-5">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-1">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Promo Code String *</label>
-                <input required type="text" className="input-field w-full font-mono font-bold uppercase" value={formData.code} onChange={e => setFormData({...formData, code: e.target.value.toUpperCase()})} placeholder="SUMMER10" />
+          <form onSubmit={handleSubmit} className="p-0">
+            <div className="p-6 space-y-6">
+              {/* Top Row: Code & Percentage */}
+              <div className="grid grid-cols-2 gap-5">
+                <div className="col-span-1">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Promo Code *</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <Megaphone className="text-primary-400" size={16} />
+                    </div>
+                    <input required type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3.5 font-mono font-black text-slate-800 text-lg uppercase tracking-wide focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder:text-slate-300 placeholder:font-normal" value={formData.code} onChange={e => setFormData({...formData, code: e.target.value.toUpperCase()})} placeholder="SUMMER2026" />
+                  </div>
+                </div>
+                <div className="col-span-1">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Discount % *</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <span className="text-emerald-500 font-bold text-lg">%</span>
+                    </div>
+                    <input required type="number" step="0.01" min="0.01" max="100" className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3.5 font-black text-emerald-600 text-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all placeholder:text-slate-300 placeholder:font-normal" value={formData.discount_percent} onChange={e => setFormData({...formData, discount_percent: e.target.value})} placeholder="15.00" />
+                  </div>
+                </div>
               </div>
-              <div className="col-span-1">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Discount % *</label>
-                <input required type="number" step="0.01" min="0.01" max="100" className="input-field w-full font-bold text-emerald-600" value={formData.discount_percent} onChange={e => setFormData({...formData, discount_percent: e.target.value})} placeholder="10.00" />
+
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description (Internal)</label>
+                <textarea rows="2" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder:text-slate-400 resize-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Note: Only applies to Q4 pipeline deals..."></textarea>
+              </div>
+
+              {/* Date Ranges */}
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 border-dashed">
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <CheckCircle className="text-slate-400" size={14}/> Validity Window
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-1">
+                    <label className="block text-xs font-semibold text-slate-500 mb-1.5">Starts At</label>
+                    <input type="datetime-local" className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" value={formData.starts_at} onChange={e => setFormData({...formData, starts_at: e.target.value})} />
+                  </div>
+                  <div className="col-span-1">
+                    <label className="block text-xs font-semibold text-slate-500 mb-1.5">Expires At</label>
+                    <input type="datetime-local" className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" value={formData.expires_at} onChange={e => setFormData({...formData, expires_at: e.target.value})} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Limits and Status */}
+              <div className="flex items-center justify-between gap-4 bg-white border border-slate-200 shadow-sm rounded-2xl p-5">
+                <div className="flex-1">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Total Usage Limit</label>
+                  <input type="number" min="1" step="1" className="w-full max-w-[200px] bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder:text-slate-400 placeholder:font-normal" value={formData.usage_limit} onChange={e => setFormData({...formData, usage_limit: e.target.value})} placeholder="∞ Unlimited" />
+                </div>
+                
+                <div className="flex-1 flex justify-end">
+                  <label className="relative inline-flex items-center cursor-pointer group">
+                    <input type="checkbox" className="sr-only peer" checked={formData.is_active} onChange={e => setFormData({...formData, is_active: e.target.checked})} />
+                    <div className="w-14 h-7 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-500 group-hover:shadow-md"></div>
+                    <span className="ml-3 text-sm font-bold text-slate-700 uppercase tracking-wide">Active</span>
+                  </label>
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Description (Internal)</label>
-              <input type="text" className="input-field w-full" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Optional notes about this promo..." />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-1">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Starts At (Optional)</label>
-                <input type="datetime-local" className="input-field w-full" value={formData.starts_at} onChange={e => setFormData({...formData, starts_at: e.target.value})} />
-              </div>
-              <div className="col-span-1">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Expires At (Optional)</label>
-                <input type="datetime-local" className="input-field w-full" value={formData.expires_at} onChange={e => setFormData({...formData, expires_at: e.target.value})} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 items-end">
-              <div className="col-span-1">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Usage Limit (Optional)</label>
-                <input type="number" min="1" step="1" className="input-field w-full" value={formData.usage_limit} onChange={e => setFormData({...formData, usage_limit: e.target.value})} placeholder="Unlimited" />
-              </div>
-              <div className="col-span-1 flex items-center h-[42px]">
-                <label className="flex items-center gap-2 cursor-pointer ml-2">
-                  <input type="checkbox" className="w-4 h-4 text-primary-600 rounded cursor-pointer" checked={formData.is_active} onChange={e => setFormData({...formData, is_active: e.target.checked})} />
-                  <span className="text-sm font-bold text-slate-700">Code is Active</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
-              <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-colors">Cancel</button>
-              <button type="submit" className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2">
+            {/* Footer Buttons */}
+            <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 rounded-b-2xl">
+              <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-xl font-bold text-slate-600 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 transition-all">Cancel</button>
+              <button type="submit" className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-8 py-2.5 rounded-xl shadow-md shadow-primary-600/20 transition-all flex items-center gap-2 transform active:scale-95">
                 <Save size={18}/>
                 {editingPromo ? 'Save Changes' : 'Create Promo Code'}
               </button>
