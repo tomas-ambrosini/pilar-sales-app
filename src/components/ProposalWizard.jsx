@@ -147,6 +147,57 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     }
   }, [hasPreloadedData, editModeData]);
 
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return;
+    setValidatingPromo(true);
+    setPromoError('');
+    
+    try {
+      const { data, error } = await supabase
+        .from('promo_codes')
+        .select('*')
+        .eq('code', promoInput.trim().toUpperCase())
+        .single();
+        
+      if (error || !data) {
+        setPromoError('Invalid promo code');
+        setValidatingPromo(false);
+        return;
+      }
+      
+      if (!data.is_active) {
+        setPromoError('This promo code is no longer active');
+        setValidatingPromo(false);
+        return;
+      }
+      
+      const now = new Date();
+      if (data.starts_at && new Date(data.starts_at) > now) {
+         setPromoError('This promo code is not active yet');
+         setValidatingPromo(false);
+         return;
+      }
+      if (data.expires_at && new Date(data.expires_at) < now) {
+         setPromoError('This promo code has expired');
+         setValidatingPromo(false);
+         return;
+      }
+      if (data.usage_limit && data.times_used >= data.usage_limit) {
+         setPromoError('This promo code has reached its usage limit');
+         setValidatingPromo(false);
+         return;
+      }
+      
+      setAppliedPromo(data);
+      setPromoInput('');
+      setPromoError('');
+    } catch (err) {
+      setPromoError('Error validating code');
+    } finally {
+      setValidatingPromo(false);
+    }
+  };
+
   useEffect(() => {
     async function loadBackendData() {
       const [equip, labor, marg] = await Promise.all([
