@@ -2,6 +2,7 @@ import React from 'react';
 import Modal from './Modal';
 import ProposalComments from './ProposalComments';
 import { formatQuoteId } from '../utils/formatters';
+import { useCustomers } from '../context/CustomerContext';
 import { User, FileText, Calendar, Activity, Mail, Phone, MapPin, Grid, Camera, ThermometerSun, AlertCircle } from 'lucide-react';
 
 const MEASUREMENTS = {
@@ -30,11 +31,19 @@ const PHOTO_LABELS = {
 };
 
 export default function ProposalDetailsModal({ proposal, onClose }) {
+    const { customers } = useCustomers();
     if (!proposal) return null;
 
     const data = proposal?.proposal_data || {};
-    const customer = proposal?.customer_profiles || {};
-    const name = proposal?.customer || customer.name || 'Unknown Client';
+    
+    // Attempt local resolution of the DB entity using the generator's state
+    const customerId = data?.wizard_state?.selectedCustomerId;
+    const dbCustomer = customerId ? customers?.find(c => c.id === customerId) : null;
+    
+    const name = proposal?.customer || dbCustomer?.name || 'Unknown Client';
+    const email = dbCustomer?.email || 'N/A';
+    const phone = dbCustomer?.phone || 'N/A';
+    const addressString = dbCustomer?.address || 'N/A';
     
     // Safely extract system info
     const systems = data?.systemTiers || data?.systems || [];
@@ -87,17 +96,15 @@ export default function ProposalDetailsModal({ proposal, onClose }) {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Mail size={12}/> Email Address</span>
-                                <span className="text-sm font-bold text-slate-700 break-words">{customer.email || proposal.email || 'N/A'}</span>
+                                <span className="text-sm font-bold text-slate-700 break-words">{email}</span>
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Phone size={12}/> Phone Number</span>
-                                <span className="text-sm font-bold text-slate-700">{customer.phone || proposal.phone || 'N/A'}</span>
+                                <span className="text-sm font-bold text-slate-700">{phone}</span>
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><MapPin size={12}/> Service Address</span>
-                                <span className="text-sm font-bold text-slate-700 break-words">
-                                    {[customer.address, customer.city, customer.state, customer.zip].filter(Boolean).join(', ') || 'N/A'}
-                                </span>
+                                <span className="text-sm font-bold text-slate-700 break-words">{addressString}</span>
                             </div>
                         </div>
                     </div>
