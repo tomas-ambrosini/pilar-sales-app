@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
-import { Search, Filter, ChevronRight, CheckCircle, Zap, Thermometer, Wind, Plus, Trash2 } from 'lucide-react';
+import { Search, Filter, ChevronRight, CheckCircle, Zap, Thermometer, Wind, Plus, Trash2, Package } from 'lucide-react';
 import { useCatalog } from '../context/CatalogContext';
 import Modal from '../components/Modal';
 import './Catalog.css';

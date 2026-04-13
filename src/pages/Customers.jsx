@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Routes, Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Search, Plus, Phone, Mail, MapPin, ChevronRight, User as UserIcon, Calendar, FileText, Edit2, Trash2, Tag, Clock } from 'lucide-react';
+import { Search, Plus, Phone, Mail, MapPin, ChevronRight, User as UserIcon, Users, Calendar, FileText, Edit2, Trash2, Tag, Clock } from 'lucide-react';
 import Modal from '../components/Modal';
 import './Customers.css';
 import { useCustomers } from '../context/CustomerContext';
