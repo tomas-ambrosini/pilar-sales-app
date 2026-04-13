@@ -107,30 +107,41 @@ export default function AccountManagement() {
   });
 
   return (
-    <div className="page-container fade-in">
-      <header className="page-header mb-8">
+    <div className="page-container">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 px-4 sm:px-8 pt-8">
         <div>
-          <h1 className="page-title">Internal Security & Access</h1>
-          <p className="page-subtitle">Manage company access, roles, and employee credentials.</p>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+            <Shield className="text-primary-600" size={32} />
+            Internal Security & Access
+          </h1>
+          <p className="text-slate-500 font-medium mt-1">Manage company access, roles, and employee credentials.</p>
         </div>
-        <button className="primary-action-btn flex items-center justify-center gap-2" onClick={() => setShowCreateModal(true)}>
+        <button 
+          onClick={() => setShowCreateModal(true)}
+          className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95"
+        >
           <Plus size={18} /> Provision New Account
         </button>
-      </header>
+      </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-         <div className="p-4 border-b border-slate-100 bg-slate-50 flex gap-4 items-center">
-            <div className="relative flex-1 max-w-sm">
-               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-               <input 
+      {/* Main Container */}
+      <div className="px-4 sm:px-8 pb-12 overflow-x-hidden w-full">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          
+          {/* Action Bar Inside Card */}
+          <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50">
+             <div className="relative w-full max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16}/>
+                <input 
                   type="text" 
+                  className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium placeholder-slate-400 shadow-sm" 
                   placeholder="Search by name, username, or email..." 
-                  className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-               />
-            </div>
-         </div>
+                />
+             </div>
+          </div>
 
          <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-600">

@@ -241,51 +241,61 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
   };
 
   return (
-    <div className="page-container fade-in">
-      <header className="page-header">
+    <div className="page-container">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 px-4 sm:px-8 pt-8">
         <div>
-          <h1 className="page-title">Sales Proposals & Estimates</h1>
-          <p className="page-subtitle">Track and generate equipment replacement quotes.</p>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+            <FileText className="text-primary-600" size={32} />
+            Sales Proposals & Estimates
+          </h1>
+          <p className="text-slate-500 font-medium mt-1">Track and generate equipment replacement quotes.</p>
         </div>
-        <button className="primary-action-btn" onClick={() => setShowWizard(true)}>
+        <button 
+          onClick={() => setShowWizard(true)}
+          className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95"
+        >
           <Plus size={18} /> Generate Quote
         </button>
-      </header>
-      
-      <div className="flex gap-2 mb-6 mt-4 animate-in fade-in slide-in-from-bottom-2">
-         {['All', 'Draft', 'Sent', 'Approved'].map(mode => (
-             <button 
-                key={mode} 
-                onClick={() => setFilterMode(mode)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-colors ${filterMode === mode ? 'bg-slate-800 text-white border-slate-800 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
-             >
-                {mode}
-             </button>
-         ))}
       </div>
 
-      <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
+      <div className="px-4 sm:px-8 pb-12 overflow-x-hidden w-full">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
+          
+          <div className="p-4 border-b border-slate-100 flex gap-2 overflow-x-auto bg-slate-50 custom-scrollbar">
+             {['All', 'Draft', 'Sent', 'Approved'].map(mode => (
+                 <button 
+                    key={mode} 
+                    onClick={() => setFilterMode(mode)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-colors whitespace-nowrap ${filterMode === mode ? 'bg-slate-800 text-white border-slate-800 shadow-sm' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
+                 >
+                    {mode}
+                 </button>
+             ))}
+          </div>
 
-        {(() => {
-           const filteredProposals = proposals.filter(p => filterMode === 'All' || p.status === filterMode);
-           
-           if (filteredProposals.length === 0) {
-              return (
-                 <div className="border-2 border-dashed border-slate-200 bg-white/50 backdrop-blur-sm rounded-2xl p-12 flex flex-col items-center justify-center min-h-[300px]">
-                   <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-4"><FileText size={32} /></div>
-                   <p className="text-slate-500 font-semibold mb-6">No proposals found {filterMode !== 'All' ? `for ${filterMode}` : 'yet'}.</p>
-                   {filterMode === 'All' && (
-                     <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg flex items-center gap-2 transition-all hover:scale-105" onClick={() => setShowWizard(true)}>
-                       <Plus size={18} /> Build First Quote
-                     </button>
-                   )}
-                 </div>
-              );
-           }
-           
-           return (
-             <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col mt-4 w-full">
-               <div className="overflow-x-auto">
+          <div className="flex flex-col w-full">
+
+            {(() => {
+               const filteredProposals = proposals.filter(p => filterMode === 'All' || p.status === filterMode);
+               
+               if (filteredProposals.length === 0) {
+                  return (
+                     <div className="m-8 border-2 border-dashed border-slate-200 bg-slate-50/50 rounded-2xl p-12 flex flex-col items-center justify-center">
+                       <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-4"><FileText size={32} /></div>
+                       <p className="text-slate-500 font-semibold mb-6">No proposals found {filterMode !== 'All' ? `for ${filterMode}` : 'yet'}.</p>
+                       {filterMode === 'All' && (
+                         <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg flex items-center gap-2 transition-all hover:scale-105" onClick={() => setShowWizard(true)}>
+                           <Plus size={18} /> Build First Quote
+                         </button>
+                       )}
+                     </div>
+                  );
+               }
+               
+               return (
+                 <div className="w-full">
+                   <div className="overflow-x-auto">
                  {loading ? (
                    <table className="w-full text-left border-collapse">
                      <thead>
@@ -478,6 +488,8 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
              </div>
            );
          })()}
+       </div>
+       </div>
        </div>
 
 

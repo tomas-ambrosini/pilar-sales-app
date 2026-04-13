@@ -74,34 +74,45 @@ function CustomerList() {
   };
 
   return (
-    <div className="page-container customers-page">
-      <header className="page-header">
+    <div className="page-container">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 px-4 sm:px-8 pt-8">
         <div>
-          <h1 className="page-title">Customer Directory</h1>
-          <p className="page-subtitle">Centralized database for all customer contacts.</p>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+            <Users className="text-primary-600" size={32} />
+            Customer Directory
+          </h1>
+          <p className="text-slate-500 font-medium mt-1">Centralized database for all customer contacts.</p>
         </div>
-        <button className="primary-action-btn" onClick={() => setIsAddCustomerOpen(true)}>
-          <Plus size={18} />
-          <span className="hide-mobile">Add Customer</span>
+        <button 
+          onClick={() => setIsAddCustomerOpen(true)}
+          className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95"
+        >
+          <Plus size={18} /> Add Customer
         </button>
-      </header>
-
-      <div className="search-bar-container glass-panel">
-        <Search className="search-icon" size={20} />
-        <input 
-          type="text" 
-          placeholder="Search by name, address, or phone..." 
-          className="search-input" 
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-6 mb-16">
+      <div className="px-4 sm:px-8 pb-12 overflow-x-hidden w-full">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        
+          <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50">
+             <div className="relative w-full max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16}/>
+                <input 
+                  type="text" 
+                  className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium placeholder-slate-400 shadow-sm" 
+                  placeholder="Search by name, address, or phone..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+             </div>
+          </div>
+
+          <div className="overflow-x-auto">
         {loading ? (
            <table className="w-full text-left border-collapse">
              <thead>
-                <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-black text-slate-400 uppercase tracking-widest">
                    <th className="p-4 px-6 font-medium">Customer Name</th>
                    <th className="p-4 px-6 font-medium">Contact</th>
                    <th className="p-4 px-6 font-medium">Service Address</th>
@@ -146,7 +157,7 @@ function CustomerList() {
         ) : (
           <table className="w-full text-left border-collapse">
             <thead>
-               <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+               <tr className="bg-slate-50 border-b border-slate-200 text-xs font-black text-slate-400 uppercase tracking-widest">
                   <th className="p-4 px-6 font-medium">Customer Name</th>
                   <th className="p-4 px-6 font-medium">Contact</th>
                   <th className="p-4 px-6 font-medium">Service Address</th>
@@ -173,16 +184,16 @@ function CustomerList() {
                  >
                    <td className="p-4 px-6">
                      <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0">
+                       <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-200">
                           {customer.name?.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'C'}
                        </div>
-                       <div className="font-bold text-slate-900">{customer.name}</div>
+                       <div className="font-bold text-slate-900 text-sm">{customer.name}</div>
                      </div>
                    </td>
                    <td className="p-4 px-6">
                      <div className="flex flex-col gap-1">
-                        {customer.phone && <div className="text-sm text-slate-600 flex items-center gap-1.5"><Phone size={12} className="text-slate-400"/> {customer.phone}</div>}
-                        {customer.email && <div className="text-sm text-slate-600 flex items-center gap-1.5"><Mail size={12} className="text-slate-400"/> {customer.email}</div>}
+                        {customer.phone && <div className="text-sm text-slate-600 flex items-center gap-1.5 font-medium"><Phone size={12} className="text-slate-400"/> {customer.phone}</div>}
+                        {customer.email && <div className="text-xs text-slate-500 flex items-center gap-1.5 font-mono"><Mail size={12} className="text-slate-400"/> {customer.email}</div>}
                      </div>
                    </td>
                    <td className="p-4 px-6">
@@ -199,6 +210,8 @@ function CustomerList() {
             </tbody>
           </table>
         )}
+          </div>
+        </div>
       </div>
 
       <Modal

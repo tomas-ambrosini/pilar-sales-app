@@ -47,30 +47,41 @@ function CatalogList() {
   if (loading) return <div className="page-container flex-center"><h3>Loading Live Catalog...</h3></div>;
 
   return (
-    <div className="page-container catalog-page">
-      <header className="page-header">
+    <div className="page-container">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 px-4 sm:px-8 pt-8">
         <div>
-           <h1 className="page-title">Live Product Catalog</h1>
-           <p className="page-subtitle">Manage inventory pricing and metrics.</p>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+            <Package className="text-primary-600" size={32} />
+            Live Product Catalog
+          </h1>
+          <p className="text-slate-500 font-medium mt-1">Manage inventory pricing and metrics.</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-            <button className="primary-action-btn" onClick={() => setIsAddModalOpen(true)}>
-              <Plus size={18} /> Add Equipment
-            </button>
-        </div>
-      </header>
-
-      <div className="catalog-tabs">
-        {tabs.map(tab => (
-          <button 
-             key={tab} 
-             className={`catalog-tab ${activeTab === tab ? 'active' : ''}`}
-             onClick={() => setActiveTab(tab)}
-          >
-            {tab}
-          </button>
-        ))}
+        <button 
+          onClick={() => setIsAddModalOpen(true)}
+          className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95"
+        >
+          <Plus size={18} /> Add Equipment
+        </button>
       </div>
+
+      <div className="px-4 sm:px-8 pb-12 overflow-x-hidden w-full">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
+          
+          {/* Action Bar Inside Card */}
+          <div className="p-4 border-b border-slate-100 flex gap-2 overflow-x-auto bg-slate-50 custom-scrollbar">
+             {tabs.map(tab => (
+                 <button 
+                    key={tab} 
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-colors whitespace-nowrap ${activeTab === tab ? 'bg-slate-800 text-white border-slate-800 shadow-sm' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
+                 >
+                    {tab}
+                 </button>
+             ))}
+          </div>
+          
+          <div className="p-6">
 
       <div className="catalog-grid">
         {filteredData.length === 0 && <p className="text-slate-500">No equipment found. Add some above!</p>}
@@ -103,7 +114,9 @@ function CatalogList() {
           </div>
         ))}
       </div>
-
+      </div>
+      </div>
+      </div>
       {/* Admin Add Equipment Modal */}
       <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add Database Equipment">
         <form onSubmit={handleAddSubmit} className="modal-form">
