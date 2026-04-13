@@ -45,8 +45,8 @@ export default function ProposalDetailsModal({ proposal, onClose }) {
     const phone = dbCustomer?.phone || 'N/A';
     const addressString = dbCustomer?.address || 'N/A';
     
-    // Safely extract system info
-    const systems = data?.systemTiers || data?.systems || [];
+    // Safely extract system info (accounting for drafts and finalized quote formats)
+    const systems = data?.systemTiers || data?.systems || data?.wizard_state?.systems || [];
 
     return (
         <Modal 
