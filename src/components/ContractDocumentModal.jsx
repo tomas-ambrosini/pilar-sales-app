@@ -22,6 +22,22 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
        c.name === proposal?.customer
    ) || {};
 
+   // Resolve multi-system contracts dynamically for standard accepted packages
+   let resolvedSystemsList = tierData?.systemsList;
+   if ((!resolvedSystemsList || resolvedSystemsList.length === 0) && proposal?.proposal_data?.systemTiers && proposal.proposal_data.systemTiers.length > 1) {
+       resolvedSystemsList = proposal.proposal_data.systemTiers.map(sys => {
+           const matchedTierName = (tierName || 'good').toLowerCase();
+           const td = sys.tiers?.[matchedTierName];
+           if (!td) return null;
+           return {
+               systemId: sys.systemId,
+               systemName: sys.systemName || sys.name || 'System',
+               tierName: tierName,
+               tierData: td
+           };
+       }).filter(Boolean);
+   }
+
    const handlePrint = () => {
       window.print();
    };
@@ -122,8 +138,8 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                 </div>
 
                 {/* Unit Info Box */}
-                {(tierData?.systemsList && tierData.systemsList.length > 0) ? (
-                    tierData.systemsList.map((sys, idx) => (
+                {(resolvedSystemsList && resolvedSystemsList.length > 0) ? (
+                    resolvedSystemsList.map((sys, idx) => (
                         <div key={idx} className="border border-slate-300 rounded overflow-hidden mb-4">
                             <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
                                 <div className="flex-1 px-3 py-1.5 border-r border-slate-300">{sys.systemName} - Unit Info</div>
