@@ -246,9 +246,11 @@ export default function AccountManagement() {
                            <td className="px-6 py-4 font-mono text-xs text-slate-500 text-center">
                               {u.must_change_password ? <span className="text-amber-500 font-bold">Pending Setup</span> : 'Secured'}
                            </td>
-                           <td className="px-6 py-4 flex items-center justify-center gap-3">
-                              <button onClick={() => { setShowEditModal(u); setEditBadges(userBadgesMap[u.id] || []); }} className="text-primary-600 hover:text-primary-800 font-bold text-xs transition-colors">Manage</button>
-                              <button onClick={() => setShowResetModal(u)} className="text-slate-400 hover:text-amber-600 transition-colors" title="Force Password Reset"><Key size={16}/></button>
+                           <td className="px-6 py-4 text-center" style={{ verticalAlign: 'middle' }}>
+                              <div className="inline-flex items-center justify-center gap-3">
+                                 <button onClick={() => { setShowEditModal(u); setEditBadges(userBadgesMap[u.id] || []); }} className="text-primary-600 hover:text-primary-800 font-bold text-xs transition-colors">Manage</button>
+                                 <button onClick={() => setShowResetModal(u)} className="text-slate-400 hover:text-amber-600 transition-colors" title="Force Password Reset"><Key size={16}/></button>
+                              </div>
                            </td>
                         </tr>
                      );
