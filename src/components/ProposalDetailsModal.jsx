@@ -45,9 +45,20 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
     const phone = dbCustomer?.phone || 'N/A';
     const addressString = dbCustomer?.address || 'N/A';
     
-    // Safely extract system info (accounting for drafts and finalized quote formats)
-    const systems = data?.systemTiers || data?.systems || data?.wizard_state?.systems || [];
+    // Safely extract system info, prioritizing legacy array structures for UI components but bolting on the raw survey/photos
+    const getPopulatedObj = (objA, objB) => (objA && Object.keys(objA).length > 0) ? objA : (objB || {});
+    
+    const baseSystems = data?.systemTiers || data?.systems || data?.wizard_state?.systems || [];
+    const sourceSystems = data?.wizard_state?.systems || data?.systems || [];
 
+    const systems = baseSystems.map((baseSys, idx) => {
+        const rawSys = sourceSystems.find(s => (s.id === baseSys.systemId || s.id === baseSys.id) || (s.name === baseSys.systemName || s.name === baseSys.name)) || sourceSystems[idx] || {};
+        return {
+            ...baseSys,
+            survey: getPopulatedObj(baseSys.survey, rawSys.survey),
+            photos: getPopulatedObj(baseSys.photos, rawSys.photos),
+        };
+    });
     return (
         <Modal 
             isOpen={!!proposal} 
@@ -207,7 +218,27 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
                                                     } else {
                                                         targetSystems.push({ name: `${matchedTierNameUpperCase} Package`, specificTierName: matchedTierNameUpperCase, ...matchedTierData });
                                                     }
-                                                } else {
+                                                } else if (matchedTierData.equipmentList && matchedTierData.equipmentList.length > 0) {
+                                                    const rawSysNameStr = (sys.systemName || sys.name || '').toLowerCase();
+                                                    const matchedEq = matchedTierData.equipmentList.find(eq => eq.toLowerCase().startsWith(rawSysNameStr));
+                                                    if (matchedEq) {
+                                                        const parts = matchedEq.split(': ');
+                                                        const sysName = parts.length > 1 ? parts[0] : 'Package System';
+                                                        const modelStr = parts.length > 1 ? parts[1] : parts[0];
+                                                        const brandStr = modelStr ? modelStr.split(' ')[0] : matchedTierData.brand;
+                                                        const seriesStr = modelStr ? modelStr.split(' ').slice(1).join(' ') : matchedTierData.series;
+                                                        targetSystems.push({
+                                                            name: sysName,
+                                                            brand: brandStr,
+                                                            series: seriesStr,
+                                                            tons: matchedTierData.tons,
+                                                            specificTierName: matchedTierNameUpperCase,
+                                                            salesPrice: (matchedTierData.salesPrice || 0) / matchedTierData.equipmentList.length
+                                                        });
+                                                    } else if (idx === 0) {
+                                                        targetSystems.push({ name: `${matchedTierNameUpperCase} Package`, specificTierName: matchedTierNameUpperCase, ...matchedTierData });
+                                                    }
+                                                } else if (idx === 0) {
                                                     targetSystems.push({ name: `${matchedTierNameUpperCase} Package`, specificTierName: matchedTierNameUpperCase, ...matchedTierData });
                                                 }
                                                 

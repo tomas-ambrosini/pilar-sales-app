@@ -21,13 +21,13 @@ export default function Modal({ isOpen, onClose, title, children, width = "max-w
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className={`modal-container bg-white border border-slate-200 shadow-2xl relative z-10 w-full ${width} rounded-2xl overflow-hidden flex flex-col`}
+            className={`modal-container bg-white border border-slate-200 shadow-2xl shadow-slate-900/10 relative z-10 w-full ${width} rounded-3xl overflow-hidden flex flex-col`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50">
-              <h2 className="text-lg font-bold text-slate-800">{title}</h2>
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-white">
+              <h2 className="text-xl font-bold text-slate-800 tracking-tight">{title}</h2>
               <button 
-                className="p-1 text-slate-400 hover:text-slate-700 transition-colors rounded-lg hover:bg-slate-200" 
+                className="p-1.5 text-slate-400 hover:text-slate-600 transition-colors rounded-xl md hover:bg-slate-50 border border-transparent hover:border-slate-200" 
                 onClick={onClose} 
                 aria-label="Close modal"
               >

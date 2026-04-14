@@ -137,26 +137,25 @@ export default function PromoCodes() {
   );
 
   return (
-    <div className="page-container">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 px-4 sm:px-8 pt-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-            <Megaphone className="text-primary-600" size={32} />
+          <h1 className="text-[28px] font-bold text-slate-900 tracking-tight flex items-center gap-3 mb-1">
+            <Megaphone className="text-primary-600" size={28} />
             Promo Codes
           </h1>
-          <p className="text-slate-500 font-medium mt-1">Govern discount campaigns and monitor usage across proposals.</p>
+          <p className="text-slate-500 font-medium">Govern discount campaigns and monitor usage across proposals.</p>
         </div>
         <button 
           onClick={handleOpenNew}
-          className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95"
+          className="bg-gradient-to-tr from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm hover:shadow-md active:scale-95 border border-slate-700"
         >
           <Plus size={18} /> Add New Code
         </button>
       </div>
 
-      <div className="px-4 sm:px-8 pb-12 overflow-x-hidden w-full">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           
           <div className="p-4 border-b border-slate-100 flex items-center gap-4 bg-slate-50">
              <div className="relative flex-1 max-w-md">
@@ -183,11 +182,28 @@ export default function PromoCodes() {
                   <th className="p-4 font-bold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {loading ? (
-                  <tr><td colSpan="6" className="p-8 text-center text-slate-400 italic font-medium">Loading promo codes...</td></tr>
+                   [1, 2, 3].map(i => (
+                     <tr key={i} className="animate-pulse">
+                       <td className="p-4"><div className="h-5 bg-slate-200 rounded w-24 mb-1"></div><div className="h-3 bg-slate-200 rounded w-32"></div></td>
+                       <td className="p-4"><div className="h-5 bg-slate-200 rounded w-16 ml-auto"></div></td>
+                       <td className="p-4"><div className="h-5 bg-slate-200 rounded-full w-20 mx-auto"></div></td>
+                       <td className="p-4"><div className="h-4 bg-slate-200 rounded w-24"></div></td>
+                       <td className="p-4"><div className="h-4 bg-slate-200 rounded w-16 mx-auto"></div></td>
+                       <td className="p-4"><div className="h-8 bg-slate-200 rounded w-20 ml-auto"></div></td>
+                     </tr>
+                   ))
                 ) : filteredPromos.length === 0 ? (
-                  <tr><td colSpan="6" className="p-8 text-center text-slate-400 italic font-medium">No promo codes found.</td></tr>
+                  <tr><td colSpan="6">
+                     <div className="text-center py-16 flex flex-col items-center">
+                       <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
+                         <Megaphone size={32} />
+                       </div>
+                       <h3 className="text-sm font-bold text-slate-900 mb-1">No promo codes</h3>
+                       <p className="text-xs font-medium text-slate-500">There are no discount campaigns matching your search.</p>
+                     </div>
+                  </td></tr>
                 ) : (
                   filteredPromos.map(promo => {
                     const isExpired = promo.expires_at && new Date(promo.expires_at) < new Date();
@@ -235,7 +251,6 @@ export default function PromoCodes() {
             </table>
           </div>
         </div>
-      </div>
 
       <Modal isOpen={isModalOpen} title={editingPromo ? 'Edit Promo Code' : 'Create Promo Code'} onClose={() => setIsModalOpen(false)}>
           <form onSubmit={handleSubmit} className="p-0">

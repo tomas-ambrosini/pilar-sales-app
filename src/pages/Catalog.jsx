@@ -44,12 +44,12 @@ function CatalogList() {
       setFormData({ brand: '', series: '', type: 'AC', tons: '', btu: '', seer: '', afue: '', system_cost: '', retail_price: '', badge: 'Economy', decibels: '' });
   };
 
-  if (loading) return <div className="page-container flex-center"><h3>Loading Live Catalog...</h3></div>;
+  if (loading) return <div className="p-6 space-y-6 flex-center"><span className="text-slate-400 font-medium animate-pulse">Syncing Catalog...</span></div>;
 
   return (
-    <div className="page-container">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 px-4 sm:px-8 pt-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
             <Package className="text-primary-600" size={32} />
@@ -191,7 +191,7 @@ function CatalogDetail() {
   const { catalog, deleteEquipment } = useCatalog();
   const product = catalog.find(p => p.id.toString() === id);
 
-  if (!product) return <div className="page-container"><h2>Product Not Found</h2><button onClick={() => navigate('/catalog')}>Back</button></div>;
+  if (!product) return <div className="p-6 space-y-6"><h2>Product Not Found</h2><button onClick={() => navigate('/catalog')}>Back</button></div>;
 
   const handleDelete = async () => {
       if (window.confirm(`Are you sure you want to permanently delete this ${product.brand} unit?`)) {
@@ -201,7 +201,7 @@ function CatalogDetail() {
   };
 
   return (
-     <div className="page-container catalog-detail">
+     <div className="p-6 space-y-6 catalog-detail">
        <button className="back-btn" onClick={() => navigate('/catalog')}>
         <ChevronRight size={18} className="icon-flip" /> Back to Dashboard
       </button>

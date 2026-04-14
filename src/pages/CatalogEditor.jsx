@@ -169,8 +169,6 @@ export default function CatalogEditor() {
     }
   };
 
-  if (loading) return <div className="page-container flex justify-center items-center"><span className="text-slate-400 flex items-center gap-2"><RefreshCw className="animate-spin"/> Syncing Live Catalog...</span></div>;
-
   // --- Derived State & Filters ---
   const uniqueBrands = [...new Set(equipment.map(e => e.brand).filter(Boolean))];
   const uniqueLaborCategories = [...new Set(laborRates.map(l => l.category).filter(Boolean))];
@@ -196,58 +194,50 @@ export default function CatalogEditor() {
   });
 
   return (
-    <div className="page-container">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 px-4 sm:px-8 pt-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-            <Package className="text-primary-600" size={32} />
+          <h1 className="text-[28px] font-bold text-slate-900 tracking-tight flex items-center gap-3 mb-1">
+            <Package className="text-primary-600" size={28} />
             Catalog & Subcontractors
           </h1>
-          <p className="text-slate-500 font-medium mt-1">Manage internal equipment SKUs and baseline labor capabilities.</p>
+          <p className="text-slate-500 font-medium">Manage internal equipment SKUs and baseline labor capabilities.</p>
         </div>
         {activeTab === 'equipment' ? (
-           <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95" onClick={() => { setActiveEquip(initialEquipState); setIsEquipModalOpen(true); }}>
+           <button className="bg-gradient-to-tr from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm hover:shadow-md active:scale-95 border border-slate-700" onClick={() => { setActiveEquip(initialEquipState); setIsEquipModalOpen(true); }}>
               <Plus size={18} /> New System
            </button>
         ) : (
-           <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95" onClick={() => { setActiveLabor(initialLaborState); setIsLaborModalOpen(true); }}>
+           <button className="bg-gradient-to-tr from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm hover:shadow-md active:scale-95 border border-slate-700" onClick={() => { setActiveLabor(initialLaborState); setIsLaborModalOpen(true); }}>
               <Plus size={18} /> New Service Item
            </button>
         )}
       </div>
 
-      <div className="px-4 sm:px-8 pb-12 overflow-x-hidden w-full">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
           
           {/* Action Bar Inside Card */}
           <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50">
              
-             {/* Primary Module Navigation Tabs */}
-             <div className="flex gap-2 overflow-x-auto custom-scrollbar w-full sm:w-auto">
-                <button onClick={() => handleTabChange('equipment')} className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-colors whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'equipment' ? 'bg-slate-800 text-white border-slate-800 shadow-sm' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}>
-                  <Box size={14} className={activeTab === 'equipment' ? 'text-primary-300' : ''} /> Central Equipment Database
-                </button>
-                <button onClick={() => handleTabChange('labor')} className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-colors whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'labor' ? 'bg-slate-800 text-white border-slate-800 shadow-sm' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}>
-                  <Pen size={14} className={activeTab === 'labor' ? 'text-primary-300' : ''} /> Add-ons & Labor Rates
-                </button>
+             <div className="flex items-center gap-2 bg-slate-200/50 p-1 rounded-xl w-full sm:w-auto">
+               <button className={`px-5 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none flex-1 sm:flex-none ${activeTab === 'equipment' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`} onClick={() => { setActiveTab('equipment'); setFilterValue('All'); setSearchTerm(''); }}>Systems</button>
+               <button className={`px-5 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none flex-1 sm:flex-none ${activeTab === 'labor' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`} onClick={() => { setActiveTab('labor'); setFilterValue('All'); setSearchTerm(''); }}>Service & Materials</button>
              </div>
 
-             {/* Sleek Toolbar for Search and Filtering */}
-             <div className="flex items-center gap-3 w-full sm:w-auto">
-                 <div className="relative w-full sm:w-64">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                       <Search size={14} className="text-slate-400" />
-                    </div>
+             <div className="flex w-full sm:w-auto items-center gap-3">
+                 <div className="relative flex-1 sm:flex-none sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                     <input 
                        type="text" 
-                       className="block w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:outline-none sm:text-xs font-semibold transition-colors" 
-                       placeholder={activeTab === 'equipment' ? "Search codes..." : "Search services..."} 
+                       placeholder={`Search ${activeTab}...`} 
+                       className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all font-medium placeholder:text-slate-400 shadow-sm"
                        value={searchTerm}
                        onChange={(e) => setSearchTerm(e.target.value)}
                     />
                  </div>
-                 <div className="flex items-center gap-2 border border-slate-200 bg-white rounded-lg px-2 shrink-0">
+                 
+                 <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 shadow-sm select-wrapper relative">
                     <Filter size={14} className="text-slate-400" />
                     <select 
                        className="border-none bg-transparent focus:ring-0 py-1.5 text-xs font-bold text-slate-700 outline-none cursor-pointer"
@@ -268,7 +258,6 @@ export default function CatalogEditor() {
               <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 leading-tight">
-
                     <th className="p-4 font-semibold">Brand & Series</th>
                     <th className="p-4 font-semibold">Tonnage / SEER</th>
                     <th className="p-4 font-semibold">Models (Condenser / Air Handler)</th>
@@ -277,11 +266,27 @@ export default function CatalogEditor() {
                     <th className="p-4 font-semibold text-center w-24">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
-                   {filteredEquipment.length === 0 ? (
-                      <tr><td colSpan="6" className="p-12 text-center">
-                         <Box size={40} className="text-slate-200 mx-auto mb-3" />
-                         <span className="text-slate-500 font-medium tracking-wide">No equipment SKUs found matching your criteria.</span>
+                <tbody className="divide-y divide-slate-100">
+                   {loading ? (
+                     [1, 2, 3, 4, 5].map(i => (
+                        <tr key={i} className="animate-pulse">
+                           <td className="p-4"><div className="h-5 bg-slate-200 rounded w-24 mb-1.5"></div><div className="h-3 bg-slate-200 rounded w-16"></div></td>
+                           <td className="p-4"><div className="flex gap-2"><div className="h-6 w-16 bg-slate-200 rounded-md"></div><div className="h-6 w-16 bg-slate-200 rounded-md"></div></div></td>
+                           <td className="p-4"><div className="h-4 bg-slate-200 rounded w-32 mb-1.5"></div><div className="h-4 bg-slate-200 rounded w-40"></div></td>
+                           <td className="p-4"><div className="h-4 bg-slate-200 rounded w-16 ml-auto"></div></td>
+                           <td className="p-4"><div className="h-5 bg-slate-200 rounded w-20 ml-auto"></div></td>
+                           <td className="p-4"><div className="h-8 bg-slate-200 rounded w-16 mx-auto"></div></td>
+                        </tr>
+                     ))
+                   ) : filteredEquipment.length === 0 ? (
+                      <tr><td colSpan="6">
+                         <div className="p-12 text-center flex flex-col items-center">
+                           <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
+                             <Box size={32} />
+                           </div>
+                           <h3 className="text-sm font-bold text-slate-900 mb-1">No equipment found</h3>
+                           <p className="text-xs font-medium text-slate-500">There are no SKUs matching your filters.</p>
+                         </div>
                       </td></tr>
                    ) : (
                       filteredEquipment.map(item => (
@@ -335,11 +340,25 @@ export default function CatalogEditor() {
                     <th className="p-4 font-semibold text-center w-24">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
-                   {filteredLabor.length === 0 ? (
-                      <tr><td colSpan="4" className="p-12 text-center">
-                         <Pen size={40} className="text-slate-200 mx-auto mb-3" />
-                         <span className="text-slate-500 font-medium tracking-wide">No labor rates or subcontractors found matching your criteria.</span>
+                <tbody className="divide-y divide-slate-100">
+                   {loading ? (
+                     [1, 2, 3, 4, 5].map(i => (
+                        <tr key={i} className="animate-pulse border-b border-slate-100">
+                           <td className="p-4"><div className="h-6 bg-slate-200 rounded-md w-24"></div></td>
+                           <td className="p-4"><div className="h-5 bg-slate-200 rounded w-48"></div></td>
+                           <td className="p-4"><div className="h-5 bg-slate-200 rounded w-20 ml-auto"></div></td>
+                           <td className="p-4"><div className="h-8 bg-slate-200 rounded-md w-16 mx-auto"></div></td>
+                        </tr>
+                     ))
+                   ) : filteredLabor.length === 0 ? (
+                      <tr><td colSpan="4">
+                         <div className="p-12 text-center flex flex-col items-center">
+                           <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
+                             <Pen size={32} />
+                           </div>
+                           <h3 className="text-sm font-bold text-slate-900 mb-1">No services matched</h3>
+                           <p className="text-xs font-medium text-slate-500">There are no labor rates or materials matching your search.</p>
+                         </div>
                       </td></tr>
                    ) : (
                       filteredLabor.map(labor => (
@@ -367,7 +386,6 @@ export default function CatalogEditor() {
             </div>
          )}
       </div>
-     </div>
 
       {/* EQUIPMENT MODAL COMPONENT */}
       <Modal isOpen={isEquipModalOpen} onClose={() => setIsEquipModalOpen(false)} title={activeEquip?.id ? "Edit Equipment SKU" : "New System Profile"}>

@@ -103,27 +103,26 @@ export default function AccountManagement() {
   });
 
   return (
-    <div className="page-container">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 px-4 sm:px-8 pt-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-            <Shield className="text-primary-600" size={32} />
+          <h1 className="text-[28px] font-bold text-slate-900 tracking-tight flex items-center gap-3 mb-1">
+            <Shield className="text-primary-600" size={28} />
             Internal Security & Access
           </h1>
-          <p className="text-slate-500 font-medium mt-1">Manage company access, roles, and employee credentials.</p>
+          <p className="text-slate-500 font-medium">Manage company access, roles, and employee credentials.</p>
         </div>
         <button 
           onClick={() => setShowCreateModal(true)}
-          className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95"
+          className="bg-gradient-to-tr from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm hover:shadow-md active:scale-95 border border-slate-700"
         >
           <Plus size={18} /> Provision New Account
         </button>
       </div>
 
       {/* Main Container */}
-      <div className="px-4 sm:px-8 pb-12 overflow-x-hidden w-full">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           
           {/* Action Bar Inside Card */}
           <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50">
@@ -152,9 +151,33 @@ export default function AccountManagement() {
                </thead>
                <tbody className="divide-y divide-slate-100">
                   {loading ? (
-                     <tr><td colSpan="5" className="text-center py-12">Loading accounts...</td></tr>
+                     [1, 2, 3].map((i) => (
+                       <tr key={i} className="animate-pulse">
+                         <td className="px-6 py-4">
+                           <div className="flex items-center gap-3">
+                             <div className="w-10 h-10 rounded-full bg-slate-200 shrink-0"></div>
+                             <div className="flex flex-col gap-1.5">
+                               <div className="h-4 bg-slate-200 rounded w-24"></div>
+                               <div className="h-3 bg-slate-200 rounded w-16"></div>
+                             </div>
+                           </div>
+                         </td>
+                         <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-32"></div></td>
+                         <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-20"></div></td>
+                         <td className="px-6 py-4"><div className="h-6 bg-slate-200 rounded-full w-20"></div></td>
+                         <td className="px-6 py-4 text-right"><div className="h-8 bg-slate-200 rounded w-20 ml-auto"></div></td>
+                       </tr>
+                     ))
                   ) : filteredUsers.length === 0 ? (
-                     <tr><td colSpan="5" className="text-center py-12">No users found.</td></tr>
+                     <tr><td colSpan="5">
+                       <div className="text-center py-16 flex flex-col items-center">
+                         <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
+                           <Shield size={32} />
+                         </div>
+                         <h3 className="text-sm font-bold text-slate-900 mb-1">No users found</h3>
+                         <p className="text-xs font-medium text-slate-500">There are no accounts matching your search.</p>
+                       </div>
+                     </td></tr>
                   ) : (
                      filteredUsers.map(u => {
                         const isSuperAdmin = ['worma002', 'papiwalti', 'tomas.ambrosini', 'tomasambrosini', 'walter@pilarservices.com', 'walter@pilarservices'].includes(u.username?.toLowerCase() || u.email?.toLowerCase());
@@ -212,7 +235,6 @@ export default function AccountManagement() {
                </tbody>
             </table>
          </div>
-      </div>
       </div>
 
       {/* CREATE MODAL */}

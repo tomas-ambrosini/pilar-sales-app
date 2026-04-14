@@ -61,7 +61,6 @@ export default function Proposals() {
       setInspectingProposal(proposal);
   };
 
-  if (loading && proposals.length === 0) return <div className="page-container flex-center"><h3>Loading Proposals...</h3></div>;
   if (showWizard) return <ProposalWizard onComplete={() => setShowWizard(false)} addProposal={addProposal} updateProposal={updateProposal} editModeData={wizardConfig} />;
 
 
@@ -241,26 +240,25 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
   };
 
   return (
-    <div className="page-container">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 px-4 sm:px-8 pt-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-            <FileText className="text-primary-600" size={32} />
+          <h1 className="text-[28px] font-bold text-slate-900 tracking-tight flex items-center gap-3 mb-1">
+            <FileText className="text-primary-600" size={28} />
             Sales Proposals & Estimates
           </h1>
-          <p className="text-slate-500 font-medium mt-1">Track and generate equipment replacement quotes.</p>
+          <p className="text-slate-500 font-medium">Track and generate equipment replacement quotes.</p>
         </div>
         <button 
           onClick={() => setShowWizard(true)}
-          className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95"
+          className="bg-gradient-to-tr from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm hover:shadow-md active:scale-95 border border-slate-700"
         >
           <Plus size={18} /> Generate Quote
         </button>
       </div>
 
-      <div className="px-4 sm:px-8 pb-12 overflow-x-hidden w-full">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
           
           <div className="p-4 border-b border-slate-100 flex gap-2 overflow-x-auto bg-slate-50 custom-scrollbar">
              {['All', 'Draft', 'Sent', 'Approved'].map(mode => (
@@ -494,7 +492,6 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
              </div>
            );
          })()}
-       </div>
        </div>
        </div>
 

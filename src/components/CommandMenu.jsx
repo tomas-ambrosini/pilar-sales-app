@@ -86,17 +86,17 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-2xl bg-white shadow-2xl rounded-xl overflow-hidden border border-slate-200 relative z-10 flex flex-col"
+            className="w-full max-w-2xl bg-white/90 backdrop-blur-xl shadow-2xl shadow-slate-900/10 rounded-2xl overflow-hidden border border-slate-200 relative z-10 flex flex-col"
           >
             <Command 
-               className="flex flex-col w-full h-full text-slate-800 bg-white" 
+               className="flex flex-col w-full h-full text-slate-800 bg-transparent rounded-2xl" 
                loop 
                shouldFilter={false}
                onKeyDown={(e) => {
                  if (e.key === 'Escape') setIsOpen(false);
                }}
             >
-              <div className="flex items-center px-4 border-b border-slate-100">
+              <div className="flex items-center px-4 border-b border-slate-100 bg-white/50">
                 <Search className="text-slate-400 mr-2 shrink-0" size={20} />
                 <Command.Input 
                   className="w-full bg-transparent text-slate-800 text-lg py-4 border-none outline-none placeholder:text-slate-400 font-medium h-14" 

@@ -53,14 +53,14 @@ export default function NotificationsPanel({ isOpen, onClose, onOpenChat }) {
   return (
     <AnimatePresence>
       <motion.div 
-        className="absolute top-16 right-4 w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 flex flex-col max-h-[80vh]"
+        className="absolute top-20 right-4 w-96 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-900/10 border border-slate-200 overflow-hidden z-[100] flex flex-col max-h-[80vh]"
         initial={{ opacity: 0, y: -10, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -10, scale: 0.95 }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/80 backdrop-blur-md">
-          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-transparent">
+          <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2 tracking-tight">
             Notifications
             {unreadCount > 0 && (
               <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
