@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { getActiveContractTemplate } from '../utils/contracts/getActiveContractTemplate';
 import { normalizeContractTemplate } from '../utils/contracts/normalizeContractTemplate';
-import { Loader2, Save, FileText, Plus, Trash2, ShieldCheck } from 'lucide-react';
+import { Loader2, Save, FileText, Plus, Trash2, ShieldCheck, Pen } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function TemplateSettings() {
