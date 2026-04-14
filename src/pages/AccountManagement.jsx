@@ -180,7 +180,7 @@ export default function AccountManagement() {
                      </td></tr>
                   ) : (
                      filteredUsers.map(u => {
-                        const isSuperAdmin = ['worma002', 'papiwalti', 'tomas.ambrosini', 'tomasambrosini', 'walter@pilarservices.com', 'walter@pilarservices'].includes(u.username?.toLowerCase() || u.email?.toLowerCase());
+                        const isFounder = ['worma002', 'papiwalti', 'tomas.ambrosini', 'tomasambrosini', 'walter@pilarservices.com', 'walter@pilarservices'].includes(u.username?.toLowerCase() || u.email?.toLowerCase());
 
                         return (
                          <tr key={u.id} className="hover:bg-slate-50 transition-colors">
@@ -196,21 +196,24 @@ export default function AccountManagement() {
                                   <div className="flex flex-col min-w-0">
                                      <div className="font-bold text-slate-800 flex items-center flex-wrap gap-1">
                                         <span className="truncate">{u.full_name || 'System User'}</span>
-                                        {isSuperAdmin && <span title="Platform Founder" className="text-[10px] bg-slate-900 text-amber-400 px-1.5 py-0.5 rounded-sm font-black uppercase tracking-widest shrink-0">Founder</span>}
+                                        {isFounder && <span title="Platform Founder" className="text-[10px] bg-slate-900 text-amber-400 px-1.5 py-0.5 rounded-sm font-black uppercase tracking-widest shrink-0">Founder</span>}
                                      </div>
                                      <div className="font-mono text-xs text-slate-400 mt-0.5 truncate">{u.username || u.email || 'No login bound'}</div>
                                   </div>
                                </div>
                             </td>
                             <td className="px-6 py-4 text-center">
-                               {isSuperAdmin ? (
+                               {u.role === 'SUPER_ADMIN' ? (
                                   <span className="inline-flex px-2.5 py-1 text-[10px] font-black tracking-widest uppercase rounded-full bg-amber-100 text-amber-700 border border-amber-200 shadow-sm align-middle">
                                      <Shield size={10} className="inline mr-1"/> SUPER ADMIN
                                   </span>
+                               ) : u.role === 'MANAGER' ? (
+                                  <span className="inline-flex px-2.5 py-1 text-[10px] font-black tracking-widest uppercase rounded-full bg-purple-100 text-purple-700 border border-purple-200 shadow-sm align-middle">
+                                     <Shield size={10} className="inline mr-1"/> MANAGER
+                                  </span>
                                ) : (
-                                  <span className={`inline-flex px-2.5 py-1 text-[10px] font-black tracking-widest uppercase rounded-full align-middle ${u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`}>
-                                     {u.role === 'ADMIN' ? <Shield size={10} className="inline mr-1"/> : null}
-                                     {u.role}
+                                  <span className="inline-flex px-2.5 py-1 text-[10px] font-black tracking-widest uppercase rounded-full bg-slate-100 text-slate-600 align-middle border border-slate-200 shadow-sm">
+                                     SALES
                                   </span>
                                )}
                             </td>
@@ -258,9 +261,10 @@ export default function AccountManagement() {
                   <div className="flex gap-4">
                      <div className="flex-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Role</label>
-                        <select name="role" className="w-full border rounded p-2 text-sm font-bold">
+                        <select name="role" defaultValue="MANAGER" className="w-full border rounded p-2 text-sm font-bold">
                            <option value="SALES">SALES</option>
-                           <option value="ADMIN">ADMIN</option>
+                           <option value="MANAGER">MANAGER</option>
+                           <option value="SUPER_ADMIN">SUPER ADMIN</option>
                         </select>
                      </div>
                   </div>
@@ -302,7 +306,8 @@ export default function AccountManagement() {
                      <label className="text-xs font-bold text-slate-500 uppercase">Account Role</label>
                      <select name="role" defaultValue={showEditModal.role} className="w-full border rounded p-2 text-sm font-bold">
                         <option value="SALES">SALES</option>
-                        <option value="ADMIN">ADMIN</option>
+                        <option value="MANAGER">MANAGER</option>
+                        <option value="SUPER_ADMIN">SUPER ADMIN</option>
                      </select>
                   </div>
                   <div>
