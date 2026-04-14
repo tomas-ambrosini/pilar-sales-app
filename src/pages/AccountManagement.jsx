@@ -223,15 +223,15 @@ export default function AccountManagement() {
                             </td>
                             <td className="px-6 py-4 text-center">
                                {u.role === 'ADMIN' ? (
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full bg-slate-800 text-white border border-slate-700 shadow-sm align-middle">
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full text-white shadow-sm align-middle" style={{ background: '#001b71', border: '1px solid #001050' }}>
                                      <Shield size={11} /> ADMIN
                                   </span>
                                ) : u.role === 'MANAGER' ? (
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full bg-emerald-600 text-white border border-emerald-700 shadow-sm align-middle">
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full text-white shadow-sm align-middle" style={{ background: '#39b54a', border: '1px solid #2d9a3d' }}>
                                      <Shield size={11} /> MANAGER
                                   </span>
                                ) : (
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full bg-slate-50 text-slate-400 align-middle border border-slate-200">
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full bg-white text-slate-400 align-middle border border-slate-200">
                                      SALES
                                   </span>
                                )}

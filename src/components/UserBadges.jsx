@@ -26,7 +26,7 @@ export default function UserBadges({ user, manualBadgeKeys = [], maxVisible = 4 
           onMouseLeave={() => setHoveredBadge(null)}
         >
           <span
-            className="inline-flex items-center justify-center w-7 h-7 rounded-full cursor-default transition-all duration-200 hover:scale-125 hover:shadow-lg [&>svg]:w-[14px] [&>svg]:h-[14px]"
+            className="inline-flex items-center justify-center w-[30px] h-[30px] rounded-full cursor-default transition-all duration-200 hover:scale-125 hover:shadow-lg [&>svg]:w-[15px] [&>svg]:h-[15px]"
             style={{
               background: badge.gradient,
               color: 'white',
