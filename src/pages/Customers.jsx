@@ -215,6 +215,7 @@ function CustomerList() {
           </div>
         )}
       </div>
+      </div>
 
       <Modal
         isOpen={isAddCustomerOpen}
