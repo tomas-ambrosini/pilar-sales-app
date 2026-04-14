@@ -7,6 +7,12 @@ import { formatQuoteId } from '../utils/formatters';
 export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal, onAccept, onViewContract }) {
   const [localSelections, setLocalSelections] = React.useState({});
 
+  React.useEffect(() => {
+     if (!isOpen) {
+         setLocalSelections({});
+     }
+  }, [isOpen, proposal?.id]);
+
   if (!proposal) return null;
 
   const { proposal_data } = proposal;
