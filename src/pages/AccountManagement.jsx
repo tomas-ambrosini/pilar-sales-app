@@ -223,15 +223,15 @@ export default function AccountManagement() {
                             </td>
                             <td className="px-6 py-4 text-center">
                                {u.role === 'ADMIN' ? (
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full align-middle shadow-sm" style={{ background: 'linear-gradient(135deg, #1e293b, #334155)', color: '#fbbf24', border: '1px solid #475569' }}>
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full bg-slate-800 text-white border border-slate-700 shadow-sm align-middle">
                                      <Shield size={11} /> ADMIN
                                   </span>
                                ) : u.role === 'MANAGER' ? (
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full align-middle shadow-sm" style={{ background: 'linear-gradient(135deg, #4338ca, #6366f1)', color: '#e0e7ff', border: '1px solid #818cf8' }}>
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full bg-emerald-600 text-white border border-emerald-700 shadow-sm align-middle">
                                      <Shield size={11} /> MANAGER
                                   </span>
                                ) : (
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full bg-slate-100 text-slate-500 align-middle border border-slate-200 shadow-sm">
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full bg-slate-50 text-slate-400 align-middle border border-slate-200">
                                      SALES
                                   </span>
                                )}
