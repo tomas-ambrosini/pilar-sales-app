@@ -119,22 +119,53 @@
   color: var(--color-slate-400);
   font-weight: 700;
   font-size: 1rem;
-  transition: all 0.2s ease-in-out;
+  transition: width 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.2s;
   position: relative;
   white-space: nowrap;
+  overflow: hidden;
+}
+
+.nav-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  transition: opacity 0.2s ease 0.05s;
 }
 
 .sidebar.collapsed .nav-link {
-  padding: 0.85rem;
-  justify-content: center;
-  border-radius: 16px;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 16px;
+  border-radius: 9999px;
+  margin: 0 auto;
+  z-index: 10;
 }
 
+.sidebar.collapsed .nav-link:hover {
+  width: 240px;
+  background-color: var(--color-slate-800);
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+  z-index: 50; /* Float over the boundary */
+}
+
+/* Base state for label in collapsed mode */
 .sidebar.collapsed .nav-label {
-  display: none;
+  display: block;
+  opacity: 0;
+  margin-left: 1rem;
+  pointer-events: none;
 }
 
-.nav-link:hover {
+/* Hover state for label in collapsed mode */
+.sidebar.collapsed .nav-link:hover .nav-label {
+  opacity: 1;
+}
+
+.nav-link:hover:not(.collapsed-hover) {
   background-color: rgba(255, 255, 255, 0.05);
   color: var(--color-slate-100);
 }

@@ -173,13 +173,6 @@ export default function Layout() {
                     >
                       <item.icon className="nav-icon shrink-0" size={24} />
                       <span className="nav-label">{item.label}</span>
-                      
-                      {/* Tooltip for collapsed state */}
-                      {isSidebarCollapsed && (
-                        <div className="absolute left-14 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 bg-slate-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-xl whitespace-nowrap z-50 ml-2 pointer-events-none border border-slate-700">
-                          {item.label}
-                        </div>
-                      )}
                     </NavLink>
                   ))}
                 </div>
