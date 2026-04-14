@@ -6,31 +6,32 @@ import { useCustomers } from '../context/CustomerContext';
 import { formatQuoteId } from '../utils/formatters';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { getActiveContractTemplate } from '../utils/contracts/getActiveContractTemplate';
+import { normalizeContractTemplate, DEFAULT_TEMPLATE_CONFIG } from '../utils/contracts/normalizeContractTemplate';
 import './ContractDocumentModal.css';
-
-// Phase 2: Template Architecture Foundation 
-// Future proofing for admin editable web-settings
-const DEFAULT_TEMPLATE_CONFIG = {
-    companyInfo: {
-        name: "Pilar Home Services Inc.",
-        address: "123 Corporate Blvd, Ste 100",
-        phone: "Miami, FL 33132",
-        email: "Lic #CAC18192348"
-    },
-    terms: [
-        "STANDARD WARRANTY: Pilar Services Inc. provides a 1-year comprehensive labor warranty on all new installations. Liability for circumstantial property damage due to pre-existing conditions is expressly waived.",
-        "EPA COMPLIANCE: All refrigerant handling strictly follows Section 608 of the Clean Air Act. Equipment sizing is based on Manual J calculations standard to Florida Building Code.",
-        "AUTHORIZATION: By digital acceptance, the authorizing party represents authority to contract improvements on the specified property. A mechanic's lien may be executed for failure to remit final payment."
-    ],
-    materials: ['Removal / Disposal', 'Refrigerant', 'Permitting'],
-    companySignatureName: "Pilar Home Services"
-};
 
 export default function ContractDocumentModal({ isOpen, onClose, contractData }) {
    const { customers } = useCustomers();
    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+   const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
+   const [templateConfig, setTemplateConfig] = useState(DEFAULT_TEMPLATE_CONFIG);
    const pdfRef = useRef(null);
-   const templateConfig = DEFAULT_TEMPLATE_CONFIG;
+
+   React.useEffect(() => {
+       if (!isOpen) return;
+
+       let isMounted = true;
+       setIsLoadingTemplate(true);
+
+       getActiveContractTemplate().then(rawTemplate => {
+           if (isMounted) {
+               setTemplateConfig(normalizeContractTemplate(rawTemplate));
+               setIsLoadingTemplate(false);
+           }
+       });
+
+       return () => { isMounted = false; };
+   }, [isOpen]);
 
    let { proposal, tierName, tierData, date } = contractData || {};
    
@@ -135,24 +136,29 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="printable-contract relative bg-white shadow-2xl overflow-y-auto w-full max-w-[850px] mx-auto flex flex-col print:block mt-24 mb-12 shrink max-h-[calc(100vh-140px)] print:max-h-none print:m-0 text-slate-800 text-[11px] leading-relaxed"
          >
-            {/* Page padding bound to the pdf snapshot ref */}
-            <div className="p-8 pb-12" ref={pdfRef}>
-            
-                {/* Header Section */}
-                <div className="flex justify-between items-start mb-6">
-                    <div>
-                        <h1 className="text-3xl font-bold mb-2 text-slate-800" title={proposal?.proposal_number ? `Legacy ID: ${proposal?.id}` : ''}>Quote # <span className="font-normal text-slate-600 underline decoration-slate-300 underline-offset-4">{formatQuoteId(proposal).replace('Quote ', '').replace('#', '')}</span></h1>
-                        <div className="flex gap-4 mt-4 font-bold text-slate-700">
-                            <span>Quote #: <span className="border-b border-slate-300 font-normal px-4 text-slate-600 truncate max-w-[250px] inline-block align-bottom">{formatQuoteId(proposal).replace('Quote ', '').replace('#', '')}</span></span>
-                            <span>Date: <span className="border-b border-slate-300 font-normal px-4 text-slate-600">{date}</span></span>
+            {isLoadingTemplate ? (
+                <div className="flex flex-col items-center justify-center h-96 w-full text-slate-400">
+                    <Loader2 size={32} className="animate-spin mb-4 text-primary-500" />
+                    <p className="font-bold tracking-widest text-sm uppercase">Loading Contract Template...</p>
+                </div>
+            ) : (
+                <div className="p-8 pb-12" ref={pdfRef}>
+                
+                    {/* Header Section */}
+                    <div className="flex justify-between items-start mb-6">
+                        <div>
+                            <h1 className="text-3xl font-bold mb-2 text-slate-800" title={proposal?.proposal_number ? `Legacy ID: ${proposal?.id}` : ''}>Quote # <span className="font-normal text-slate-600 underline decoration-slate-300 underline-offset-4">{formatQuoteId(proposal).replace('Quote ', '').replace('#', '')}</span></h1>
+                            <div className="flex gap-4 mt-4 font-bold text-slate-700">
+                                <span>Quote #: <span className="border-b border-slate-300 font-normal px-4 text-slate-600 truncate max-w-[250px] inline-block align-bottom">{formatQuoteId(proposal).replace('Quote ', '').replace('#', '')}</span></span>
+                                <span>Date: <span className="border-b border-slate-300 font-normal px-4 text-slate-600">{date}</span></span>
+                            </div>
+                        </div>
+                        <div className="text-right flex items-center justify-end">
+                             <div className="text-primary-600 font-black text-2xl flex items-center gap-1 tracking-tighter">
+                                  <span className="text-3xl relative -top-1">^</span> PILAR HOME
+                             </div>
                         </div>
                     </div>
-                    <div className="text-right flex items-center justify-end">
-                         <div className="text-primary-600 font-black text-2xl flex items-center gap-1 tracking-tighter">
-                              <span className="text-3xl relative -top-1">^</span> PILAR HOME
-                         </div>
-                    </div>
-                </div>
 
                 {/* Customer / Company Info Grid */}
                 <div className="grid grid-cols-2 gap-4 mb-4 print-safe-block">
@@ -382,6 +388,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                 </div>
 
             </div>
+            )}
          </motion.div>
             </motion.div>
          )}
