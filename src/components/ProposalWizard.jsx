@@ -1059,7 +1059,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                
                {/* Hidden toggle button that doesn't say "promo" */}
                {!showPromoInput && !appliedPromo && (
-                  <button onClick={() => setShowPromoInput(true)} className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center p-2 mt-1 text-slate-200 hover:text-slate-400 transition-colors" title="Settings">
+                  <button onClick={() => setShowPromoInput(true)} className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center p-2 mt-1 text-primary-800 hover:text-primary-900 opacity-50 hover:opacity-100 transition-opacity" title="Settings">
                      <Tag size={12} />
                   </button>
                )}
