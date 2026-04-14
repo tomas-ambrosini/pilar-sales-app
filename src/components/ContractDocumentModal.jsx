@@ -49,7 +49,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                initial={{ opacity: 0 }} 
                animate={{ opacity: 1 }} 
                exit={{ opacity: 0 }} 
-               className="fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-300 print:static print:block print:inset-auto opacity-100 pointer-events-auto">
+               className="fixed inset-0 z-[100] flex flex-col items-center justify-center modal-layout-wrapper transition-all duration-300 print:static print:block print:inset-auto opacity-100 pointer-events-auto">
          {/* Print Backdrop */}
          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm print:hidden" onClick={onClose}></div>
          

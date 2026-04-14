@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, CheckCircle, Shield, Wind, Droplets, ArrowRight, FileText, AlertTriangle } from 'lucide-react';
 import Modal from './Modal';
 import { formatQuoteId } from '../utils/formatters';
@@ -102,8 +103,8 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
     );
   };
 
-  return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+  return typeof document !== 'undefined' ? createPortal(
+    <div className={`fixed inset-0 z-[100] flex items-center justify-center modal-layout-wrapper transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
        {/* Backdrop */}
        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
        
@@ -243,5 +244,5 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
           )}
        </div>
     </div>
-  );
+  , document.body) : null;
 }

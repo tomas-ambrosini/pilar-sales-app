@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { X, UploadCloud, UserCircle, Phone, AtSign, Loader2, Image as ImageIcon, Mail, Shield } from 'lucide-react';
@@ -151,8 +152,8 @@ export default function ProfileSettingsModal({ onClose }) {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+  return typeof document !== 'undefined' ? createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200 modal-layout-wrapper">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg border border-slate-200 overflow-hidden flex flex-col">
         
         {/* Header */}
@@ -328,5 +329,5 @@ export default function ProfileSettingsModal({ onClose }) {
 
       </div>
     </div>
-  );
+  , document.body) : null;
 }
