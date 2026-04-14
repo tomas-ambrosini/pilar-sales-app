@@ -8,14 +8,17 @@ import { useProposals } from '../context/ProposalContext';
 import { useRole, ROLES } from '../context/RoleContext';
 
 const STATIC_COMMANDS = [
-  { id: 'dash', name: 'Go to Home', icon: LayoutDashboard, route: '/', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
-  { id: 'cust', name: 'View Customers', icon: Users, route: '/customers', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
-  { id: 'addcust', name: 'Add New Customer', icon: Users, route: '/customers?action=new', section: 'Actions', allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
-  { id: 'prop_list', name: 'View Proposals', icon: FileCheck, route: '/proposals', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
-  { id: 'prop', name: 'Create New Proposal', icon: FileCheck, route: '/proposals?action=new', section: 'Actions', allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
-  { id: 'cat', name: 'Equipment Catalog', icon: BookOpen, route: '/catalog', section: 'Navigation', allowedRoles: [ROLES.ADMIN] },
-  { id: 'pipe', name: 'Pipeline Ops (Legacy)', icon: ClipboardList, route: '/pipeline', section: 'Navigation', allowedRoles: [ROLES.ADMIN] },
-  { id: 'settings', name: 'Account Management', icon: Settings, route: '/account-management', section: 'System', allowedRoles: [ROLES.ADMIN] },
+  { id: 'dash', name: 'Go to Home', icon: LayoutDashboard, route: '/', section: 'Navigation', allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER, ROLES.SALES] },
+  { id: 'cust', name: 'View Customers', icon: Users, route: '/customers', section: 'Navigation', allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER, ROLES.SALES] },
+  { id: 'addcust', name: 'Add New Customer', icon: Users, route: '/customers?action=new', section: 'Actions', allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER, ROLES.SALES] },
+  { id: 'prop_list', name: 'View Proposals', icon: FileCheck, route: '/proposals', section: 'Navigation', allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER, ROLES.SALES] },
+  { id: 'prop', name: 'Create New Proposal', icon: FileCheck, route: '/proposals?action=new', section: 'Actions', allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER, ROLES.SALES] },
+  { id: 'cat', name: 'Equipment Catalog', icon: BookOpen, route: '/catalog', section: 'Navigation', allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER] },
+  { id: 'promo_codes', name: 'Promo Codes', icon: BookOpen, route: '/promo-codes', section: 'Navigation', allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER] },
+  { id: 'pipe', name: 'Pipeline Ops', icon: ClipboardList, route: '/pipeline', section: 'Navigation', allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER] },
+  { id: 'dispatch', name: 'Dispatch', icon: ClipboardList, route: '/dispatch', section: 'Navigation', allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER] },
+  { id: 'template_settings', name: 'Template Settings', icon: Settings, route: '/template-settings', section: 'System', allowedRoles: [ROLES.SUPER_ADMIN] },
+  { id: 'settings', name: 'Account Management', icon: Settings, route: '/account-management', section: 'System', allowedRoles: [ROLES.SUPER_ADMIN] },
 ];
 
 export default function CommandMenu({ isOpen, setIsOpen }) {

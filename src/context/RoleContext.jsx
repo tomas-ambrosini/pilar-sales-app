@@ -4,15 +4,20 @@ import { useAuth } from './AuthContext';
 const RoleContext = createContext();
 
 export const ROLES = {
-  ADMIN: 'ADMIN',
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  MANAGER: 'MANAGER',
   SALES: 'SALES',
 };
 
 export const RoleProvider = ({ children }) => {
   // Try to load from localStorage so it persists across refreshes
   const { user } = useAuth();
-  // Role mapping: if user lacks a role, fallback to SALES. If not logged in, null.
-  const activeRole = user?.role || ROLES.SALES;
+  
+  // Legacy role mapping handler incase cached credentials still hold ADMIN
+  let mappedRole = user?.role || ROLES.SALES;
+  if (mappedRole === 'ADMIN') mappedRole = ROLES.SUPER_ADMIN;
+
+  const activeRole = mappedRole;
 
   return (
     <RoleContext.Provider value={{ activeRole, ROLES }}>

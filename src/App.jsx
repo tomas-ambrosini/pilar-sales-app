@@ -28,14 +28,13 @@ const RoleRoute = ({ children, allowedRoles }) => {
   
   // Map simulated long role to route code
   const roleCode = 
-      activeRole === ROLES.ADMIN ? 'ADMIN' :
-      activeRole === ROLES.DISPATCH ? 'DISPATCH' :
-      activeRole === ROLES.SUBCONTRACTOR ? 'SUBCONTRACTOR' :
+      activeRole === ROLES.SUPER_ADMIN ? 'SUPER_ADMIN' :
+      activeRole === ROLES.MANAGER ? 'MANAGER' :
       'SALES';
   
   if (!allowedRoles.includes(roleCode)) {
     // Hard rejection fallback matrices 
-    return <Navigate to="/customers" replace />;
+    return <Navigate to="/" replace />;
   }
   
   return children;
@@ -61,21 +60,21 @@ function MainRouter() {
       ) : (
         <Route path="/" element={<Layout />}>
           {/* SALES DOMAINS */}
-          <Route path="customers/*" element={<RoleRoute allowedRoles={['ADMIN', 'SALES']}><Customers /></RoleRoute>} />
-          <Route path="proposals/*" element={<RoleRoute allowedRoles={['ADMIN', 'SALES']}><Proposals /></RoleRoute>} />
+          <Route path="customers/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'MANAGER', 'SALES']}><Customers /></RoleRoute>} />
+          <Route path="proposals/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'MANAGER', 'SALES']}><Proposals /></RoleRoute>} />
           
-          {/* GLOBAL EXECUTIVE ADMIN */}
-          <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN']}><Catalog /></RoleRoute>} />
-          <Route path="promo-codes/*" element={<RoleRoute allowedRoles={['ADMIN']}><PromoCodes /></RoleRoute>} />
-          <Route path="account-management/*" element={<RoleRoute allowedRoles={['ADMIN']}><AccountManagement /></RoleRoute>} />
-          <Route path="template-settings/*" element={<RoleRoute allowedRoles={['ADMIN']}><TemplateSettings /></RoleRoute>} />
-          
-          {/* LEGACY OPERATIONS ERP */}
-          <Route path="pipeline/*" element={<RoleRoute allowedRoles={['ADMIN']}><SalesPipeline /></RoleRoute>} />
-          <Route path="dispatch/*" element={<RoleRoute allowedRoles={['ADMIN']}><DispatchHub /></RoleRoute>} />
+          {/* MANAGER DOMAINS */}
+          <Route path="catalog/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'MANAGER']}><Catalog /></RoleRoute>} />
+          <Route path="promo-codes/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'MANAGER']}><PromoCodes /></RoleRoute>} />
+          <Route path="pipeline/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'MANAGER']}><SalesPipeline /></RoleRoute>} />
+          <Route path="dispatch/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'MANAGER']}><DispatchHub /></RoleRoute>} />
+
+          {/* SUPER ADMIN EXCLUSIVE DOMAINS */}
+          <Route path="account-management/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><AccountManagement /></RoleRoute>} />
+          <Route path="template-settings/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><TemplateSettings /></RoleRoute>} />
           
           {/* WILDCARDS / DEFAULTS */}
-          <Route index element={<RoleRoute allowedRoles={['ADMIN', 'SALES']}><Dashboard /></RoleRoute>} />
+          <Route index element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'MANAGER', 'SALES']}><Dashboard /></RoleRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       )}

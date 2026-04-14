@@ -1,0 +1,3 @@
+sed -i '' -e 's/return (/return typeof document !== "undefined" ? createPortal(/g' src/components/ProposalViewerModal.jsx
+sed -i '' -e 's/    <div className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300 ${isOpen ? '"'"'opacity-100 pointer-events-auto'"'"' : '"'"'opacity-0 pointer-events-none'"'"'}`}/    <div className={`fixed inset-0 z-[100] flex items-center justify-center modal-layout-wrapper transition-opacity duration-300 ${isOpen ? '"'"'opacity-100 pointer-events-auto'"'"' : '"'"'opacity-0 pointer-events-none'"'"'}`}/g' src/components/ProposalViewerModal.jsx
+sed -i '' -e 's/  );/  ), document.body) : null;/g' src/components/ProposalViewerModal.jsx
