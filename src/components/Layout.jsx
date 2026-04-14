@@ -168,7 +168,7 @@ export default function Layout() {
 
       <div className="main-wrapper">
         {/* Top App Bar */}
-        <header className="top-bar glass-panel">
+        <header className="top-bar">
           <div className="mobile-header">
             <div className="brand-logo" style={{ background: 'var(--color-primary-900)' }}>P</div>
             <span className="brand-text text-gradient">Pilar Home</span>
