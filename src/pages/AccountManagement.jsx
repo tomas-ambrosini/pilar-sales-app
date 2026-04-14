@@ -203,12 +203,12 @@ export default function AccountManagement() {
                                </div>
                             </td>
                             <td className="px-6 py-4 text-center">
-                               {u.role === 'SUPER_ADMIN' ? (
+                               {u.role === 'ADMIN' ? (
                                   <span className="inline-flex px-2.5 py-1 text-[10px] font-black tracking-widest uppercase rounded-full bg-amber-100 text-amber-700 border border-amber-200 shadow-sm align-middle">
-                                     <Shield size={10} className="inline mr-1"/> SUPER ADMIN
+                                     <Shield size={10} className="inline mr-1"/> ADMIN
                                   </span>
                                ) : u.role === 'MANAGER' ? (
-                                  <span className="inline-flex px-2.5 py-1 text-[10px] font-black tracking-widest uppercase rounded-full bg-purple-100 text-purple-700 border border-purple-200 shadow-sm align-middle">
+                                  <span className="inline-flex px-2.5 py-1 text-[10px] font-black tracking-widest uppercase rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-sm align-middle">
                                      <Shield size={10} className="inline mr-1"/> MANAGER
                                   </span>
                                ) : (
@@ -264,7 +264,7 @@ export default function AccountManagement() {
                         <select name="role" defaultValue="MANAGER" className="w-full border rounded p-2 text-sm font-bold">
                            <option value="SALES">SALES</option>
                            <option value="MANAGER">MANAGER</option>
-                           <option value="SUPER_ADMIN">SUPER ADMIN</option>
+                           <option value="ADMIN">ADMIN</option>
                         </select>
                      </div>
                   </div>
@@ -307,7 +307,7 @@ export default function AccountManagement() {
                      <select name="role" defaultValue={showEditModal.role} className="w-full border rounded p-2 text-sm font-bold">
                         <option value="SALES">SALES</option>
                         <option value="MANAGER">MANAGER</option>
-                        <option value="SUPER_ADMIN">SUPER ADMIN</option>
+                        <option value="ADMIN">ADMIN</option>
                      </select>
                   </div>
                   <div>

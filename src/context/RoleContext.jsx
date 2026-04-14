@@ -4,7 +4,7 @@ import { useAuth } from './AuthContext';
 const RoleContext = createContext();
 
 export const ROLES = {
-  SUPER_ADMIN: 'SUPER_ADMIN',
+  ADMIN: 'ADMIN',
   MANAGER: 'MANAGER',
   SALES: 'SALES',
 };
@@ -13,9 +13,9 @@ export const RoleProvider = ({ children }) => {
   // Try to load from localStorage so it persists across refreshes
   const { user } = useAuth();
   
-  // Legacy role mapping handler incase cached credentials still hold ADMIN
+  // Legacy mapping: handle any cached SUPER_ADMIN values from prior migration
   let mappedRole = user?.role || ROLES.SALES;
-  if (mappedRole === 'ADMIN') mappedRole = ROLES.SUPER_ADMIN;
+  if (mappedRole === 'SUPER_ADMIN') mappedRole = ROLES.ADMIN;
 
   const activeRole = mappedRole;
 

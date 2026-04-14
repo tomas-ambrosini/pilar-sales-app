@@ -36,8 +36,8 @@ serve(async (req) => {
       .eq('id', user.id)
       .single();
 
-    if (profile?.role !== 'SUPER_ADMIN' || profile?.status !== 'active') {
-      return new Response(JSON.stringify({ error: 'Unauthorized: Super Admin privileges required.' }), {
+    if (profile?.role !== 'ADMIN' || profile?.status !== 'active') {
+      return new Response(JSON.stringify({ error: 'Unauthorized: Admin privileges required.' }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

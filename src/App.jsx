@@ -28,7 +28,7 @@ const RoleRoute = ({ children, allowedRoles }) => {
   
   // Map simulated long role to route code
   const roleCode = 
-      activeRole === ROLES.SUPER_ADMIN ? 'SUPER_ADMIN' :
+      activeRole === ROLES.ADMIN ? 'ADMIN' :
       activeRole === ROLES.MANAGER ? 'MANAGER' :
       'SALES';
   
@@ -60,21 +60,21 @@ function MainRouter() {
       ) : (
         <Route path="/" element={<Layout />}>
           {/* SALES DOMAINS */}
-          <Route path="customers/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'MANAGER', 'SALES']}><Customers /></RoleRoute>} />
-          <Route path="proposals/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'MANAGER', 'SALES']}><Proposals /></RoleRoute>} />
+          <Route path="customers/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Customers /></RoleRoute>} />
+          <Route path="proposals/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Proposals /></RoleRoute>} />
           
           {/* MANAGER DOMAINS */}
-          <Route path="catalog/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'MANAGER']}><Catalog /></RoleRoute>} />
-          <Route path="promo-codes/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'MANAGER']}><PromoCodes /></RoleRoute>} />
-          <Route path="pipeline/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'MANAGER']}><SalesPipeline /></RoleRoute>} />
-          <Route path="dispatch/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'MANAGER']}><DispatchHub /></RoleRoute>} />
+          <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><Catalog /></RoleRoute>} />
+          <Route path="promo-codes/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><PromoCodes /></RoleRoute>} />
+          <Route path="pipeline/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><SalesPipeline /></RoleRoute>} />
+          <Route path="dispatch/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><DispatchHub /></RoleRoute>} />
 
           {/* SUPER ADMIN EXCLUSIVE DOMAINS */}
-          <Route path="account-management/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><AccountManagement /></RoleRoute>} />
-          <Route path="template-settings/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><TemplateSettings /></RoleRoute>} />
+          <Route path="account-management/*" element={<RoleRoute allowedRoles={['ADMIN']}><AccountManagement /></RoleRoute>} />
+          <Route path="template-settings/*" element={<RoleRoute allowedRoles={['ADMIN']}><TemplateSettings /></RoleRoute>} />
           
           {/* WILDCARDS / DEFAULTS */}
-          <Route index element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'MANAGER', 'SALES']}><Dashboard /></RoleRoute>} />
+          <Route index element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Dashboard /></RoleRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       )}

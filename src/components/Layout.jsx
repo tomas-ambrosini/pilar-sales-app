@@ -17,23 +17,23 @@ import './Layout.css';
 const navGroups = [
   {
     title: 'CRM MVP',
-    allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER, ROLES.SALES],
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES],
     items: [
-      { path: '/', label: 'Home', icon: LayoutDashboard, allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER, ROLES.SALES] },
-      { path: '/customers', label: 'Customers', icon: Users, allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER, ROLES.SALES] },
-      { path: '/proposals', label: 'Proposals', icon: FileCheck, allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER, ROLES.SALES] },
-      { path: '/catalog', label: 'Catalog', icon: BookOpen, allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER] },
-      { path: '/promo-codes', label: 'Promo Codes', icon:Megaphone, allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER] },
-      { path: '/template-settings', label: 'Templates', icon: FileText, allowedRoles: [ROLES.SUPER_ADMIN] },
-      { path: '/account-management', label: 'Account Mgmt', icon: Settings, allowedRoles: [ROLES.SUPER_ADMIN] }
+      { path: '/', label: 'Home', icon: LayoutDashboard, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
+      { path: '/customers', label: 'Customers', icon: Users, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
+      { path: '/proposals', label: 'Proposals', icon: FileCheck, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
+      { path: '/catalog', label: 'Catalog', icon: BookOpen, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+      { path: '/promo-codes', label: 'Promo Codes', icon:Megaphone, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+      { path: '/template-settings', label: 'Templates', icon: FileText, allowedRoles: [ROLES.ADMIN] },
+      { path: '/account-management', label: 'Account Mgmt', icon: Settings, allowedRoles: [ROLES.ADMIN] }
     ]
   },
   {
     title: 'Operations ERP (Legacy)',
-    allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER],
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
     items: [
-      { path: '/pipeline', label: 'Pipeline Ops', icon: ClipboardList, allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER] },
-      { path: '/dispatch', label: 'Dispatch', icon: Truck, allowedRoles: [ROLES.SUPER_ADMIN, ROLES.MANAGER] }
+      { path: '/pipeline', label: 'Pipeline Ops', icon: ClipboardList, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+      { path: '/dispatch', label: 'Dispatch', icon: Truck, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] }
     ]
   }
 ];
