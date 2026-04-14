@@ -357,7 +357,7 @@ export default function AccountManagement() {
 
                   {/* Badge Awards Section */}
                   <div className="border-t pt-4">
-                     <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Award Badges</label>
+                     <label className="text-xs font-bold text-slate-500 uppercase mb-3 block">Award Badges</label>
                      <div className="grid grid-cols-2 gap-2">
                         {MANUAL_BADGE_KEYS.map(key => {
                            const badge = BADGE_REGISTRY[key];
@@ -371,14 +371,21 @@ export default function AccountManagement() {
                                        prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
                                     );
                                  }}
-                                 className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-xs font-bold transition-all ${
+                                 className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all ${
                                     isActive
-                                       ? `${badge.bg} ${badge.text} ${badge.border} shadow-sm ring-2 ring-offset-1 ring-slate-300`
-                                       : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300 hover:text-slate-500'
+                                       ? 'bg-slate-900 text-white border-slate-700 shadow-md ring-2 ring-offset-1 ring-slate-400'
+                                       : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300 hover:text-slate-600'
                                  }`}
                               >
-                                 <span className="shrink-0" dangerouslySetInnerHTML={{ __html: badge.svg }} />
-                                 <span>{badge.label}</span>
+                                 <span
+                                    className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-white [&>svg]:w-3 [&>svg]:h-3"
+                                    style={{ background: badge.gradient, boxShadow: isActive ? `0 0 8px ${badge.glow}` : 'none' }}
+                                    dangerouslySetInnerHTML={{ __html: badge.svg }}
+                                 />
+                                 <div className="text-left">
+                                    <div className="leading-tight">{badge.label}</div>
+                                    <div className={`text-[9px] font-medium mt-0.5 ${isActive ? 'text-slate-400' : 'text-slate-300'}`}>{badge.subtitle}</div>
+                                 </div>
                               </button>
                            );
                         })}

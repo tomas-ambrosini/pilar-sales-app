@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { computeAutoBadges, mergeBadges } from '../utils/badges';
 
 /**
- * Renders inline badge pills next to a user's name.
- * Each badge shows its icon + label as a colored pill.
- * Hover reveals a tooltip with the full description.
+ * Renders premium circular badge icons next to a user's name.
+ * Icon-only display. Hover reveals the badge name in a tooltip.
  */
 export default function UserBadges({ user, manualBadgeKeys = [], maxVisible = 4 }) {
   const [hoveredBadge, setHoveredBadge] = useState(null);
@@ -18,7 +17,7 @@ export default function UserBadges({ user, manualBadgeKeys = [], maxVisible = 4 
   const overflow = allBadges.length - maxVisible;
 
   return (
-    <span className="inline-flex items-center gap-1 ml-1.5 shrink-0 flex-wrap">
+    <span className="inline-flex items-center gap-1 ml-1.5 shrink-0">
       {visible.map((badge) => (
         <span
           key={badge.key}
@@ -27,17 +26,28 @@ export default function UserBadges({ user, manualBadgeKeys = [], maxVisible = 4 
           onMouseLeave={() => setHoveredBadge(null)}
         >
           <span
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border cursor-default transition-all hover:scale-105 hover:shadow-md ${badge.bg} ${badge.text} ${badge.border}`}
-          >
-            <span className="shrink-0 [&>svg]:w-3 [&>svg]:h-3" dangerouslySetInnerHTML={{ __html: badge.svg }} />
-            <span className="leading-none">{badge.label}</span>
-          </span>
+            className="inline-flex items-center justify-center w-7 h-7 rounded-full cursor-default transition-all duration-200 hover:scale-125 hover:shadow-lg [&>svg]:w-[14px] [&>svg]:h-[14px]"
+            style={{
+              background: badge.gradient,
+              color: 'white',
+              boxShadow: `0 2px 6px ${badge.glow}`,
+              border: `1.5px solid ${badge.ring}`,
+            }}
+            dangerouslySetInnerHTML={{ __html: badge.svg }}
+          />
 
           {/* Tooltip */}
           {hoveredBadge === badge.key && (
-            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-slate-900 text-white text-[10px] font-bold rounded-lg whitespace-nowrap shadow-xl z-50 pointer-events-none tracking-wide">
-              {badge.tooltip}
-              <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-slate-900" />
+            <span
+              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 px-3 py-1.5 rounded-lg whitespace-nowrap shadow-xl z-50 pointer-events-none text-center"
+              style={{ background: badge.tooltipBg || '#0f172a' }}
+            >
+              <span className="block text-[10px] font-black text-white uppercase tracking-widest">{badge.label}</span>
+              <span className="block text-[9px] font-medium text-white/70 mt-0.5">{badge.subtitle}</span>
+              <span
+                className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent"
+                style={{ borderTopColor: badge.tooltipBg || '#0f172a' }}
+              />
             </span>
           )}
         </span>
@@ -45,8 +55,8 @@ export default function UserBadges({ user, manualBadgeKeys = [], maxVisible = 4 
 
       {overflow > 0 && (
         <span
-          className="inline-flex items-center justify-center h-5 px-1.5 rounded-full text-[9px] font-black text-slate-400 bg-slate-100 border border-slate-200 cursor-default"
-          title={allBadges.slice(maxVisible).map(b => b.tooltip).join(', ')}
+          className="inline-flex items-center justify-center w-7 h-7 rounded-full text-[9px] font-black text-slate-400 bg-slate-100 border border-slate-200 cursor-default hover:scale-110 transition-transform"
+          title={allBadges.slice(maxVisible).map(b => `${b.label}: ${b.subtitle}`).join(', ')}
         >
           +{overflow}
         </span>

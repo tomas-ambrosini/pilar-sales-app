@@ -1,11 +1,11 @@
 /**
  * Badge Registry & Auto-Computation — Pilar Home Edition
  * -------------------------------------------------------
- * Custom badges with inline SVG icons, themed around
- * the Pilar brand, HVAC culture, and team identity.
+ * Premium gradient badges with inline SVG icons.
+ * Icon-only display, tooltip on hover.
  */
 
-// Founder identifiers (usernames / emails)
+// Founder identifiers
 const FOUNDER_IDENTIFIERS = [
   'worma002',
   'papiwalti',
@@ -15,7 +15,7 @@ const FOUNDER_IDENTIFIERS = [
   'walter@pilarservices',
 ];
 
-// --- Inline SVG Icon Builders (14x14, stroke-based) ---
+// --- Inline SVG Icons (white, 14x14, stroke-based) ---
 
 const iconPillar = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="4" width="8" height="16" rx="1"/><line x1="6" y1="4" x2="18" y2="4"/><line x1="6" y1="20" x2="18" y2="20"/></svg>`;
 
@@ -35,93 +35,126 @@ const iconColumn = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="1
 
 
 /**
- * Master badge definitions.
+ * Master badge definitions with gradient styling.
  */
 export const BADGE_REGISTRY = {
   piedra_angular: {
     key: 'piedra_angular',
     label: 'Piedra Angular',
+    subtitle: 'Company Founder',
     svg: iconPillar,
-    tooltip: 'Piedra Angular — Company Founder',
-    bg: 'bg-red-700',
+    gradient: 'linear-gradient(135deg, #b8860b, #daa520, #cd7f32)',
+    glow: 'rgba(218, 165, 32, 0.4)',
+    ring: 'rgba(255, 215, 0, 0.5)',
+    tooltipBg: '#78350f',
+    // For edit modal
+    bg: 'bg-amber-600',
     text: 'text-white',
-    border: 'border-red-800',
+    border: 'border-amber-700',
     auto: true,
   },
   raices: {
     key: 'raices',
     label: 'Raíces',
+    subtitle: '1+ Year with Pilar',
     svg: iconRoot,
-    tooltip: 'Raíces — 1+ Year with Pilar Home',
-    bg: 'bg-emerald-100',
-    text: 'text-emerald-700',
-    border: 'border-emerald-300',
+    gradient: 'linear-gradient(135deg, #059669, #10b981, #34d399)',
+    glow: 'rgba(16, 185, 129, 0.35)',
+    ring: 'rgba(52, 211, 153, 0.5)',
+    tooltipBg: '#064e3b',
+    bg: 'bg-emerald-500',
+    text: 'text-white',
+    border: 'border-emerald-600',
     auto: true,
   },
   brote: {
     key: 'brote',
     label: 'Brote',
+    subtitle: 'Joined < 90 days ago',
     svg: iconSunrise,
-    tooltip: 'Brote — Joined within the last 90 days',
-    bg: 'bg-violet-100',
-    text: 'text-violet-600',
-    border: 'border-violet-300',
+    gradient: 'linear-gradient(135deg, #7c3aed, #8b5cf6, #a78bfa)',
+    glow: 'rgba(139, 92, 246, 0.35)',
+    ring: 'rgba(167, 139, 250, 0.5)',
+    tooltipBg: '#4c1d95',
+    bg: 'bg-violet-500',
+    text: 'text-white',
+    border: 'border-violet-600',
     auto: true,
   },
   hielo: {
     key: 'hielo',
     label: 'Hielo',
+    subtitle: 'Cool Under Pressure',
     svg: iconIce,
-    tooltip: 'Hielo — Cool Under Pressure',
-    bg: 'bg-cyan-100',
-    text: 'text-cyan-700',
-    border: 'border-cyan-300',
+    gradient: 'linear-gradient(135deg, #0891b2, #06b6d4, #22d3ee)',
+    glow: 'rgba(6, 182, 212, 0.35)',
+    ring: 'rgba(34, 211, 238, 0.5)',
+    tooltipBg: '#164e63',
+    bg: 'bg-cyan-500',
+    text: 'text-white',
+    border: 'border-cyan-600',
     auto: false,
   },
   el_martillo: {
     key: 'el_martillo',
     label: 'El Martillo',
+    subtitle: 'Top Closer',
     svg: iconHammer,
-    tooltip: 'El Martillo — Top Closer',
-    bg: 'bg-orange-100',
-    text: 'text-orange-700',
-    border: 'border-orange-300',
+    gradient: 'linear-gradient(135deg, #c2410c, #ea580c, #f97316)',
+    glow: 'rgba(234, 88, 12, 0.35)',
+    ring: 'rgba(249, 115, 22, 0.5)',
+    tooltipBg: '#7c2d12',
+    bg: 'bg-orange-500',
+    text: 'text-white',
+    border: 'border-orange-600',
     auto: false,
   },
   llave_maestra: {
     key: 'llave_maestra',
     label: 'Llave Maestra',
+    subtitle: 'Certified Master Tech',
     svg: iconKey,
-    tooltip: 'Llave Maestra — Certified Master Tech',
-    bg: 'bg-teal-100',
-    text: 'text-teal-700',
-    border: 'border-teal-300',
+    gradient: 'linear-gradient(135deg, #0d9488, #14b8a6, #2dd4bf)',
+    glow: 'rgba(20, 184, 166, 0.35)',
+    ring: 'rgba(45, 212, 191, 0.5)',
+    tooltipBg: '#134e4a',
+    bg: 'bg-teal-500',
+    text: 'text-white',
+    border: 'border-teal-600',
     auto: false,
   },
   fuego: {
     key: 'fuego',
     label: 'Fuego',
+    subtitle: 'On a Hot Streak',
     svg: iconFlame,
-    tooltip: 'Fuego — On a Hot Streak',
-    bg: 'bg-red-100',
-    text: 'text-red-600',
-    border: 'border-red-300',
+    gradient: 'linear-gradient(135deg, #dc2626, #ef4444, #f87171)',
+    glow: 'rgba(239, 68, 68, 0.35)',
+    ring: 'rgba(248, 113, 113, 0.5)',
+    tooltipBg: '#7f1d1d',
+    bg: 'bg-red-500',
+    text: 'text-white',
+    border: 'border-red-600',
     auto: false,
   },
   la_columna: {
     key: 'la_columna',
     label: 'La Columna',
+    subtitle: 'Backbone of the Team',
     svg: iconColumn,
-    tooltip: 'La Columna — Backbone of the Team',
-    bg: 'bg-indigo-100',
-    text: 'text-indigo-700',
-    border: 'border-indigo-300',
+    gradient: 'linear-gradient(135deg, #4338ca, #6366f1, #818cf8)',
+    glow: 'rgba(99, 102, 241, 0.35)',
+    ring: 'rgba(129, 140, 248, 0.5)',
+    tooltipBg: '#312e81',
+    bg: 'bg-indigo-500',
+    text: 'text-white',
+    border: 'border-indigo-600',
     auto: false,
   },
 };
 
 /**
- * All manually-assignable badge keys (for admin UI).
+ * All manually-assignable badge keys.
  */
 export const MANUAL_BADGE_KEYS = Object.values(BADGE_REGISTRY)
   .filter(b => !b.auto)
@@ -153,8 +186,7 @@ export function computeAutoBadges(user) {
 }
 
 /**
- * Merge auto badges with manual badge keys.
- * Returns full badge definition objects, deduplicated and sorted.
+ * Merge auto + manual badges, deduplicated and sorted.
  */
 export function mergeBadges(autoBadgeKeys = [], manualBadgeKeys = []) {
   const allKeys = [...new Set([...autoBadgeKeys, ...manualBadgeKeys])];
