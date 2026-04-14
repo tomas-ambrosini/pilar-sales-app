@@ -1,13 +1,36 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Printer, ShieldCheck, Pen } from 'lucide-react';
+import { X, Printer, ShieldCheck, Pen, Download, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomers } from '../context/CustomerContext';
 import { formatQuoteId } from '../utils/formatters';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import './ContractDocumentModal.css';
+
+// Phase 2: Template Architecture Foundation 
+// Future proofing for admin editable web-settings
+const DEFAULT_TEMPLATE_CONFIG = {
+    companyInfo: {
+        name: "Pilar Home Services Inc.",
+        address: "123 Corporate Blvd, Ste 100",
+        phone: "Miami, FL 33132",
+        email: "Lic #CAC18192348"
+    },
+    terms: [
+        "STANDARD WARRANTY: Pilar Services Inc. provides a 1-year comprehensive labor warranty on all new installations. Liability for circumstantial property damage due to pre-existing conditions is expressly waived.",
+        "EPA COMPLIANCE: All refrigerant handling strictly follows Section 608 of the Clean Air Act. Equipment sizing is based on Manual J calculations standard to Florida Building Code.",
+        "AUTHORIZATION: By digital acceptance, the authorizing party represents authority to contract improvements on the specified property. A mechanic's lien may be executed for failure to remit final payment."
+    ],
+    materials: ['Removal / Disposal', 'Refrigerant', 'Permitting'],
+    companySignatureName: "Pilar Home Services"
+};
 
 export default function ContractDocumentModal({ isOpen, onClose, contractData }) {
    const { customers } = useCustomers();
+   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+   const pdfRef = useRef(null);
+   const templateConfig = DEFAULT_TEMPLATE_CONFIG;
 
    let { proposal, tierName, tierData, date } = contractData || {};
    
@@ -42,6 +65,37 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
       window.print();
    };
 
+   const handleDownloadPDF = async () => {
+      if (!pdfRef.current || isGeneratingPDF) return;
+      setIsGeneratingPDF(true);
+
+      try {
+          const element = pdfRef.current;
+          
+          // Use high scale for retina-like quality in the exported PDF
+          const canvas = await html2canvas(element, {
+              scale: 2,
+              useCORS: true,
+              logging: false,
+              backgroundColor: "#ffffff",
+          });
+
+          // Match the canvas aspect ratio directly inside the PDF definition for infinite scrolling height
+          const imgWidth = 850; 
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          
+          const pdf = new jsPDF('p', 'pt', [imgWidth, imgHeight]);
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          
+          pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+          pdf.save(`Pilar_Contract_${formatQuoteId(proposal).replace('Quote ', '').replace('#', '')}.pdf`);
+      } catch (err) {
+          console.error("Failed to generate PDF", err);
+      } finally {
+          setIsGeneratingPDF(false);
+      }
+   };
+
    return createPortal(
       <AnimatePresence>
          {isOpen && contractData && (
@@ -60,8 +114,12 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                 <span className="font-bold tracking-widest text-sm uppercase">Official Contract Generated</span>
              </div>
              <div className="flex gap-4">
-                 <button onClick={handlePrint} className="flex items-center gap-2 bg-white text-slate-900 hover:bg-primary-50 px-4 py-2 rounded font-bold text-sm shadow transition-colors">
-                     <Printer size={16} /> Print / Save PDF
+                 <button onClick={handlePrint} className="flex items-center gap-2 text-white bg-slate-700/50 hover:bg-slate-700 px-4 py-2 rounded font-bold text-sm transition-colors border border-slate-600/50">
+                     <Printer size={16} /> Print Physical Copy
+                 </button>
+                 <button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="flex items-center gap-2 bg-primary-600 text-white hover:bg-primary-700 px-4 py-2 rounded font-bold text-sm shadow transition-colors">
+                     {isGeneratingPDF ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} 
+                     {isGeneratingPDF ? 'Rendering PDF...' : 'Download Universal PDF'}
                  </button>
                  <button onClick={onClose} className="p-2 text-white/70 hover:text-white bg-white/10 rounded-full transition-colors">
                      <X size={20} />
@@ -77,8 +135,8 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="printable-contract relative bg-white shadow-2xl overflow-y-auto w-full max-w-[850px] mx-auto flex flex-col print:block mt-24 mb-12 shrink max-h-[calc(100vh-140px)] print:max-h-none print:m-0 text-slate-800 text-[11px] leading-relaxed"
          >
-            {/* Page padding */}
-            <div className="p-8">
+            {/* Page padding bound to the pdf snapshot ref */}
+            <div className="p-8 pb-12" ref={pdfRef}>
             
                 {/* Header Section */}
                 <div className="flex justify-between items-start mb-6">
@@ -97,7 +155,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                 </div>
 
                 {/* Customer / Company Info Grid */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-2 gap-4 mb-4 print-safe-block">
                     {/* Customer Box */}
                     <div className="border border-slate-300 rounded overflow-hidden">
                         <div className="bg-[#e2e8f0] text-slate-700 font-bold px-3 py-1.5 border-b border-slate-300">Customer Info</div>
@@ -122,16 +180,16 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                         <div className="bg-[#e2e8f0] text-slate-700 font-bold px-3 py-1.5 border-b border-slate-300">Company Info</div>
                         <div className="p-3 bg-[#f8fafc] flex flex-col gap-2">
                             <div className="flex border-b border-slate-200 pb-1">
-                                <span className="font-bold text-slate-800">Pilar Home Services Inc.</span>
+                                <span className="font-bold text-slate-800">{templateConfig.companyInfo.name}</span>
                             </div>
                             <div className="flex border-b border-slate-200 pb-1">
-                                <span className="w-16 text-slate-500">Address:</span> <span className="text-slate-600">123 Corporate Blvd, Ste 100</span>
+                                <span className="w-16 text-slate-500">Address:</span> <span className="text-slate-600">{templateConfig.companyInfo.address}</span>
                             </div>
                             <div className="flex border-b border-slate-200 pb-1">
-                                <span className="w-16 text-slate-500">Phone:</span> <span className="text-slate-600">Miami, FL 33132</span>
+                                <span className="w-16 text-slate-500">Phone:</span> <span className="text-slate-600">{templateConfig.companyInfo.phone}</span>
                             </div>
                             <div className="flex pb-1">
-                                <span className="w-16 text-slate-500">Email:</span> <span className="text-slate-600">Lic #CAC18192348</span>
+                                <span className="w-16 text-slate-500">Email:</span> <span className="text-slate-600">{templateConfig.companyInfo.email}</span>
                             </div>
                         </div>
                     </div>
@@ -140,7 +198,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                 {/* Unit Info Box */}
                 {(resolvedSystemsList && resolvedSystemsList.length > 0) ? (
                     resolvedSystemsList.map((sys, idx) => (
-                        <div key={idx} className="border border-slate-300 rounded overflow-hidden mb-4">
+                        <div key={idx} className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
                             <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
                                 <div className="flex-1 px-3 py-1.5 border-r border-slate-300">{sys.systemName} - Unit Info</div>
                                 <div className="w-32 px-3 py-1.5 text-center">Price</div>
@@ -180,7 +238,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                         </div>
                     ))
                 ) : (
-                    <div className="border border-slate-300 rounded overflow-hidden mb-4">
+                    <div className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
                         <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
                             <div className="flex-1 px-3 py-1.5 border-r border-slate-300">Unit Info</div>
                             <div className="w-32 px-3 py-1.5 text-center">Price</div>
@@ -222,13 +280,13 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                 )}
 
                 {/* Materials & Labor */}
-                <div className="border border-slate-300 rounded overflow-hidden mb-4">
+                <div className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
                      <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
                         <div className="flex-1 px-3 py-1.5 border-r border-slate-300">Materials & Labor / Subs needed</div>
                         <div className="w-32 px-3 py-1.5 text-center">Price</div>
                     </div>
                     <div className="flex flex-col bg-[#f8fafc]">
-                         {[...(tierData.features || []), 'Removal / Disposal', 'Refrigerant', 'Permitting']
+                         {[...(tierData.features || []), ...templateConfig.materials]
                           .slice(0, 4)
                           .map((f, i) => (
                             <div key={i} className="flex border-b border-slate-200">
@@ -253,29 +311,34 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                 </div>
 
                 {/* Exclusions / Legal */}
-                <div className="font-bold text-slate-800 mb-2 mt-4 px-1">Exclusions / Legal:</div>
-                <div className="flex border-b border-slate-200 pb-1 mb-1 text-[9px] text-slate-500">
-                    <span className="w-2 text-center mr-1">•</span> <span className="flex-1">STANDARD WARRANTY: Pilar Services Inc. provides a 1-year comprehensive labor warranty on all new installations. Liability for circumstantial property damage due to pre-existing conditions is expressly waived.</span>
+                <div className="print-safe-block mt-4 mb-2">
+                    <div className="font-bold text-slate-800 mb-2 px-1">Exclusions / Legal:</div>
+                    {templateConfig.terms.map((term, i) => (
+                        <div key={i} className="flex border-b border-slate-200 pb-1 mb-1 text-[9px] text-slate-500">
+                            {i === templateConfig.terms.length - 1 ? (
+                                <>
+                                   <div className="flex flex-1">
+                                      <span className="w-2 text-center mr-1">•</span> <span className="flex-1">{term}</span>
+                                   </div>
+                                   <div className="w-48 text-right font-bold text-[12px] text-slate-800 shrink-0 ml-4 pb-1 flex flex-col justify-end">
+                                       {proposal?.applied_promo_code && (
+                                           <div className="text-[10px] text-emerald-600 mb-0.5">
+                                               Promo: {proposal.applied_promo_code} (-{proposal.applied_discount_percent}%)
+                                           </div>
+                                       )}
+                                       <div>Total Price: ${(tierData.salesPrice || 0).toLocaleString()}</div>
+                                   </div>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="w-2 text-center mr-1">•</span> <span className="flex-1">{term}</span>
+                                </>
+                            )}
+                        </div>
+                    ))}
                 </div>
-                <div className="flex border-b border-slate-200 pb-1 mb-1 text-[9px] text-slate-500">
-                    <span className="w-2 text-center mr-1">•</span> <span className="flex-1">EPA COMPLIANCE: All refrigerant handling strictly follows Section 608 of the Clean Air Act. Equipment sizing is based on Manual J calculations standard to Florida Building Code.</span>
-                </div>
-                <div className="flex border-b border-slate-200 pb-1 mb-1 text-[9px] text-slate-500 items-end">
-                   <div className="flex flex-1">
-                      <span className="w-2 text-center mr-1">•</span> <span className="flex-1">AUTHORIZATION: By digital acceptance, the authorizing party represents authority to contract improvements on the specified property. A mechanic's lien may be executed for failure to remit final payment.</span>
-                   </div>
-                   <div className="w-48 text-right font-bold text-[12px] text-slate-800 shrink-0 ml-4 pb-1 flex flex-col justify-end">
-                       {proposal?.applied_promo_code && (
-                           <div className="text-[10px] text-emerald-600 mb-0.5">
-                              Promo: {proposal.applied_promo_code} (-{proposal.applied_discount_percent}%)
-                           </div>
-                       )}
-                       <div>Total Price: ${(tierData.salesPrice || 0).toLocaleString()}</div>
-                   </div>
-                </div>
-
                 {/* Signatures */}
-                <div className="border border-slate-300 rounded overflow-hidden mt-6 bg-white">
+                <div className="border border-slate-300 rounded overflow-hidden mt-6 bg-white print-safe-block">
                     {/* Header Row */}
                     <div className="grid grid-cols-2 bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
                         <div className="px-3 py-1.5 border-r border-slate-300">Company Signature</div>
@@ -286,7 +349,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                     <div className="grid grid-cols-2 border-b border-slate-300 bg-[#f8fafc]">
                         {/* Company Signature Cell */}
                         <div className="h-32 border-r border-slate-300 relative flex items-center justify-center p-4 overflow-hidden">
-                           <span className="font-[cursive] text-4xl text-slate-800 opacity-20 transform -rotate-[5deg] select-none">Pilar Home Services</span>
+                           <span className="font-[cursive] text-4xl text-slate-800 opacity-20 transform -rotate-[5deg] select-none">{templateConfig.companySignatureName}</span>
                         </div>
                         
                         {/* Client Signature Cell */}

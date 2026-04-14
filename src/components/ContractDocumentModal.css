@@ -53,3 +53,9 @@
     background-size: 20px 20px;
     background-color: white;
 }
+
+/* Protections against splitting logical blocks across pages during printing */
+.print-safe-block {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
