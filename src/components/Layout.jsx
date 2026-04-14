@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldAlert, LogOut, LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Megaphone, DollarSign, Settings, Bell, Search, Truck, MessageCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, ShieldAlert, LogOut, LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Megaphone, DollarSign, Settings, Bell, Search, Truck, MessageCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
@@ -49,7 +49,22 @@ export default function Layout() {
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [forceChannelId, setForceChannelId] = useState(null);
+  
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pilar-sidebar-collapsed');
+      return saved === 'true';
+    }
+    return false;
+  });
+
   const isMessagesOpenRef = useRef(isMessagesOpen);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pilar-sidebar-collapsed', isSidebarCollapsed);
+    }
+  }, [isSidebarCollapsed]);
 
   useEffect(() => {
     isMessagesOpenRef.current = isMessagesOpen;
@@ -135,9 +150,9 @@ export default function Layout() {
   return (
     <div className="layout">
       {/* Sidebar for Desktop/Tablet */}
-      <aside className="sidebar">
+      <aside className={`sidebar flex flex-col ${isSidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-brand">
-          <div className="brand-logo" style={{ background: 'var(--color-primary-900)' }}>P</div>
+          <div className="brand-logo shadow-sm" style={{ background: 'var(--color-primary-900)' }}>P</div>
           <span className="brand-text text-gradient">Pilar Home</span>
         </div>
         <nav className="sidebar-nav">
@@ -154,16 +169,34 @@ export default function Layout() {
                     <NavLink
                       key={item.path}
                       to={item.path}
-                      className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                      className={({ isActive }) => `nav-link group ${isActive ? 'active' : ''}`}
                     >
-                      <item.icon className="nav-icon" size={20} />
+                      <item.icon className="nav-icon shrink-0" size={24} />
                       <span className="nav-label">{item.label}</span>
+                      
+                      {/* Tooltip for collapsed state */}
+                      {isSidebarCollapsed && (
+                        <div className="absolute left-14 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 bg-slate-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-xl whitespace-nowrap z-50 ml-2 pointer-events-none border border-slate-700">
+                          {item.label}
+                        </div>
+                      )}
                     </NavLink>
                   ))}
                 </div>
               );
           })}
         </nav>
+
+        {/* Sidebar Toggle Button */}
+        <div className="mt-auto p-4 border-t border-white/5">
+          <button 
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="w-full flex items-center justify-center gap-3 p-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all outline-none"
+            aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isSidebarCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+          </button>
+        </div>
       </aside>
 
       <div className="main-wrapper">
