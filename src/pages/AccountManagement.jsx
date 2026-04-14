@@ -3,6 +3,8 @@ import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { Users, Shield, UserX, UserCheck, Key, Plus, Lock, Search, Copy } from 'lucide-react';
 import toast from 'react-hot-toast';
+import UserBadges from '../components/UserBadges';
+import { MANUAL_BADGE_KEYS, BADGE_REGISTRY } from '../utils/badges';
 
 export default function AccountManagement() {
   const { user } = useAuth();
@@ -15,10 +17,29 @@ export default function AccountManagement() {
   const [showEditModal, setShowEditModal] = useState(null); // holds user obj
   const [showResetModal, setShowResetModal] = useState(null);
   const [successPayload, setSuccessPayload] = useState(null);
+  const [userBadgesMap, setUserBadgesMap] = useState({}); // { userId: ['star_employee', ...] }
+  const [editBadges, setEditBadges] = useState([]); // badge keys being edited
 
   useEffect(() => {
     fetchUsers();
+    fetchBadges();
   }, []);
+
+  const fetchBadges = async () => {
+    try {
+      const { data, error } = await supabase.from('user_badges').select('user_id, badge_key');
+      if (error) throw error;
+      const map = {};
+      (data || []).forEach(row => {
+        if (!map[row.user_id]) map[row.user_id] = [];
+        map[row.user_id].push(row.badge_key);
+      });
+      setUserBadgesMap(map);
+    } catch (err) {
+      // Silently fail — badges are non-critical
+      console.warn('Could not fetch badges:', err.message);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -180,8 +201,6 @@ export default function AccountManagement() {
                      </td></tr>
                   ) : (
                      filteredUsers.map(u => {
-                        const isFounder = ['worma002', 'papiwalti', 'tomas.ambrosini', 'tomasambrosini', 'walter@pilarservices.com', 'walter@pilarservices'].includes(u.username?.toLowerCase() || u.email?.toLowerCase());
-
                         return (
                          <tr key={u.id} className="hover:bg-slate-50 transition-colors">
                             <td className="px-6 py-4">
@@ -196,7 +215,7 @@ export default function AccountManagement() {
                                   <div className="flex flex-col min-w-0">
                                      <div className="font-bold text-slate-800 flex items-center flex-wrap gap-1">
                                         <span className="truncate">{u.full_name || 'System User'}</span>
-                                        {isFounder && <span title="Platform Founder" className="text-[10px] bg-slate-900 text-amber-400 px-1.5 py-0.5 rounded-sm font-black uppercase tracking-widest shrink-0">Founder</span>}
+                                        <UserBadges user={u} manualBadgeKeys={userBadgesMap[u.id] || []} />
                                      </div>
                                      <div className="font-mono text-xs text-slate-400 mt-0.5 truncate">{u.username || u.email || 'No login bound'}</div>
                                   </div>
@@ -228,7 +247,7 @@ export default function AccountManagement() {
                               {u.must_change_password ? <span className="text-amber-500 font-bold">Pending Setup</span> : 'Secured'}
                            </td>
                            <td className="px-6 py-4 flex items-center justify-center gap-3">
-                              <button onClick={() => setShowEditModal(u)} className="text-primary-600 hover:text-primary-800 font-bold text-xs transition-colors">Manage</button>
+                              <button onClick={() => { setShowEditModal(u); setEditBadges(userBadgesMap[u.id] || []); }} className="text-primary-600 hover:text-primary-800 font-bold text-xs transition-colors">Manage</button>
                               <button onClick={() => setShowResetModal(u)} className="text-slate-400 hover:text-amber-600 transition-colors" title="Force Password Reset"><Key size={16}/></button>
                            </td>
                         </tr>
@@ -284,15 +303,32 @@ export default function AccountManagement() {
       )}
 
       {/* EDIT MODAL */}
-      {showEditModal && (
+       {showEditModal && (
          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
+            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
                <h3 className="text-xl font-black text-slate-800 mb-6 border-b pb-2">Manage {showEditModal.full_name}</h3>
-               <form onSubmit={(e) => {
+               <form onSubmit={async (e) => {
                   e.preventDefault();
                   const fd = new FormData(e.target);
                   const fdObj = Object.fromEntries(fd.entries());
-                  handleUpdateUser(showEditModal, fdObj);
+                  await handleUpdateUser(showEditModal, fdObj);
+
+                  // Sync badges
+                  try {
+                     const currentBadges = userBadgesMap[showEditModal.id] || [];
+                     const toAdd = editBadges.filter(b => !currentBadges.includes(b));
+                     const toRemove = currentBadges.filter(b => !editBadges.includes(b));
+
+                     for (const key of toAdd) {
+                        await supabase.from('user_badges').upsert({ user_id: showEditModal.id, badge_key: key, awarded_by: user.id });
+                     }
+                     for (const key of toRemove) {
+                        await supabase.from('user_badges').delete().eq('user_id', showEditModal.id).eq('badge_key', key);
+                     }
+                     fetchBadges();
+                  } catch (err) {
+                     console.error('Badge sync error:', err);
+                  }
                }} className="space-y-4">
                   <div>
                      <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
@@ -318,6 +354,37 @@ export default function AccountManagement() {
                      </select>
                      {showEditModal.id === user.id && <p className="text-[10px] text-danger-500 mt-1 font-bold">Safeguard: You cannot suspend your own active session.</p>}
                   </div>
+
+                  {/* Badge Awards Section */}
+                  <div className="border-t pt-4">
+                     <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Award Badges</label>
+                     <div className="grid grid-cols-2 gap-2">
+                        {MANUAL_BADGE_KEYS.map(key => {
+                           const badge = BADGE_REGISTRY[key];
+                           const isActive = editBadges.includes(key);
+                           return (
+                              <button
+                                 key={key}
+                                 type="button"
+                                 onClick={() => {
+                                    setEditBadges(prev =>
+                                       prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+                                    );
+                                 }}
+                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-bold transition-all ${
+                                    isActive
+                                       ? `${badge.bg} ${badge.text} ${badge.border} shadow-sm ring-2 ring-offset-1 ring-slate-300`
+                                       : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
+                                 }`}
+                              >
+                                 <span className="text-sm">{badge.emoji}</span>
+                                 <span>{badge.label}</span>
+                              </button>
+                           );
+                        })}
+                     </div>
+                  </div>
+
                   <div className="flex justify-end gap-3 pt-4 border-t">
                      <button type="button" onClick={() => setShowEditModal(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancel</button>
                      <button type="submit" className="px-4 py-2 bg-slate-900 text-white rounded text-sm font-bold">Enforce Setting</button>
