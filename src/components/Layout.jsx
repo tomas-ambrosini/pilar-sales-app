@@ -63,6 +63,10 @@ export default function Layout() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('pilar-sidebar-collapsed', isSidebarCollapsed);
+      document.documentElement.style.setProperty(
+        '--sidebar-width', 
+        isSidebarCollapsed ? '88px' : '260px'
+      );
     }
   }, [isSidebarCollapsed]);
 

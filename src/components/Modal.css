@@ -133,3 +133,11 @@
     transform: translateY(0) scale(1);
   }
 }
+
+/* Modals center in the available workspace offset by sidebar width */
+@media (min-width: 768px) {
+  .modal-layout-wrapper {
+    padding-left: calc(var(--sidebar-width, 0px) + 1rem) !important;
+    transition: padding-left 0.3s cubic-bezier(0.2, 0, 0, 1);
+  }
+}
