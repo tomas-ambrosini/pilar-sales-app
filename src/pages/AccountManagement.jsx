@@ -144,10 +144,10 @@ export default function AccountManagement() {
                <thead className="bg-slate-50 text-xs uppercase font-black tracking-widest text-slate-400 border-b border-slate-200">
                   <tr>
                      <th className="px-6 py-4">User</th>
-                     <th className="px-6 py-4">Role</th>
-                     <th className="px-6 py-4">Status</th>
-                     <th className="px-6 py-4">Security</th>
-                     <th className="px-6 py-4">Actions</th>
+                     <th className="px-6 py-4 text-center">Role</th>
+                     <th className="px-6 py-4 text-center">Status</th>
+                     <th className="px-6 py-4 text-center">Security</th>
+                     <th className="px-6 py-4 text-center">Actions</th>
                   </tr>
                </thead>
                <tbody className="divide-y divide-slate-100">
@@ -179,29 +179,29 @@ export default function AccountManagement() {
                                   </div>
                                </div>
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-6 py-4 text-center">
                                {isSuperAdmin ? (
-                                  <span className="px-2.5 py-1 text-[10px] font-black tracking-widest uppercase rounded-full bg-amber-100 text-amber-700 border border-amber-200 shadow-sm">
+                                  <span className="inline-flex px-2.5 py-1 text-[10px] font-black tracking-widest uppercase rounded-full bg-amber-100 text-amber-700 border border-amber-200 shadow-sm align-middle">
                                      <Shield size={10} className="inline mr-1"/> SUPER ADMIN
                                   </span>
                                ) : (
-                                  <span className={`px-2.5 py-1 text-[10px] font-black tracking-widest uppercase rounded-full ${u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`}>
+                                  <span className={`inline-flex px-2.5 py-1 text-[10px] font-black tracking-widest uppercase rounded-full align-middle ${u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`}>
                                      {u.role === 'ADMIN' ? <Shield size={10} className="inline mr-1"/> : null}
                                      {u.role}
                                   </span>
                                )}
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-6 py-4 text-center">
                                {u.status === 'active' ? (
-                                 <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600"><UserCheck size={14}/> Active</span>
+                                 <span className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-600"><UserCheck size={14}/> Active</span>
                                ) : (
-                                 <span className="flex items-center gap-1.5 text-xs font-bold text-danger-600"><UserX size={14}/> Inactive</span>
+                                 <span className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-danger-600"><UserX size={14}/> Inactive</span>
                                )}
                             </td>
-                           <td className="px-6 py-4 font-mono text-xs text-slate-500">
+                           <td className="px-6 py-4 font-mono text-xs text-slate-500 text-center">
                               {u.must_change_password ? <span className="text-amber-500 font-bold">Pending Setup</span> : 'Secured'}
                            </td>
-                           <td className="px-6 py-4 flex items-center gap-3">
+                           <td className="px-6 py-4 flex items-center justify-center gap-3">
                               <button onClick={() => setShowEditModal(u)} className="text-primary-600 hover:text-primary-800 font-bold text-xs transition-colors">Manage</button>
                               <button onClick={() => setShowResetModal(u)} className="text-slate-400 hover:text-amber-600 transition-colors" title="Force Password Reset"><Key size={16}/></button>
                            </td>
