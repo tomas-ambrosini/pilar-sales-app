@@ -371,13 +371,13 @@ export default function AccountManagement() {
                                        prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
                                     );
                                  }}
-                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-bold transition-all ${
+                                 className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-xs font-bold transition-all ${
                                     isActive
                                        ? `${badge.bg} ${badge.text} ${badge.border} shadow-sm ring-2 ring-offset-1 ring-slate-300`
-                                       : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
+                                       : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300 hover:text-slate-500'
                                  }`}
                               >
-                                 <span className="text-sm">{badge.emoji}</span>
+                                 <span className="shrink-0" dangerouslySetInnerHTML={{ __html: badge.svg }} />
                                  <span>{badge.label}</span>
                               </button>
                            );
