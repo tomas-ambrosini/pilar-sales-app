@@ -23,14 +23,34 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
        let isMounted = true;
        setIsLoadingTemplate(true);
 
+       // Safe fallback timeout
+       const timeoutId = setTimeout(() => {
+           if (isMounted && isLoadingTemplate) {
+               console.warn("Template fetch timed out. Falling back to default configuration.");
+               setTemplateConfig(DEFAULT_TEMPLATE_CONFIG);
+               setIsLoadingTemplate(false);
+           }
+       }, 5000);
+
        getActiveContractTemplate().then(rawTemplate => {
            if (isMounted) {
                setTemplateConfig(normalizeContractTemplate(rawTemplate));
                setIsLoadingTemplate(false);
+               clearTimeout(timeoutId);
+           }
+       }).catch(err => {
+           if (isMounted) {
+               console.error("Error fetching template, relying on defaults:", err);
+               setTemplateConfig(DEFAULT_TEMPLATE_CONFIG);
+               setIsLoadingTemplate(false);
+               clearTimeout(timeoutId);
            }
        });
 
-       return () => { isMounted = false; };
+       return () => { 
+           isMounted = false; 
+           clearTimeout(timeoutId);
+       };
    }, [isOpen]);
 
    let { proposal, tierName, tierData, date } = contractData || {};
@@ -154,9 +174,13 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                             </div>
                         </div>
                         <div className="text-right flex items-center justify-end">
-                             <div className="text-primary-600 font-black text-2xl flex items-center gap-1 tracking-tighter">
-                                  <span className="text-3xl relative -top-1">^</span> PILAR HOME
-                             </div>
+                             {templateConfig.branding?.logoUrl ? (
+                                  <img src={templateConfig.branding.logoUrl} alt="Company Logo" className="max-h-16 max-w-[250px] object-contain" />
+                             ) : (
+                                  <div className="text-primary-600 font-black text-2xl flex items-center gap-1 tracking-tighter">
+                                       <span className="text-3xl relative -top-1">^</span> {templateConfig.branding?.brandName || 'PILAR HOME'}
+                                  </div>
+                             )}
                         </div>
                     </div>
 
@@ -206,7 +230,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                     resolvedSystemsList.map((sys, idx) => (
                         <div key={idx} className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
                             <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
-                                <div className="flex-1 px-3 py-1.5 border-r border-slate-300">{sys.systemName} - Unit Info</div>
+                                <div className="flex-1 px-3 py-1.5 border-r border-slate-300">{sys.systemName} - {templateConfig.sectionTitles?.unitInfo || 'Unit Info'}</div>
                                 <div className="w-32 px-3 py-1.5 text-center">Price</div>
                             </div>
                             <div className="flex bg-[#f8fafc]">
@@ -219,20 +243,24 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                                             <span className="w-20 text-slate-500">Serial:</span> <span></span>
                                         </div>
                                         <div className="flex border-b border-slate-200 pb-1">
-                                            <span className="w-20 text-slate-500">Efficiency:</span> <span className="text-slate-600">Standard Ratings</span>
+                                            <span className="w-20 text-slate-500">Efficiency:</span> <span className="text-slate-600">{sys.tierData?.seer ? `${sys.tierData.seer} SEER` : 'Standard Ratings'}</span>
                                         </div>
                                         <div className="flex border-b border-slate-200 pb-1">
-                                            <span className="w-20 text-slate-500">Brand:</span> <span className="text-slate-600">{sys.tierData?.brand} {sys.tierData?.series}</span>
+                                            <span className="w-20 text-slate-500">Brand:</span> <span className="text-slate-600">{sys.tierData?.brand || 'Premium'} {sys.tierData?.series || ''}</span>
                                         </div>
                                         <div className="flex border-b border-slate-200 pb-1">
-                                            <span className="w-20 text-slate-500">Dimensions:</span> <span className="text-slate-600">{sys.tierData?.tons} Ton System</span>
+                                            <span className="w-20 text-slate-500">Dimensions:</span> <span className="text-slate-600">{sys.tierData?.tons ? `${sys.tierData.tons} Ton System` : 'Per Layout'}</span>
                                         </div>
                                         <div className="flex pb-1">
-                                            <span className="w-20 text-slate-500">Type of Unit:</span> <span className="text-slate-600">System Replacement</span>
+                                            <span className="w-20 text-slate-500">Type of Unit:</span> <span className="text-slate-600">{sys.tierData?.category || sys.tierData?.type || 'System Replacement'}</span>
                                         </div>
                                     </div>
-                                    <div className="w-40 border border-slate-300 bg-[#e2e8f0]/40 flex items-center justify-center text-slate-400 font-bold tracking-widest rounded mx-2 my-1">
-                                        PHOTO
+                                    <div className="w-40 border border-slate-300 bg-[#e2e8f0]/40 flex items-center justify-center text-slate-400 font-bold tracking-widest rounded mx-2 my-1 overflow-hidden p-1">
+                                        {sys.tierData?.image_url || sys.tierData?.image ? (
+                                            <img src={sys.tierData.image_url || sys.tierData.image} alt={sys.systemName} className="object-contain w-full h-full" />
+                                        ) : (
+                                            "PHOTO"
+                                        )}
                                     </div>
                                 </div>
                                 <div className="w-32 border-l border-slate-300 flex flex-col justify-end pb-3 text-center bg-[#f8fafc]">
@@ -246,7 +274,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                 ) : (
                     <div className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
                         <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
-                            <div className="flex-1 px-3 py-1.5 border-r border-slate-300">Unit Info</div>
+                            <div className="flex-1 px-3 py-1.5 border-r border-slate-300">{templateConfig.sectionTitles?.unitInfo || 'Unit Info'}</div>
                             <div className="w-32 px-3 py-1.5 text-center">Price</div>
                         </div>
                         <div className="flex bg-[#f8fafc]">
@@ -259,21 +287,25 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                                         <span className="w-20 text-slate-500">Serial:</span> <span></span>
                                     </div>
                                     <div className="flex border-b border-slate-200 pb-1">
-                                        <span className="w-20 text-slate-500">Efficiency:</span> <span className="text-slate-600">Standard Ratings</span>
+                                        <span className="w-20 text-slate-500">Efficiency:</span> <span className="text-slate-600">{tierData?.seer ? `${tierData.seer} SEER` : 'Standard Ratings'}</span>
                                     </div>
                                     <div className="flex border-b border-slate-200 pb-1">
-                                        <span className="w-20 text-slate-500">Brand:</span> <span className="text-slate-600">{tierData?.brand} {tierData?.series}</span>
+                                        <span className="w-20 text-slate-500">Brand:</span> <span className="text-slate-600">{tierData?.brand || 'Premium'} {tierData?.series || ''}</span>
                                     </div>
                                     <div className="flex border-b border-slate-200 pb-1">
-                                        <span className="w-20 text-slate-500">Dimensions:</span> <span className="text-slate-600">{tierData?.tons} Ton System</span>
+                                        <span className="w-20 text-slate-500">Dimensions:</span> <span className="text-slate-600">{tierData?.tons ? `${tierData.tons} Ton System` : 'Per Layout'}</span>
                                     </div>
                                     <div className="flex pb-1">
-                                        <span className="w-20 text-slate-500">Type of Unit:</span> <span className="text-slate-600">System Replacement</span>
+                                        <span className="w-20 text-slate-500">Type of Unit:</span> <span className="text-slate-600">{tierData?.category || tierData?.type || 'System Replacement'}</span>
                                     </div>
                                 </div>
                                 {/* Photo Placeholder */}
-                                <div className="w-40 border border-slate-300 bg-[#e2e8f0]/40 flex items-center justify-center text-slate-400 font-bold tracking-widest rounded mx-2 my-1">
-                                    PHOTO
+                                <div className="w-40 border border-slate-300 bg-[#e2e8f0]/40 flex items-center justify-center text-slate-400 font-bold tracking-widest rounded mx-2 my-1 overflow-hidden p-1">
+                                    {tierData?.image_url || tierData?.image ? (
+                                        <img src={tierData.image_url || tierData.image} alt="Unit photo" className="object-contain w-full h-full" />
+                                    ) : (
+                                        "PHOTO"
+                                    )}
                                 </div>
                             </div>
                             <div className="w-32 border-l border-slate-300 flex flex-col justify-end pb-3 text-center bg-[#f8fafc]">
@@ -318,7 +350,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
 
                 {/* Exclusions / Legal */}
                 <div className="print-safe-block mt-4 mb-2">
-                    <div className="font-bold text-slate-800 mb-2 px-1">Exclusions / Legal:</div>
+                    <div className="font-bold text-slate-800 mb-2 px-1">{templateConfig.sectionTitles?.legal || 'Exclusions / Legal:'}</div>
                     {templateConfig.terms.map((term, i) => (
                         <div key={i} className="flex border-b border-slate-200 pb-1 mb-1 text-[9px] text-slate-500">
                             {i === templateConfig.terms.length - 1 ? (

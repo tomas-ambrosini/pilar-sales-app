@@ -11,7 +11,15 @@ export const DEFAULT_TEMPLATE_CONFIG = {
         "AUTHORIZATION: By digital acceptance, the authorizing party represents authority to contract improvements on the specified property. A mechanic's lien may be executed for failure to remit final payment."
     ],
     materials: ['Removal / Disposal', 'Refrigerant', 'Permitting'],
-    companySignatureName: "Pilar Home Services"
+    companySignatureName: "Pilar Home Services",
+    branding: {
+        logoUrl: null,
+        brandName: "PILAR HOME"
+    },
+    sectionTitles: {
+        legal: "Exclusions / Legal:",
+        unitInfo: "Unit Info"
+    }
 };
 
 /**
@@ -36,6 +44,14 @@ export function normalizeContractTemplate(dbTemplate) {
         materials: (dbTemplate.materials && dbTemplate.materials.length > 0)
             ? dbTemplate.materials
             : DEFAULT_TEMPLATE_CONFIG.materials,
-        companySignatureName: dbTemplate.company_signature_name || DEFAULT_TEMPLATE_CONFIG.companySignatureName
+        companySignatureName: dbTemplate.company_signature_name || DEFAULT_TEMPLATE_CONFIG.companySignatureName,
+        branding: {
+            logoUrl: dbTemplate.logo_url || DEFAULT_TEMPLATE_CONFIG.branding.logoUrl,
+            brandName: dbTemplate.brand_name || DEFAULT_TEMPLATE_CONFIG.branding.brandName
+        },
+        sectionTitles: {
+            legal: dbTemplate.title_legal_section || DEFAULT_TEMPLATE_CONFIG.sectionTitles.legal,
+            unitInfo: dbTemplate.title_unit_section || DEFAULT_TEMPLATE_CONFIG.sectionTitles.unitInfo
+        }
     };
 }
