@@ -1,10 +1,10 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, CheckCircle, Shield, Wind, Droplets, ArrowRight, FileText, AlertTriangle } from 'lucide-react';
+import { X, CheckCircle, Shield, Wind, Droplets, ArrowRight, FileText, AlertTriangle, ArrowLeft } from 'lucide-react';
 import Modal from './Modal';
 import { formatQuoteId } from '../utils/formatters';
 
-export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccept, onViewContract }) {
+export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal, onAccept, onViewContract }) {
   const [localSelections, setLocalSelections] = React.useState({});
 
   if (!proposal) return null;
@@ -123,9 +123,16 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
                    )}
                 </div>
              </div>
-             <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-800 bg-white rounded-full border border-slate-200 transition-colors">
-                <X size={20} />
-             </button>
+             <div className="flex items-center gap-2">
+                {onBack && (
+                   <button onClick={onBack} className="p-2 text-slate-400 hover:text-slate-800 bg-white rounded-full border border-slate-200 transition-colors" title="Back to Details">
+                      <ArrowLeft size={20} />
+                   </button>
+                )}
+                <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-800 bg-white rounded-full border border-slate-200 transition-colors" title="Close Viewer">
+                   <X size={20} />
+                </button>
+             </div>
           </div>
 
           {/* Body */}
@@ -209,7 +216,10 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
                         <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded mr-auto">
                             <AlertTriangle size={14}/> Preview Only Mode
                         </div>
-                        <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors" onClick={onClose}>Close Viewer</button>
+                        <div className="flex gap-2">
+                           {onBack && <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2" onClick={onBack}><ArrowLeft size={16}/> Back to Details</button>}
+                           <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors" onClick={onClose}>Close Viewer</button>
+                        </div>
                      </div>
                  );
              }
@@ -221,6 +231,7 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
                         Please select an equipment tier for all units above.
                     </div>
                     <div className="flex gap-3 w-full md:w-auto">
+                        {onBack && <button className="px-4 py-2.5 font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-colors rounded flex items-center gap-2" onClick={onBack}><ArrowLeft size={16}/> Back</button>}
                         <button className="px-6 py-2.5 font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-colors rounded" onClick={onClose}>Close Planner</button>
                         <button 
                            disabled={!isCartComplete} 
@@ -239,7 +250,10 @@ export default function ProposalViewerModal({ isOpen, onClose, proposal, onAccep
                         <AlertTriangle size={14}/> Preview Only Mode
                     </div>
                 )}
-                <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors" onClick={onClose}>Close Viewer</button>
+                <div className="flex gap-2">
+                   {onBack && <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2" onClick={onBack}><ArrowLeft size={16}/> Back to Details</button>}
+                   <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors" onClick={onClose}>Close Viewer</button>
+                </div>
              </div>
           )}
        </div>

@@ -525,10 +525,13 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
         }}
       />
 
-      {/* Digital Quote Viewer Modal */}
       <ProposalViewerModal
         isOpen={!!viewingProposal}
         onClose={() => setViewingProposal(null)}
+        onBack={viewingProposal?.isReadOnly ? () => {
+           setViewingProposal(null);
+           setTimeout(() => setInspectingProposal(viewingProposal), 50);
+        } : undefined}
         proposal={viewingProposal}
         onAccept={handleInitiateAcceptance}
         onViewContract={(proposalData) => {
