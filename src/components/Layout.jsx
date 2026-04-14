@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, ShieldAlert, LogOut, LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Megaphone, DollarSign, Settings, Bell, Search, Truck, MessageCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, ShieldAlert, LogOut, LayoutDashboard, Users, BookOpen, FileCheck, FileText, ClipboardList, Megaphone, DollarSign, Settings, Bell, Search, Truck, MessageCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
@@ -24,6 +24,7 @@ const navGroups = [
       { path: '/proposals', label: 'Proposals', icon: FileCheck, allowedRoles: [ROLES.ADMIN, ROLES.SALES] },
       { path: '/catalog', label: 'Catalog', icon: BookOpen, allowedRoles: [ROLES.ADMIN] },
       { path: '/promo-codes', label: 'Promo Codes', icon: Megaphone, allowedRoles: [ROLES.ADMIN] },
+      { path: '/template-settings', label: 'Templates', icon: FileText, allowedRoles: [ROLES.ADMIN] },
       { path: '/account-management', label: 'Account Mgmt', icon: Settings, allowedRoles: [ROLES.ADMIN] }
     ]
   },

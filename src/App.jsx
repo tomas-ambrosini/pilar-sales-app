@@ -10,6 +10,7 @@ import Login from './pages/Login';
 import FirstSetup from './pages/FirstSetup';
 import PromoCodes from './pages/PromoCodes';
 import AccountManagement from './pages/AccountManagement';
+import TemplateSettings from './pages/TemplateSettings';
 import SalesPipeline from './pages/SalesPipeline';
 import DispatchHub from './pages/DispatchHub';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -67,6 +68,7 @@ function MainRouter() {
           <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN']}><Catalog /></RoleRoute>} />
           <Route path="promo-codes/*" element={<RoleRoute allowedRoles={['ADMIN']}><PromoCodes /></RoleRoute>} />
           <Route path="account-management/*" element={<RoleRoute allowedRoles={['ADMIN']}><AccountManagement /></RoleRoute>} />
+          <Route path="template-settings/*" element={<RoleRoute allowedRoles={['ADMIN']}><TemplateSettings /></RoleRoute>} />
           
           {/* LEGACY OPERATIONS ERP */}
           <Route path="pipeline/*" element={<RoleRoute allowedRoles={['ADMIN']}><SalesPipeline /></RoleRoute>} />
