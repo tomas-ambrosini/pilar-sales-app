@@ -56,7 +56,7 @@
   padding: 0;
 }
 
-body {
+body, html {
   font-family: var(--font-family);
   background-color: var(--bg-app);
   color: var(--color-slate-800);
