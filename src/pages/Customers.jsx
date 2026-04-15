@@ -14,9 +14,11 @@ import { PIPELINE_STATES } from '../utils/pipelineControls';
 
 function CustomerList() {
   const navigate = useNavigate();
-  const { customers, loading, addCustomer } = useCustomers();
+  const { customers, archivedCustomers, loading, addCustomer, restoreCustomer } = useCustomers();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(() => searchParams.get('action') === 'new');
+  const [viewMode, setViewMode] = useState('active');
 
   React.useEffect(() => {
      if (searchParams.get('action') === 'new') {
@@ -106,6 +108,23 @@ function CustomerList() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
              </div>
+             
+             {user?.role !== 'SALES' && (
+                 <div className="flex bg-slate-200/50 p-1 rounded-lg">
+                    <button 
+                        onClick={() => setViewMode('active')}
+                        className={`text-xs font-bold px-4 py-1.5 rounded-md transition-all ${viewMode === 'active' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Active
+                    </button>
+                    <button 
+                        onClick={() => setViewMode('archived')}
+                        className={`text-xs font-bold px-4 py-1.5 rounded-md transition-all ${viewMode === 'archived' ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Archived Graveyard
+                    </button>
+                 </div>
+             )}
           </div>
 
           <div className="overflow-x-auto">
@@ -143,7 +162,7 @@ function CustomerList() {
                ))}
              </tbody>
            </table>
-        ) : customers.length === 0 ? (
+         ) : viewMode === 'active' && customers.length === 0 ? (
           <div className="p-12 text-center flex flex-col items-center">
             <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
               <UserIcon size={32} />
@@ -153,6 +172,14 @@ function CustomerList() {
             <button className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 font-bold px-4 py-2 rounded-xl text-sm shadow-sm transition-all focus:ring-2 focus:ring-offset-1 focus:outline-none flex items-center gap-2" onClick={() => setIsAddCustomerOpen(true)}>
               <Plus size={16} /> Add Your First Customer
             </button>
+          </div>
+        ) : viewMode === 'archived' && archivedCustomers.length === 0 ? (
+          <div className="p-12 text-center flex flex-col items-center">
+             <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
+               <Trash2 size={32} />
+             </div>
+             <h3 className="text-sm font-bold text-slate-900 mb-1">Graveyard Empty</h3>
+             <p className="text-xs font-medium text-slate-500">No archived customers found.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -166,7 +193,7 @@ function CustomerList() {
                </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-               {customers
+               {(viewMode === 'active' ? customers : archivedCustomers)
                  .filter(c => {
                      const sq = searchQuery.toLowerCase();
                      return (
@@ -180,33 +207,45 @@ function CustomerList() {
                  .map((customer) => (
                  <tr 
                    key={customer.id} 
-                   onClick={() => navigate(`/customers/${customer.id}`)}
-                   className="hover:bg-slate-50 transition-colors cursor-pointer group"
+                   onClick={(e) => {
+                       if (viewMode === 'active') navigate(`/customers/${customer.id}`);
+                       // Archived customers do nothing on row click except via Restore button
+                   }}
+                   className={`transition-colors group ${viewMode === 'active' ? 'hover:bg-slate-50 cursor-pointer' : ''}`}
                  >
                    <td className="p-4 px-6">
-                     <span className="font-bold text-slate-900">{customer.name}</span>
+                     <span className={`font-bold text-slate-900 ${viewMode === 'archived' ? 'opacity-50' : ''}`}>{customer.name}</span>
                      {customer.tags && customer.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1.5">
                            {customer.tags.map((t, idx) => (
-                              <span key={idx} className="bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded text-[10px] uppercase font-black tracking-widest flex items-center gap-1"><Tag size={10}/> {t}</span>
+                              <span key={idx} className={`bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded text-[10px] uppercase font-black tracking-widest flex items-center gap-1 ${viewMode === 'archived' ? 'opacity-50' : ''}`}><Tag size={10}/> {t}</span>
                            ))}
                         </div>
                      )}
                    </td>
-                   <td className="p-4 px-6">
+                   <td className={`p-4 px-6 ${viewMode === 'archived' ? 'opacity-50' : ''}`}>
                       <div className="text-xs font-medium text-slate-600 flex flex-col gap-1">
-                        {customer.phone && <span className="flex items-center gap-1.5"><Phone size={12} className="text-slate-400 group-hover:text-primary-500 transition-colors"/> {customer.phone}</span>}
-                        {customer.email && <span className="flex items-center gap-1.5"><Mail size={12} className="text-slate-400 group-hover:text-primary-500 transition-colors"/> {customer.email}</span>}
+                        {customer.phone && <span className="flex items-center gap-1.5"><Phone size={12} className="text-slate-400 transition-colors"/> {customer.phone}</span>}
+                        {customer.email && <span className="flex items-center gap-1.5"><Mail size={12} className="text-slate-400 transition-colors"/> {customer.email}</span>}
                         {(!customer.phone && !customer.email) && <span className="text-slate-400 italic">No contact info</span>}
                       </div>
                    </td>
-                   <td className="p-4 px-6">
+                   <td className={`p-4 px-6 ${viewMode === 'archived' ? 'opacity-50' : ''}`}>
                      <span className="text-sm font-medium text-slate-600 line-clamp-1 flex items-center gap-1.5">
-                        <MapPin size={14} className="text-slate-400 group-hover:text-primary-500 transition-colors shrink-0"/> {customer.address || <span className="italic">No address on file</span>}
+                        <MapPin size={14} className="text-slate-400 transition-colors shrink-0"/> {customer.address || <span className="italic">No address on file</span>}
                      </span>
                    </td>
-                   <td className="p-4 px-6 text-right w-12">
-                     <ChevronRight size={16} className="text-slate-300 group-hover:text-primary-600 transition-colors inline-block" />
+                   <td className="p-4 px-6 text-right">
+                     {viewMode === 'active' ? (
+                        <ChevronRight size={16} className="text-slate-300 group-hover:text-primary-600 transition-colors inline-block" />
+                     ) : (
+                        <button 
+                           onClick={(e) => { e.stopPropagation(); restoreCustomer(customer.id); }}
+                           className="bg-white border border-slate-200 text-slate-600 hover:text-primary-600 hover:border-primary-200 hover:bg-primary-50 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center justify-end gap-1"
+                        >
+                           Restore
+                        </button>
+                     )}
                    </td>
                  </tr>
                ))}
@@ -460,7 +499,9 @@ function CustomerDetail() {
   const handleDelete = () => {
       deleteCustomer(customer.id);
       navigate('/customers');
-    };
+  };
+
+  const activeDealsCount = (customer.opportunities || []).filter(opp => opp.status !== 'Lost' && opp.status !== 'Approved').length;
 
   return (
     <div className="page-container customer-detail">
@@ -486,7 +527,7 @@ function CustomerDetail() {
           <button className="icon-btn outline" onClick={() => setIsEditModalOpen(true)} title="Edit Customer"><Edit2 size={18} /></button>
           <button className="icon-btn outline" onClick={() => setActiveQuickAction('Call Customer')} title="Call Customer"><Phone size={18} /></button>
           <button className="icon-btn outline" onClick={() => setActiveQuickAction('Email Customer')} title="Email Customer"><Mail size={18} /></button>
-          <button className="icon-btn outline" style={{color: 'var(--color-danger)', borderColor: 'var(--color-danger)'}} onClick={() => setIsDeleteModalOpen(true)} title="Delete Contact"><Trash2 size={18} /></button>
+          <button className="icon-btn outline" style={{color: 'var(--color-danger)', borderColor: 'var(--color-danger)'}} onClick={() => setIsDeleteModalOpen(true)} title="Archive Customer"><Trash2 size={18} /></button>
         </div>
       </div>
 
@@ -727,22 +768,41 @@ function CustomerDetail() {
         </form>
       </Modal>
 
-      {/* Delete Confirmation Modal */}
+      {/* Archive Confirmation Modal */}
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        title="Delete Customer"
+        title="Archive Customer"
       >
         <div className="modal-form" style={{ textAlign: 'center', padding: '1rem 0' }}>
-          <p style={{ color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
-            Are you sure you want to delete <strong>{customer.name}</strong>? This action cannot be undone.
-          </p>
+          {activeDealsCount > 0 ? (
+             <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-left mb-6">
+                <h4 className="font-bold flex items-center gap-2 mb-2"><Trash2 size={18}/> Active Deals Detected!</h4>
+                <p className="text-sm">This customer currently has <strong>{activeDealsCount} active deal(s)</strong> in the sales pipeline.</p>
+                <p className="text-sm mt-2">Archiving this customer will not delete the deals natively, resulting in orphaned "ghost deals" visible in the pipeline.</p>
+                {user.role === 'SALES' ? (
+                   <p className="font-black text-xs uppercase tracking-wider mt-4 bg-red-100 p-2 rounded text-center">Action Blocked: Please cancel deals first.</p>
+                ) : (
+                   <p className="font-bold text-xs uppercase tracking-wider mt-4 bg-red-100 p-2 rounded text-center text-red-800">Admin Override Permitted</p>
+                )}
+             </div>
+          ) : (
+             <p style={{ color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
+                Are you sure you want to archive <strong>{customer.name}</strong>? They will be hidden from the Active Directory.
+             </p>
+          )}
+
           <div className="modal-actions" style={{ justifyContent: 'center', gap: '1rem' }}>
             <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>
               Cancel
             </button>
-            <button className="btn-primary" style={{ background: 'var(--color-danger)' }} onClick={handleDelete}>
-              Delete Contact
+            <button 
+               className="btn-primary" 
+               style={{ background: activeDealsCount > 0 && user.role === 'SALES' ? 'var(--color-slate-300)' : 'var(--color-danger)' }} 
+               onClick={handleDelete}
+               disabled={activeDealsCount > 0 && user.role === 'SALES'}
+            >
+              Confirm Archive
             </button>
           </div>
         </div>

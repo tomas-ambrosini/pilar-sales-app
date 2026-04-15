@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { useAuth } from './AuthContext';
 
 const CustomerContext = createContext(null);
 
 export function CustomerProvider({ children }) {
+    const { user } = useAuth();
     const [customers, setCustomers] = useState([]);
+    const [archivedCustomers, setArchivedCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -93,6 +96,61 @@ export function CustomerProvider({ children }) {
             console.error('Error fetching relational customers:', error.message);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchArchivedCustomers = async () => {
+        if (!user) return;
+        // Temporarily, ONLY Manager/Super Admin can view archived customers
+        // because ownership tracking on households is not perfectly enforced yet.
+        if (user.role === 'SALES') {
+            setArchivedCustomers([]);
+            return;
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('households')
+                .select(`
+                    id,
+                    household_name,
+                    tags,
+                    created_at,
+                    addresses!addresses_household_id_fkey ( id, street_address, city, state, zip, property_details, is_primary_residence ),
+                    contacts ( id, first_name, last_name, primary_phone, email, role ),
+                    opportunities ( id, status, urgency_level, issue_description, created_at ),
+                    work_orders ( id, work_order_number, status, urgency_level, created_at )
+                `)
+                .eq('is_active', false)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            if (data) {
+                const formatted = data.map(household => {
+                    const primaryContact = household.contacts && household.contacts.length > 0 ? household.contacts[0] : {};
+                    const locations = household.addresses && household.addresses.length > 0 ? household.addresses : [];
+                    const primaryAddress = locations[0] || {};
+                    const addressString = primaryAddress.street_address ? `${primaryAddress.street_address} ${primaryAddress.city ? ', ' + primaryAddress.city : ''}`.trim() : 'No address provided';
+                    
+                    return {
+                        id: household.id,
+                        household_name: household.household_name,
+                        name: `${primaryContact.first_name || ''} ${primaryContact.last_name || ''}`.trim() || household.household_name,
+                        email: primaryContact.email || '',
+                        phone: primaryContact.primary_phone || '',
+                        address: addressString,
+                        locations: locations,
+                        tags: household.tags || [],
+                        addedDate: new Date(household.created_at).toLocaleDateString(),
+                        opportunities: household.opportunities || [],
+                        work_orders: household.work_orders || [],
+                        raw: household
+                    };
+                });
+                setArchivedCustomers(formatted);
+            }
+        } catch (err) {
+            console.error('Error fetching archived customers:', err.message);
         }
     };
 
@@ -239,14 +297,27 @@ export function CustomerProvider({ children }) {
             if (error) throw error;
 
             fetchCustomers();
+            fetchArchivedCustomers();
         } catch (error) {
             console.error('Failed to deeply delete household & dependencies:', error);
             fetchCustomers(); // Restore on fail
         }
     };
 
+    const restoreCustomer = async (id) => {
+        try {
+            const { error } = await supabase.from('households').update({ is_active: true }).eq('id', id);
+            if (error) throw error;
+
+            fetchCustomers();
+            fetchArchivedCustomers();
+        } catch (error) {
+            console.error('Failed to restore customer:', error);
+        }
+    };
+
     return (
-        <CustomerContext.Provider value={{ customers, addCustomer, updateCustomer, deleteCustomer, updatePropertyDetails, addPropertyToCustomer, loading }}>
+        <CustomerContext.Provider value={{ customers, archivedCustomers, addCustomer, updateCustomer, deleteCustomer, restoreCustomer, fetchArchivedCustomers, updatePropertyDetails, addPropertyToCustomer, loading }}>
             {children}
         </CustomerContext.Provider>
     );
