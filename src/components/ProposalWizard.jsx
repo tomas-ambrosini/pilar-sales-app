@@ -934,9 +934,19 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                     </div>
                                     <div className="p-6 flex-1 flex flex-col justify-between gap-6">
                                        
-                                       <div className="text-center pt-2">
-                                          <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-1">Standard Investment</label>
-                                          <div className={`text-4xl font-black ${discountAmount > 0 ? 'line-through text-slate-300' : 'text-slate-800'}`}>${baselineRetail.toLocaleString()}</div>
+                                       <div className="text-center pt-2 min-h-[60px] flex flex-col justify-center">
+                                          <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-2">Included Add-ons & Labor</label>
+                                          <div className="flex flex-wrap justify-center gap-1.5">
+                                             {Object.entries(sys.addons || {}).filter(([_, v]) => v).length > 0 ? (
+                                                Object.entries(sys.addons).filter(([_, v]) => v).map(([k]) => (
+                                                   <span key={k} className="text-[9px] font-bold bg-slate-50 text-slate-600 px-2.5 py-1 rounded-full border border-slate-200 uppercase flex items-center gap-1">
+                                                      <Check size={10} className="text-emerald-500"/> {k}
+                                                   </span>
+                                                ))
+                                             ) : (
+                                                <span className="text-xs text-slate-400 font-medium italic">Standard Installation</span>
+                                             )}
+                                          </div>
                                        </div>
                
                                        <div className="space-y-1 py-4 border-y border-slate-100">
@@ -948,12 +958,12 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                           </div>
                                        </div>
                
-                                       <div className="text-center">
+                                       <div className="text-center pt-2">
                                           {discountAmount > 0 && (
                                               <div className="mb-4">
-                                                 <label className="text-[10px] uppercase font-bold text-emerald-500 tracking-widest block mb-1">Approved Savings applied</label>
+                                                 <div className="text-lg font-black text-slate-300 line-through mb-1">${baselineRetail.toLocaleString()}</div>
                                                  <div className="inline-block bg-emerald-50 text-emerald-600 font-black px-4 py-1.5 rounded-xl border border-emerald-100">
-                                                    - ${discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                    - ${discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} Savings
                                                  </div>
                                               </div>
                                           )}
