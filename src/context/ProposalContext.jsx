@@ -133,7 +133,7 @@ export function ProposalProvider({ children }) {
         if (updatedData.status && oppId) {
             try {
                 if (updatedData.status === 'Approved') await PipelineController.approveDeal(oppId, 'PROPOSAL_SENT');
-                else if (updatedData.status === 'Declined') await PipelineController.markLost(oppId, 'PROPOSAL_SENT', null, 'Proposal Declined');
+                else if (updatedData.status === 'Lost') await PipelineController.markLost(oppId, 'PROPOSAL_SENT', null, updatedData.proposal_data?.lost_reason || 'Proposal Lost');
                 else if (['Sent', 'Opened'].includes(updatedData.status)) await PipelineController.sendProposal(oppId, 'PROPOSAL_BUILDING');
             } catch (syncError) {
                 console.warn('Pipeline Sync Warning:', syncError.message);

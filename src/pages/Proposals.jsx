@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useProposals } from '../context/ProposalContext';
 import { useCustomers } from '../context/CustomerContext';
-import { Search, Plus, Calendar, Settings, ShieldCheck, Mail, Printer, AlertTriangle, FileText, Share, Clock, Home, PenTool, CheckCircle, Smartphone, Edit2, Trash2, ArrowRight, CalendarClock, Lock, Link, Copy } from 'lucide-react';
+import { Search, Plus, Calendar, Settings, ShieldCheck, Mail, Printer, AlertTriangle, FileText, Share, Clock, Home, PenTool, CheckCircle, Smartphone, Edit2, Trash2, ArrowRight, CalendarClock, Lock, Link, Copy, ThumbsDown, RotateCcw } from 'lucide-react';
 import Modal from '../components/Modal';
 import toast from 'react-hot-toast';
 import './Proposals.css';
@@ -55,6 +55,9 @@ export default function Proposals() {
   const [viewingContract, setViewingContract] = useState(null);
   const [signingContract, setSigningContract] = useState(null);
   const [deletingProposal, setDeletingProposal] = useState(null);
+  const [markingLost, setMarkingLost] = useState(null);
+  const [lostReason, setLostReason] = useState('');
+  const [lostNotes, setLostNotes] = useState('');
   const [filterMode, setFilterMode] = useState('All');
 
   const handleRowClick = (proposal) => {
@@ -69,6 +72,30 @@ export default function Proposals() {
   };
 
 
+
+  const handleMarkLostConfirm = async () => {
+    if (!lostReason) return toast.error('Please select a reason.');
+    
+    await updateProposal(markingLost.id, {
+        status: 'Lost',
+        proposal_data: {
+            ...(markingLost.proposal_data || {}),
+            lost_reason: lostReason,
+            lost_notes: lostNotes,
+            lost_at: new Date().toISOString(),
+            lost_by: user?.id
+        }
+    });
+    setMarkingLost(null);
+    setLostReason('');
+    setLostNotes('');
+    toast.success('Proposal marked as lost.');
+  };
+
+  const handleReopen = async (proposal) => {
+      await updateProposal(proposal.id, { status: 'Sent' });
+      toast.success('Proposal re-opened successfully.');
+  };
 
   const getProposalUrl = (id) => {
      const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
@@ -261,7 +288,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
           
           <div className="p-4 border-b border-slate-100 flex gap-2 overflow-x-auto bg-slate-50 custom-scrollbar">
-             {['All', 'Draft', 'Sent', 'Approved'].map(mode => (
+             {['All', 'Draft', 'Sent', 'Approved', 'Lost'].map(mode => (
                  <button 
                     key={mode} 
                     onClick={() => setFilterMode(mode)}
@@ -355,6 +382,8 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                            badgeColors = 'bg-blue-50 text-blue-700 border-blue-200';
                         } else if (proposal.status === 'Approved') {
                            badgeColors = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                        } else if (proposal.status === 'Lost') {
+                           badgeColors = 'bg-red-50 text-red-700 border-red-200';
                         }
             
                         return (
@@ -387,7 +416,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                             {/* COL 3: Pricing */}
                             <td className="p-4 px-6 text-left">
                               <div className="flex flex-col items-start justify-center truncate">
-                                 {(!proposal.status || ['Draft', 'Sent', 'Opened'].includes(proposal.status)) ? (() => {
+                                 {(!proposal.status || ['Draft', 'Sent', 'Opened', 'Lost'].includes(proposal.status)) ? (() => {
                                      const tiers = proposal.proposal_data?.tiers || {};
                                      const prices = [tiers.good?.salesPrice, tiers.better?.salesPrice, tiers.best?.salesPrice].filter(Boolean);
                                      if (prices.length > 0) {
@@ -445,6 +474,12 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                     {['super_admin', 'admin'].includes((user?.role || '').toLowerCase()) && (
                                        <button className="p-2 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Force Delete"><Trash2 size={16} /></button>
                                     )}
+                                    {['Sent', 'Draft'].includes(proposal.status) && (
+                                       <button className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors" onClick={() => setMarkingLost(proposal)} title="Mark as Lost"><ThumbsDown size={16} /></button>
+                                    )}
+                                    {proposal.status === 'Lost' && (
+                                       <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" onClick={() => handleReopen(proposal)} title="Re-open Proposal"><RotateCcw size={16} /></button>
+                                    )}
                                  </div>
 
                                  {/* Email/Copy/Link Group */}
@@ -461,6 +496,8 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                           ? 'bg-emerald-500 text-white hover:bg-emerald-600 focus:ring-emerald-500 border border-emerald-600' 
                                           : proposal.status === 'Sent'
                                           ? 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-600 border border-blue-700'
+                                          : proposal.status === 'Lost'
+                                          ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 shadow-none'
                                           : 'bg-slate-500 text-white hover:bg-slate-600 focus:ring-slate-500 border border-slate-600'
                                    }`}
                                    onClick={() => {
@@ -476,7 +513,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                        }
                                    }}
                                  >
-                                    {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : 'Resume'}
+                                    {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : proposal.status === 'Lost' ? 'Review' : 'Resume'}
                                  </button>
                               </div>
                             </td>
@@ -507,6 +544,48 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
             <button className="btn-primary" style={{ background: 'var(--color-danger)' }} onClick={handleDeleteConfirm}>Delete Proposal</button>
           </div>
         </div>
+      </Modal>
+
+      {/* Mark Lost Modal */}
+      <Modal isOpen={!!markingLost} onClose={() => setMarkingLost(null)} title="Mark Deal as Lost">
+         <div className="p-4 space-y-4">
+            <p className="text-sm text-slate-600 mb-4">You are marking the proposal for <strong>{markingLost?.customer}</strong> as lost. Please provide a reason to track attrition.</p>
+            
+            <div className="space-y-1.5">
+               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">Reason <span className="text-red-500">*</span></label>
+               <select 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-slate-800 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"
+                  value={lostReason} 
+                  onChange={(e) => setLostReason(e.target.value)}
+                  required
+               >
+                  <option value="" disabled>Select a reason...</option>
+                  <option value="Too Expensive">Too Expensive</option>
+                  <option value="Went with Competitor">Went with Competitor</option>
+                  <option value="Financing Denied">Financing Denied</option>
+                  <option value="No Response / Ghosted">No Response / Ghosted</option>
+                  <option value="Timing / Not Ready">Timing / Not Ready</option>
+                  <option value="Scope Changed">Scope Changed</option>
+                  <option value="Duplicate / Invalid Lead">Duplicate / Invalid Lead</option>
+                  <option value="Other">Other</option>
+               </select>
+            </div>
+            
+            <div className="space-y-1.5">
+               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">Additional Notes (Optional)</label>
+               <textarea 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-slate-800 text-sm min-h-[80px] focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"
+                  placeholder="Any details on why this was lost?"
+                  value={lostNotes}
+                  onChange={(e) => setLostNotes(e.target.value)}
+               ></textarea>
+            </div>
+
+            <div className="flex gap-3 justify-end pt-4 border-t border-slate-100 mt-6">
+               <button className="px-5 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-bold transition-colors" onClick={() => setMarkingLost(null)}>Cancel</button>
+               <button className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition-colors shadow-sm" onClick={handleMarkLostConfirm} disabled={!lostReason}>Mark as Lost</button>
+            </div>
+         </div>
       </Modal>
 
       {/* Internal Proposal Details Modal */}
