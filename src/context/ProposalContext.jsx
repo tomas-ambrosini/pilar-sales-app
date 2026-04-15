@@ -1,16 +1,49 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { PipelineController } from '../utils/pipelineControls';
 import toast from 'react-hot-toast';
+import { useAuth } from './AuthContext';
 
 const ProposalContext = createContext(null);
 
 export function ProposalProvider({ children }) {
+    const { user } = useAuth();
     const [proposals, setProposals] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const fetchProposals = useCallback(async () => {
+        if (!user) {
+            setLoading(false);
+            return;
+        }
+        
+        try {
+            let query = supabase
+                .from('proposals')
+                .select('*, user_profiles(full_name)')
+                .order('created_at', { ascending: false });
+
+            if (user.role === 'SALES') {
+                query = query.eq('created_by', user.id);
+            } else if (user.role === 'MANAGER' || user.role === 'SUPER_ADMIN') {
+                query = query.or(`created_by.eq.${user.id},status.neq.Draft`);
+            }
+
+            const { data, error } = await query;
+
+            if (error) throw error;
+            if (data) setProposals(data);
+        } catch (error) {
+            console.error('Error fetching proposals:', error.message);
+            toast.error('Failed to sync pipeline visibility.');
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
+
     // Fetch initial data from Supabase
     useEffect(() => {
+        if (!user) return;
         fetchProposals();
         
         // Setup Realtime Subscription
@@ -23,23 +56,7 @@ export function ProposalProvider({ children }) {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, []);
-
-    const fetchProposals = async () => {
-        try {
-            const { data, error } = await supabase
-                .from('proposals')
-                .select('*, user_profiles(full_name)')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            if (data) setProposals(data);
-        } catch (error) {
-            console.error('Error fetching proposals:', error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [fetchProposals, user]);
 
     // Creates a draft natively in the DB without optimistic UI flooding
     const createDraft = async (draftData) => {
@@ -51,6 +68,7 @@ export function ProposalProvider({ children }) {
             amount: draftData.amount || 0,
             associated_opportunity_id: draftData.associated_opportunity_id || null,
             proposal_data: draftData.proposal_data || null,
+            created_by: user?.id,
             updated_at: new Date().toISOString()
         };
         
@@ -89,6 +107,7 @@ export function ProposalProvider({ children }) {
             status: 'Sent',
             associated_opportunity_id: proposalData.associated_opportunity_id || null,
             proposal_data: proposalData.proposal_data || null,
+            created_by: user?.id,
             updated_at: new Date().toISOString()
         };
 

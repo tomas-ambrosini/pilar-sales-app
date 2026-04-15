@@ -48,8 +48,21 @@ export default function Proposals() {
          setShowWizard(true);
          setWizardConfig(true);
          window.history.replaceState({}, document.title, window.location.pathname);
+     } else if (searchParams.get('action') === 'resume' && searchParams.get('id')) {
+         const id = searchParams.get('id');
+         const targetProposal = proposals.find(p => p.id === id);
+         if (targetProposal && targetProposal.status === 'Draft') {
+             if (targetProposal.created_by && targetProposal.created_by !== user?.id) {
+                 toast.error('Access Denied: This draft is locked by its creator.');
+                 window.history.replaceState({}, document.title, window.location.pathname);
+                 return;
+             }
+             setWizardConfig({ id: targetProposal.id, ...targetProposal });
+             setShowWizard(true);
+         }
+         window.history.replaceState({}, document.title, window.location.pathname);
      }
-  }, [searchParams]);
+  }, [searchParams, proposals, user]);
 
   const [viewingProposal, setViewingProposal] = useState(null);
   const [viewingContract, setViewingContract] = useState(null);
@@ -506,6 +519,10 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                           const matchedTierData = proposal.proposal_data?.accepted_tier_data || proposal.proposal_data?.tiers?.[matchedTierName];
                                           setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
                                        } else if (proposal.status === 'Draft') {
+                                          if (proposal.created_by && proposal.created_by !== user?.id) {
+                                              toast.error('Access Denied: This draft is locked by its creator.');
+                                              return;
+                                          }
                                           setWizardConfig({ id: proposal.id, ...proposal });
                                           setShowWizard(true);
                                        } else {
