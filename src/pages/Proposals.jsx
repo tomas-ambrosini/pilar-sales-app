@@ -487,7 +487,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                     {['super_admin', 'admin'].includes((user?.role || '').toLowerCase()) && (
                                        <button className="p-2 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Force Delete"><Trash2 size={16} /></button>
                                     )}
-                                    {['Sent', 'Draft'].includes(proposal.status) && (
+                                    {['Sent', 'Opened'].includes(proposal.status) && (
                                        <button className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors" onClick={() => setMarkingLost(proposal)} title="Mark as Lost"><ThumbsDown size={16} /></button>
                                     )}
                                     {proposal.status === 'Lost' && (
