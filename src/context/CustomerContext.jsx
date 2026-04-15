@@ -25,6 +25,13 @@ export function CustomerProvider({ children }) {
         };
     }, []);
 
+    // Ensure we fetch archived customers once the user is loaded (since it relies on role logic)
+    useEffect(() => {
+        if (user) {
+            fetchArchivedCustomers();
+        }
+    }, [user]);
+
     const fetchCustomers = async () => {
         try {
             let { data, error } = await supabase
