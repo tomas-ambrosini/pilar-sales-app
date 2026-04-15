@@ -458,42 +458,75 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
     const wizardState = { step: 6, selectedCustomerId, selectedLocationId, systems, appliedPromo };
 
-    if (isEditing) {
-       const oppId = editModeData.proposal_data?.associated_opportunity_id;
-       const linkedProposalData = { ...finalProposalData, associated_opportunity_id: oppId, wizard_state: wizardState };
-       
-       updateProposal(editingId, { amount: finalAmount, proposal_data: linkedProposalData });
-       
-       // Force update the Pipeline row to match new pricing/tiers
-       if (oppId) {
-          supabase.from('opportunities').update({ proposal_data: linkedProposalData }).eq('id', oppId).then();
-       }
-    } else if (targetHouseholdId) {
-       const { data: oppData, error: oppError } = await supabase.from('opportunities').insert({
-           household_id: targetHouseholdId,
-           status: 'Proposal Sent', urgency_level: 'Medium',
-           issue_description: `Auto-generated Digital Proposal with 3 Tiers for ${propAddressString}.`,
-           site_survey_data: { ...survey, photos: photos, property_id: selectedProp?.id, property_address: propAddressString },
-           proposal_data: { ...finalProposalData, wizard_state: wizardState }
-       }).select().single();
-       
-       if (oppError) console.error("Failed to insert Opportunity into Pipeline:", oppError);
-       
-       const finalOppId = oppData ? oppData.id : null;
-       const linkedProposalData = { ...finalProposalData, associated_opportunity_id: finalOppId, wizard_state: wizardState };
-       
-       if (draftServerId) {
-          updateProposal(draftServerId, { customer: customerName, amount: finalAmount, status: 'Sent', associated_opportunity_id: finalOppId, proposal_data: linkedProposalData, updated_at: new Date().toISOString() });
-       } else {
-          addProposal({ customer: customerName, amount: finalAmount, associated_opportunity_id: finalOppId, proposal_data: linkedProposalData });
-       }
-    } else {
-       if (draftServerId) {
-          updateProposal(draftServerId, { customer: customerName, amount: finalAmount, status: 'Sent', proposal_data: { ...finalProposalData, wizard_state: wizardState }, updated_at: new Date().toISOString() });
-       } else {
-          addProposal({ customer: customerName, amount: finalAmount, proposal_data: { ...finalProposalData, wizard_state: wizardState } });
-       }
+    // Initialize saving as Draft (safeguard)
+    let savedId = null;
+    let finalLinkedData = null;
+
+    try {
+        if (isEditing) {
+           const oppId = editModeData.proposal_data?.associated_opportunity_id;
+           finalLinkedData = { ...finalProposalData, associated_opportunity_id: oppId, wizard_state: wizardState };
+           savedId = await updateProposal(editingId, { amount: finalAmount, proposal_data: finalLinkedData });
+           
+           if (oppId) supabase.from('opportunities').update({ proposal_data: finalLinkedData }).eq('id', oppId).then();
+        } else if (targetHouseholdId) {
+           const { data: oppData, error: oppError } = await supabase.from('opportunities').insert({
+               household_id: targetHouseholdId,
+               status: 'Proposal Building', urgency_level: 'Medium',
+               issue_description: `Auto-generated Digital Proposal with 3 Tiers for ${propAddressString}.`,
+               site_survey_data: { ...survey, photos: photos, property_id: selectedProp?.id, property_address: propAddressString },
+               proposal_data: { ...finalProposalData, wizard_state: wizardState }
+           }).select().single();
+           
+           if (oppError) console.error("Failed to insert Opportunity into Pipeline:", oppError);
+           
+           const finalOppId = oppData ? oppData.id : null;
+           finalLinkedData = { ...finalProposalData, associated_opportunity_id: finalOppId, wizard_state: wizardState, selectedCustomer: currentCustomer };
+           
+           if (draftServerId) {
+              savedId = await updateProposal(draftServerId, { customer: customerName, amount: finalAmount, associated_opportunity_id: finalOppId, proposal_data: finalLinkedData, updated_at: new Date().toISOString() });
+           } else {
+              savedId = await addProposal({ customer: customerName, amount: finalAmount, associated_opportunity_id: finalOppId, proposal_data: finalLinkedData });
+           }
+        } else {
+           finalLinkedData = { ...finalProposalData, wizard_state: wizardState, selectedCustomer: currentCustomer };
+           if (draftServerId) {
+              savedId = await updateProposal(draftServerId, { customer: customerName, amount: finalAmount, proposal_data: finalLinkedData, updated_at: new Date().toISOString() });
+           } else {
+              savedId = await addProposal({ customer: customerName, amount: finalAmount, proposal_data: finalLinkedData });
+           }
+        }
+
+        if (!savedId) {
+            toast.error("Failed to securely extract Database ID for proposal.");
+            onComplete();
+            return;
+        }
+
+        const toastId = toast.loading("Dispatching automated proposal to client...");
+        
+        const { error: invokeError } = await supabase.functions.invoke('send-proposal', {
+            body: { proposalId: savedId }
+        });
+
+        if (invokeError) {
+            console.error("Email Dispatch Error:", invokeError);
+            toast.error("Proposal Generated, but Email Failed", { id: toastId, duration: 4000 });
+            await updateProposal(savedId, { 
+                proposal_data: { ...finalLinkedData, email_delivery_status: 'failed', last_email_error: invokeError.message || 'Unknown' } 
+            });
+        } else {
+            toast.success("Proposal Generated & Emailed to Client!", { id: toastId, duration: 4000 });
+            await updateProposal(savedId, { 
+                status: 'Sent', 
+                proposal_data: { ...finalLinkedData, email_delivery_status: 'sent', email_sent_at: new Date().toISOString() } 
+            });
+        }
+    } catch (err) {
+        console.error("Critical Generation Error: ", err);
+        toast.error("An unexpected error occurred finalizing this system.");
     }
+
     onComplete();
   };
 

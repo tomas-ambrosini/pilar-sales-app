@@ -132,6 +132,7 @@ export function ProposalProvider({ children }) {
                     console.warn("Skipped transition: ", e.message);
                 }
             }
+            return data.id;
         }
     };
 
@@ -145,7 +146,7 @@ export function ProposalProvider({ children }) {
         if (error) {
             console.error('Failed to update proposal:', error);
             fetchProposals();
-            return;
+            return null;
         }
         
         // Auto-sync status to Pipeline Opportunity strictly through Execution controls
@@ -158,6 +159,8 @@ export function ProposalProvider({ children }) {
                 console.warn('Pipeline Sync Warning:', syncError.message);
             }
         }
+        
+        return id;
     };
 
     const deleteProposal = async (id) => {
