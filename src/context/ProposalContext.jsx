@@ -132,6 +132,7 @@ export function ProposalProvider({ children }) {
                     console.warn("Skipped transition: ", e.message);
                 }
             }
+            return nextId;
         }
     };
 

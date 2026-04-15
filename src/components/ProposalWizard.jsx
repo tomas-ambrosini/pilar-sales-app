@@ -355,7 +355,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     return ((rawEquipCost + taxableMaterials) * (1 + taxRate)) + nontaxableLabor;
   };
 
-  const generateProposal = async () => {
+  const generateProposal = async (actionIntent = 'present') => {
     if (syncTimer.current) clearTimeout(syncTimer.current);
     
     let systemBestSum = 0;
@@ -482,19 +482,22 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        const finalOppId = oppData ? oppData.id : null;
        const linkedProposalData = { ...finalProposalData, associated_opportunity_id: finalOppId, wizard_state: wizardState };
        
+       let finalId = draftServerId;
        if (draftServerId) {
-          updateProposal(draftServerId, { customer: customerName, amount: finalAmount, status: 'Sent', associated_opportunity_id: finalOppId, proposal_data: linkedProposalData, updated_at: new Date().toISOString() });
+          await updateProposal(draftServerId, { customer: customerName, amount: finalAmount, status: 'Sent', associated_opportunity_id: finalOppId, proposal_data: linkedProposalData, updated_at: new Date().toISOString() });
        } else {
-          addProposal({ customer: customerName, amount: finalAmount, associated_opportunity_id: finalOppId, proposal_data: linkedProposalData });
+          finalId = await addProposal({ customer: customerName, amount: finalAmount, associated_opportunity_id: finalOppId, proposal_data: linkedProposalData });
        }
+       onComplete(finalId, actionIntent);
     } else {
+       let finalId = draftServerId;
        if (draftServerId) {
-          updateProposal(draftServerId, { customer: customerName, amount: finalAmount, status: 'Sent', proposal_data: { ...finalProposalData, wizard_state: wizardState }, updated_at: new Date().toISOString() });
+          await updateProposal(draftServerId, { customer: customerName, amount: finalAmount, status: 'Sent', proposal_data: { ...finalProposalData, wizard_state: wizardState }, updated_at: new Date().toISOString() });
        } else {
-          addProposal({ customer: customerName, amount: finalAmount, proposal_data: { ...finalProposalData, wizard_state: wizardState } });
+          finalId = await addProposal({ customer: customerName, amount: finalAmount, proposal_data: { ...finalProposalData, wizard_state: wizardState } });
        }
+       onComplete(finalId, actionIntent);
     }
-    onComplete();
   };
 
   if (!dbReady) return <div className="page-container flex-center"><h3>Loading Live Pricing Engines...</h3></div>;
@@ -1078,8 +1081,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
              
              <div className="flex justify-center gap-4">
                 <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(5)}><ArrowLeft size={16}/> Modify Margins</button>
-                <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-lg font-black tracking-wide flex items-center gap-2 shadow-xl hover:scale-105 transition-transform" onClick={generateProposal}>
-                   {isEditing ? 'OVERWRITE & UPDATE PROPOSAL' : 'GENERATE DIGITAL PROPOSAL'}
+                <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-lg font-black tracking-wide flex items-center gap-2 shadow-xl hover:scale-105 transition-transform" onClick={() => generateProposal('present')}>
+                   {isEditing ? 'OVERWRITE PROPOSAL & PRESENT IN HOME' : 'GENERATE & PRESENT IN HOME'}
                 </button>
              </div>
           </div>

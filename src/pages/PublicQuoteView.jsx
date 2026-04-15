@@ -4,15 +4,20 @@ import { supabase } from '../supabaseClient';
 import { CheckCircle, Zap, Shield, HelpCircle, HardDrive, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatQuoteId } from '../utils/formatters';
+import SignaturePad from '../components/SignaturePad';
 
 export default function PublicQuoteView() {
     const { id } = useParams();
     const [proposal, setProposal] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [accepted, setAccepted] = useState(false);
-    const [signature, setSignature] = useState('');
-    const [showConfirmation, setShowConfirmation] = useState(false);
+    
+    // VIEW -> CONTRACT -> DEPOSIT -> CLOSED
+    const [viewState, setViewState] = useState('VIEW'); 
+    
+    // Deposit State
+    const [depositMethod, setDepositMethod] = useState('');
+    const [depositAmount, setDepositAmount] = useState('');
 
     useEffect(() => {
         const fetchProposal = async () => {
@@ -28,10 +33,11 @@ export default function PublicQuoteView() {
                 
                 setProposal(data);
                 
-                // If it is already approved, we just show a Read-Only state
-                if (data.status === 'Approved') {
-                    setAccepted(true);
-                    setSignature(data.proposal_data?.signature_data || data.signature_data || 'Signed Electronically');
+                if (data.status === 'Closed') {
+                    setViewState('CLOSED');
+                } else if (data.status === 'Approved') {
+                    // Contract signed, waiting on deposit
+                    setViewState('DEPOSIT');
                 }
             } catch (err) {
                 setError("This proposal link is invalid or has expired.");
@@ -43,19 +49,14 @@ export default function PublicQuoteView() {
     }, [id]);
 
     const handleAcceptClick = () => {
-        if (!signature.trim()) {
-           toast.error("Please type your name to accept.");
-           return;
-        }
-        setShowConfirmation(true);
+        setViewState('CONTRACT');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleConfirmAccept = async () => {
-        setShowConfirmation(false);
+    const handleSignatureSave = async (signatureData) => {
         try {
             setLoading(true);
             
-            // Build Approval Snapshot
             const price = proposal.amount || 0;
             let tierName = 'Proposal Details';
             let tierData = null;
@@ -70,14 +71,13 @@ export default function PublicQuoteView() {
                 brand: tierData ? tierData.brand : 'Unknown',
                 model: tierData ? tierData.series : 'Unknown',
                 features: tierData ? tierData.features : [],
-                signer: signature,
                 accepted_timestamp: new Date().toISOString()
             };
 
             const updatedPayload = { 
                 ...proposal.proposal_data, 
                 approval_snapshot: snapshot,
-                signature_data: signature
+                signature_data: signatureData
             };
 
             const { error } = await supabase
@@ -90,12 +90,47 @@ export default function PublicQuoteView() {
 
             if (error) throw error;
             
-            setAccepted(true);
             setProposal(prev => ({...prev, status: 'Approved', proposal_data: updatedPayload}));
-            toast.success("Proposal Accepted! Thank you.");
-            
+            setViewState('DEPOSIT');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (err) {
-            toast.error("Error finalizing your acceptance. Please contact your rep.");
+            toast.error("Error finalizing your signature. Please contact your rep.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDepositSave = async () => {
+        try {
+            setLoading(true);
+            const depositPayload = {
+                collected: true,
+                method: depositMethod || 'Other',
+                amount: parseFloat(depositAmount) || 0,
+                timestamp: new Date().toISOString()
+            };
+            
+            const updatedPayload = {
+                ...proposal.proposal_data,
+                deposit_data: depositPayload
+            };
+
+            const { error } = await supabase
+                .from('proposals')
+                .update({ 
+                    status: 'Closed',
+                    proposal_data: updatedPayload
+                })
+                .eq('id', id);
+
+            if (error) throw error;
+            
+            setProposal(prev => ({...prev, status: 'Closed', proposal_data: updatedPayload}));
+            setViewState('CLOSED');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            toast.success("Deal Locked & Closed!");
+        } catch (err) {
+            toast.error("Failed to log deposit.");
         } finally {
             setLoading(false);
         }
@@ -190,7 +225,7 @@ export default function PublicQuoteView() {
                     )}
                     
                     {/* Why Pilar Home Trust Elements */}
-                    {!accepted && (
+                    {(viewState === 'VIEW' || viewState === 'CONTRACT') && (
                         <div className="px-8 pb-8">
                             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6">
                                 <h4 className="text-[11px] uppercase tracking-widest font-black text-primary-600 mb-4">Why Homeowners Choose Pilar Home</h4>
@@ -223,74 +258,79 @@ export default function PublicQuoteView() {
 
                     {/* Frictionaless Acceptance Bottom Area */}
                     <div className="p-8 bg-slate-50 border-t border-slate-100">
-                        {accepted ? (
-                            <div className="text-center py-8 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                        {viewState === 'CLOSED' ? (
+                            <div className="text-center py-8 bg-white border border-slate-200 rounded-2xl shadow-sm mt-4">
                                 <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <Shield size={40} />
                                 </div>
-                                <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">You're all set!</h3>
+                                <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Deal Closed!</h3>
                                 <p className="text-base text-slate-600 mb-6 max-w-md mx-auto leading-relaxed">
-                                    Your approval has been received. A Pilar Home team member will contact you shortly to confirm next steps and schedule your installation.
+                                    Your approval and deposit have been received. Please check your email or review your finalized contract below.
                                 </p>
-                                <div className="inline-block bg-slate-50 border border-slate-200 px-6 py-3 rounded-xl">
+                                <div className="inline-block bg-slate-50 border border-slate-200 px-6 py-3 rounded-xl mb-6">
                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Reference ID</p>
                                     <p className="font-mono font-bold text-slate-700" title={proposal.proposal_number ? `Legacy ID: ${proposal.id}` : ''}>{formatQuoteId(proposal)}</p>
                                 </div>
+                                <br/>
+                                <a 
+                                   href={`mailto:?subject=Signed Contract - ${proposal.customer}&body=Hello,%0D%0A%0D%0AHere is a secure link to your finalized contract and deposit receipt:%0D%0A${window.location.href}%0D%0A%0D%0AThank you!`}
+                                   className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform hover:scale-105 inline-flex items-center gap-2"
+                                >
+                                   Email Receipt & Contract
+                                </a>
+                            </div>
+                        ) : viewState === 'DEPOSIT' ? (
+                            <div className="py-6 bg-white border border-slate-200 rounded-2xl shadow-sm px-6 max-w-md mx-auto">
+                                <h3 className="text-xl font-bold text-slate-800 mb-2 text-center">Signature Captured</h3>
+                                <p className="text-sm font-medium text-amber-600 bg-amber-50 rounded p-2 mb-6 text-center border border-amber-100">Please hand the device back to your representative to log the initial deposit.</p>
+                                
+                                <div className="space-y-4">
+                                    <div>
+                                       <label className="text-xs font-bold text-slate-700 uppercase mb-1 block">Deposit Method</label>
+                                       <select className="w-full border border-slate-300 rounded-lg p-3 outline-none focus:border-primary-500 text-slate-800" value={depositMethod} onChange={e=>setDepositMethod(e.target.value)}>
+                                          <option value="">Select Method...</option>
+                                          <option value="Credit Card">Credit Card / Terminal</option>
+                                          <option value="Check">Check</option>
+                                          <option value="Cash">Cash</option>
+                                          <option value="Financing">Financing Approved</option>
+                                          <option value="None">No Deposit Required</option>
+                                       </select>
+                                    </div>
+                                    {depositMethod !== 'None' && depositMethod !== '' && (
+                                        <div>
+                                           <label className="text-xs font-bold text-slate-700 uppercase mb-1 block">Deposit Amount ($)</label>
+                                           <input type="number" className="w-full border border-slate-300 rounded-lg p-3 outline-none focus:border-primary-500 font-mono text-slate-800" placeholder="1000.00" value={depositAmount} onChange={e=>setDepositAmount(e.target.value)}/>
+                                        </div>
+                                    )}
+                                    <button 
+                                        onClick={handleDepositSave}
+                                        disabled={loading || (!depositMethod || (depositMethod !== 'None' && !depositAmount))}
+                                        className="w-full bg-slate-900 hover:bg-black text-white font-bold py-4 rounded-xl transition-all shadow-md flex justify-center mt-2 disabled:opacity-50"
+                                    >
+                                        {loading ? 'Processing...' : 'Finalize Deal & Log Component'}
+                                    </button>
+                                </div>
+                            </div>
+                        ) : viewState === 'CONTRACT' ? (
+                            <div className="-mx-8 -mb-8">
+                                <SignaturePad onSave={handleSignatureSave} onCancel={() => setViewState('VIEW')} />
                             </div>
                         ) : (
                             <div>
                                 <h3 className="text-lg font-bold text-slate-800 mb-4">Ready to move forward?</h3>
-                                <p className="text-sm text-slate-500 mb-4 font-medium">By typing your name and clicking Accept, you electronically authorize this proposal.</p>
-                                <div className="flex flex-col sm:flex-row gap-3">
-                                    <input 
-                                       type="text" 
-                                       placeholder="Type your full name as signature" 
-                                       className="flex-1 px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 font-bold bg-white shadow-inner"
-                                       value={signature}
-                                       onChange={(e) => setSignature(e.target.value)}
-                                    />
-                                    <button 
-                                       onClick={handleAcceptClick}
-                                       disabled={loading}
-                                       className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-md hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 disabled:shadow-none sm:w-auto flex items-center justify-center gap-2"
-                                    >
-                                       {loading ? 'Processing...' : 'Accept & Move Forward'}
-                                    </button>
-                                </div>
+                                <p className="text-sm text-slate-500 mb-4 font-medium">Click below to proceed to the electronic signature capture.</p>
+                                <button 
+                                   onClick={handleAcceptClick}
+                                   className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-md hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                                >
+                                   Accept Proposal & Sign Contract
+                                </button>
                             </div>
                         )}
                     </div>
                 </div>
                 
-                {/* Double Opt-In Modal Overlay */}
-                {showConfirmation && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                        <div className="absolute -inset-10 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowConfirmation(false)}></div>
-                        <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200">
-                            <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mb-4">
-                                <HelpCircle size={24}/>
-                            </div>
-                            <h3 className="text-xl font-black text-slate-800 mb-2">Are you ready to move forward?</h3>
-                            <p className="text-sm text-slate-600 mb-6">
-                                You are electronically signing the <span className="font-bold">{tierName}</span> system proposal for <span className="font-bold">${price.toLocaleString()}</span>. 
-                            </p>
-                            <div className="flex gap-3">
-                                <button 
-                                    className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors"
-                                    onClick={() => setShowConfirmation(false)}>
-                                    Cancel
-                                </button>
-                                <button 
-                                    className="flex-1 px-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold transition-colors shadow-md"
-                                    onClick={handleConfirmAccept}>
-                                    Aprove Quote
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-                
-                <footer className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest">
+                <footer className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mt-8">
                     Powered by Pilar Home
                 </footer>
             </div>

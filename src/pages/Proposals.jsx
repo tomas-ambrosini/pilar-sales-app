@@ -15,7 +15,7 @@ import ProposalViewerModal from '../components/ProposalViewerModal';
 import ContractDocumentModal from '../components/ContractDocumentModal';
 import SignaturePad from '../components/SignaturePad';
 import ProposalComments from '../components/ProposalComments';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { formatQuoteId } from '../utils/formatters';
 
@@ -24,6 +24,7 @@ export default function Proposals() {
   const { proposals, addProposal, updateProposal, deleteProposal, loading } = useProposals();
   const { customers } = useCustomers();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [showWizard, setShowWizard] = useState(false);
   const [wizardConfig, setWizardConfig] = useState(null);
   const [inspectingProposal, setInspectingProposal] = useState(null);
@@ -77,7 +78,12 @@ export default function Proposals() {
       setInspectingProposal(proposal);
   };
 
-  if (showWizard) return <ProposalWizard onComplete={() => setShowWizard(false)} addProposal={addProposal} updateProposal={updateProposal} editModeData={wizardConfig} />;
+  if (showWizard) return <ProposalWizard onComplete={(proposalId, actionType) => {
+      setShowWizard(false);
+      if (actionType === 'present' && proposalId) {
+          navigate(`/quote/${proposalId}`);
+      }
+  }} addProposal={addProposal} updateProposal={updateProposal} editModeData={wizardConfig} />;
 
 
   const handleDeleteOpen = (proposal) => {
@@ -301,7 +307,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
           
           <div className="p-4 border-b border-slate-100 flex gap-2 overflow-x-auto bg-slate-50 custom-scrollbar">
-             {['All', 'Draft', 'Sent', 'Approved', 'Lost'].map(mode => (
+             {['All', 'Draft', 'Sent', 'Approved', 'Closed', 'Lost'].map(mode => (
                  <button 
                     key={mode} 
                     onClick={() => setFilterMode(mode)}
@@ -395,6 +401,8 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                            badgeColors = 'bg-blue-50 text-blue-700 border-blue-200';
                         } else if (proposal.status === 'Approved') {
                            badgeColors = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                        } else if (proposal.status === 'Closed') {
+                           badgeColors = 'bg-slate-900 text-white border-slate-900';
                         } else if (proposal.status === 'Lost') {
                            badgeColors = 'bg-red-50 text-red-700 border-red-200';
                         }
@@ -454,8 +462,8 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                      );
                                  })() : (
                                     <>
-                                      <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">Accepted</span>
-                                      <span className="text-sm font-black text-emerald-700 truncate">
+                                      <span className={`text-[9px] font-bold uppercase tracking-wider mb-0.5 ${proposal.status === 'Closed' ? 'text-slate-500' : 'text-emerald-600'}`}>{proposal.status === 'Closed' ? 'Closed' : 'Accepted'}</span>
+                                      <span className={`text-sm font-black truncate ${proposal.status === 'Closed' ? 'text-slate-800' : 'text-emerald-700'}`}>
                                          ${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                       </span>
                                     </>
@@ -505,7 +513,9 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                  {/* Main Action Button */}
                                  <button 
                                    className={`flex items-center justify-center gap-1.5 text-xs font-black py-2.5 rounded-lg shrink-0 w-[110px] shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none ${
-                                       proposal.status === 'Approved' 
+                                       proposal.status === 'Closed'
+                                          ? 'bg-slate-900 text-white hover:bg-black focus:ring-slate-900 border border-black'
+                                          : proposal.status === 'Approved' 
                                           ? 'bg-emerald-500 text-white hover:bg-emerald-600 focus:ring-emerald-500 border border-emerald-600' 
                                           : proposal.status === 'Sent'
                                           ? 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-600 border border-blue-700'
@@ -514,8 +524,8 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                           : 'bg-slate-500 text-white hover:bg-slate-600 focus:ring-slate-500 border border-slate-600'
                                    }`}
                                    onClick={() => {
-                                       if (proposal.status === 'Approved') {
-                                          const matchedTierName = proposal.proposal_data?.accepted_tier_name || ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers?.[t]?.salesPrice === proposal.amount) || 'good';
+                                       if (proposal.status === 'Approved' || proposal.status === 'Closed') {
+                                          const matchedTierName = proposal.proposal_data?.accepted_tier_name || proposal.proposal_data?.approval_snapshot?.tier || ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers?.[t]?.salesPrice === proposal.amount) || 'good';
                                           const matchedTierData = proposal.proposal_data?.accepted_tier_data || proposal.proposal_data?.tiers?.[matchedTierName];
                                           setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
                                        } else if (proposal.status === 'Draft') {
@@ -530,7 +540,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                        }
                                    }}
                                  >
-                                    {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : proposal.status === 'Lost' ? 'Review' : 'Resume'}
+                                    {proposal.status === 'Closed' ? 'Closed Deal' : proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : proposal.status === 'Lost' ? 'Review' : 'Resume'}
                                  </button>
                               </div>
                             </td>
