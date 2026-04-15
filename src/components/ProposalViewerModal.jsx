@@ -112,7 +112,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
   return typeof document !== 'undefined' ? createPortal(
     <div className={`fixed inset-0 z-[100] flex items-center justify-center modal-layout-wrapper transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
        {/* Backdrop */}
-       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
+       <div className="absolute -inset-10 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
        
        {/* Massive Modal Container */}
        <div className="relative bg-white rounded-xl shadow-2xl w-[95vw] max-w-6xl max-h-[90vh] flex flex-col overflow-hidden transform transition-transform duration-300 scale-100">
