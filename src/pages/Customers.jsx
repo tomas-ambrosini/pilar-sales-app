@@ -14,7 +14,7 @@ import { PIPELINE_STATES } from '../utils/pipelineControls';
 
 function CustomerList() {
   const navigate = useNavigate();
-  const { customers, archivedCustomers, loading, addCustomer, restoreCustomer } = useCustomers();
+  const { customers, archivedCustomers, loading, addCustomer, restoreCustomer, forceDeleteCustomer } = useCustomers();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(() => searchParams.get('action') === 'new');
@@ -239,12 +239,28 @@ function CustomerList() {
                      {viewMode === 'active' ? (
                         <ChevronRight size={16} className="text-slate-300 group-hover:text-primary-600 transition-colors inline-block" />
                      ) : (
-                        <button 
-                           onClick={(e) => { e.stopPropagation(); restoreCustomer(customer.id); }}
-                           className="bg-white border border-slate-200 text-slate-600 hover:text-primary-600 hover:border-primary-200 hover:bg-primary-50 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center justify-end gap-1"
-                        >
-                           Restore
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                           <button 
+                              onClick={(e) => { e.stopPropagation(); restoreCustomer(customer.id); }}
+                              className="bg-white border border-slate-200 text-slate-600 hover:text-primary-600 hover:border-primary-200 hover:bg-primary-50 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center gap-1"
+                           >
+                              Restore
+                           </button>
+                           {user?.role === 'SUPER_ADMIN' && (
+                              <button 
+                                 onClick={(e) => { 
+                                     e.stopPropagation(); 
+                                     if(window.confirm(`WARNING: Force delete completely wipes ${customer.name} and all associated data. This cannot be undone. Proceed?`)) {
+                                         forceDeleteCustomer(customer.id);
+                                     }
+                                 }}
+                                 className="bg-white border border-red-200 text-red-600 hover:bg-red-50 px-2 py-1.5 rounded-lg transition-all shadow-sm active:scale-95 flex items-center justify-center shrink-0"
+                                 title="Force Wipe"
+                              >
+                                 <Trash2 size={16} />
+                              </button>
+                           )}
+                        </div>
                      )}
                    </td>
                  </tr>

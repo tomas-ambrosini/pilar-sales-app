@@ -316,8 +316,26 @@ export function CustomerProvider({ children }) {
         }
     };
 
+    const forceDeleteCustomer = async (id) => {
+        try {
+            // Perform explicit cascading deletes to prevent Foreign Key constraint blocks
+            await supabase.from('opportunities').delete().eq('household_id', id);
+            await supabase.from('work_orders').delete().eq('household_id', id);
+            await supabase.from('contacts').delete().eq('household_id', id);
+            await supabase.from('addresses').delete().eq('household_id', id);
+            
+            const { error } = await supabase.from('households').delete().eq('id', id);
+            if (error) throw error;
+
+            setArchivedCustomers(prev => prev.filter(c => c.id !== id));
+        } catch (error) {
+            console.error('Failed to force delete customer:', error);
+            alert("Could not physically wipe customer data. It may be linked to unremovable financial records.");
+        }
+    };
+
     return (
-        <CustomerContext.Provider value={{ customers, archivedCustomers, addCustomer, updateCustomer, deleteCustomer, restoreCustomer, fetchArchivedCustomers, updatePropertyDetails, addPropertyToCustomer, loading }}>
+        <CustomerContext.Provider value={{ customers, archivedCustomers, addCustomer, updateCustomer, deleteCustomer, restoreCustomer, forceDeleteCustomer, fetchArchivedCustomers, updatePropertyDetails, addPropertyToCustomer, loading }}>
             {children}
         </CustomerContext.Provider>
     );
