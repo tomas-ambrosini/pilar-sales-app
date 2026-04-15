@@ -246,7 +246,7 @@ function CustomerList() {
                            >
                               Restore
                            </button>
-                           {user?.role === 'SUPER_ADMIN' && (
+                           {['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role) && (
                               <button 
                                  onClick={(e) => { 
                                      e.stopPropagation(); 
