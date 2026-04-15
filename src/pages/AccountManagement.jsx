@@ -263,8 +263,9 @@ export default function AccountManagement() {
 
       {/* CREATE MODAL */}
       {showCreateModal && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="absolute -inset-10 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowCreateModal(false)}></div>
+            <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
                <h3 className="text-xl font-black text-slate-800 mb-6 border-b pb-2">Provision Employee</h3>
                <form onSubmit={handleCreateUser} className="space-y-4">
                   <div>
@@ -306,9 +307,10 @@ export default function AccountManagement() {
 
       {/* EDIT MODAL */}
        {showEditModal && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-               <h3 className="text-xl font-black text-slate-800 mb-6 border-b pb-2">Manage {showEditModal.full_name}</h3>
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="absolute -inset-10 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowEditModal(null)}></div>
+            <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+               <h3 className="text-xl font-black text-slate-800 mb-6 border-b pb-2">Edit Access & Badges</h3>
                <form onSubmit={async (e) => {
                   e.preventDefault();
                   const fd = new FormData(e.target);
@@ -405,8 +407,9 @@ export default function AccountManagement() {
 
       {/* RESET PASSWORD MODAL */}
       {showResetModal && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 border-t-8 border-amber-500">
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="absolute -inset-10 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowResetModal(null)}></div>
+            <div className="relative bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 border-t-8 border-amber-500">
                <h3 className="text-lg font-black text-slate-800 mb-2">Force Auth Reset</h3>
                <p className="text-xs text-slate-500 font-medium mb-6">This will scramble the user's password and force them through the First Setup wall on their next login attempt.</p>
                <form onSubmit={handleResetPassword} className="space-y-4">
@@ -426,8 +429,9 @@ export default function AccountManagement() {
 
       {/* SUCCESS MODAL (ONBOARDING MESSAGE) */}
       {successPayload && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border-t-8 border-emerald-500">
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="absolute -inset-10 bg-slate-900/40 backdrop-blur-sm" onClick={() => setSuccessPayload(null)}></div>
+            <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border-t-8 border-emerald-500">
                <h3 className="text-xl font-black text-slate-800 mb-2">Account Provisioned!</h3>
                <p className="text-sm text-slate-600 mb-6">Send the following secure message to the team member so they can log in.</p>
                

@@ -79,7 +79,7 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
+            className="fixed -inset-10 bg-slate-900/40 backdrop-blur-sm"
             onClick={() => setIsOpen(false)}
           />
           

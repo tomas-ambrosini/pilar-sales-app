@@ -126,7 +126,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                exit={{ opacity: 0 }} 
                className="fixed inset-0 z-[100] flex flex-col items-center justify-center modal-layout-wrapper transition-all duration-300 print:static print:block print:inset-auto opacity-100 pointer-events-auto">
          {/* Print Backdrop */}
-         <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm print:hidden" onClick={onClose}></div>
+         <div className="absolute -inset-10 bg-slate-900/60 backdrop-blur-sm print:hidden" onClick={onClose}></div>
          
          {/* Top Action Bar (Hidden on print) */}
          <div className="action-bar absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 print:hidden bg-slate-900/80 backdrop-blur border-b border-slate-700 shadow-xl">

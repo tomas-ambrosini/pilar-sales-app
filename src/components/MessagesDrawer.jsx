@@ -1193,7 +1193,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
       
       {expandedImage && (
         <motion.div 
-          className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm cursor-zoom-out"
+          className="fixed -inset-10 z-[2000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm cursor-zoom-out"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

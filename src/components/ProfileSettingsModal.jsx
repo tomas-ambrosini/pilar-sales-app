@@ -153,8 +153,9 @@ export default function ProfileSettingsModal({ onClose }) {
   };
 
   return typeof document !== 'undefined' ? createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200 modal-layout-wrapper">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg border border-slate-200 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200 modal-layout-wrapper">
+      <div className="absolute -inset-10 bg-slate-900/60 backdrop-blur-md" onClick={onClose}></div>
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg border border-slate-200 overflow-hidden flex flex-col">
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
