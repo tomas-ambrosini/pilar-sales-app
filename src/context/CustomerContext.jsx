@@ -245,17 +245,27 @@ export function CustomerProvider({ children }) {
             // Optimistic fast update
             setCustomers(prev => prev.map(c => c.id === id ? { ...c, ...updatedData } : c));
             
-            // In a full production app, this would deeply update the 3 tables natively.
             if (updatedData.tags) {
                 await supabase.from('households').update({ tags: updatedData.tags }).eq('id', id);
             }
+            
+            const contactUpdates = {};
             if (updatedData.name) {
                 const nameParts = (updatedData.name || '').split(' ');
-                await supabase.from('contacts').update({ 
-                     first_name: nameParts[0] || 'Unknown', 
-                     last_name: nameParts.length > 1 ? nameParts.slice(1).join(' ') : '' 
-                }).eq('household_id', id);
+                contactUpdates.first_name = nameParts[0] || 'Unknown';
+                contactUpdates.last_name = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
             }
+            if (updatedData.email !== undefined) {
+                contactUpdates.email = updatedData.email;
+            }
+            if (updatedData.phone !== undefined) {
+                contactUpdates.primary_phone = updatedData.phone;
+            }
+
+            if (Object.keys(contactUpdates).length > 0) {
+                await supabase.from('contacts').update(contactUpdates).eq('household_id', id);
+            }
+            
             fetchCustomers();
         } catch (e) {
             console.error("Failed to update customer", e);

@@ -540,7 +540,16 @@ function CustomerDetail() {
           </div>
         </div>
         <div className="contact-actions">
-          <button className="icon-btn outline" onClick={() => setIsEditModalOpen(true)} title="Edit Customer"><Edit2 size={18} /></button>
+          <button className="icon-btn outline" onClick={() => {
+              setEditFormData({
+                  name: customer?.name || '',
+                  email: customer?.email || '',
+                  phone: customer?.phone || '',
+                  address: customer?.address || '',
+                  tags: customer?.tags ? customer.tags.join(', ') : ''
+              });
+              setIsEditModalOpen(true);
+          }} title="Edit Customer"><Edit2 size={18} /></button>
           <button className="icon-btn outline" onClick={() => setActiveQuickAction('Call Customer')} title="Call Customer"><Phone size={18} /></button>
           <button className="icon-btn outline" onClick={() => setActiveQuickAction('Email Customer')} title="Email Customer"><Mail size={18} /></button>
           <button className="icon-btn outline" style={{color: 'var(--color-danger)', borderColor: 'var(--color-danger)'}} onClick={() => setIsDeleteModalOpen(true)} title="Archive Customer"><Trash2 size={18} /></button>
