@@ -31,10 +31,10 @@ serve(async (req) => {
     // Initialize Supabase Admin Client to bypass RLS and fetch all necessary relations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Fetch the proposal to get customer name and associated opportunity (for emailing)
+    // Fetch the proposal to get customer name, associated opportunity (for emailing), and the creator's profile
     const { data: proposal, error: proposalError } = await supabaseAdmin
       .from('proposals')
-      .select('*, opportunities(household_id)')
+      .select('*, opportunities(household_id), user_profiles(full_name)')
       .eq('id', proposalId)
       .single()
 
@@ -74,11 +74,14 @@ serve(async (req) => {
 
     // Construct the payload
     const firstName = proposal.customer?.split(' ')[0] || 'there';
+    const repName = proposal.user_profiles?.full_name || 'Pilar Home Representative';
+    const fromString = `${repName} <tomas@pilarservices.com>`;
+    
     // We assume the frontend application is running on lotarri.com
     const proposalLink = `https://lotarri.com/quote/${proposalId}`;
 
     const emailSubject = `Your Pilar Home Proposal`;
-    const emailBodyTxt = `Hi ${firstName},\n\nYour Pilar Home proposal is ready. You can securely review your options here: \n\n${proposalLink}\n\nLet me know what you think when you're ready.\n\nBest,\nPilar Home`;
+    const emailBodyTxt = `Hi ${firstName},\n\nYour Pilar Home proposal is ready. You can securely review your options here: \n\n${proposalLink}\n\nLet me know what you think when you're ready.\n\nBest,\n${repName}\nPilar Home`;
 
     // HTML Version
     const emailBodyHtml = `
@@ -99,7 +102,8 @@ serve(async (req) => {
         <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;">
         <p style="font-size: 12px; color: #94a3b8;">
           Best regards,<br>
-          <strong>Pilar Home Sales Team</strong>
+          <strong style="color: #475569; font-size: 14px;">${repName}</strong><br>
+          Pilar Home Sales Team
         </p>
       </div>
     `;
@@ -112,7 +116,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${resendApiKey}`
       },
       body: JSON.stringify({
-        from: 'tomas@pilarservices.com',
+        from: fromString,
         to: [customerEmail],
         subject: emailSubject,
         text: emailBodyTxt,
