@@ -524,10 +524,8 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                           : 'bg-slate-500 text-white hover:bg-slate-600 focus:ring-slate-500 border border-slate-600'
                                    }`}
                                    onClick={() => {
-                                       if (proposal.status === 'Approved' || proposal.status === 'Closed') {
-                                          const matchedTierName = proposal.proposal_data?.accepted_tier_name || proposal.proposal_data?.approval_snapshot?.tier || ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers?.[t]?.salesPrice === proposal.amount) || 'good';
-                                          const matchedTierData = proposal.proposal_data?.accepted_tier_data || proposal.proposal_data?.tiers?.[matchedTierName];
-                                          setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
+                                       if (proposal.status === 'Approved' || proposal.status === 'Closed' || proposal.status === 'Sent') {
+                                          window.open(`/quote/${proposal.id}`, '_self');
                                        } else if (proposal.status === 'Draft') {
                                           if (proposal.created_by && proposal.created_by !== user?.id) {
                                               toast.error('Access Denied: This draft is locked by its creator.');
