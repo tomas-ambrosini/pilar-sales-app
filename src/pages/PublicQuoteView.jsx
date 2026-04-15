@@ -10,14 +10,12 @@ export default function PublicQuoteView() {
     const { id } = useParams();
     const [proposal, setProposal] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    
-    // VIEW -> CONTRACT -> DEPOSIT -> CLOSED
-    const [viewState, setViewState] = useState('VIEW'); 
-    
-    // Deposit State
+    const [viewState, setViewState] = useState('VIEW'); // VIEW, CONTRACT, DEPOSIT, CLOSED
+    const [error, setError] = useState(false);
+    const [signature, setSignature] = useState(null);
     const [depositMethod, setDepositMethod] = useState('');
     const [depositAmount, setDepositAmount] = useState('');
+    const [isSendingEmail, setIsSendingEmail] = useState(false);
 
     useEffect(() => {
         const fetchProposal = async () => {
@@ -128,7 +126,19 @@ export default function PublicQuoteView() {
             setProposal(prev => ({...prev, status: 'Closed', proposal_data: updatedPayload}));
             setViewState('CLOSED');
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            toast.success("Deal Locked & Closed!");
+            toast.success("Deal Locked! Sending Receipt...");
+            
+            // Background dispatch of email
+            supabase.functions.invoke('send-close-documents', {
+                body: { proposalId: id }
+            }).then(({ error: invokeError }) => {
+                if (invokeError) {
+                    console.error("Invoke Error:", invokeError);
+                    toast.error("Deal closed, but receipt email failed to send.");
+                } else {
+                    toast.success("Client receipt email delivered!");
+                }
+            });
         } catch (err) {
             toast.error("Failed to log deposit.");
         } finally {
@@ -289,12 +299,19 @@ export default function PublicQuoteView() {
                                     </div>
 
                                     <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center items-center">
-                                        <a 
-                                           href={`mailto:?subject=Signed Contract - ${proposal.customer}&body=Hello,%0D%0A%0D%0AHere is a secure link to your finalized contract and deposit receipt. This link acts as your digital record:%0D%0A${window.location.href}%0D%0A%0D%0AThank you!`}
-                                           className="w-full sm:w-auto bg-white hover:bg-slate-50 text-slate-900 font-black tracking-wide py-4 px-8 rounded-xl shadow-lg transition-transform hover:scale-[1.02] active:scale-95 inline-flex items-center justify-center gap-2"
+                                        <button 
+                                           onClick={async () => {
+                                               setIsSendingEmail(true);
+                                               const { error } = await supabase.functions.invoke('send-close-documents', { body: { proposalId: id } });
+                                               setIsSendingEmail(false);
+                                               if (error) toast.error("Failed to resend receipt.");
+                                               else toast.success("Receipt resent successfully!");
+                                           }}
+                                           disabled={isSendingEmail}
+                                           className="w-full sm:w-auto bg-white hover:bg-slate-50 text-slate-900 font-black tracking-wide py-4 px-8 rounded-xl shadow-lg transition-transform hover:scale-[1.02] active:scale-95 inline-flex items-center justify-center gap-2 disabled:opacity-50"
                                         >
-                                           <Mail size={18}/> Email Receipt & Contract
-                                        </a>
+                                           <Mail size={18}/> {isSendingEmail ? 'Sending...' : 'Issue Replacement Receipt'}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
