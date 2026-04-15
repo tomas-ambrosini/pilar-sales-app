@@ -259,25 +259,44 @@ export default function PublicQuoteView() {
                     {/* Frictionaless Acceptance Bottom Area */}
                     <div className="p-8 bg-slate-50 border-t border-slate-100">
                         {viewState === 'CLOSED' ? (
-                            <div className="text-center py-8 bg-white border border-slate-200 rounded-2xl shadow-sm mt-4">
-                                <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <Shield size={40} />
+                            <div className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-8 sm:p-12 text-center text-white mt-4">
+                                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-emerald-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+                                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-primary-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+
+                                <div className="relative z-10 space-y-6">
+                                    <div className="mx-auto w-24 h-24 bg-gradient-to-tr from-emerald-400 to-emerald-600 rounded-full shadow-lg shadow-emerald-500/30 flex items-center justify-center mb-8 border-4 border-slate-900/50">
+                                        <CheckCircle size={48} className="text-white" strokeWidth={2.5}/>
+                                    </div>
+                                    
+                                    <div className="space-y-2">
+                                        <h3 className="text-3xl font-black tracking-tight text-white">Deal Authorized & Locked</h3>
+                                        <p className="text-lg text-slate-300 font-medium">Congratulations! Your system has been officially secured.</p>
+                                    </div>
+
+                                    <div className="max-w-md mx-auto bg-slate-800/50 backdrop-blur-md border border-slate-700/50 rounded-2xl p-6 mb-8 text-left space-y-4">
+                                        <div className="flex justify-between items-center border-b border-slate-700/50 pb-4">
+                                            <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Reference ID</span>
+                                            <span className="font-mono text-sm font-black text-emerald-400">{formatQuoteId(proposal)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center border-b border-slate-700/50 pb-4">
+                                            <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Deposit Received</span>
+                                            <span className="text-sm font-black text-white">{proposal.proposal_data?.deposit_data?.method || 'None'} / ${(proposal.proposal_data?.deposit_data?.amount || 0).toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">System Tier</span>
+                                            <span className="text-sm font-black text-white capitalize">{proposal.proposal_data?.approval_snapshot?.tier || 'System'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center items-center">
+                                        <a 
+                                           href={`mailto:?subject=Signed Contract - ${proposal.customer}&body=Hello,%0D%0A%0D%0AHere is a secure link to your finalized contract and deposit receipt. This link acts as your digital record:%0D%0A${window.location.href}%0D%0A%0D%0AThank you!`}
+                                           className="w-full sm:w-auto bg-white hover:bg-slate-50 text-slate-900 font-black tracking-wide py-4 px-8 rounded-xl shadow-lg transition-transform hover:scale-[1.02] active:scale-95 inline-flex items-center justify-center gap-2"
+                                        >
+                                           <Mail size={18}/> Email Receipt & Contract
+                                        </a>
+                                    </div>
                                 </div>
-                                <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Deal Closed!</h3>
-                                <p className="text-base text-slate-600 mb-6 max-w-md mx-auto leading-relaxed">
-                                    Your approval and deposit have been received. Please check your email or review your finalized contract below.
-                                </p>
-                                <div className="inline-block bg-slate-50 border border-slate-200 px-6 py-3 rounded-xl mb-6">
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Reference ID</p>
-                                    <p className="font-mono font-bold text-slate-700" title={proposal.proposal_number ? `Legacy ID: ${proposal.id}` : ''}>{formatQuoteId(proposal)}</p>
-                                </div>
-                                <br/>
-                                <a 
-                                   href={`mailto:?subject=Signed Contract - ${proposal.customer}&body=Hello,%0D%0A%0D%0AHere is a secure link to your finalized contract and deposit receipt:%0D%0A${window.location.href}%0D%0A%0D%0AThank you!`}
-                                   className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform hover:scale-105 inline-flex items-center gap-2"
-                                >
-                                   Email Receipt & Contract
-                                </a>
                             </div>
                         ) : viewState === 'DEPOSIT' ? (
                             <div className="py-6 bg-white border border-slate-200 rounded-2xl shadow-sm px-6 max-w-md mx-auto">
