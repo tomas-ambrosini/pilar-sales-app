@@ -509,7 +509,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                           setWizardConfig({ id: proposal.id, ...proposal });
                                           setShowWizard(true);
                                        } else {
-                                          setViewingProposal(proposal);
+                                          setViewingProposal(proposal.status === 'Lost' ? { ...proposal, isReadOnly: true } : proposal);
                                        }
                                    }}
                                  >
@@ -599,7 +599,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                const matchedTierData = proposal.proposal_data?.accepted_tier_data || proposal.proposal_data?.tiers?.[matchedTierName];
                setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
             } else {
-               setViewingProposal({ ...proposal, isReadOnly: true });
+               setViewingProposal(proposal.status === 'Lost' ? { ...proposal, isReadOnly: true } : proposal);
             }
         }}
       />
