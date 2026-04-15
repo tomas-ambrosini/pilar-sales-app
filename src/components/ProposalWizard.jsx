@@ -886,11 +886,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
         {step === 5 && (
           <div>
-            <h3 className="font-bold mb-2 text-slate-800 flex items-center gap-2"><DollarSign className="text-emerald-600"/> 5. Internal Pricing Controls & Offer Discounting</h3>
-            <div className="glass-panel border-red-200 bg-red-50/20 mb-6 flex gap-3 p-4 items-start">
-               <AlertTriangle className="text-red-500 mt-1 shrink-0" size={20}/>
-               <p className="text-xs text-red-800 font-medium"><strong>Confidential Dashboard:</strong> This data reflects absolute floor costs and backend margin protections. Your base commission algorithm operates against the <span className="underline font-bold">Target System Par</span>. Providing a retail discount strictly lowers the final transaction price, not your proportional algorithmic baseline.</p>
-            </div>
+            <h3 className="font-bold mb-6 text-slate-800 flex items-center gap-2"><DollarSign className="text-emerald-600"/> 5. Proposal Presentation</h3>
 
 
 
@@ -931,47 +927,40 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                  const equip = sys.selectedTiers[tier.k];
 
                                  return (
-                                 <div key={tier.k} className="bg-white border-2 border-slate-200 rounded-xl overflow-hidden shadow-md flex flex-col">
-                                    <div className="bg-slate-100 py-3 px-4 border-b border-slate-200 font-bold text-sm text-center uppercase tracking-wider text-slate-600">{tier.l}</div>
-                                    <div className="p-5 flex-1 flex flex-col gap-4">
+                                 <div key={tier.k} className="bg-white border text-slate-800 rounded-2xl overflow-hidden shadow-lg flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 border-slate-200">
+                                    <div className="bg-slate-50 py-4 px-4 border-b border-slate-200 text-center">
+                                       <h4 className="font-black text-lg tracking-widest uppercase text-slate-800">{tier.l.split('(')[0].trim()}</h4>
+                                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 block">Selected Tier</span>
+                                    </div>
+                                    <div className="p-6 flex-1 flex flex-col justify-between gap-6">
                                        
-                                       <div className="bg-slate-50 border border-slate-100 rounded p-3 text-xs space-y-1.5 font-mono">
-                                          <div className="flex justify-between text-slate-500"><span>Raw System/Mat:</span><span>${raw.toFixed(2)}</span></div>
-                                          <div className="flex justify-between text-slate-500 border-b border-slate-200 pb-1.5"><span>V-Labor Addons:</span><span>+ ${(floorCost - raw).toFixed(2)}</span></div>
-                                          <div className="flex justify-between font-bold text-slate-700"><span>Hard Cost Total:</span><span>${floorCost.toFixed(2)}</span></div>
-                                          <div className="flex justify-between text-slate-500 pt-1.5"><span>1st Yr Reserve:</span><span>+ {((margins.service_reserve || 0.05)*100).toFixed(1)}%</span></div>
-                                          <div className="flex justify-between text-slate-500"><span>Target Markup:</span><span>/ {((1 - tier.m)*100).toFixed(1)}% Par</span></div>
-                                       </div>
-               
                                        <div className="text-center pt-2">
-                                          <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1">Target Retail Baseline</label>
-                                          <div className="text-2xl font-black text-slate-800">${baselineRetail.toLocaleString()}</div>
-                                          <div className="text-xs font-bold text-emerald-600 mt-1">Algorithmic Commission: ${baseComm.toLocaleString()}</div>
+                                          <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-1">Standard Investment</label>
+                                          <div className={`text-4xl font-black ${discountAmount > 0 ? 'line-through text-slate-300' : 'text-slate-800'}`}>${baselineRetail.toLocaleString()}</div>
                                        </div>
                
-                                       <div className="space-y-1 mt-2 border-t border-slate-100 pt-3">
-                                          <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-2 text-center">Selected Equipment</label>
-                                          <div className="bg-slate-50 p-2 rounded border border-slate-200 flex justify-between items-center text-xs">
-                                              <div className="flex flex-col">
-                                                  <span className="font-bold text-slate-700">{equip.brand}</span>
-                                                  <span className="text-[10px] text-slate-500">{equip.series}</span>
-                                              </div>
-                                              <div className="text-right flex flex-col items-end">
-                                                  <span className="font-mono font-bold text-slate-600">${equip.system_cost?.toLocaleString()}</span>
-                                                  <span className="font-mono text-[9px] bg-slate-200 text-slate-500 px-1 py-0.5 rounded leading-none mt-0.5">{equip.tons}T</span>
-                                              </div>
+                                       <div className="space-y-1 py-4 border-y border-slate-100">
+                                          <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-2 text-center">Equipment Package</label>
+                                          <div className="flex flex-col items-center text-center gap-1">
+                                              <span className="font-black text-slate-800 text-xl">{equip.brand}</span>
+                                              <span className="text-sm font-medium text-slate-500 mb-2">{equip.series}</span>
+                                              <span className="font-mono text-xs bg-slate-100 text-slate-600 font-bold px-3 py-1 rounded-full">{equip.tons} TON SYSTEM</span>
                                           </div>
                                        </div>
                
-                                       <div className="mt-auto pt-4 border-t border-slate-100 relative">
-                                          <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1 text-center">Global Discount Application</label>
-                                          <div className="text-center mb-4 text-danger font-black">
-                                             - ${discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} (-{percent}%)
-                                          </div>
+                                       <div className="text-center">
+                                          {discountAmount > 0 && (
+                                              <div className="mb-4">
+                                                 <label className="text-[10px] uppercase font-bold text-emerald-500 tracking-widest block mb-1">Approved Savings applied</label>
+                                                 <div className="inline-block bg-emerald-50 text-emerald-600 font-black px-4 py-1.5 rounded-xl border border-emerald-100">
+                                                    - ${discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                 </div>
+                                              </div>
+                                          )}
                
-                                          <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-1 text-center">Final Presentable Price</label>
-                                          <div className={`text-3xl font-black text-center ${isBelowFloor ? 'text-danger bg-red-100 animate-pulse rounded py-1' : 'text-primary-700'}`}>${finalPrice.toLocaleString()}</div>
-                                          {isBelowFloor && <p className="text-[10px] font-bold text-danger mt-2 text-center">ERROR: Dropping below absolute internal hard costs (${absoluteTotalFloor.toFixed(2)}).</p>}
+                                          <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-1">Total System Investment</label>
+                                          <div className={`text-[42px] leading-none tracking-tight font-black ${isBelowFloor ? 'text-red-500' : 'text-primary-800'}`}>${finalPrice.toLocaleString()}</div>
+                                          {isBelowFloor && <p className="text-[10px] font-bold text-red-500 mt-3 bg-red-50 p-2 rounded">Error: Pricing below acceptable floor rules.</p>}
                                        </div>
                
                                     </div>
