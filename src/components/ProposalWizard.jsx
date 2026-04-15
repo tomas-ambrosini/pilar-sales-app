@@ -355,7 +355,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     return ((rawEquipCost + taxableMaterials) * (1 + taxRate)) + nontaxableLabor;
   };
 
-  const generateProposal = async (actionIntent = 'present') => {
+  const generateProposal = async () => {
     if (syncTimer.current) clearTimeout(syncTimer.current);
     
     let systemBestSum = 0;
@@ -482,22 +482,19 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        const finalOppId = oppData ? oppData.id : null;
        const linkedProposalData = { ...finalProposalData, associated_opportunity_id: finalOppId, wizard_state: wizardState };
        
-       let finalId = draftServerId;
        if (draftServerId) {
-          await updateProposal(draftServerId, { customer: customerName, amount: finalAmount, status: 'Sent', associated_opportunity_id: finalOppId, proposal_data: linkedProposalData, updated_at: new Date().toISOString() });
+          updateProposal(draftServerId, { customer: customerName, amount: finalAmount, status: 'Sent', associated_opportunity_id: finalOppId, proposal_data: linkedProposalData, updated_at: new Date().toISOString() });
        } else {
-          finalId = await addProposal({ customer: customerName, amount: finalAmount, associated_opportunity_id: finalOppId, proposal_data: linkedProposalData });
+          addProposal({ customer: customerName, amount: finalAmount, associated_opportunity_id: finalOppId, proposal_data: linkedProposalData });
        }
-       onComplete(finalId, actionIntent);
     } else {
-       let finalId = draftServerId;
        if (draftServerId) {
-          await updateProposal(draftServerId, { customer: customerName, amount: finalAmount, status: 'Sent', proposal_data: { ...finalProposalData, wizard_state: wizardState }, updated_at: new Date().toISOString() });
+          updateProposal(draftServerId, { customer: customerName, amount: finalAmount, status: 'Sent', proposal_data: { ...finalProposalData, wizard_state: wizardState }, updated_at: new Date().toISOString() });
        } else {
-          finalId = await addProposal({ customer: customerName, amount: finalAmount, proposal_data: { ...finalProposalData, wizard_state: wizardState } });
+          addProposal({ customer: customerName, amount: finalAmount, proposal_data: { ...finalProposalData, wizard_state: wizardState } });
        }
-       onComplete(finalId, actionIntent);
     }
+    onComplete();
   };
 
   if (!dbReady) return <div className="page-container flex-center"><h3>Loading Live Pricing Engines...</h3></div>;
@@ -1079,15 +1076,10 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
              <h3 className="text-2xl font-black text-slate-800 mb-2">Proposal Mathematical Ready</h3>
              <p className="text-sm text-slate-500 mb-10 max-w-lg mx-auto">The digital payloads have been mathematically validated. Click below to immutably snap these 3 tiers to the database, generate the link, and fire the opportunity to the Pipeline Board.</p>
              
-             <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <button className="btn-secondary flex items-center justify-center gap-2" onClick={() => setStep(5)}>
-                   <ArrowLeft size={16}/> Modify Margins
-                </button>
-                <button className="bg-slate-900 hover:bg-black text-white px-6 py-3 rounded-lg font-black tracking-wide flex items-center justify-center gap-2 shadow-md transition-colors" onClick={() => generateProposal('save')}>
-                   {isEditing ? 'OVERWRITE & CLOSE' : 'GENERATE & CLOSE'}
-                </button>
-                <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-lg font-black tracking-wide flex items-center justify-center gap-2 shadow-xl hover:scale-105 transition-transform" onClick={() => generateProposal('present')}>
-                   {isEditing ? 'OVERWRITE & PRESENT IN HOME' : 'GENERATE & PRESENT IN HOME'}
+             <div className="flex justify-center gap-4">
+                <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(5)}><ArrowLeft size={16}/> Modify Margins</button>
+                <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-lg font-black tracking-wide flex items-center gap-2 shadow-xl hover:scale-105 transition-transform" onClick={generateProposal}>
+                   {isEditing ? 'OVERWRITE & UPDATE PROPOSAL' : 'GENERATE DIGITAL PROPOSAL'}
                 </button>
              </div>
           </div>
