@@ -263,7 +263,20 @@ export function CustomerProvider({ children }) {
             }
 
             if (Object.keys(contactUpdates).length > 0) {
-                await supabase.from('contacts').update(contactUpdates).eq('household_id', id);
+                const { data: updatedRows, error: updateErr } = await supabase.from('contacts')
+                    .update(contactUpdates)
+                    .eq('household_id', id)
+                    .select('id');
+                    
+                if (updateErr) {
+                    console.error("Supabase Contact Update Error:", updateErr);
+                } else if (!updatedRows || updatedRows.length === 0) {
+                    // LEGACY FIX: Customer has no contact row in the DB! We must force insert one.
+                    await supabase.from('contacts').insert({ 
+                        ...contactUpdates, 
+                        household_id: id 
+                    });
+                }
             }
             
             fetchCustomers();
