@@ -363,9 +363,10 @@ export default function CatalogEditor() {
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 leading-tight">
                     <th className="p-4 font-semibold w-24">SKU</th>
                     <th className="p-4 font-semibold w-1/5">Financial Category</th>
-                    <th className="p-4 font-semibold w-1/3">Service or Material Line Item</th>
-                    <th className="p-4 font-semibold text-center w-24">Stock</th>
-                    <th className="p-4 font-semibold text-right">Fixed Cost</th>
+                    <th className="p-4 font-semibold w-1/4">Service or Material Line Item</th>
+                    <th className="p-4 font-semibold text-center w-20">Stock</th>
+                    <th className="p-4 font-semibold text-right w-32">Raw Cost</th>
+                    <th className="p-4 font-semibold text-right w-32">Target Retail</th>
                     <th className="p-4 font-semibold text-center w-24">Actions</th>
                   </tr>
                 </thead>
@@ -401,13 +402,31 @@ export default function CatalogEditor() {
                            <td className="p-4 font-black text-slate-800 text-base tracking-tight">{labor.item_name}</td>
                            <td className="p-4 text-center">
                               <span className={`font-bold px-2 py-1 rounded-md text-xs border ${labor.in_stock_quantity > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
-                                 {labor.in_stock_quantity || 0}
-                              </span>
-                           </td>
-                           <td className="p-4 text-right font-black font-mono text-slate-700 text-base">
-                              ${labor.cost?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                           </td>
-                           <td className="p-4 text-center">
+                              {labor.in_stock_quantity || 0}
+                           </span>
+                        </td>
+                        <td className="p-4 text-right font-black font-mono text-red-600 text-base">
+                           ${labor.cost?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="p-4 text-right">
+                           {(() => {
+                               const rawCost = parseFloat(labor.cost || 0);
+                               const taxRate = margins?.sales_tax || 0.07;
+                               const reserve = margins?.service_reserve || 0.05;
+                               const margin = margins?.good_margin || 0.35;
+                               
+                               const isTaxExempt = ['Labor', 'Install', 'Subcontract', 'Permit'].includes(labor.category);
+                               const appliedTax = isTaxExempt ? 0 : taxRate;
+                               const projectedRetail = (rawCost * (1 + appliedTax) * (1 + reserve)) / (1 - margin);
+
+                               return (
+                                   <span className="font-black text-white bg-emerald-600 shadow-sm px-3.5 py-1 rounded-full inline-block text-[13px] tracking-wide">
+                                      ${projectedRetail.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                   </span>
+                               );
+                           })()}
+                        </td>
+                        <td className="p-4 text-center">
                               <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                  <button className="bg-white border border-slate-200 p-1.5 rounded-md text-slate-400 hover:text-primary-600 hover:border-primary-200 shadow-sm transform hover:scale-105 transition-all" onClick={() => { setActiveLabor(labor); setIsLaborModalOpen(true); }}><Edit2 size={16} /></button>
                                  <button className="bg-white border border-slate-200 p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-red-50 hover:border-red-200 shadow-sm transform hover:scale-105 transition-all" onClick={() => handleDeleteLabor(labor.id)}><Trash2 size={16} /></button>
