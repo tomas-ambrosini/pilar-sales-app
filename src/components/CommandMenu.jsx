@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Command } from 'cmdk';
-import { Search, LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Settings, LogOut, ArrowRight, UserCheck } from 'lucide-react';
+import { Search, LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Settings, LogOut, ArrowRight, UserCheck, DollarSign } from 'lucide-react';
 import { useCustomers } from '../context/CustomerContext';
 import { useProposals } from '../context/ProposalContext';
 import { useRole, ROLES } from '../context/RoleContext';
@@ -15,6 +15,7 @@ const STATIC_COMMANDS = [
   { id: 'prop', name: 'Create New Proposal', icon: FileCheck, route: '/proposals?action=new', section: 'Actions', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
   { id: 'cat', name: 'Equipment Catalog', icon: BookOpen, route: '/catalog', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
   { id: 'promo_codes', name: 'Promo Codes', icon: BookOpen, route: '/promo-codes', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+  { id: 'financial_settings', name: 'Financial Ops Configurations', icon: DollarSign, route: '/financial-settings', section: 'System', allowedRoles: [ROLES.ADMIN] },
   { id: 'template_settings', name: 'Template Settings', icon: Settings, route: '/template-settings', section: 'System', allowedRoles: [ROLES.ADMIN] },
   { id: 'settings', name: 'Account Management', icon: Settings, route: '/account-management', section: 'System', allowedRoles: [ROLES.ADMIN] },
   { id: 'pipe', name: 'Pipeline Ops', icon: ClipboardList, route: '/pipeline', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
