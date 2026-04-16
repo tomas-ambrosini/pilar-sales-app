@@ -3,7 +3,7 @@ import Modal from './Modal';
 import ProposalComments from './ProposalComments';
 import { formatQuoteId } from '../utils/formatters';
 import { useCustomers } from '../context/CustomerContext';
-import { User, FileText, Calendar, Activity, Mail, Phone, MapPin, Grid, Camera, ThermometerSun, AlertCircle } from 'lucide-react';
+import { User, FileText, Calendar, Activity, Mail, Phone, MapPin, Grid, Camera, ThermometerSun, AlertCircle, CheckCircle, PackageCheck } from 'lucide-react';
 
 const MEASUREMENTS = {
   m1: "Ret W", m2: "Ret D", m3: "Sup W", m4: "Sup D", m5: "Ret Box W",
@@ -266,6 +266,20 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
                                                                 <span className="text-sm font-bold text-emerald-600">${((sData.salesPrice || 0)).toLocaleString()}</span>
                                                             </div>
                                                         </div>
+                                                        
+                                                        {sData.features && sData.features.some(f => f.startsWith('Includes: ')) && (
+                                                           <div className="mt-6 pt-4 border-t border-slate-100">
+                                                              <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><PackageCheck size={12}/> Contracted Materials & Logistics</h5>
+                                                              <div className="flex flex-wrap gap-2">
+                                                                 {sData.features.filter(f => f.startsWith('Includes: ')).map((feat, fIdx) => (
+                                                                    <span key={fIdx} className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                                                                       <CheckCircle size={10} className="text-emerald-500" />
+                                                                       {feat.replace('Includes: ', '')}
+                                                                    </span>
+                                                                 ))}
+                                                              </div>
+                                                           </div>
+                                                        )}
                                                     </div>
                                                 ));
                                             })()}
