@@ -405,9 +405,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                                     {proposal.status === 'Lost' && (
                                                        <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" onClick={() => handleReopen(proposal)} title="Re-open Proposal"><RotateCcw size={14} /></button>
                                                     )}
-                                                    <button onClick={() => handleMailto(proposal)} className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-50 rounded transition-colors" title="Email Client"><Mail size={14} /></button>
                                                     <button onClick={() => handleCopyMessage(proposal)} className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-50 rounded transition-colors" title="Copy Message"><Copy size={14} /></button>
-                                                    <button onClick={() => handleCopyLink(proposal)} className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-50 rounded transition-colors" title="Copy Link"><Link size={14} /></button>
                                                  </div>
                                                  <button 
                                                     className={`ml-auto flex items-center justify-center text-[10px] font-black px-4 py-1.5 rounded-md shadow-sm transition-all focus:ring-2 outline-none ${
@@ -612,11 +610,9 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                     )}
                                  </div>
 
-                                 {/* Email/Copy/Link Group */}
+                                 {/* Copy Message Utility */}
                                  <div className="flex items-center border border-slate-200 rounded-lg shrink-0 bg-white shadow-sm overflow-hidden min-w-max">
-                                    <button onClick={() => handleMailto(proposal)} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors border-r border-slate-200" title="Email Client"><Mail size={16} /></button>
-                                    <button onClick={() => handleCopyMessage(proposal)} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors border-r border-slate-200" title="Copy Message"><Copy size={16} /></button>
-                                    <button onClick={() => handleCopyLink(proposal)} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors" title="Copy Link"><Link size={16} /></button>
+                                    <button onClick={() => handleCopyMessage(proposal)} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors" title="Copy Message"><Copy size={16} /></button>
                                  </div>
 
                                  {/* Main Action Button */}
