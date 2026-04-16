@@ -320,7 +320,7 @@ export default function CatalogEditor() {
                          <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 hover:shadow-inner transition-colors group cursor-pointer" onClick={() => { setActiveEquip(item); setIsEquipModalOpen(true); }}>
 
                            <td className="p-4">
-                              <div className="font-black text-slate-800 tracking-tight text-lg mb-0.5 leading-tight">{item.brand}</div>
+                              <div className="font-black text-slate-800 tracking-tight text-base mb-0.5">{item.brand}</div>
                               <div className="text-xs text-slate-500 font-bold tracking-widest uppercase">{item.series} Series</div>
                            </td>
                            <td className="p-4">
@@ -338,8 +338,8 @@ export default function CatalogEditor() {
                               </div>
                            </td>
                            <td className="p-4 text-right">
-                              <span className="font-mono font-black text-slate-400 text-sm">$</span>
-                              <span className="font-black text-slate-700 text-lg">{item.system_cost?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                              <span className="font-mono font-black text-slate-400 text-sm mr-0.5">$</span>
+                              <span className="font-black text-slate-700 text-base">{item.system_cost?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                            </td>
                            <td className="p-4 text-right">
                               <span className="font-black text-white bg-emerald-600 shadow-sm px-3.5 py-1.5 rounded-full inline-block text-[13px] tracking-wide border border-emerald-500">
@@ -420,9 +420,8 @@ export default function CatalogEditor() {
                               </span>
                            </td>
                            <td className="p-4 text-right">
-                              <span className="font-mono font-black text-red-600 text-base">
-                                 ${labor.cost?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                              </span>
+                              <span className="font-mono font-black text-slate-400 text-sm mr-0.5">$</span>
+                              <span className="font-black text-slate-700 text-base">{labor.cost?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                            </td>
                            <td className="p-4 text-right">
                               {(() => {
