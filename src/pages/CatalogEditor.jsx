@@ -281,74 +281,74 @@ export default function CatalogEditor() {
              </div>
           </div>
          {activeTab === 'equipment' && (
-            <div className="w-full overflow-x-auto px-4 pb-4">
-              <table className="w-full text-left border-separate border-spacing-y-3 whitespace-nowrap">
+            <div className="w-full overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
                 <thead>
-                  <tr className="text-slate-400 text-[10px] uppercase tracking-widest font-black">
-                    <th className="px-6 py-2">Brand & Series</th>
-                    <th className="px-6 py-2">Tonnage / SEER</th>
-                    <th className="px-6 py-2">Models (Condenser / Air Handler)</th>
-                    <th className="px-6 py-2 text-right">Raw Wholesale Cost</th>
-                    <th className="px-6 py-2 text-right">Target Retail</th>
-                    <th className="px-6 py-2 text-center w-24">Actions</th>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 leading-tight">
+                    <th className="p-4 font-semibold">Brand & Series</th>
+                    <th className="p-4 font-semibold">Tonnage / SEER</th>
+                    <th className="p-4 font-semibold">Models (Condenser / Air Handler)</th>
+                    <th className="p-4 font-semibold text-right">Raw Wholesale Cost</th>
+                    <th className="p-4 font-semibold text-right">Target Retail</th>
+                    <th className="p-4 font-semibold text-center w-24">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                    {loading ? (
                      [1, 2, 3, 4, 5].map(i => (
-                        <tr key={i} className="animate-pulse bg-white shadow-sm rounded-xl">
-                           <td className="px-6 py-5 rounded-l-xl border-y border-l border-slate-100"><div className="h-5 bg-slate-100 rounded w-24 mb-1.5"></div><div className="h-3 bg-slate-100 rounded w-16"></div></td>
-                           <td className="px-6 py-5 border-y border-slate-100"><div className="flex gap-2"><div className="h-6 w-16 bg-slate-100 rounded-md"></div><div className="h-6 w-16 bg-slate-100 rounded-md"></div></div></td>
-                           <td className="px-6 py-5 border-y border-slate-100"><div className="h-4 bg-slate-100 rounded w-32 mb-1.5"></div><div className="h-4 bg-slate-100 rounded w-40"></div></td>
-                           <td className="px-6 py-5 border-y border-slate-100"><div className="h-4 bg-slate-100 rounded w-16 ml-auto"></div></td>
-                           <td className="px-6 py-5 border-y border-slate-100"><div className="h-5 bg-slate-100 rounded w-20 ml-auto"></div></td>
-                           <td className="px-6 py-5 rounded-r-xl border-y border-r border-slate-100"><div className="h-8 bg-slate-100 rounded w-16 mx-auto"></div></td>
+                        <tr key={i} className="animate-pulse">
+                           <td className="p-4"><div className="h-5 bg-slate-200 rounded w-24 mb-1.5"></div><div className="h-3 bg-slate-200 rounded w-16"></div></td>
+                           <td className="p-4"><div className="flex gap-2"><div className="h-6 w-16 bg-slate-200 rounded-md"></div><div className="h-6 w-16 bg-slate-200 rounded-md"></div></div></td>
+                           <td className="p-4"><div className="h-4 bg-slate-200 rounded w-32 mb-1.5"></div><div className="h-4 bg-slate-200 rounded w-40"></div></td>
+                           <td className="p-4"><div className="h-4 bg-slate-200 rounded w-16 ml-auto"></div></td>
+                           <td className="p-4"><div className="h-5 bg-slate-200 rounded w-20 ml-auto"></div></td>
+                           <td className="p-4"><div className="h-8 bg-slate-200 rounded w-16 mx-auto"></div></td>
                         </tr>
                      ))
                    ) : filteredEquipment.length === 0 ? (
                       <tr><td colSpan="6">
-                         <div className="p-16 text-center flex flex-col items-center bg-white rounded-2xl border border-slate-100 shadow-sm mt-2">
-                           <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4 border border-slate-100 shadow-inner">
+                         <div className="p-12 text-center flex flex-col items-center">
+                           <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
                              <Box size={32} />
                            </div>
-                           <h3 className="text-base font-black text-slate-800 mb-1">No equipment found</h3>
-                           <p className="text-sm font-medium text-slate-500">There are no SKUs matching your current filters.</p>
+                           <h3 className="text-sm font-bold text-slate-900 mb-1">No equipment found</h3>
+                           <p className="text-xs font-medium text-slate-500">There are no SKUs matching your current filters.</p>
                          </div>
                       </td></tr>
                    ) : (
                       filteredEquipment.map(item => (
-                         <tr key={item.id} className="bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] rounded-2xl hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.1)] hover:-translate-y-0.5 transition-all group cursor-pointer" onClick={() => { setActiveEquip(item); setIsEquipModalOpen(true); }}>
+                         <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 hover:shadow-inner transition-colors group cursor-pointer" onClick={() => { setActiveEquip(item); setIsEquipModalOpen(true); }}>
 
-                           <td className="px-6 py-5 rounded-l-2xl border-y border-l border-slate-100 group-hover:border-primary-100 transition-colors">
+                           <td className="p-4">
                               <div className="font-black text-slate-800 tracking-tight text-lg mb-0.5 leading-tight">{item.brand}</div>
                               <div className="text-xs text-slate-500 font-bold tracking-widest uppercase">{item.series} Series</div>
                            </td>
-                           <td className="px-6 py-5 border-y border-slate-100 group-hover:border-primary-100 transition-colors">
+                           <td className="p-4">
                               <div className="flex gap-2 text-[11px] uppercase tracking-widest">
                                  <span className="bg-primary-50 text-primary-700 px-3 py-1.5 rounded-lg font-black border border-primary-100 shadow-sm">{item.tons} Ton</span>
                                  <span className="bg-slate-50 text-slate-600 px-3 py-1.5 rounded-lg font-bold border border-slate-200 shadow-sm">{item.seer} SEER</span>
                               </div>
                            </td>
-                           <td className="px-6 py-5 border-y border-slate-100 group-hover:border-primary-100 transition-colors text-[11px] text-slate-500 font-mono font-bold">
-                              <div className="mb-1.5 bg-slate-50/80 px-2.5 py-1 rounded-md max-w-[180px] truncate shadow-sm border border-slate-100 flex items-center justify-between" title={`Condenser: ${item.condenser_model}`}>
+                           <td className="p-4 text-[11px] text-slate-500 font-mono font-bold">
+                              <div className="mb-1.5 bg-slate-100 px-2.5 py-1 rounded-md max-w-[180px] truncate shadow-sm flex items-center justify-between" title={`Condenser: ${item.condenser_model}`}>
                                  <span className="opacity-50 text-[9px] mr-2">OUT</span> <span className="truncate">{item.condenser_model || '-'}</span>
                               </div>
-                              <div className="bg-slate-50/80 px-2.5 py-1 rounded-md max-w-[180px] truncate shadow-sm border border-slate-100 flex items-center justify-between" title={`Air Handler: ${item.ahu_model}`}>
+                              <div className="bg-slate-100 px-2.5 py-1 rounded-md max-w-[180px] truncate shadow-sm flex items-center justify-between" title={`Air Handler: ${item.ahu_model}`}>
                                  <span className="opacity-50 text-[9px] mr-2">IN</span> <span className="truncate">{item.ahu_model || '-'}</span>
                               </div>
                            </td>
-                           <td className="px-6 py-5 border-y border-slate-100 group-hover:border-primary-100 transition-colors text-right">
+                           <td className="p-4 text-right">
                               <span className="font-mono font-black text-slate-400 text-sm">$</span>
                               <span className="font-black text-slate-700 text-lg">{item.system_cost?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                            </td>
-                           <td className="px-6 py-5 border-y border-slate-100 group-hover:border-primary-100 transition-colors text-right">
-                              <span className="font-black text-white bg-emerald-500 shadow-[0_4px_12px_rgba(16,185,129,0.3)] px-4 py-2 rounded-xl inline-block text-base tracking-tight border border-emerald-400 font-mono">
+                           <td className="p-4 text-right">
+                              <span className="font-black text-white bg-emerald-600 shadow-sm px-3.5 py-1.5 rounded-full inline-block text-[13px] tracking-wide border border-emerald-500">
                                  ${item.retail_price?.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                               </span>
                            </td>
-                           <td className="px-6 py-5 rounded-r-2xl border-y border-r border-slate-100 group-hover:border-primary-100 transition-colors text-center relative" onClick={(e) => e.stopPropagation()}>
-                              <div className="flex justify-center gap-2">
-                                 <button className="bg-white border text-danger hover:bg-red-50 border-red-100/50 hover:border-red-200 px-3 py-1.5 rounded-lg shadow-sm text-xs font-bold transition-all focus:outline-none focus:ring-2 ring-red-500/20" onClick={() => handleDeleteEquip(item.id)}>Delete</button>
+                           <td className="p-4 text-center relative" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                 <button className="bg-white border text-danger hover:bg-red-50 border-slate-200 hover:border-red-200 p-1.5 rounded-md shadow-sm transition-all focus:outline-none" onClick={() => handleDeleteEquip(item.id)}><Trash2 size={16} /></button>
                               </div>
                            </td>
                          </tr>
@@ -360,72 +360,71 @@ export default function CatalogEditor() {
          )}
 
          {activeTab === 'labor' && (
-            <div className="w-full overflow-x-auto px-4 pb-4">
-              <table className="w-full text-left border-separate border-spacing-y-3 whitespace-nowrap">
+            <div className="w-full overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
                 <thead>
-                  <tr className="text-slate-400 text-[10px] uppercase tracking-widest font-black">
-                    <th className="px-6 py-2 w-24">SKU</th>
-                    <th className="px-6 py-2 w-1/5">Financial Category</th>
-                    <th className="px-6 py-2 w-1/4">Service or Material Line Item</th>
-                    <th className="px-6 py-2 text-center w-20">Stock</th>
-                    <th className="px-6 py-2 text-right w-32">Raw Cost</th>
-                    <th className="px-6 py-2 text-right w-32">Target Retail</th>
-                    <th className="px-6 py-2 text-center w-24">Actions</th>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 leading-tight">
+                    <th className="p-4 font-semibold w-24">SKU</th>
+                    <th className="p-4 font-semibold w-1/5">Financial Category</th>
+                    <th className="p-4 font-semibold w-1/4">Service or Material Line Item</th>
+                    <th className="p-4 font-semibold text-center w-20">Stock</th>
+                    <th className="p-4 font-semibold text-right w-32">Raw Cost</th>
+                    <th className="p-4 font-semibold text-right w-32">Target Retail</th>
+                    <th className="p-4 font-semibold text-center w-24">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                    {loading ? (
                      [1, 2, 3, 4, 5].map(i => (
-                        <tr key={i} className="animate-pulse bg-white shadow-sm rounded-xl">
-                           <td className="px-6 py-5 rounded-l-xl border-y border-l border-slate-100"><div className="h-6 bg-slate-100 rounded-md w-24"></div></td>
-                           <td className="px-6 py-5 border-y border-slate-100"><div className="h-5 bg-slate-100 rounded w-48"></div></td>
-                           <td className="px-6 py-5 border-y border-slate-100"><div className="h-5 bg-slate-100 rounded w-20 mx-auto"></div></td>
-                           <td className="px-6 py-5 border-y border-slate-100"><div className="h-8 bg-slate-100 rounded-md w-16 mx-auto"></div></td>
-                           <td className="px-6 py-5 border-y border-slate-100"><div className="h-5 bg-slate-100 rounded w-20 ml-auto"></div></td>
-                           <td className="px-6 py-5 border-y border-slate-100"><div className="h-5 bg-slate-100 rounded w-20 ml-auto"></div></td>
-                           <td className="px-6 py-5 rounded-r-xl border-y border-r border-slate-100"><div className="h-8 bg-slate-100 rounded w-16 mx-auto"></div></td>
+                        <tr key={i} className="animate-pulse border-b border-slate-100">
+                           <td className="p-4"><div className="h-6 bg-slate-200 rounded-md w-24"></div></td>
+                           <td className="p-4"><div className="h-5 bg-slate-200 rounded w-48"></div></td>
+                           <td className="p-4"><div className="h-5 bg-slate-200 rounded w-20 mx-auto"></div></td>
+                           <td className="p-4"><div className="h-8 bg-slate-200 rounded-md w-16 mx-auto"></div></td>
+                           <td className="p-4"><div className="h-5 bg-slate-200 rounded w-20 ml-auto"></div></td>
+                           <td className="p-4"><div className="h-5 bg-slate-200 rounded w-20 ml-auto"></div></td>
+                           <td className="p-4"><div className="h-8 bg-slate-200 rounded w-16 mx-auto"></div></td>
                         </tr>
                      ))
                    ) : filteredLabor.length === 0 ? (
                       <tr><td colSpan="7">
-                         <div className="p-16 text-center flex flex-col items-center bg-white rounded-2xl border border-slate-100 shadow-sm mt-2">
-                           <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4 border border-slate-100 shadow-inner">
+                         <div className="p-12 text-center flex flex-col items-center">
+                           <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
                              <Pen size={32} />
                            </div>
-                           <h3 className="text-base font-black text-slate-800 mb-1">No services matched</h3>
-                           <p className="text-sm font-medium text-slate-500">There are no labor rates or materials matching your search.</p>
+                           <h3 className="text-sm font-bold text-slate-900 mb-1">No services matched</h3>
+                           <p className="text-xs font-medium text-slate-500">There are no labor rates or materials matching your search.</p>
                          </div>
                       </td></tr>
                    ) : (
                       filteredLabor.map(labor => (
-                         <tr key={labor.id} className="bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] rounded-2xl hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.1)] hover:-translate-y-0.5 transition-all group cursor-pointer" onClick={() => { setActiveLabor(labor); setIsLaborModalOpen(true); }}>
-                           <td className="px-6 py-5 rounded-l-2xl border-y border-l border-slate-100 group-hover:border-primary-100 transition-colors">
-                              <span className="font-mono text-slate-400 font-bold bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100 shadow-inner">
+                         <tr key={labor.id} className="border-b border-slate-100 hover:bg-slate-50 hover:shadow-inner transition-colors group cursor-pointer" onClick={() => { setActiveLabor(labor); setIsLaborModalOpen(true); }}>
+                           <td className="p-4">
+                              <span className="font-mono text-slate-500 font-bold bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 shadow-sm text-xs">
                                  {labor.sku || '-'}
                               </span>
                            </td>
-                           <td className="px-6 py-5 border-y border-slate-100 group-hover:border-primary-100 transition-colors">
-                              <span className="bg-emerald-50/50 shadow-sm text-emerald-800 text-[10px] font-black px-3 py-1.5 flex items-center w-max rounded-md uppercase tracking-widest border border-emerald-100">
+                           <td className="p-4">
+                              <span className="bg-emerald-50 shadow-sm text-emerald-700 text-[10px] font-black px-2.5 py-1 flex items-center w-max rounded-md uppercase tracking-widest border border-emerald-200">
                                  {labor.category}
                               </span>
                            </td>
-                           <td className="px-6 py-5 border-y border-slate-100 group-hover:border-primary-100 transition-colors">
-                              <div className="font-black text-slate-800 text-base tracking-tight leading-loose">
+                           <td className="p-4">
+                              <div className="font-black text-slate-800 text-base tracking-tight">
                                  {labor.item_name}
                               </div>
                            </td>
-                           <td className="px-6 py-5 border-y border-slate-100 group-hover:border-primary-100 transition-colors text-center">
-                              <span className={`font-black px-3 py-1.5 rounded-lg text-xs shadow-sm border ${labor.in_stock_quantity > 0 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
+                           <td className="p-4 text-center">
+                              <span className={`font-black px-2.5 py-1 rounded-md text-xs shadow-sm border ${labor.in_stock_quantity > 0 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
                                  {labor.in_stock_quantity || 0}
                               </span>
                            </td>
-                           <td className="px-6 py-5 border-y border-slate-100 group-hover:border-primary-100 transition-colors text-right">
-                              <span className="font-mono font-black text-slate-400 text-sm">$</span>
-                              <span className="font-black text-slate-700 text-lg">
-                                 {labor.cost?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                           <td className="p-4 text-right">
+                              <span className="font-mono font-black text-red-600 text-base">
+                                 ${labor.cost?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                               </span>
                            </td>
-                           <td className="px-6 py-5 border-y border-slate-100 group-hover:border-primary-100 transition-colors text-right">
+                           <td className="p-4 text-right">
                               {(() => {
                                   const rawCost = parseFloat(labor.cost || 0);
                                   const taxRate = margins?.sales_tax || 0.07;
@@ -437,15 +436,15 @@ export default function CatalogEditor() {
                                   const projectedRetail = (rawCost * (1 + appliedTax) * (1 + reserve)) / (1 - margin);
 
                                   return (
-                                      <span className="font-black text-white bg-emerald-500 shadow-[0_4px_12px_rgba(16,185,129,0.3)] px-4 py-2 rounded-xl inline-block text-base tracking-tight border border-emerald-400 font-mono">
+                                      <span className="font-black text-white bg-emerald-600 shadow-sm px-3.5 py-1.5 rounded-full inline-block text-[13px] tracking-wide border border-emerald-500">
                                          ${projectedRetail.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                       </span>
                                   );
                               })()}
                            </td>
-                           <td className="px-6 py-5 rounded-r-2xl border-y border-r border-slate-100 group-hover:border-primary-100 transition-colors text-center relative" onClick={(e) => e.stopPropagation()}>
-                              <div className="flex justify-center gap-2">
-                                 <button className="bg-white border text-danger hover:bg-red-50 border-red-100/50 hover:border-red-200 px-3 py-1.5 rounded-lg shadow-sm text-xs font-bold transition-all focus:outline-none focus:ring-2 ring-red-500/20" onClick={() => handleDeleteLabor(labor.id)}>Delete</button>
+                           <td className="p-4 text-center relative" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                 <button className="bg-white border text-danger hover:bg-red-50 border-slate-200 hover:border-red-200 p-1.5 rounded-md shadow-sm transition-all focus:outline-none" onClick={() => handleDeleteLabor(labor.id)}><Trash2 size={16} /></button>
                               </div>
                            </td>
                          </tr>
