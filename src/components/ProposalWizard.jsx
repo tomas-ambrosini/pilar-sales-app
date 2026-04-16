@@ -372,12 +372,18 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        let totalBaseline = 0;
        let sysBrands = [];
        let totalTons = 0;
+       let aggregatedAddons = new Set();
        
        systems.forEach(sys => {
           if (sys.selectedTiers[tierKey]) {
              totalBaseline += calculateSystemBaselineRetail(sys, sys.selectedTiers[tierKey].system_cost, tierKey.charAt(0).toUpperCase() + tierKey.slice(1));
              sysBrands.push(`${sys.name}: ${sys.selectedTiers[tierKey].brand} ${sys.selectedTiers[tierKey].series}`);
              totalTons += (sys.selectedTiers[tierKey].tons || 0);
+
+             Object.entries(sys.addons || {}).filter(([_, v]) => v).forEach(([k]) => {
+                const name = laborRates.find(l => l.id.toString() === k.toString())?.item_name;
+                if (name && !name.toLowerCase().includes('slab')) aggregatedAddons.add(`Includes: ${name}`);
+             });
           }
        });
 
@@ -390,6 +396,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        if (tierKey === 'best') features = ["Variable Speed Ultra Quiet", "Highest Efficiency Ratings", "Premium 12-Year Parts Warranty", "Advanced Dehumidification Control"];
        if (tierKey === 'better') features = ["Two-Stage Enhanced Comfort", "High Efficiency SEER2", "10-Year Parts Warranty", "Consistent Temperature Control"];
        if (tierKey === 'good') features = ["Single-Stage Operation", "Base Efficiency Standard", "5-Year Parts Warranty", "Cost-Effective Reliable Cooling"];
+
+       features = [...features, ...Array.from(aggregatedAddons)];
 
        finalTiers[tierKey] = {
            id: tierKey,
@@ -430,6 +438,13 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
            if (tierKey === 'better') features = ["Two-Stage Enhanced Comfort", "High Efficiency SEER2", "10-Year Parts Warranty", "Consistent Temperature Control"];
            if (tierKey === 'good') features = ["Single-Stage Operation", "Base Efficiency Standard", "5-Year Parts Warranty", "Cost-Effective Reliable Cooling"];
            
+           const activeAddonsList = Object.entries(sys.addons || {}).filter(([_, v]) => v).map(([k]) => {
+              const name = laborRates.find(l => l.id.toString() === k.toString())?.item_name;
+              return name && !name.toLowerCase().includes('slab') ? `Includes: ${name}` : null;
+           }).filter(Boolean);
+
+           features = [...features, ...activeAddonsList];
+
            sysTiers[tierKey] = {
                id: tierKey,
                brand: sys.selectedTiers[tierKey].brand,
@@ -980,11 +995,15 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                           <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-2">Included Add-ons & Labor</label>
                                           <div className="flex flex-wrap justify-center gap-1.5">
                                              {Object.entries(sys.addons || {}).filter(([_, v]) => v).length > 0 ? (
-                                                Object.entries(sys.addons).filter(([_, v]) => v).map(([k]) => (
-                                                   <span key={k} className="text-[9px] font-bold bg-slate-50 text-slate-600 px-2.5 py-1 rounded-full border border-slate-200 uppercase flex items-center gap-1">
-                                                      <Check size={10} className="text-emerald-500"/> {k}
-                                                   </span>
-                                                ))
+                                                Object.entries(sys.addons).filter(([_, v]) => v).map(([k]) => {
+                                                   const laborName = laborRates.find(l => l.id.toString() === k.toString())?.item_name || 'Component';
+                                                   if (laborName.toLowerCase().includes('slab')) return null;
+                                                   return (
+                                                      <span key={k} className="text-[9px] font-bold bg-slate-50 text-slate-600 px-2.5 py-1 rounded-full border border-slate-200 uppercase flex items-center gap-1">
+                                                         <Check size={10} className="text-emerald-500"/> {laborName}
+                                                      </span>
+                                                   );
+                                                })
                                              ) : (
                                                 <span className="text-xs text-slate-400 font-medium italic">Standard Installation</span>
                                              )}
