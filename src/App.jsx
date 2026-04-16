@@ -11,6 +11,7 @@ import FirstSetup from './pages/FirstSetup';
 import PromoCodes from './pages/PromoCodes';
 import AccountManagement from './pages/AccountManagement';
 import TemplateSettings from './pages/TemplateSettings';
+import FinancialSettings from './pages/FinancialSettings';
 import SalesPipeline from './pages/SalesPipeline';
 import DispatchHub from './pages/DispatchHub';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -72,6 +73,7 @@ function MainRouter() {
           {/* SUPER ADMIN EXCLUSIVE DOMAINS */}
           <Route path="account-management/*" element={<RoleRoute allowedRoles={['ADMIN']}><AccountManagement /></RoleRoute>} />
           <Route path="template-settings/*" element={<RoleRoute allowedRoles={['ADMIN']}><TemplateSettings /></RoleRoute>} />
+          <Route path="financial-settings/*" element={<RoleRoute allowedRoles={['ADMIN']}><FinancialSettings /></RoleRoute>} />
           
           {/* WILDCARDS / DEFAULTS */}
           <Route index element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Dashboard /></RoleRoute>} />

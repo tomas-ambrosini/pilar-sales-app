@@ -24,6 +24,7 @@ const navGroups = [
       { path: '/proposals', label: 'Proposals', icon: FileCheck, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
       { path: '/catalog', label: 'Catalog', icon: BookOpen, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
       { path: '/promo-codes', label: 'Promo Codes', icon:Megaphone, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+      { path: '/financial-settings', label: 'Financial Ops', icon: DollarSign, allowedRoles: [ROLES.ADMIN] },
       { path: '/template-settings', label: 'Templates', icon: FileText, allowedRoles: [ROLES.ADMIN] },
       { path: '/account-management', label: 'Account Mgmt', icon: Settings, allowedRoles: [ROLES.ADMIN] }
     ]
