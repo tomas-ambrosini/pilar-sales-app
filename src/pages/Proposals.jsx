@@ -650,6 +650,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                  </table>
                  )}
                </div>
+               )}
              </div>
            );
          })()}
