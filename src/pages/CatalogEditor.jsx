@@ -102,9 +102,10 @@ export default function CatalogEditor() {
   const handleSaveLabor = async (e) => {
     e.preventDefault();
     const payload = {
+      id: activeLabor.id || crypto.randomUUID(),
       category: activeLabor.category,
       item_name: activeLabor.item_name,
-      cost: parseFloat(activeLabor.cost),
+      cost: parseFloat(activeLabor.cost) || 0,
       sku: activeLabor.sku,
       in_stock_quantity: parseInt(activeLabor.in_stock_quantity) || 0
     };
