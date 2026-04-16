@@ -458,67 +458,95 @@ export default function CatalogEditor() {
 
       {/* EQUIPMENT MODAL COMPONENT */}
       <Modal isOpen={isEquipModalOpen} onClose={() => setIsEquipModalOpen(false)} title={activeEquip?.id ? "Edit Equipment SKU" : "New System Profile"}>
-         <form className="modal-form" onSubmit={handleSaveEquip}>
-            <div className="grid grid-cols-2 gap-4">
-               <div>
-                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Brand Name</label>
-                 <input className="input-field w-full font-semibold" list="brand-options" value={activeEquip.brand} onChange={e => setActiveEquip({...activeEquip, brand: e.target.value})} required/>
-                 <datalist id="brand-options">
-                    {uniqueBrands.map(b => <option key={b} value={b} />)}
-                 </datalist>
-               </div>
-               <div>
-                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Series Line</label>
-                 <input className="input-field w-full font-semibold" value={activeEquip.series} onChange={e => setActiveEquip({...activeEquip, series: e.target.value})} placeholder="e.g. XR14" required/>
-               </div>
-               <div>
-                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Tonnage</label>
-                 <input type="number" step="0.5" className="input-field w-full font-mono bg-slate-50 border-slate-200" value={activeEquip.tons} onChange={e => setActiveEquip({...activeEquip, tons: e.target.value})} required/>
-               </div>
-               <div>
-                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">SEER2 Specs</label>
-                 <input type="number" step="0.5" className="input-field w-full font-mono bg-slate-50 border-slate-200" value={activeEquip.seer} onChange={e => setActiveEquip({...activeEquip, seer: e.target.value})} required/>
-               </div>
-               <div className="col-span-2">
-                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Internal Condenser Model Code</label>
-                 <input className="input-field w-full text-slate-600 font-mono text-xs" value={activeEquip.condenser_model} onChange={e => setActiveEquip({...activeEquip, condenser_model: e.target.value})}/>
-               </div>
-               <div className="col-span-2">
-                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Internal Air Handler Model Code</label>
-                 <input className="input-field w-full text-slate-600 font-mono text-xs" value={activeEquip.ahu_model} onChange={e => setActiveEquip({...activeEquip, ahu_model: e.target.value})}/>
-               </div>
-            </div>
-
-
-
-            <div className="border-t border-slate-100 mt-4 pt-4 bg-[#F8FAFC] p-4 rounded-b-lg -mx-6 -mb-6">
-               <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-xs font-bold text-slate-700 flex items-center gap-1.5 uppercase tracking-wide"><Calculator size={14}/> Integrated Pricing Engine</h4>
-                  <button type="button" onClick={applyPricingFormula} className="text-[9px] font-bold bg-primary-100 text-primary-700 px-3 py-1 rounded shadow-sm hover:bg-primary-200 transition-colors uppercase tracking-wider focus:ring-2 ring-primary-500">
-                     Execute Target Script
-                  </button>
-               </div>
+         <form className="flex flex-col h-full bg-slate-50 rounded-b-xl" onSubmit={handleSaveEquip}>
+            <div className="p-6 space-y-6">
                
-               <div className="grid grid-cols-2 gap-4 bg-white p-3 border border-slate-200 rounded-md shadow-sm">
+               {/* Core Information */}
+               <div className="grid grid-cols-2 gap-5">
+                  <div className="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Brand Name</label>
+                     <input className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 font-bold text-slate-800 focus:ring-2 ring-primary-500 outline-none transition-all shadow-inner" list="brand-options" value={activeEquip.brand || ''} onChange={e => setActiveEquip({...activeEquip, brand: e.target.value})} required placeholder="e.g. Trane"/>
+                     <datalist id="brand-options">
+                        {uniqueBrands.map(b => <option key={b} value={b} />)}
+                     </datalist>
+                  </div>
+                  <div className="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Series Line</label>
+                     <input className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 font-bold text-slate-800 focus:ring-2 ring-primary-500 outline-none transition-all shadow-inner" value={activeEquip.series || ''} onChange={e => setActiveEquip({...activeEquip, series: e.target.value})} placeholder="e.g. XR14" required/>
+                  </div>
+               </div>
+
+               {/* Performance Specs */}
+               <div className="grid grid-cols-2 gap-5">
+                  <div className="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Tonnage Rating</label>
+                     <input type="number" step="0.5" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 font-mono text-slate-800 font-bold focus:ring-2 ring-primary-500 outline-none transition-all shadow-inner" value={activeEquip.tons || ''} onChange={e => setActiveEquip({...activeEquip, tons: e.target.value})} required placeholder="3.0"/>
+                  </div>
+                  <div className="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">SEER2 Specs</label>
+                     <input type="number" step="0.5" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 font-mono text-slate-800 font-bold focus:ring-2 ring-primary-500 outline-none transition-all shadow-inner" value={activeEquip.seer || ''} onChange={e => setActiveEquip({...activeEquip, seer: e.target.value})} required placeholder="14.0"/>
+                  </div>
+               </div>
+
+               {/* Model Codes */}
+               <div className="bg-white p-5 border border-slate-200 rounded-xl shadow-sm space-y-4">
                   <div>
-                    <label className="text-[10px] font-bold text-red-500 uppercase tracking-widest block mb-1">Company Base Cost</label>
-                    <input type="number" step="0.01" className="w-full p-2.5 rounded bg-red-50 border border-red-100 font-mono font-black text-red-700 shadow-inner" value={activeEquip.system_cost} onChange={e => setActiveEquip({...activeEquip, system_cost: e.target.value})} required/>
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Internal Condenser Model Code</label>
+                     <input className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 font-mono text-[13px] text-slate-800 font-bold focus:ring-2 ring-primary-500 outline-none shadow-inner" value={activeEquip.condenser_model || ''} onChange={e => setActiveEquip({...activeEquip, condenser_model: e.target.value})} placeholder="OUT-UANL..."/>
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block mb-1">Minimum Retail Baseline</label>
-                    <input type="number" step="0.01" className="w-full p-2.5 rounded bg-emerald-50 border border-emerald-200 font-mono font-black text-white bg-emerald-600 shadow-md transform scale-105" value={activeEquip.retail_price} onChange={e => setActiveEquip({...activeEquip, retail_price: e.target.value})}/>
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Internal Air Handler Model Code</label>
+                     <input className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 font-mono text-[13px] text-slate-800 font-bold focus:ring-2 ring-primary-500 outline-none shadow-inner" value={activeEquip.ahu_model || ''} onChange={e => setActiveEquip({...activeEquip, ahu_model: e.target.value})} placeholder="IN-BHP17..."/>
+                  </div>
+               </div>
+
+               {/* Integrated Pricing Engine */}
+               <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
+                  <div className="bg-slate-50 py-3 px-5 border-b border-slate-100 flex justify-between items-center">
+                     <div className="flex items-center gap-2">
+                        <Calculator size={14} className="text-emerald-500" />
+                        <h4 className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Pricing Strategy Array</h4>
+                     </div>
+                     <button type="button" onClick={() => {
+                        const cost = parseFloat(activeEquip.system_cost || 0);
+                        const reserve = margins?.service_reserve || 0.05;
+                        const margin = margins?.good_margin || 0.35;
+                        const projectedRetail = (cost * (1 + reserve)) / (1 - margin);
+                        setActiveEquip({...activeEquip, retail_price: projectedRetail.toFixed(2)});
+                     }} className="text-[9px] font-bold bg-primary-100 text-primary-700 px-3 py-1.5 rounded-lg shadow-sm hover:bg-primary-200 transition-colors uppercase tracking-wider focus:ring-2 ring-primary-500 active:scale-95">
+                        Execute Target Script
+                     </button>
                   </div>
                   
-                  <div className="col-span-2 mt-2 input-field bg-slate-50 border border-slate-200 p-2.5 rounded flex flex-col shadow-inner">
-                     <span className="text-[9px] font-bold text-slate-400 mb-1 uppercase tracking-widest">Pricing Strategy Array Script</span>
-                     <input type="text" className="w-full text-slate-600 font-mono text-[11px] bg-transparent outline-none" value={formulaStr} onChange={e => setFormulaStr(e.target.value)}/>
+                  <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                     <div className="p-5 flex-1 relative">
+                        <label className="text-[10px] font-black text-red-500/80 uppercase tracking-widest block mb-2">Raw Base Cost ($)</label>
+                        <div className="relative">
+                           <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-xl">$</span>
+                           <input type="number" step="0.01" className="w-full bg-red-50/50 border border-red-100 rounded-lg pl-10 pr-4 py-4 font-mono font-black text-xl text-red-700 focus:ring-2 ring-red-500 outline-none shadow-inner placeholder:text-red-300" value={activeEquip.system_cost || ''} onChange={e => setActiveEquip({...activeEquip, system_cost: e.target.value})} required placeholder="0.00"/>
+                        </div>
+                     </div>
+                     <div className="p-5 flex-1 relative bg-emerald-50/20">
+                        <label className="text-[10px] font-black text-emerald-600/80 uppercase tracking-widest block mb-2">Target Retail Configuration ($)</label>
+                        <div className="relative">
+                           <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-emerald-500/50 text-xl z-10">$</span>
+                           <input type="number" step="0.01" title="Minimum Retail Baseline" className="w-full bg-emerald-500 border border-emerald-400 rounded-lg pl-10 pr-4 py-4 font-mono font-black text-xl text-white focus:ring-2 ring-emerald-500 outline-none shadow-lg placeholder:text-emerald-300 transform scale-[1.02] transition-transform focus:scale-[1.03]" value={activeEquip.retail_price ? Number(activeEquip.retail_price) : ''} onChange={e => setActiveEquip({...activeEquip, retail_price: e.target.value})}/>
+                        </div>
+                     </div>
+                  </div>
+                  
+                  <div className="bg-slate-50 border-t border-slate-100 px-5 py-4">
+                     <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Mathematical Formula</label>
+                     <div className="bg-white border border-slate-200 rounded-lg px-3 py-2 flex items-center shadow-inner">
+                         <span className="font-mono text-[10px] text-slate-400 flex-1">(cost * (1 + overhead)) / (1 - target_margin)</span>
+                     </div>
                   </div>
                </div>
-               
-               <div className="flex gap-3 justify-end mt-5">
-                  <button type="button" className="btn-secondary font-bold" onClick={() => setIsEquipModalOpen(false)}>Discard Edits</button>
-                  <button type="submit" className="btn-primary shadow-lg font-bold group">Complete Setup <Check size={16} className="text-white opacity-50 group-hover:opacity-100 transition-opacity ml-1 inline-block"/></button>
-               </div>
+            </div>
+            
+            <div className="bg-white px-6 py-4 border-t border-slate-200 flex justify-end gap-3 rounded-b-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)] relative z-10">
+               <button type="button" className="btn-secondary font-bold px-6 py-2.5 rounded-lg" onClick={() => setIsEquipModalOpen(false)}>Discard Edits</button>
+               <button type="submit" className="bg-primary-600 hover:bg-primary-700 text-white shadow-sm font-bold px-8 py-2.5 rounded-lg group flex items-center gap-2 transform transition-all active:scale-95">Complete Setup <Check size={16} className="opacity-60 group-hover:opacity-100 transition-opacity"/></button>
             </div>
          </form>
       </Modal>
