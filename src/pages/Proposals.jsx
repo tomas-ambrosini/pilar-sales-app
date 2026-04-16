@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useProposals } from '../context/ProposalContext';
 import { useCustomers } from '../context/CustomerContext';
-import { Search, Plus, Calendar, Settings, ShieldCheck, Mail, Printer, AlertTriangle, FileText, Share, Clock, Home, PenTool, CheckCircle, Smartphone, Edit2, Trash2, ArrowRight, CalendarClock, Lock, Link, Copy, ThumbsDown, RotateCcw } from 'lucide-react';
+import { Search, Plus, Calendar, Settings, ShieldCheck, Mail, Printer, AlertTriangle, FileText, Share, Clock, Home, PenTool, CheckCircle, Smartphone, Edit2, Trash2, ArrowRight, CalendarClock, Lock, Link, Copy, ThumbsDown, RotateCcw, LayoutGrid, List as ListIcon } from 'lucide-react';
 import Modal from '../components/Modal';
 import toast from 'react-hot-toast';
 import './Proposals.css';
@@ -72,6 +72,7 @@ export default function Proposals() {
   const [lostReason, setLostReason] = useState('');
   const [lostNotes, setLostNotes] = useState('');
   const [filterMode, setFilterMode] = useState('All');
+  const [layoutMode, setLayoutMode] = useState('list');
 
   const handleRowClick = (proposal) => {
       setInspectingProposal(proposal);
@@ -300,16 +301,31 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
           
-          <div className="p-4 border-b border-slate-100 flex gap-2 overflow-x-auto bg-slate-50 custom-scrollbar">
-             {['All', 'Draft', 'Sent', 'Approved', 'Lost'].map(mode => (
-                 <button 
-                    key={mode} 
-                    onClick={() => setFilterMode(mode)}
-                    className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-colors whitespace-nowrap ${filterMode === mode ? 'bg-slate-800 text-white border-slate-800 shadow-sm' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
-                 >
-                    {mode}
-                 </button>
-             ))}
+          <div className="p-4 border-b border-slate-100 flex justify-between gap-2 overflow-x-auto bg-slate-50 custom-scrollbar">
+             <div className="flex gap-2">
+                {['All', 'Draft', 'Sent', 'Approved', 'Lost'].map(mode => (
+                    <button 
+                       key={mode} 
+                       onClick={() => setFilterMode(mode)}
+                       className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-colors whitespace-nowrap ${filterMode === mode ? 'bg-slate-800 text-white border-slate-800 shadow-sm' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
+                    >
+                       {mode}
+                    </button>
+                ))}
+             </div>
+             
+             <div className="flex bg-white rounded-lg p-0.5 border border-slate-200 shadow-sm shrink-0">
+                <button 
+                  onClick={() => setLayoutMode('list')}
+                  className={`p-1.5 rounded-md transition-colors ${layoutMode === 'list' ? 'bg-slate-100 text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  title="List View"
+                ><ListIcon size={16} /></button>
+                <button 
+                  onClick={() => setLayoutMode('kanban')}
+                  className={`p-1.5 rounded-md transition-colors ${layoutMode === 'kanban' ? 'bg-slate-100 text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  title="Kanban View"
+                ><LayoutGrid size={16} /></button>
+             </div>
           </div>
 
           <div className="flex flex-col w-full">
@@ -333,7 +349,98 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                
                return (
                  <div className="w-full">
-                   <div className="overflow-x-auto">
+                    
+                    {layoutMode === 'kanban' && !loading ? (
+                        <div className="p-6 flex gap-6 overflow-x-auto min-h-[500px] bg-slate-50/30">
+                           {(filterMode === 'All' ? ['Draft', 'Sent', 'Approved', 'Lost'] : [filterMode]).map(colName => {
+                              const colProposals = filteredProposals.filter(p => p.status === colName);
+                              
+                              let headerColor = 'border-slate-200 bg-slate-50 text-slate-700';
+                              if (colName === 'Sent') headerColor = 'border-blue-200 bg-blue-50 text-blue-700';
+                              if (colName === 'Approved') headerColor = 'border-emerald-200 bg-emerald-50 text-emerald-700';
+                              if (colName === 'Lost') headerColor = 'border-red-200 bg-red-50 text-red-700';
+
+                              return (
+                                 <div key={colName} className="flex flex-col w-[320px] shrink-0 bg-slate-100/50 rounded-xl border border-slate-200 p-4 relative h-max mt-4">
+                                    <div className={`px-4 py-2 border rounded-lg mb-4 font-black uppercase tracking-wider text-[11px] ${headerColor} flex justify-between items-center shadow-sm absolute -top-5 left-4 right-4 bg-white`}>
+                                       <span>{colName}</span>
+                                       <span className="bg-white/80 px-2 py-0.5 rounded-full text-[10px] shadow-sm">{colProposals.length}</span>
+                                    </div>
+                                    
+                                    <div className="flex flex-col gap-3 mt-3">
+                                       {colProposals.map(proposal => (
+                                           <div key={proposal.id} onClick={() => handleRowClick(proposal)} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-slate-400 transition-all cursor-pointer group">
+                                              <div className="flex justify-between items-start mb-3">
+                                                 <div>
+                                                    <h3 className="font-black text-slate-800 text-sm truncate max-w-[180px]">{proposal.customer}</h3>
+                                                    <span className="font-mono text-[9px] uppercase tracking-widest text-slate-400">{formatQuoteId(proposal)}</span>
+                                                 </div>
+                                                 <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center shrink-0 border border-slate-200">
+                                                    <span className="text-[10px] font-black text-slate-600 uppercase">{proposal.user_profiles?.full_name ? proposal.user_profiles.full_name.charAt(0) : 'U'}</span>
+                                                 </div>
+                                              </div>
+                                              
+                                              <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 mb-4 flex justify-between items-end">
+                                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Est. Value</span>
+                                                  <span className="font-black text-slate-700 text-base leading-none">
+                                                     {(() => {
+                                                        if (['Draft', 'Sent', 'Lost'].includes(proposal.status)) {
+                                                           const tiers = proposal.proposal_data?.tiers || {};
+                                                           const prices = [tiers.good?.salesPrice, tiers.better?.salesPrice, tiers.best?.salesPrice].filter(Boolean);
+                                                           if (prices.length > 0) return `$${Math.max(...prices).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+                                                        }
+                                                        return `$${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+                                                     })()}
+                                                  </span>
+                                              </div>
+
+                                              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3" onClick={e => e.stopPropagation()}>
+                                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={() => handleCopyLink(proposal)} className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-50 rounded transition-colors" title="Copy Link"><Link size={14} /></button>
+                                                    <button onClick={() => handleMailto(proposal)} className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-50 rounded transition-colors" title="Email"><Mail size={14} /></button>
+                                                 </div>
+                                                 <button 
+                                                    className={`ml-auto flex items-center justify-center text-[10px] font-black px-4 py-1.5 rounded-md shadow-sm transition-all focus:ring-2 outline-none ${
+                                                        proposal.status === 'Approved' ? 'bg-emerald-500 text-white hover:bg-emerald-600' :
+                                                        proposal.status === 'Sent' ? 'bg-blue-600 text-white hover:bg-blue-700' :
+                                                        proposal.status === 'Lost' ? 'bg-red-50 text-red-600 hover:bg-red-100 shadow-none border border-red-200' :
+                                                        'bg-slate-600 text-white hover:bg-slate-700'
+                                                    }`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (proposal.status === 'Approved') {
+                                                           const matchedTierName = proposal.proposal_data?.accepted_tier_name || ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers?.[t]?.salesPrice === proposal.amount) || 'good';
+                                                           const matchedTierData = proposal.proposal_data?.accepted_tier_data || proposal.proposal_data?.tiers?.[matchedTierName];
+                                                           setViewingContract({ proposal, tierName: matchedTierName?.toUpperCase() || 'SYSTEM', tierData: matchedTierData || {}, date: proposal.date });
+                                                        } else if (proposal.status === 'Draft') {
+                                                           if (proposal.created_by && proposal.created_by !== user?.id) {
+                                                               toast.error('Access Denied: This draft is locked by its creator.');
+                                                               return;
+                                                           }
+                                                           setWizardConfig({ id: proposal.id, ...proposal });
+                                                           setShowWizard(true);
+                                                        } else {
+                                                           setViewingProposal(proposal.status === 'Lost' ? { ...proposal, isReadOnly: true } : proposal);
+                                                        }
+                                                    }}
+                                                 >
+                                                    {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : proposal.status === 'Lost' ? 'Review' : 'Resume'}
+                                                 </button>
+                                              </div>
+                                           </div>
+                                       ))}
+                                       {colProposals.length === 0 && (
+                                           <div className="p-4 border-2 border-dashed border-slate-200 rounded-xl text-center">
+                                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No DEALS</span>
+                                           </div>
+                                       )}
+                                    </div>
+                                 </div>
+                              )
+                           })}
+                        </div>
+                    ) : (
+                    <div className="overflow-x-auto">
                  {loading ? (
                    <table className="w-full text-left border-collapse">
                      <thead>
