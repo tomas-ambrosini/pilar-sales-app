@@ -303,7 +303,7 @@ export default function FinancialSettings() {
                                 <button 
                                     type="submit"
                                     disabled={!hasChanges || isSaving}
-                                    className={\`w-full flex justify-center items-center gap-2 font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all shadow-lg \${hasChanges ? 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/20 active:scale-95' : 'bg-slate-700 text-slate-500 cursor-not-allowed border border-slate-600'}\`}
+                                    className={`w-full flex justify-center items-center gap-2 font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all shadow-lg ${hasChanges ? 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/20 active:scale-95' : 'bg-slate-700 text-slate-500 cursor-not-allowed border border-slate-600'}`}
                                 >
                                     {isSaving ? <Activity className="animate-spin" /> : <Save size={18} />}
                                     Deploy Strategy
