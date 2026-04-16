@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
 import { useAuth } from '../context/AuthContext';
 import { useProposals } from '../context/ProposalContext';
-import { Check, Image as ImageIcon, Layers, Tag, DollarSign, Calculator, AlertTriangle, ArrowRight, ArrowLeft, Save, Clock, RefreshCcw, Edit2, X } from 'lucide-react';
+import { Check, Image as ImageIcon, Layers, Tag, DollarSign, Calculator, AlertTriangle, ArrowRight, ArrowLeft, Save, Clock, RefreshCcw, Edit2, X, Search, Box } from 'lucide-react';
 
 export default function ProposalWizard({ onComplete, addProposal, updateProposal, editModeData }) {
   const hasPreloadedData = typeof editModeData === 'object' && editModeData !== null;
@@ -76,6 +76,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
      sales_tax: 0.07, service_reserve: 0.05, good_margin: 0.35, better_margin: 0.40, best_margin: 0.45 
   });
   const [dbReady, setDbReady] = useState(false);
+  const [addonSearchTerm, setAddonSearchTerm] = useState('');
   
   const { createDraft } = useProposals();
   const [draftServerId, setDraftServerId] = useState((isEditing || isDraftLaunch) ? editModeData.id : null);
@@ -856,22 +857,63 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
           </div>
         )}
 
-        {step === 4 && (
+         {step === 4 && (
           <div>
              <h3 className="font-bold mb-2 text-slate-700">4. Global Variable Labor & Add-ons</h3>
              <p className="text-xs text-slate-500 mb-6">Items toggled below are universally injected into every active tier in the Proposal. Select necessary logistics.</p>
 
-             <div className="bg-slate-50 p-6 rounded border border-slate-200 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {laborRates.filter(labor => !labor.item_name.toLowerCase().includes('slab')).map(labor => (
-                  <label key={labor.id} className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-fast shadow-sm ${addons[labor.id] ? 'bg-primary-50 border-primary-200' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
-                    <input type="checkbox" className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" checked={!!addons[labor.id]} onChange={() => toggleAddon(labor.id)} />
-                    <div className="flex-1">
-                       <span className={`block font-bold text-sm ${addons[labor.id] ? 'text-primary-800' : 'text-slate-700'}`}>{labor.item_name}</span>
-                       <span className="text-[10px] uppercase font-black tracking-wider text-slate-400">{labor.category}</span>
-                    </div>
-                    <span className="font-mono font-black text-slate-600 text-right">${labor.cost}</span>
-                  </label>
-                ))}
+             <div className="mb-6 relative max-w-lg">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input 
+                   type="text" 
+                   className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm font-medium placeholder:text-slate-400 transition-all font-mono"
+                   placeholder="Search 60+ components or SKU..."
+                   value={addonSearchTerm}
+                   onChange={e => setAddonSearchTerm(e.target.value)}
+                />
+             </div>
+
+             <div className="bg-slate-50 p-4 md:p-6 rounded-2xl border border-slate-200 max-h-[450px] overflow-y-auto custom-scrollbar shadow-inner relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
+                  {laborRates
+                    .filter(labor => !labor.item_name.toLowerCase().includes('slab'))
+                    .filter(labor => 
+                       addonSearchTerm === '' || 
+                       labor.item_name.toLowerCase().includes(addonSearchTerm.toLowerCase()) || 
+                       labor.sku?.toLowerCase().includes(addonSearchTerm.toLowerCase()) ||
+                       labor.category.toLowerCase().includes(addonSearchTerm.toLowerCase())
+                    )
+                    .sort((a, b) => (parseInt(a.sku) || Number.MAX_SAFE_INTEGER) - (parseInt(b.sku) || Number.MAX_SAFE_INTEGER))
+                    .map(labor => (
+                      <label key={labor.id} className={`flex items-start gap-4 p-3.5 border rounded-xl cursor-pointer transition-all shadow-sm group select-none relative overflow-hidden ${addons[labor.id] ? 'bg-primary-50/80 border-primary-300 ring-1 ring-primary-200' : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-md'}`}>
+                        {addons[labor.id] && <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-primary-200/40 to-transparent flex justify-end items-start p-1.5"><Check size={14} className="text-primary-600 shadow-sm"/></div>}
+                        
+                        <input type="checkbox" className="w-[18px] h-[18px] mt-0.5 shrink-0 text-primary-600 border-gray-300 rounded focus:ring-primary-500 cursor-pointer shadow-sm transition-colors" checked={!!addons[labor.id]} onChange={() => toggleAddon(labor.id)} />
+                        
+                        <div className="flex-1 min-w-0 pr-6">
+                           <span className={`block font-black text-[13px] leading-tight mb-1.5 truncate ${addons[labor.id] ? 'text-primary-900' : 'text-slate-800'}`}>{labor.item_name}</span>
+                           <div className="flex items-center gap-2">
+                              <span className="text-[9px] uppercase font-bold tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 shadow-sm">{labor.category}</span>
+                              <span className="font-mono text-[10px] font-bold text-slate-400">SKU {labor.sku || 'N/A'}</span>
+                           </div>
+                        </div>
+                        
+                        <div className="flex flex-col items-end shrink-0 hidden sm:flex">
+                           <span className="font-mono font-black text-slate-700 text-[13px]">${labor.cost}</span>
+                        </div>
+                      </label>
+                  ))}
+                </div>
+                
+                {laborRates.filter(labor => !labor.item_name.toLowerCase().includes('slab')).filter(l => addonSearchTerm === '' || l.item_name.toLowerCase().includes(addonSearchTerm.toLowerCase())).length === 0 && (
+                   <div className="text-center py-16 text-slate-400 flex flex-col items-center justify-center">
+                     <span className="bg-white p-4 rounded-full shadow-sm mb-4 border border-slate-100 text-slate-300">
+                        <Box size={32} />
+                     </span>
+                     <p className="font-bold text-sm text-slate-500">No components found matching "{addonSearchTerm}"</p>
+                     <p className="text-xs font-semibold text-slate-400 mt-1">Try adjusting your internal search phrase.</p>
+                   </div>
+                )}
              </div>
 
              <div className="flex justify-between items-center mt-8 pt-4 border-t border-slate-100">
