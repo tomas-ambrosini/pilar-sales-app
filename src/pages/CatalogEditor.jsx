@@ -19,7 +19,7 @@ export default function CatalogEditor() {
   const [isLaborModalOpen, setIsLaborModalOpen] = useState(false);
   
   const initialEquipState = { id: null, brand: '', series: '', tons: '', seer: '', condenser_model: '', ahu_model: '', system_cost: '', retail_price: '', image_url: '' };
-  const initialLaborState = { id: null, category: 'Labor', item_name: '', cost: '' };
+  const initialLaborState = { id: null, category: 'Labor', item_name: '', cost: '', sku: '', in_stock_quantity: 0 };
 
   const [activeEquip, setActiveEquip] = useState(initialEquipState);
   const [activeLabor, setActiveLabor] = useState(initialLaborState);
@@ -103,7 +103,9 @@ export default function CatalogEditor() {
     const payload = {
       category: activeLabor.category,
       item_name: activeLabor.item_name,
-      cost: parseFloat(activeLabor.cost)
+      cost: parseFloat(activeLabor.cost),
+      sku: activeLabor.sku,
+      in_stock_quantity: parseInt(activeLabor.in_stock_quantity) || 0
     };
 
     let error;
@@ -334,8 +336,10 @@ export default function CatalogEditor() {
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 leading-tight">
-                    <th className="p-4 font-semibold w-1/4">Financial Category</th>
-                    <th className="p-4 font-semibold w-1/2">Service or Material Line Item</th>
+                    <th className="p-4 font-semibold w-24">SKU</th>
+                    <th className="p-4 font-semibold w-1/5">Financial Category</th>
+                    <th className="p-4 font-semibold w-1/3">Service or Material Line Item</th>
+                    <th className="p-4 font-semibold text-center w-24">Stock</th>
                     <th className="p-4 font-semibold text-right">Fixed Cost</th>
                     <th className="p-4 font-semibold text-center w-24">Actions</th>
                   </tr>
@@ -363,12 +367,18 @@ export default function CatalogEditor() {
                    ) : (
                       filteredLabor.map(labor => (
                          <tr key={labor.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
+                           <td className="p-4 font-mono text-slate-500 font-bold">{labor.sku || '-'}</td>
                            <td className="p-4">
                               <span className="bg-white shadow-sm text-slate-600 text-[10px] font-black px-2.5 py-1.5 flex items-center w-max rounded-md uppercase tracking-widest border border-slate-200">
                                  {labor.category}
                               </span>
                            </td>
                            <td className="p-4 font-black text-slate-800 text-base tracking-tight">{labor.item_name}</td>
+                           <td className="p-4 text-center">
+                              <span className={`font-bold px-2 py-1 rounded-md text-xs border ${labor.in_stock_quantity > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+                                 {labor.in_stock_quantity || 0}
+                              </span>
+                           </td>
                            <td className="p-4 text-right font-black font-mono text-slate-700 text-base">
                               ${labor.cost?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                            </td>
@@ -458,6 +468,17 @@ export default function CatalogEditor() {
       <Modal isOpen={isLaborModalOpen} onClose={() => setIsLaborModalOpen(false)} title={activeLabor?.id ? "Edit System Add-on" : "Create Technical Add-on Matrix"}>
          <form className="modal-form" onSubmit={handleSaveLabor}>
             <div className="bg-slate-50 p-5 border border-slate-200 rounded-lg shadow-inner mb-6 space-y-5">
+               
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="form-group mb-0">
+                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">SKU / Code Number</label>
+                     <input className="input-field w-full font-mono text-sm border-slate-300 py-3 shadow-sm" value={activeLabor.sku || ''} onChange={e => setActiveLabor({...activeLabor, sku: e.target.value})} placeholder="e.g. 1007"/>
+                  </div>
+                  <div className="form-group mb-0">
+                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">In-Stock Inventory Qty</label>
+                     <input type="number" className="input-field w-full font-mono text-sm border-slate-300 py-3 shadow-sm" value={activeLabor.in_stock_quantity || ''} onChange={e => setActiveLabor({...activeLabor, in_stock_quantity: e.target.value})} placeholder="0"/>
+                  </div>
+               </div>
                
                <div className="form-group mb-0">
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Tax Categorization Protocol</label>
