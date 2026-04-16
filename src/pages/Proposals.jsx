@@ -395,9 +395,19 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                                               </div>
 
                                               <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3" onClick={e => e.stopPropagation()}>
-                                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                 <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {['super_admin', 'admin'].includes((user?.role || '').toLowerCase()) && (
+                                                       <button className="p-1.5 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Force Delete"><Trash2 size={14} /></button>
+                                                    )}
+                                                    {['Sent', 'Opened'].includes(proposal.status) && (
+                                                       <button className="p-1.5 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors" onClick={() => setMarkingLost(proposal)} title="Mark as Lost"><ThumbsDown size={14} /></button>
+                                                    )}
+                                                    {proposal.status === 'Lost' && (
+                                                       <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" onClick={() => handleReopen(proposal)} title="Re-open Proposal"><RotateCcw size={14} /></button>
+                                                    )}
+                                                    <button onClick={() => handleMailto(proposal)} className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-50 rounded transition-colors" title="Email Client"><Mail size={14} /></button>
+                                                    <button onClick={() => handleCopyMessage(proposal)} className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-50 rounded transition-colors" title="Copy Message"><Copy size={14} /></button>
                                                     <button onClick={() => handleCopyLink(proposal)} className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-50 rounded transition-colors" title="Copy Link"><Link size={14} /></button>
-                                                    <button onClick={() => handleMailto(proposal)} className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-50 rounded transition-colors" title="Email"><Mail size={14} /></button>
                                                  </div>
                                                  <button 
                                                     className={`ml-auto flex items-center justify-center text-[10px] font-black px-4 py-1.5 rounded-md shadow-sm transition-all focus:ring-2 outline-none ${
