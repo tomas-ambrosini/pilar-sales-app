@@ -361,7 +361,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                               if (colName === 'Lost') headerColor = 'border-red-200 bg-red-50 text-red-700';
 
                               return (
-                                 <div key={colName} className="flex flex-col w-[320px] shrink-0 bg-slate-100/50 rounded-xl border border-slate-200 p-4 relative h-max mt-4">
+                                 <div key={colName} className="flex flex-col flex-1 min-w-[300px] max-w-md shrink-0 bg-slate-100/50 rounded-xl border border-slate-200 p-4 relative h-max mt-4">
                                     <div className={`px-4 py-2 border rounded-lg mb-4 font-black uppercase tracking-wider text-[11px] ${headerColor} flex justify-between items-center shadow-sm absolute -top-5 left-4 right-4 bg-white`}>
                                        <span>{colName}</span>
                                        <span className="bg-white/80 px-2 py-0.5 rounded-full text-[10px] shadow-sm">{colProposals.length}</span>
