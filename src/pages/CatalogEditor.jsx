@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Plus, Edit2, Trash2, Box, Pen, Layers, Calculator, UploadCloud, RefreshCw, Component, Check, Search, Filter, Package } from 'lucide-react';
+import { Plus, Edit2, Trash2, Box, Pen, Layers, Calculator, UploadCloud, RefreshCw, Component, Check, Search, Filter, Package, ListOrdered } from 'lucide-react';
 import Modal from '../components/Modal';
 
 export default function CatalogEditor() {
@@ -13,6 +13,7 @@ export default function CatalogEditor() {
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
   const [filterValue, setFilterValue] = useState('All');
+  const [laborSort, setLaborSort] = useState('Alphabetical');
 
   // Forms State
   const [isEquipModalOpen, setIsEquipModalOpen] = useState(false);
@@ -190,9 +191,18 @@ export default function CatalogEditor() {
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = searchTerm === '' ||
       labor.item_name?.toLowerCase().includes(searchLower) ||
-      labor.category?.toLowerCase().includes(searchLower);
+      labor.category?.toLowerCase().includes(searchLower) ||
+      labor.sku?.toLowerCase().includes(searchLower);
     const matchesFilter = filterValue === 'All' || labor.category === filterValue;
     return matchesSearch && matchesFilter;
+  }).sort((a, b) => {
+     if (laborSort === 'SKU') {
+        const skuA = parseInt(a.sku) || Number.MAX_SAFE_INTEGER;
+        const skuB = parseInt(b.sku) || Number.MAX_SAFE_INTEGER;
+        return skuA - skuB;
+     } else {
+        return (a.item_name || '').localeCompare(b.item_name || '');
+     }
   });
 
   return (
@@ -253,6 +263,21 @@ export default function CatalogEditor() {
                        }
                     </select>
                  </div>
+
+                  {activeTab === 'labor' && (
+                     <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 shadow-sm select-wrapper relative">
+                        <ListOrdered size={14} className="text-slate-400" />
+                        <select 
+                           className="border-none bg-transparent focus:ring-0 py-1.5 text-xs font-bold text-slate-700 outline-none cursor-pointer"
+                           value={laborSort}
+                           onChange={(e) => setLaborSort(e.target.value)}
+                        >
+                           <option value="Alphabetical">A-Z Name</option>
+                           <option value="SKU">By SKU #</option>
+                        </select>
+                     </div>
+                  )}
+
              </div>
           </div>
          {activeTab === 'equipment' && (
