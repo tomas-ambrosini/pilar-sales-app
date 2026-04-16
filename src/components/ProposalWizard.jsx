@@ -382,7 +382,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
              Object.entries(sys.addons || {}).filter(([_, v]) => v).forEach(([k]) => {
                 const name = laborRates.find(l => l.id.toString() === k.toString())?.item_name;
-                if (name && !name.toLowerCase().includes('slab')) aggregatedAddons.add(`Includes: ${name}`);
+                if (name) aggregatedAddons.add(`Includes: ${name}`);
              });
           }
        });
@@ -440,7 +440,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
            
            const activeAddonsList = Object.entries(sys.addons || {}).filter(([_, v]) => v).map(([k]) => {
               const name = laborRates.find(l => l.id.toString() === k.toString())?.item_name;
-              return name && !name.toLowerCase().includes('slab') ? `Includes: ${name}` : null;
+              return name ? `Includes: ${name}` : null;
            }).filter(Boolean);
 
            features = [...features, ...activeAddonsList];
@@ -891,7 +891,6 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
              <div className="bg-slate-50 p-4 md:p-6 rounded-2xl border border-slate-200 max-h-[450px] overflow-y-auto custom-scrollbar shadow-inner relative">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
                   {laborRates
-                    .filter(labor => !labor.item_name.toLowerCase().includes('slab'))
                     .filter(labor => 
                        addonSearchTerm === '' || 
                        labor.item_name.toLowerCase().includes(addonSearchTerm.toLowerCase()) || 
@@ -920,7 +919,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                   ))}
                 </div>
                 
-                {laborRates.filter(labor => !labor.item_name.toLowerCase().includes('slab')).filter(l => addonSearchTerm === '' || l.item_name.toLowerCase().includes(addonSearchTerm.toLowerCase())).length === 0 && (
+                {laborRates.filter(l => addonSearchTerm === '' || l.item_name.toLowerCase().includes(addonSearchTerm.toLowerCase())).length === 0 && (
                    <div className="text-center py-16 text-slate-400 flex flex-col items-center justify-center">
                      <span className="bg-white p-4 rounded-full shadow-sm mb-4 border border-slate-100 text-slate-300">
                         <Box size={32} />
@@ -997,7 +996,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                              {Object.entries(sys.addons || {}).filter(([_, v]) => v).length > 0 ? (
                                                 Object.entries(sys.addons).filter(([_, v]) => v).map(([k]) => {
                                                    const laborName = laborRates.find(l => l.id.toString() === k.toString())?.item_name || 'Component';
-                                                   if (laborName.toLowerCase().includes('slab')) return null;
+                                                   
                                                    return (
                                                       <span key={k} className="text-[9px] font-bold bg-slate-50 text-slate-600 px-2.5 py-1 rounded-full border border-slate-200 uppercase flex items-center gap-1">
                                                          <Check size={10} className="text-emerald-500"/> {laborName}
