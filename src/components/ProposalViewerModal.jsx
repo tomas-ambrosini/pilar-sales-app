@@ -107,9 +107,9 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                  {isMultiSys ? (
                       <button 
                          onClick={(e) => { e.stopPropagation(); setLocalSelections(p => ({...p, [systemId]: `${focusedTrackId}_${tierKey}`})); }}
-                         className={`w-full py-3.5 flex items-center justify-center gap-2 rounded-xl text-sm font-bold border transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${isSelected ? 'bg-primary-600 border-primary-600 text-white shadow-md focus:ring-primary-600' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 shadow-sm'}`}
+                         className={`w-full py-3.5 flex items-center justify-center gap-2 rounded-xl text-sm font-bold border-2 transition-all duration-200 focus:outline-none ${isSelected ? 'bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-600/30 ring-1 ring-primary-600 translate-y-[-1px]' : 'bg-white border-slate-200/80 text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 shadow-sm'}`}
                       >
-                         {isSelected ? <><CheckCircle size={16}/> Option Selected</> : `Select ${tierName.split('(')[0].trim()}`}
+                         {isSelected ? <><CheckCircle size={16} strokeWidth={2.5}/> Option Selected</> : `Select ${tierName.split('(')[0].trim()}`}
                       </button>
                  ) : proposal.status !== 'Approved' ? (
                      <button 
@@ -139,7 +139,7 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
        <div className="absolute -inset-10 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
        
        {/* Massive Modal Container */}
-       <div className="relative bg-white rounded-2xl shadow-2xl w-[95vw] sm:w-[98vw] md:w-[95vw] lg:w-[90vw] xl:w-[80vw] max-w-6xl max-h-[90vh] flex flex-col overflow-hidden transform transition-transform duration-300 object-contain">
+       <div className="relative bg-white rounded-2xl shadow-2xl w-[98vw] sm:w-[95vw] lg:w-[90vw] xl:w-[1100px] max-w-[100%] max-h-[95vh] flex flex-col overflow-hidden transform transition-transform duration-300">
           
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
@@ -309,23 +309,23 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
              }
 
              return (
-                 <div className="border-t border-slate-200 bg-white/95 backdrop-blur-md sticky bottom-0 z-50 p-5 flex flex-col sm:flex-row items-center justify-between shrink-0 w-full rounded-b-2xl">
-                     <div className="flex items-center gap-3 w-full sm:w-auto mb-4 sm:mb-0 justify-center sm:justify-start">
-                         <div className="text-sm font-black text-slate-800 flex items-center gap-3">
-                             <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 font-black text-slate-700 shadow-inner shrink-0">
-                                 {Object.keys(localSelections).length}
-                             </div>
-                             <span className="tracking-tight whitespace-nowrap">/ {proposal_data.systemTiers.length} Systems Configured</span>
+                 <div className="border-t border-slate-200/80 bg-slate-50/95 backdrop-blur-xl sticky bottom-0 z-50 px-8 py-5 flex items-center w-full rounded-b-2xl">
+                     <div className="flex-1 flex items-center gap-4">
+                         <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-slate-200 font-black text-slate-800 shadow-sm">
+                             {Object.keys(localSelections).length}
                          </div>
+                         <span className="text-sm font-bold tracking-tight text-slate-700">
+                             / {proposal_data.systemTiers.length} Systems Configured
+                         </span>
                      </div>
-                     <div className="flex w-full sm:w-auto items-center justify-end gap-3 shrink-0">
-                         <button onClick={onClose} className="py-2.5 px-6 rounded-lg font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors bg-white border border-slate-200 text-sm whitespace-nowrap shadow-sm min-w-[140px]">Close Planner</button>
+                     <div className="flex-none flex items-center gap-4">
+                         <button onClick={onClose} className="py-2.5 px-6 rounded-lg font-bold text-slate-500 hover:text-slate-800 hover:bg-white transition-colors bg-transparent border border-transparent hover:border-slate-200 hover:shadow-sm text-sm">Close Planner</button>
                          <button 
                             disabled={!isCartComplete} 
                             onClick={handleFinalize}
-                            className={`py-2.5 px-6 rounded-lg font-bold text-sm transition-all focus:ring-2 focus:ring-offset-2 outline-none whitespace-nowrap w-full sm:w-auto sm:min-w-[180px] ${!isCartComplete ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200' : 'bg-primary-600 text-white hover:bg-primary-700 border-primary-600 focus:ring-primary-600 shadow-md'}`}
+                            className={`py-3 px-8 rounded-lg font-bold text-sm transition-all focus:outline-none min-w-[200px] flex justify-center items-center ${!isCartComplete ? 'bg-slate-200/60 text-slate-400 cursor-not-allowed border border-slate-200' : 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-600/20 translate-y-[-1px]'}`}
                          >
-                            {isCartComplete ? 'Accept Configuration' : 'Selection Pending'}
+                            {isCartComplete ? 'Confirm Package' : 'Selection Pending'}
                          </button>
                      </div>
                  </div>
