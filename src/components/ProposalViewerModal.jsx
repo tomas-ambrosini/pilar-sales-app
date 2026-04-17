@@ -35,27 +35,27 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
     const isSelected = isMultiSys && currentSelection === `${focusedTrackId}_${tierKey}`;
     
     const borderClass = isMultiSys 
-         ? (isSelected ? 'border-primary-500 ring-4 ring-primary-500/20 bg-white scale-[1.02] shadow-xl z-20' : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-primary-300')
-         : (isBest ? 'border-primary-500 shadow-xl bg-white scale-105 z-10' : 'border-slate-200 bg-slate-50');
+         ? (isSelected ? 'border-primary-400 ring-4 ring-primary-500/10 bg-gradient-to-b from-white to-primary-50/20 scale-[102%] shadow-2xl z-20' : 'border-slate-200/60 bg-white hover:border-slate-300 hover:shadow-lg')
+         : (isBest ? 'border-primary-400 shadow-2xl bg-gradient-to-b from-white to-primary-50/20 scale-105 z-10' : 'border-slate-200/60 bg-white shadow-md');
 
     return (
-       <div className={`relative flex flex-col p-6 rounded-xl border-2 transition-all duration-200 ${borderClass}`}>
+       <div className={`relative flex flex-col p-7 rounded-2xl border-2 transition-all duration-300 ease-out ${borderClass}`}>
           {((isBest && !isMultiSys) || (isMultiSys && tierKey === 'Best')) && (
-             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-500 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-sm">
+             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-emerald-400 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-md border border-emerald-400/50">
                  Suggested
              </div>
           )}
           
-          <div className="flex flex-col gap-3 mb-5">
-              <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">{tierName}</h3>
+          <div className="flex flex-col gap-3 mb-6">
+              <h3 className="text-[22px] font-black text-slate-800 uppercase tracking-tight">{tierName}</h3>
               
               {showBrandToggle && (
-                  <div className="flex bg-slate-100 rounded-lg p-1 w-full flex-wrap gap-1">
+                  <div className="flex bg-slate-100/80 rounded-xl p-1 w-full flex-wrap gap-1 border border-slate-200/60 shadow-inner">
                      {validTracks.map((trk) => (
                         <button 
                            key={trk.id} 
                            onClick={(e) => { e.stopPropagation(); setFocusedTrackId(trk.id); }} 
-                           className={`flex-1 px-2 py-1.5 text-[10px] whitespace-nowrap font-bold uppercase tracking-wider rounded-md transition-all duration-200 ${focusedTrackId === trk.id ? 'bg-white shadow-sm text-primary-700 border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
+                           className={`flex-1 px-2 py-2 text-[10px] whitespace-nowrap font-black uppercase tracking-widest rounded-lg transition-all duration-300 ${focusedTrackId === trk.id ? 'bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] text-primary-700' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
                         >
                            {trk.title}
                         </button>
@@ -64,38 +64,41 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
               )}
           </div>
           
-          <div className="my-4 pb-4 border-b border-slate-200">
-             <div className="text-3xl font-black text-slate-900">
-                ${(activeData?.salesPrice || 0).toLocaleString()}
+          <div className="my-2 pb-6 border-b border-slate-100">
+             <div className="flex items-start text-slate-900">
+                <span className="text-xl font-bold mt-1.5 mr-0.5 text-slate-400">$</span>
+                <span className="text-5xl font-black tracking-tighter">{(activeData?.salesPrice || 0).toLocaleString()}</span>
              </div>
-             <p className="text-xs text-slate-500 mt-1 font-medium">Fully Installed Price</p>
+             <p className="text-[11px] text-slate-400 mt-2 font-bold uppercase tracking-widest">Fully Installed Price</p>
           </div>
           
-          <div className="flex-grow space-y-4 mb-6">
+          <div className="flex-grow space-y-6 mb-6 mt-4">
              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Equipment</p>
+                <p className="text-[10px] font-black text-primary-400/80 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-primary-400"></div>Equipment Package</p>
                 {activeData?.equipmentList && activeData.equipmentList.length > 0 ? (
                    <div className="space-y-1">
                       {activeData.equipmentList.map((eq, i) => (
-                          <p key={i} className="text-sm font-bold text-slate-800">{eq}</p>
+                          <p key={i} className="text-[15px] font-bold text-slate-800 leading-tight">{eq}</p>
                       ))}
-                      <p className="text-xs text-slate-600 border-t border-slate-200 mt-1 pt-1">Total: {activeData.tons} Tons</p>
+                      <div className="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 border border-slate-200/60 rounded text-[10px] font-black tracking-widest uppercase mt-2">Total: {activeData.tons} Tons</div>
                    </div>
                 ) : (
                    <>
-                      <p className="font-bold text-slate-800">{activeData?.brand} {activeData?.series}</p>
-                      <p className="text-sm text-slate-600">{activeData?.tons} Ton System</p>
+                      <p className="font-bold text-[15px] text-slate-800 leading-tight">{activeData?.brand} {activeData?.series}</p>
+                      <div className="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 border border-slate-200/60 rounded text-[10px] font-black tracking-widest uppercase mt-2">{activeData?.tons} Ton System</div>
                    </>
                 )}
              </div>
              
              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Included Features</p>
-                <ul className="space-y-2">
+                <p className="text-[10px] font-black text-emerald-500/80 uppercase tracking-widest mb-3 flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>Included Features</p>
+                <ul className="space-y-2.5">
                    {(activeData?.features || []).map((feat, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-sm text-slate-700">
-                         <CheckCircle size={14} className="text-success mt-0.5 flex-shrink-0" />
-                         <span>{feat}</span>
+                      <li key={idx} className="flex items-start gap-2.5 text-[13px] text-slate-600 font-medium">
+                         <div className="mt-[2px] bg-emerald-100 rounded-full p-0.5 shrink-0">
+                            <CheckCircle size={12} className="text-emerald-600" />
+                         </div>
+                         <span className="leading-snug">{feat}</span>
                       </li>
                    ))}
                 </ul>
@@ -105,26 +108,26 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
           {!proposal?.isReadOnly && (
               <div className="mt-auto pt-4">
                  {isMultiSys ? (
-                     <button 
-                        onClick={(e) => { e.stopPropagation(); setLocalSelections(p => ({...p, [systemId]: `${focusedTrackId}_${tierKey}`})); }}
-                        className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${isSelected ? 'bg-primary-500 text-white shadow-md' : 'bg-slate-200 text-slate-600 hover:bg-primary-100 hover:text-primary-700 border-2 border-transparent'}`}
-                     >
-                        {isSelected ? <><CheckCircle size={16}/> Option Selected</> : `Select ${tierName} Tier`}
-                     </button>
+                      <button 
+                         onClick={(e) => { e.stopPropagation(); setLocalSelections(p => ({...p, [systemId]: `${focusedTrackId}_${tierKey}`})); }}
+                         className={`w-full py-3.5 rounded-xl font-black transition-all flex items-center justify-center gap-2 tracking-widest text-[11px] uppercase shadow-sm ${isSelected ? 'bg-primary-600 text-white hover:bg-primary-700 ring-4 ring-primary-500/20' : 'bg-slate-100/80 border border-slate-200/80 text-slate-600 hover:bg-white hover:border-slate-300 hover:text-slate-800'}`}
+                      >
+                         {isSelected ? <><CheckCircle size={14}/> Option Selected</> : `Select ${tierName.split('(')[0].trim()}`}
+                      </button>
                  ) : proposal.status !== 'Approved' ? (
                      <button 
                         disabled={proposal.isReadOnly}
                         onClick={(e) => { e.stopPropagation(); !proposal.isReadOnly && onAccept && onAccept(tierKey, activeData, proposal); }}
-                        className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${proposal.isReadOnly ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : isBest ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-md' : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300'}`}
+                        className={`w-full py-3.5 rounded-xl font-black transition-all flex items-center justify-center gap-2 tracking-widest text-[11px] uppercase shadow-sm ${proposal.isReadOnly ? 'bg-slate-100/50 text-slate-300 border border-slate-200/50 cursor-not-allowed' : isBest ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-500/20 ring-1 ring-primary-600' : 'bg-slate-100/80 border border-slate-200/80 text-slate-600 hover:bg-white hover:border-slate-300 hover:text-slate-800 hover:shadow-md'}`}
                      >
-                        {proposal.isReadOnly ? 'Preview Only' : `Accept ${tierName} Quote`}
+                        {proposal.isReadOnly ? 'Preview Only' : `Select ${tierName.split('(')[0].trim()}`}
                      </button>
                  ) : (
                      <button 
                         onClick={(e) => { e.stopPropagation(); onViewContract && onViewContract(proposal); }} 
-                        className={`w-full py-3 rounded font-bold flex items-center justify-center gap-2 transition-all ${isBest ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl scale-105' : 'bg-emerald-50 border-2 border-emerald-200 text-emerald-700 hover:bg-emerald-100'}`}
+                        className={`w-full py-3.5 rounded-xl font-black flex items-center justify-center gap-2 tracking-widest text-[11px] uppercase transition-all ${isBest ? 'bg-emerald-500 hover:bg-emerald-600 border border-emerald-600/50 shadow-xl shadow-emerald-500/20 text-white text-sm scale-[102%]' : 'bg-emerald-50 border border-emerald-200/60 text-emerald-600 hover:bg-emerald-100'}`}
                      >
-                        <FileText size={16}/> View Signed Contract
+                        <FileText size={16}/> View Contract
                      </button>
                  )}
               </div>
@@ -309,22 +312,25 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
              }
 
              return (
-                 <div className="p-5 border-t border-slate-200 bg-slate-50 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="text-xs font-bold text-slate-500 bg-slate-200/50 px-4 py-2 rounded-lg flex items-center">
-                        <AlertTriangle size={14} className="text-amber-500 mr-2 flex-shrink-0" />
-                        Please select an equipment tier for all units above.
-                    </div>
-                    <div className="flex gap-3 w-full md:w-auto">
-                        {onBack && <button className="px-4 py-2.5 font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-colors rounded flex items-center gap-2" onClick={onBack}><ArrowLeft size={16}/> Back</button>}
-                        <button className="px-6 py-2.5 font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-colors rounded" onClick={onClose}>Close Planner</button>
-                        <button 
-                           disabled={!isCartComplete} 
-                           onClick={handleFinalize}
-                           className={`px-6 py-2.5 font-bold rounded shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none ${isCartComplete ? 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-600' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`}
-                        >
-                           {isCartComplete ? 'Accept Configuration Package' : 'Select a Tier for Each System'}
-                        </button>
-                    </div>
+                 <div className="border border-slate-200/60 bg-white/80 shadow-lg backdrop-blur sticky bottom-0 z-50 p-6 flex flex-col sm:flex-row items-center justify-between gap-6 shrink-0 mt-8 rounded-xl">
+                     <div className="flex items-center gap-3">
+                         <div className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                             <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 font-black text-slate-600">
+                                 {Object.keys(localSelections).length}
+                             </div>
+                             <span>/ {proposal_data.systemTiers.length} Systems Configured</span>
+                         </div>
+                     </div>
+                     <div className="flex items-center gap-3 w-full sm:w-auto">
+                         <button onClick={onClose} className="px-6 py-3 rounded-lg font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors bg-white border border-slate-200 w-full sm:w-auto text-sm shrink-0">Close</button>
+                         <button 
+                            disabled={!isCartComplete} 
+                            onClick={handleFinalize}
+                            className={`px-6 py-3 rounded-lg font-black tracking-widest uppercase text-xs transition-all shadow-md ${isCartComplete ? 'bg-primary-600 text-white hover:bg-primary-700 ring-1 ring-primary-500 hover:shadow-primary-500/20 hover:shadow-xl' : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200/50'}`}
+                         >
+                            {isCartComplete ? 'Accept Configuration Package' : 'Select a Tier for Each System'}
+                         </button>
+                     </div>
                  </div>
              );
           })() : (
