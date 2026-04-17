@@ -17,23 +17,22 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
 
   const { proposal_data } = proposal;
 
-const TierCard = ({ tierName, tierKey, primaryData, altData, isBest, systemId, proposal, localSelections, setLocalSelections, onAccept, onViewContract }) => {
-    if (!primaryData && !altData) return null;
+const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, localSelections, setLocalSelections, onAccept, onViewContract }) => {
+    const validTracks = tracks ? tracks.filter(t => t.data) : [];
+    if (validTracks.length === 0) return null;
     
     // Multi-System Logic Check
     const isMultiSys = systemId !== null;
-    const currentSelection = localSelections[systemId]; // e.g., 'Primary_Best', 'Alt_Best', 'None'
-    const isPrimarySelected = isMultiSys && currentSelection === `Primary_${tierKey}`;
-    const isAltSelected = isMultiSys && currentSelection === `Alt_${tierKey}`;
-
+    const currentSelection = localSelections[systemId]; // e.g., 'Primary_Best', 'Track0_Best', 'None'
+    
     // Active Toggle State
-    const [focusedBrand, setFocusedBrand] = React.useState('Primary'); // 'Primary' or 'Alt'
-    const activeData = focusedBrand === 'Primary' ? primaryData : altData;
+    const [focusedTrackId, setFocusedTrackId] = React.useState(validTracks[0].id);
+    const activeData = validTracks.find(t => t.id === focusedTrackId)?.data || validTracks[0].data;
     
     // If the system is approved/old-school, we don't have toggles
-    const showBrandToggle = altData && primaryData;
+    const showBrandToggle = validTracks.length > 1;
 
-    const isSelected = isPrimarySelected || isAltSelected;
+    const isSelected = isMultiSys && currentSelection === `${focusedTrackId}_${tierKey}`;
     
     const borderClass = isMultiSys 
          ? (isSelected ? 'border-primary-500 ring-4 ring-primary-500/20 bg-white scale-[1.02] shadow-xl z-20' : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-primary-300')
@@ -50,9 +49,12 @@ const TierCard = ({ tierName, tierKey, primaryData, altData, isBest, systemId, p
           <div className="flex justify-between items-start mb-4">
               <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">{tierName}</h3>
               {showBrandToggle && (
-                  <div className="flex bg-slate-200 rounded-lg p-1 w-max">
-                     <button onClick={(e) => { e.stopPropagation(); setFocusedBrand('Primary'); }} className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md transition-colors ${focusedBrand === 'Primary' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}>Option 1</button>
-                     <button onClick={(e) => { e.stopPropagation(); setFocusedBrand('Alt'); }} className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md transition-colors ${focusedBrand === 'Alt' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}>Option 2</button>
+                  <div className="flex bg-slate-200 rounded-lg p-1 w-max overflow-x-auto">
+                     {validTracks.map((trk) => (
+                        <button key={trk.id} onClick={(e) => { e.stopPropagation(); setFocusedTrackId(trk.id); }} className={`px-3 py-1 text-[10px] whitespace-nowrap font-bold uppercase tracking-wider rounded-md transition-colors ${focusedTrackId === trk.id ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}>
+                           {trk.title}
+                        </button>
+                     ))}
                   </div>
               )}
           </div>
@@ -99,7 +101,7 @@ const TierCard = ({ tierName, tierKey, primaryData, altData, isBest, systemId, p
               <div className="mt-auto pt-4">
                  {isMultiSys ? (
                      <button 
-                        onClick={(e) => { e.stopPropagation(); setLocalSelections(p => ({...p, [systemId]: `${focusedBrand}_${tierKey}`})); }}
+                        onClick={(e) => { e.stopPropagation(); setLocalSelections(p => ({...p, [systemId]: `${focusedTrackId}_${tierKey}`})); }}
                         className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${isSelected ? 'bg-primary-500 text-white shadow-md' : 'bg-slate-200 text-slate-600 hover:bg-primary-100 hover:text-primary-700 border-2 border-transparent'}`}
                      >
                         {isSelected ? <><CheckCircle size={16}/> Option Selected</> : `Select ${tierName} Tier`}
@@ -177,9 +179,29 @@ const TierCard = ({ tierName, tierKey, primaryData, altData, isBest, systemId, p
                             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Select Tier Option</p>
                          </div>
                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end">
-                            <TierCard tierName="Baseline (Good)" tierKey="Good" primaryData={sys.tiers?.good} altData={sys.altTiers?.good} isBest={false} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
-                            <TierCard tierName="Premium (Best)" tierKey="Best" primaryData={sys.tiers?.best} altData={sys.altTiers?.best} isBest={true} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
-                            <TierCard tierName="Core (Better)" tierKey="Better" primaryData={sys.tiers?.better} altData={sys.altTiers?.better} isBest={false} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                            {(() => {
+                                const buildTracks = (key) => {
+                                   const tracks = [];
+                                   if (sys.tiers?.[key] || sys.tiers?.[key.charAt(0).toUpperCase() + key.slice(1)]) {
+                                       tracks.push({ id: 'Primary', title: 'Option 1', data: sys.tiers[key] || sys.tiers[key.charAt(0).toUpperCase() + key.slice(1)] });
+                                   }
+                                   if (sys.altTracks && sys.altTracks.length > 0) {
+                                       sys.altTracks.forEach((t, i) => {
+                                           if (t.tiers?.[key]) tracks.push({ id: `Track${i}`, title: `Option ${i + 2}`, data: t.tiers[key] });
+                                       });
+                                   } else if (sys.altTiers?.[key]) {
+                                       tracks.push({ id: 'Alt', title: 'Option 2', data: sys.altTiers[key] });
+                                   }
+                                   return tracks;
+                                };
+                                return (
+                                   <>
+                                      <TierCard tierName="Baseline (Good)" tierKey="Good" tracks={buildTracks('good')} isBest={false} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                                      <TierCard tierName="Premium (Best)" tierKey="Best" tracks={buildTracks('best')} isBest={true} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                                      <TierCard tierName="Core (Better)" tierKey="Better" tracks={buildTracks('better')} isBest={false} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                                   </>
+                                );
+                            })()}
                          </div>
                          {!proposal?.isReadOnly && (
                             <div className="mt-8 flex justify-center">
@@ -196,9 +218,9 @@ const TierCard = ({ tierName, tierKey, primaryData, altData, isBest, systemId, p
                 </div>
              ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end max-w-5xl mx-auto pt-4 pb-8">
-                   <TierCard tierName="Baseline (Good)" tierKey="Good" primaryData={proposal_data.tiers?.good || proposal_data.tiers?.Good} altData={null} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
-                   <TierCard tierName="Premium (Best)" tierKey="Best" primaryData={proposal_data.tiers?.best || proposal_data.tiers?.Best} altData={null} isBest={true} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
-                   <TierCard tierName="Core (Better)" tierKey="Better" primaryData={proposal_data.tiers?.better || proposal_data.tiers?.Better} altData={null} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                   <TierCard tierName="Baseline (Good)" tierKey="Good" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.good || proposal_data.tiers?.Good }]} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                   <TierCard tierName="Premium (Best)" tierKey="Best" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.best || proposal_data.tiers?.Best }]} isBest={true} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                   <TierCard tierName="Core (Better)" tierKey="Better" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.better || proposal_data.tiers?.Better }]} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
                 </div>
              )}
           </div>
@@ -222,6 +244,18 @@ const TierCard = ({ tierName, tierKey, primaryData, altData, isBest, systemId, p
                      let td = null;
                      if (brandOpt === 'Primary' && sys.tiers) td = sys.tiers[tierStr.toLowerCase()];
                      else if (brandOpt === 'Alt' && sys.altTiers) td = sys.altTiers[tierStr.toLowerCase()];
+                     else if (brandOpt.startsWith('Track') && sys.altTracks) {
+                         const trackIdx = parseInt(brandOpt.replace('Track', ''), 10);
+                         if (sys.altTracks[trackIdx] && sys.altTracks[trackIdx].tiers) {
+                             td = sys.altTracks[trackIdx].tiers[tierStr.toLowerCase()];
+                         }
+                     }
+                     else if (brandOpt.startsWith('Track') && sys.altTracks) {
+                         const trackIdx = parseInt(brandOpt.replace('Track', ''), 10);
+                         if (sys.altTracks[trackIdx] && sys.altTracks[trackIdx].tiers) {
+                             td = sys.altTracks[trackIdx].tiers[tierStr.toLowerCase()];
+                         }
+                     }
                      
                      if (td) {
                          totalSalesPrice += td.salesPrice || 0;

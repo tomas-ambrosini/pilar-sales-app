@@ -41,9 +41,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     tonnageFilter: '',
     primaryBrandFilter: '',
     selectedTiers: { best: null, better: null, good: null },
-    includeAlternateBrand: false,
-    alternateBrandFilter: '',
-    alternateTiers: { best: null, better: null, good: null },
+    alternateTracks: [],
     addons: {}
   });
 
@@ -62,7 +60,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const [uploadingPhoto, setUploadingPhoto] = useState(null);
 
   const activeSystem = systems.find(s => s.id === activeSystemId) || systems[0];
-  const { survey, photos, tonnageFilter, primaryBrandFilter, selectedTiers, includeAlternateBrand, alternateBrandFilter, alternateTiers, addons } = activeSystem;
+  const { survey, photos, tonnageFilter, primaryBrandFilter, selectedTiers, alternateTracks = [], addons } = activeSystem;
 
   const updateActiveSystem = (field, value) => {
      setSystems(prev => prev.map(sys => sys.id === activeSystemId ? { ...sys, [field]: value } : sys));
@@ -72,9 +70,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const setTonnageFilter = (val) => updateActiveSystem('tonnageFilter', typeof val === 'function' ? val(tonnageFilter) : val);
   const setPrimaryBrandFilter = (val) => updateActiveSystem('primaryBrandFilter', typeof val === 'function' ? val(primaryBrandFilter) : val);
   const setSelectedTiers = (val) => updateActiveSystem('selectedTiers', typeof val === 'function' ? val(selectedTiers) : val);
-  const setIncludeAlternateBrand = (val) => updateActiveSystem('includeAlternateBrand', typeof val === 'function' ? val(includeAlternateBrand) : val);
-  const setAlternateBrandFilter = (val) => updateActiveSystem('alternateBrandFilter', typeof val === 'function' ? val(alternateBrandFilter) : val);
-  const setAlternateTiers = (val) => updateActiveSystem('alternateTiers', typeof val === 'function' ? val(alternateTiers) : val);
+  const setAlternateTracks = (val) => updateActiveSystem('alternateTracks', typeof val === 'function' ? val(alternateTracks) : val);
   const setAddons = (val) => updateActiveSystem('addons', typeof val === 'function' ? val(addons) : val);
 
   // Live Database Arrays
@@ -465,13 +461,14 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
            };
        });
 
-       let altTiers = null;
-       if (sys.includeAlternateBrand) {
-           altTiers = { good: null, better: null, best: null };
+       const altTracksArray = (sys.alternateTracks || []).map(track => {
+           if (!track.tiers?.best && !track.tiers?.better && !track.tiers?.good) return null;
+           const trackMapping = { good: null, better: null, best: null };
+           
            ['best', 'better', 'good'].forEach(tierKey => {
-               if (!sys.alternateTiers?.[tierKey]) return;
+               if (!track.tiers?.[tierKey]) return;
                
-               const raw = sys.alternateTiers[tierKey].system_cost || 0;
+               const raw = track.tiers[tierKey].system_cost || 0;
                const baselinePrice = calculateSystemBaselineRetail(sys, raw, tierKey.charAt(0).toUpperCase() + tierKey.slice(1));
                const percent = appliedPromo ? appliedPromo.discount_percent : 0;
                const discountAmount = baselinePrice * (percent / 100);
@@ -489,24 +486,26 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
                features = [...features, ...activeAddonsList];
 
-               altTiers[tierKey] = {
+               trackMapping[tierKey] = {
                    id: tierKey,
-                   brand: sys.alternateTiers[tierKey].brand,
-                   series: sys.alternateTiers[tierKey].series,
-                   tons: sys.alternateTiers[tierKey].tons,
+                   brand: track.tiers[tierKey].brand,
+                   series: track.tiers[tierKey].series,
+                   tons: track.tiers[tierKey].tons,
                    baselinePrice: baselinePrice,
                    saleDiscount: discountAmount,
                    salesPrice: finalPrice,
                    features: features
                };
            });
-       }
+           return { id: track.id, tiers: trackMapping };
+       }).filter(Boolean);
        
        return {
            systemId: sys.id,
            systemName: sys.name,
-           tiers: sysTiers,
-           altTiers: altTiers
+           tiers: Object.keys(sysTiers).length > 0 ? sysTiers : null,
+           altTiers: altTracksArray.length > 0 ? altTracksArray[0].tiers : null,
+           altTracks: altTracksArray
        };
     });
 
@@ -878,20 +877,11 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
               <div className="mb-8">
                 <div className="flex items-center justify-between border-b pb-2 mb-4">
                    <h4 className="font-bold text-slate-700">Assign Consumer Options</h4>
-                   <label className="flex items-center gap-2 text-sm font-bold text-slate-600 cursor-pointer">
-                      <input 
-                         type="checkbox" 
-                         className="rounded border-slate-300 text-primary-600 focus:ring-primary-500 w-4 h-4 cursor-pointer" 
-                         checked={includeAlternateBrand} 
-                         onChange={e => setIncludeAlternateBrand(e.target.checked)} 
-                      />
-                      Include Alternate Brand Comparison
-                   </label>
                 </div>
                 <p className="text-xs text-slate-500 mb-6">Map previously filtered {tonnageFilter}-Ton systems into the Good/Better/Best presentation model for the homeowner.</p>
                 
                 <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
-                   <h5 className="font-bold text-xs uppercase tracking-widest text-slate-400 ml-1">{includeAlternateBrand ? 'Primary Brand Choices' : 'Selected Systems'}</h5>
+                   <h5 className="font-bold text-xs uppercase tracking-widest text-slate-400 ml-1">Primary Brand Choices</h5>
                    <select className="text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded px-2 py-1 outline-none cursor-pointer hover:bg-slate-100 transition-colors" value={primaryBrandFilter || ''} onChange={e => {setPrimaryBrandFilter(e.target.value); setSelectedTiers({best: null, better: null, good: null});}}>
                        <option value="">-- All Brands --</option>
                        {uniquePrimaryBrands.map(b => <option key={b} value={b}>{b}</option>)}
@@ -910,30 +900,53 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                   ))}
                 </div>
 
-                {includeAlternateBrand && (
-                   <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 shadow-inner">
-                      <div className="flex items-center justify-between mb-4 border-b border-indigo-200/50 pb-2">
-                          <h5 className="font-bold text-xs uppercase tracking-widest text-indigo-500 ml-1 flex items-center gap-2">
-                             <Layers size={14}/> Secondary Brand Comparison (Optional)
-                          </h5>
-                          <select className="text-xs font-bold text-indigo-700 bg-indigo-100/50 border border-indigo-200 rounded px-2 py-1 outline-none cursor-pointer hover:bg-indigo-200/50 transition-colors" value={alternateBrandFilter || ''} onChange={e => {setAlternateBrandFilter(e.target.value); setAlternateTiers({best: null, better: null, good: null});}}>
-                              <option value="">-- All Brands --</option>
-                              {uniqueAltBrands.map(b => <option key={b} value={b}>{b}</option>)}
-                          </select>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[ {k: 'good', l: 'Baseline (Good) - Alt'}, {k: 'best', l: 'Premium (Best) - Alt'}, {k: 'better', l: 'Core (Better) - Alt'} ].map(tier => (
-                           <div key={tier.k} className="bg-white p-5 border border-indigo-200 rounded-xl shadow-sm relative overflow-hidden">
-                              <label className="block font-black uppercase text-slate-700 text-sm tracking-wider mb-4 mt-1">{tier.l}</label>
-                              <select className="input-field w-full text-sm font-semibold text-slate-600 bg-slate-50 transition-colors" value={alternateTiers?.[tier.k]?.id || ''} onChange={e => setAlternateTiers({...(alternateTiers || {good: null, better: null, best: null}), [tier.k]: altFilteredCatalog.find(c => c.id.toString() === e.target.value)})}>
-                                 <option value="">-- Remove/Empty --</option>
-                                 {altFilteredCatalog.map(sys => <option key={sys.id} value={sys.id}>{sys.brand} {sys.series} {sys.seer} SEER</option>)}
+                 <div className="flex justify-end mb-6">
+                    <button 
+                       className="text-xs font-bold text-primary-600 bg-primary-50 px-3 py-1.5 rounded flex items-center gap-1 hover:bg-primary-100 transition-colors"
+                       onClick={() => setAlternateTracks([...alternateTracks, { id: Date.now().toString(36) + Math.random().toString(36).substr(2), brandFilter: '', tiers: { good: null, better: null, best: null } }])}
+                    >
+                       <Layers size={14}/> Add Another Brand Comparison
+                    </button>
+                 </div>
+
+                 {alternateTracks.map((track, trackIndex) => {
+                    const trackUniqueBrands = [...new Set(filteredCatalog.map(x => x.brand))].sort();
+                    const trackFilteredCatalog = track.brandFilter ? filteredCatalog.filter(c => c.brand === track.brandFilter) : filteredCatalog;
+
+                    return (
+                       <div key={track.id} className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 shadow-inner mb-6 relative">
+                          <button 
+                             onClick={() => setAlternateTracks(alternateTracks.filter(t => t.id !== track.id))}
+                             className="absolute top-4 right-4 text-xs font-bold text-indigo-400 hover:text-indigo-600 bg-white px-2 py-1 rounded shadow-sm border border-indigo-200"
+                          >
+                             Remove
+                          </button>
+                          <div className="flex items-center justify-between mb-4 border-b border-indigo-200/50 pb-2 pr-16">
+                              <h5 className="font-bold text-xs uppercase tracking-widest text-indigo-500 ml-1 flex items-center gap-2">
+                                 <Layers size={14}/> Comparison Track {trackIndex + 1}
+                              </h5>
+                              <select className="text-xs font-bold text-indigo-700 bg-indigo-100/50 border border-indigo-200 rounded px-2 py-1 outline-none cursor-pointer hover:bg-indigo-200/50 transition-colors" value={track.brandFilter || ''} onChange={e => setAlternateTracks(alternateTracks.map(t => t.id === track.id ? { ...t, brandFilter: e.target.value, tiers: {best: null, better: null, good: null} } : t))}>
+                                  <option value="">-- All Brands --</option>
+                                  {trackUniqueBrands.map(b => <option key={b} value={b}>{b}</option>)}
                               </select>
-                           </div>
-                        ))}
-                      </div>
-                   </div>
-                )}
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {[ {k: 'good', l: `Baseline (Good) - C${trackIndex + 1}`}, {k: 'best', l: `Premium (Best) - C${trackIndex + 1}`}, {k: 'better', l: `Core (Better) - C${trackIndex + 1}`} ].map(tier => (
+                               <div key={tier.k} className="bg-white p-5 border border-indigo-200 rounded-xl shadow-sm relative overflow-hidden">
+                                  <label className="block font-black uppercase text-slate-700 text-sm tracking-wider mb-4 mt-1">{tier.l}</label>
+                                  <select className="input-field w-full text-sm font-semibold text-slate-600 bg-slate-50 transition-colors" value={track.tiers?.[tier.k]?.id || ''} onChange={e => {
+                                      const newTiers = { ...track.tiers, [tier.k]: trackFilteredCatalog.find(c => c.id.toString() === e.target.value) };
+                                      setAlternateTracks(alternateTracks.map(t => t.id === track.id ? { ...t, tiers: newTiers } : t));
+                                  }}>
+                                     <option value="">-- Remove/Empty --</option>
+                                     {trackFilteredCatalog.map(sys => <option key={sys.id} value={sys.id}>{sys.brand} {sys.series} {sys.seer} SEER</option>)}
+                                  </select>
+                               </div>
+                            ))}
+                          </div>
+                       </div>
+                    );
+                 })}
               </div>
             )}
 
@@ -1059,7 +1072,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                            
                            {[
                               { title: 'Primary Brand Options', tiers: sys.selectedTiers, active: sys.selectedTiers.best || sys.selectedTiers.better || sys.selectedTiers.good },
-                              { title: 'Secondary Brand Options', tiers: sys.alternateTiers, active: sys.includeAlternateBrand && (sys.alternateTiers?.best || sys.alternateTiers?.better || sys.alternateTiers?.good) }
+                              ...(sys.alternateTracks || []).map((t, idx) => ({ title: `Comparison Track ${idx + 1}`, tiers: t.tiers, active: t.tiers?.best || t.tiers?.better || t.tiers?.good }))
                            ].map((track, trackIdx) => {
                               if (!track.active) return null;
                               return (
