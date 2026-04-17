@@ -47,6 +47,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
   const [systems, setSystems] = useState([generateEmptySystem(1)]);
   const [activeSystemId, setActiveSystemId] = useState(1);
+  const [activeStep5Track, setActiveStep5Track] = useState({});
   const [editingSystemNameId, setEditingSystemNameId] = useState(null);
 
   const handleSystemNameChange = (id, newName) => {
@@ -1069,14 +1070,29 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                         <div key={sys.id} className="border-t border-slate-200 pt-8 first:border-0 first:pt-0">
                            <h4 className="font-black text-xl text-slate-800 mb-6">{sys.name} Pricing</h4>
                            
-                           {[
-                              { title: 'Primary Brand Options', tiers: sys.selectedTiers, active: sys.selectedTiers.best || sys.selectedTiers.better || sys.selectedTiers.good },
-                              ...(sys.alternateTracks || []).map((t, idx) => ({ title: `Comparison Track ${idx + 1}`, tiers: t.tiers, active: t.tiers?.best || t.tiers?.better || t.tiers?.good }))
-                           ].map((track, trackIdx) => {
-                              if (!track.active) return null;
+                           {(() => {
+                              const allTracks = [
+                                 { id: 'primary', title: 'Option 1', tiers: sys.selectedTiers, active: sys.selectedTiers.best || sys.selectedTiers.better || sys.selectedTiers.good },
+                                 ...(sys.alternateTracks || []).map((t, idx) => ({ id: t.id, title: `Option ${idx + 2}`, tiers: t.tiers, active: t.tiers?.best || t.tiers?.better || t.tiers?.good }))
+                              ].filter(t => t.active);
+                              
+                              if (allTracks.length === 0) return null;
+                              
+                              const activeIdx = activeStep5Track[sys.id] || 0;
+                              const track = allTracks[activeIdx] || allTracks[0];
+                              const showBrandToggle = allTracks.length > 1;
+
                               return (
-                                 <div key={trackIdx} className={`mb-8 last:mb-0 ${trackIdx === 1 ? 'bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100' : ''}`}>
-                                     {trackIdx === 1 && <h5 className="font-bold text-sm uppercase tracking-widest text-indigo-500 mb-4 flex items-center gap-2"><Layers size={16}/> {track.title}</h5>}
+                                 <div className="mb-8 last:mb-0">
+                                     {showBrandToggle && (
+                                         <div className="flex bg-slate-200 rounded-lg p-1 w-max overflow-x-auto mb-6">
+                                            {allTracks.map((trk, idx) => (
+                                               <button key={trk.id} onClick={() => setActiveStep5Track(prev => ({...prev, [sys.id]: idx}))} className={`px-4 py-1.5 text-[11px] whitespace-nowrap font-black uppercase tracking-wider rounded-md transition-colors shadow-sm ${activeIdx === idx ? 'bg-white text-slate-800' : 'text-slate-500 hover:text-slate-700 bg-transparent shadow-none'}`}>
+                                                  {trk.title}
+                                               </button>
+                                            ))}
+                                         </div>
+                                     )}
                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         {[ {k: 'good', l: 'Baseline (Good)', m: margins.good_margin}, {k: 'better', l: 'Core (Better)', m: margins.better_margin}, {k: 'best', l: 'Premium (Best)', m: margins.best_margin} ].map(tier => {
                                            if (!track.tiers || !track.tiers[tier.k]) return null;
@@ -1098,15 +1114,10 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                            const equip = track.tiers[tier.k];
           
                                            return (
-                                           <div key={tier.k} className={`relative bg-white border rounded-2xl shadow-lg flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 ${trackIdx === 1 ? 'border-indigo-200' : 'border-slate-200'} text-slate-800 ${tier.k === 'best' ? 'scale-105 z-10 border-primary-500' : ''}`}>
-                                              {tier.k === 'best' && (
-                                                 <div className={`absolute -top-3 left-1/2 -translate-x-1/2 ${trackIdx === 1 ? 'bg-indigo-500' : 'bg-primary-500'} text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-sm`}>
-                                                     Suggested
-                                                 </div>
-                                              )}
-                                              <div className={`${trackIdx === 1 ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200'} rounded-t-[14px] py-4 px-4 border-b text-center pt-6`}>
-                                                 <h4 className={`font-black text-lg tracking-widest uppercase ${trackIdx === 1 ? 'text-indigo-900' : 'text-slate-800'}`}>{tier.l.split('(')[0].trim()}</h4>
-                                                 <span className={`text-[10px] font-bold uppercase tracking-widest mt-1 block ${trackIdx === 1 ? 'text-indigo-400' : 'text-slate-400'}`}>Selected Tier</span>
+                                           <div key={tier.k} className={`relative bg-white border rounded-2xl shadow-lg flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 border-slate-200 text-slate-800 ${tier.k === 'best' ? 'border-primary-500' : ''}`}>
+                                              <div className={`bg-slate-50 border-slate-200 rounded-t-[14px] py-4 px-4 border-b text-center pt-6`}>
+                                                 <h4 className={`font-black text-lg tracking-widest uppercase text-slate-800`}>{tier.l.split('(')[0].trim()}</h4>
+                                                 <span className={`text-[10px] font-bold uppercase tracking-widest mt-1 block text-slate-400`}>Selected Tier</span>
                                               </div>
                                               <div className="p-6 flex-1 flex flex-col justify-between gap-6">
                                                  
@@ -1132,7 +1143,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                                  <div className="space-y-1 py-4 border-y border-slate-100">
                                                     <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-2 text-center">Equipment Package</label>
                                                     <div className="flex flex-col items-center text-center gap-1">
-                                                        <span className={`font-black text-xl ${trackIdx === 1 ? 'text-indigo-900' : 'text-slate-800'}`}>{equip.brand}</span>
+                                                        <span className={`font-black text-xl text-slate-800`}>{equip.brand}</span>
                                                         <span className="text-sm font-medium text-slate-500 mb-2">{equip.series}</span>
                                                         <span className="font-mono text-xs bg-slate-100 text-slate-600 font-bold px-3 py-1 rounded-full">{equip.tons} TON SYSTEM</span>
                                                     </div>
