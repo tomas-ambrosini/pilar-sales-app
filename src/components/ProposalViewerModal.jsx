@@ -181,19 +181,23 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end">
                             {(() => {
                                 const buildTracks = (key) => {
-                                   const tracks = [];
-                                   if (sys.tiers?.[key] || sys.tiers?.[key.charAt(0).toUpperCase() + key.slice(1)]) {
-                                       tracks.push({ id: 'Primary', title: 'Option 1', data: sys.tiers[key] || sys.tiers[key.charAt(0).toUpperCase() + key.slice(1)] });
-                                   }
-                                   if (sys.altTracks && sys.altTracks.length > 0) {
-                                       sys.altTracks.forEach((t, i) => {
-                                           if (t.tiers?.[key]) tracks.push({ id: `Track${i}`, title: `Option ${i + 2}`, data: t.tiers[key] });
-                                       });
-                                   } else if (sys.altTiers?.[key]) {
-                                       tracks.push({ id: 'Alt', title: 'Option 2', data: sys.altTiers[key] });
-                                   }
-                                   return tracks;
-                                };
+                                    const tracks = [];
+                                    if (sys.tiers?.[key] || sys.tiers?.[key.charAt(0).toUpperCase() + key.slice(1)]) {
+                                        tracks.push({ id: 'Primary', title: 'Option 1', data: sys.tiers[key] || sys.tiers[key.charAt(0).toUpperCase() + key.slice(1)] });
+                                    }
+                                    if (sys.altTracks && sys.altTracks.length > 0) {
+                                        sys.altTracks.forEach((t, i) => {
+                                            if (t.tiers?.[key]) {
+                                                 tracks.push({ id: `Track${i}`, title: `Option ${i + 2}`, data: t.tiers[key] });
+                                            } else {
+                                                 tracks.push({ id: `Track${i}Err`, title: `Option ${i + 2} (ERR)`, data: { salesPrice: 0, brand: 'Missing', series: 'No Equipment Selected', tons: 0, features: ['Please go back to WIZARD', 'and map equipment'] } });
+                                            }
+                                        });
+                                    } else if (sys.altTiers?.[key]) {
+                                        tracks.push({ id: 'Alt', title: 'Option 2', data: sys.altTiers[key] });
+                                    }
+                                    return tracks;
+                                 };
                                 return (
                                    <>
                                       <TierCard tierName="Baseline (Good)" tierKey="Good" tracks={buildTracks('good')} isBest={false} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
