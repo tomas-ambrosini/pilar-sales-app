@@ -35,13 +35,13 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
     const isSelected = isMultiSys && currentSelection === `${focusedTrackId}_${tierKey}`;
     
     const borderClass = isMultiSys 
-         ? (isSelected ? 'border-primary-600 ring-1 ring-primary-600 bg-white scale-[1.01] shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-20' : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-lg')
-         : (isBest ? 'border-primary-500 shadow-xl bg-white scale-[1.02] z-10' : 'border-slate-200 bg-white shadow-sm');
+         ? (isSelected ? 'border-primary-600 ring-2 ring-primary-600 bg-white shadow-2xl z-20' : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-lg')
+         : (isBest ? 'border-primary-500 shadow-xl bg-white z-10' : 'border-slate-200 bg-white shadow-sm');
 
     return (
-       <div className={`relative flex flex-col p-8 rounded-[20px] transition-all duration-300 border ${borderClass}`}>
+       <div className={`relative flex flex-col p-8 rounded-[20px] transition-all duration-200 border ${borderClass}`}>
           {((isBest && !isMultiSys) || (isMultiSys && tierKey === 'Best')) && (
-             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-sm">
+             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-md z-30">
                  Suggested
              </div>
           )}
@@ -139,7 +139,7 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
        <div className="absolute -inset-10 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
        
        {/* Massive Modal Container */}
-       <div className="relative bg-white rounded-xl shadow-2xl w-[95vw] max-w-6xl max-h-[90vh] flex flex-col overflow-hidden transform transition-transform duration-300 scale-100">
+       <div className="relative bg-white rounded-2xl shadow-2xl w-[95vw] sm:w-[98vw] md:w-[95vw] lg:w-[90vw] xl:w-[80vw] max-w-6xl max-h-[90vh] flex flex-col overflow-hidden transform transition-transform duration-300 object-contain">
           
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
@@ -183,7 +183,7 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                             <h3 className="text-3xl font-black text-slate-800">{sys.systemName}</h3>
                             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Select Tier Option</p>
                          </div>
-                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end">
+                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 items-stretch">
                             {(() => {
                                 const buildTracks = (key) => {
                                     const tracks = [];
@@ -309,23 +309,23 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
              }
 
              return (
-                 <div className="border border-slate-200/60 bg-white/80 shadow-lg backdrop-blur sticky bottom-0 z-50 p-6 flex flex-col sm:flex-row items-center justify-between gap-6 shrink-0 mt-8 rounded-xl">
-                     <div className="flex items-center gap-3">
-                         <div className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                             <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 font-black text-slate-600">
+                 <div className="border-t border-slate-200 bg-white/95 backdrop-blur-md sticky bottom-0 z-50 p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0 w-full rounded-b-2xl">
+                     <div className="flex items-center gap-3 w-full sm:w-auto mb-4 sm:mb-0 justify-center">
+                         <div className="text-sm font-black text-slate-800 flex items-center gap-3">
+                             <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 font-black text-slate-700 shadow-inner">
                                  {Object.keys(localSelections).length}
                              </div>
-                             <span>/ {proposal_data.systemTiers.length} Systems Configured</span>
+                             <span className="tracking-tight">/ {proposal_data.systemTiers.length} Systems Configured</span>
                          </div>
                      </div>
-                     <div className="flex items-center gap-3 w-full sm:w-auto">
-                         <button onClick={onClose} className="px-6 py-3 rounded-lg font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors bg-white border border-slate-200 w-full sm:w-auto text-sm shrink-0">Close</button>
+                     <div className="grid grid-cols-2 gap-3 w-full sm:w-auto sm:flex sm:items-center sm:gap-4 shrink-0">
+                         <button onClick={onClose} className="py-3 px-6 rounded-lg font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors bg-white border border-slate-200 text-sm w-full sm:w-auto shadow-sm">Close Planner</button>
                          <button 
                             disabled={!isCartComplete} 
                             onClick={handleFinalize}
-                            className={`px-6 py-3 rounded-lg font-bold text-sm transition-all focus:ring-2 focus:ring-offset-2 outline-none ${!isCartComplete ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200' : 'bg-primary-600 text-white hover:bg-primary-700 border-primary-600 focus:ring-primary-600 shadow-lg'}`}
+                            className={`py-3 px-8 rounded-lg font-bold text-sm transition-all focus:ring-2 focus:ring-offset-2 outline-none w-full sm:w-auto ${!isCartComplete ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200' : 'bg-primary-600 text-white hover:bg-primary-700 border-primary-600 focus:ring-primary-600 shadow-md'}`}
                          >
-                            {isCartComplete ? 'Accept Configuration Package' : 'Select a Tier for Each System'}
+                            {isCartComplete ? 'Accept Configuration' : 'Selection Pending'}
                          </button>
                      </div>
                  </div>
