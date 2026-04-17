@@ -17,7 +17,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
 
   const { proposal_data } = proposal;
 
-  const renderTierBlock = (tierName, primaryData, altData, isBest, systemId = null) => {
+const TierCard = ({ tierName, primaryData, altData, isBest, systemId, proposal, localSelections, setLocalSelections, onAccept, onViewContract }) => {
     if (!primaryData && !altData) return null;
     
     // Multi-System Logic Check
@@ -177,9 +177,9 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Select Tier Option</p>
                          </div>
                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end">
-                            {renderTierBlock('Good', sys.tiers?.good, sys.altTiers?.good, false, sys.systemId)}
-                            {renderTierBlock('Best', sys.tiers?.best, sys.altTiers?.best, true, sys.systemId)}
-                            {renderTierBlock('Better', sys.tiers?.better, sys.altTiers?.better, false, sys.systemId)}
+                            <TierCard tierName="Good" primaryData={sys.tiers?.good} altData={sys.altTiers?.good} isBest={false} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                            <TierCard tierName="Best" primaryData={sys.tiers?.best} altData={sys.altTiers?.best} isBest={true} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                            <TierCard tierName="Better" primaryData={sys.tiers?.better} altData={sys.altTiers?.better} isBest={false} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
                          </div>
                          {!proposal?.isReadOnly && (
                             <div className="mt-8 flex justify-center">
@@ -196,9 +196,9 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                 </div>
              ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end max-w-5xl mx-auto pt-4 pb-8">
-                   {renderTierBlock('Good', proposal_data.tiers?.good, null, false)}
-                   {renderTierBlock('Best', proposal_data.tiers?.best, null, true)}
-                   {renderTierBlock('Better', proposal_data.tiers?.better, null, false)}
+                   <TierCard tierName="Good" primaryData={proposal_data.tiers?.good} altData={null} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                   <TierCard tierName="Best" primaryData={proposal_data.tiers?.best} altData={null} isBest={true} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                   <TierCard tierName="Better" primaryData={proposal_data.tiers?.better} altData={null} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
                 </div>
              )}
           </div>
