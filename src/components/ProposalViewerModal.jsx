@@ -17,32 +17,49 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
 
   const { proposal_data } = proposal;
 
-  const renderTier = (tierName, tierData, isBest, systemId = null) => {
-    if (!tierData) return null;
+  const renderTierBlock = (tierName, primaryData, altData, isBest, systemId = null) => {
+    if (!primaryData && !altData) return null;
     
     // Multi-System Logic Check
     const isMultiSys = systemId !== null;
-    const isSelected = isMultiSys && localSelections[systemId] === tierName;
+    const currentSelection = localSelections[systemId]; // e.g., 'Primary_Best', 'Alt_Best', 'None'
+    const isPrimarySelected = isMultiSys && currentSelection === `Primary_${tierName}`;
+    const isAltSelected = isMultiSys && currentSelection === `Alt_${tierName}`;
+
+    // Active Toggle State
+    const [focusedBrand, setFocusedBrand] = React.useState('Primary'); // 'Primary' or 'Alt'
+    const activeData = focusedBrand === 'Primary' ? primaryData : altData;
+    
+    // If the system is approved/old-school, we don't have toggles
+    const showBrandToggle = altData && primaryData;
+
+    const isSelected = isPrimarySelected || isAltSelected;
     
     const borderClass = isMultiSys 
          ? (isSelected ? 'border-primary-500 ring-4 ring-primary-500/20 bg-white scale-[1.02] shadow-xl z-20' : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-primary-300')
          : (isBest ? 'border-primary-500 shadow-xl bg-white scale-105 z-10' : 'border-slate-200 bg-slate-50');
 
     return (
-       <div 
-          className={`relative flex flex-col p-6 rounded-xl border-2 transition-all duration-200 ${isMultiSys && !proposal?.isReadOnly ? 'cursor-pointer hover:border-primary-300' : ''} ${borderClass}`}
-          onClick={() => isMultiSys && !proposal?.isReadOnly && setLocalSelections(p => ({...p, [systemId]: tierName}))}
-       >
+       <div className={`relative flex flex-col p-6 rounded-xl border-2 transition-all duration-200 ${borderClass}`}>
           {((isBest && !isMultiSys) || (isMultiSys && tierName === 'Best')) && (
              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-500 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-sm">
                  Recommended
              </div>
           )}
-          <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">{tierName}</h3>
+          
+          <div className="flex justify-between items-start mb-4">
+              <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">{tierName}</h3>
+              {showBrandToggle && (
+                  <div className="flex bg-slate-200 rounded-lg p-1 w-max">
+                     <button onClick={(e) => { e.stopPropagation(); setFocusedBrand('Primary'); }} className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md transition-colors ${focusedBrand === 'Primary' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}>Option 1</button>
+                     <button onClick={(e) => { e.stopPropagation(); setFocusedBrand('Alt'); }} className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md transition-colors ${focusedBrand === 'Alt' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}>Option 2</button>
+                  </div>
+              )}
+          </div>
           
           <div className="my-4 pb-4 border-b border-slate-200">
              <div className="text-3xl font-black text-slate-900">
-                ${(tierData.salesPrice || 0).toLocaleString()}
+                ${(activeData?.salesPrice || 0).toLocaleString()}
              </div>
              <p className="text-xs text-slate-500 mt-1 font-medium">Fully Installed Price</p>
           </div>
@@ -50,17 +67,17 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
           <div className="flex-grow space-y-4 mb-6">
              <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Equipment</p>
-                {tierData.equipmentList && tierData.equipmentList.length > 0 ? (
+                {activeData?.equipmentList && activeData.equipmentList.length > 0 ? (
                    <div className="space-y-1">
-                      {tierData.equipmentList.map((eq, i) => (
+                      {activeData.equipmentList.map((eq, i) => (
                           <p key={i} className="text-sm font-bold text-slate-800">{eq}</p>
                       ))}
-                      <p className="text-xs text-slate-600 border-t border-slate-200 mt-1 pt-1">Total: {tierData.tons} Tons</p>
+                      <p className="text-xs text-slate-600 border-t border-slate-200 mt-1 pt-1">Total: {activeData.tons} Tons</p>
                    </div>
                 ) : (
                    <>
-                      <p className="font-bold text-slate-800">{tierData.brand} {tierData.series}</p>
-                      <p className="text-sm text-slate-600">{tierData.tons} Ton System</p>
+                      <p className="font-bold text-slate-800">{activeData?.brand} {activeData?.series}</p>
+                      <p className="text-sm text-slate-600">{activeData?.tons} Ton System</p>
                    </>
                 )}
              </div>
@@ -68,7 +85,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
              <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Included Features</p>
                 <ul className="space-y-2">
-                   {(tierData.features || []).map((feat, idx) => (
+                   {(activeData?.features || []).map((feat, idx) => (
                       <li key={idx} className="flex items-start gap-2 text-sm text-slate-700">
                          <CheckCircle size={14} className="text-success mt-0.5 flex-shrink-0" />
                          <span>{feat}</span>
@@ -82,15 +99,15 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
               <div className="mt-auto pt-4">
                  {isMultiSys ? (
                      <button 
-                        disabled
-                        className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${isSelected ? 'bg-primary-500 text-white shadow-md' : 'bg-slate-200 text-slate-400 cursor-not-allowed border-2 border-transparent'}`}
+                        onClick={(e) => { e.stopPropagation(); setLocalSelections(p => ({...p, [systemId]: `${focusedBrand}_${tierName}`})); }}
+                        className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${isSelected ? 'bg-primary-500 text-white shadow-md' : 'bg-slate-200 text-slate-600 hover:bg-primary-100 hover:text-primary-700 border-2 border-transparent'}`}
                      >
-                        {isSelected ? <><CheckCircle size={16}/> Option Selected</> : 'Select Option'}
+                        {isSelected ? <><CheckCircle size={16}/> Option Selected</> : `Select ${tierName} Tier`}
                      </button>
                  ) : proposal.status !== 'Approved' ? (
                      <button 
                         disabled={proposal.isReadOnly}
-                        onClick={(e) => { e.stopPropagation(); !proposal.isReadOnly && onAccept && onAccept(tierName, tierData, proposal); }}
+                        onClick={(e) => { e.stopPropagation(); !proposal.isReadOnly && onAccept && onAccept(tierName, activeData, proposal); }}
                         className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${proposal.isReadOnly ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : isBest ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-md' : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300'}`}
                      >
                         {proposal.isReadOnly ? 'Preview Only' : `Accept ${tierName} Quote`}
@@ -160,25 +177,36 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Select Tier Option</p>
                          </div>
                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end">
-                            {renderTier('Good', sys.tiers?.good, false, sys.systemId)}
-                            {renderTier('Best', sys.tiers?.best, true, sys.systemId)}
-                            {renderTier('Better', sys.tiers?.better, false, sys.systemId)}
+                            {renderTierBlock('Good', sys.tiers?.good, sys.altTiers?.good, false, sys.systemId)}
+                            {renderTierBlock('Best', sys.tiers?.best, sys.altTiers?.best, true, sys.systemId)}
+                            {renderTierBlock('Better', sys.tiers?.better, sys.altTiers?.better, false, sys.systemId)}
                          </div>
+                         {!proposal?.isReadOnly && (
+                            <div className="mt-8 flex justify-center">
+                               <button 
+                                  onClick={() => setLocalSelections(p => ({...p, [sys.systemId]: 'None'}))} 
+                                  className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all border shadow-sm ${localSelections[sys.systemId] === 'None' ? 'bg-rose-500 text-white border-rose-500 ring-4 ring-rose-500/20' : 'bg-white text-rose-500 border-rose-200 hover:bg-rose-50 hover:border-rose-300'}`}
+                               >
+                                 {localSelections[sys.systemId] === 'None' ? <span className="flex items-center gap-2"><CheckCircle size={16}/> System Excluded</span> : `Decline ${sys.systemName} (Extract)`}
+                               </button>
+                            </div>
+                         )}
                       </div>
                    ))}
                 </div>
              ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end max-w-5xl mx-auto pt-4 pb-8">
-                   {renderTier('Good', proposal_data.tiers?.good, false)}
-                   {renderTier('Best', proposal_data.tiers?.best, true)}
-                   {renderTier('Better', proposal_data.tiers?.better, false)}
+                   {renderTierBlock('Good', proposal_data.tiers?.good, null, false)}
+                   {renderTierBlock('Best', proposal_data.tiers?.best, null, true)}
+                   {renderTierBlock('Better', proposal_data.tiers?.better, null, false)}
                 </div>
              )}
           </div>
           
           {/* Footer Actions */}
           {proposal_data?.systemTiers && proposal_data.systemTiers.length > 0 && proposal.status !== 'Approved' ? (() => {
-             const isCartComplete = Object.keys(localSelections).length === proposal_data.systemTiers.length;
+             const isCartComplete = Object.keys(localSelections).length === proposal_data.systemTiers.length &&
+                                    Object.values(localSelections).some(v => v !== 'None');
              
              const handleFinalize = () => {
                  let totalSalesPrice = 0;
@@ -187,18 +215,25 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                  const systemsList = [];
                  
                  proposal_data.systemTiers.forEach(sys => {
-                     const tierName = localSelections[sys.systemId];
-                     const td = sys.tiers[tierName.toLowerCase()];
+                     const selection = localSelections[sys.systemId];
+                     if (!selection || selection === 'None') return;
+                     
+                     const [brandOpt, tierStr] = selection.split('_');
+                     let td = null;
+                     if (brandOpt === 'Primary' && sys.tiers) td = sys.tiers[tierStr.toLowerCase()];
+                     else if (brandOpt === 'Alt' && sys.altTiers) td = sys.altTiers[tierStr.toLowerCase()];
+                     
                      if (td) {
                          totalSalesPrice += td.salesPrice || 0;
                          totalTons += td.tons || 0;
-                         combinedFeatures.push(`[${sys.systemName}]: ${td.brand} ${td.series} (${tierName} Tier)`);
+                         const cleanTierStr = tierStr.charAt(0).toUpperCase() + tierStr.slice(1);
+                         combinedFeatures.push(`[${sys.systemName}]: ${td.brand} ${td.series} (${cleanTierStr} Tier)`);
                          if (td.features) {
                              td.features.forEach(f => { if (!combinedFeatures.includes(f)) combinedFeatures.push(f); });
                          }
                          systemsList.push({
                              systemName: sys.systemName,
-                             tierName: tierName,
+                             tierName: cleanTierStr,
                              tierData: td
                          });
                      }
