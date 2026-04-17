@@ -35,27 +35,27 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
     const isSelected = isMultiSys && currentSelection === `${focusedTrackId}_${tierKey}`;
     
     const borderClass = isMultiSys 
-         ? (isSelected ? 'border-primary-400 ring-4 ring-primary-500/10 bg-gradient-to-b from-white to-primary-50/20 scale-[102%] shadow-2xl z-20' : 'border-slate-200/60 bg-white hover:border-slate-300 hover:shadow-lg')
-         : (isBest ? 'border-primary-400 shadow-2xl bg-gradient-to-b from-white to-primary-50/20 scale-105 z-10' : 'border-slate-200/60 bg-white shadow-md');
+         ? (isSelected ? 'border-primary-600 ring-1 ring-primary-600 bg-white scale-[1.01] shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-20' : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-lg')
+         : (isBest ? 'border-primary-500 shadow-xl bg-white scale-[1.02] z-10' : 'border-slate-200 bg-white shadow-sm');
 
     return (
-       <div className={`relative flex flex-col p-7 rounded-2xl border-2 transition-all duration-300 ease-out ${borderClass}`}>
+       <div className={`relative flex flex-col p-8 rounded-[20px] transition-all duration-300 border ${borderClass}`}>
           {((isBest && !isMultiSys) || (isMultiSys && tierKey === 'Best')) && (
-             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-emerald-400 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-md border border-emerald-400/50">
+             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-sm">
                  Suggested
              </div>
           )}
           
-          <div className="flex flex-col gap-3 mb-6">
-              <h3 className="text-[22px] font-black text-slate-800 uppercase tracking-tight">{tierName}</h3>
+          <div className="flex flex-col gap-4 mb-8">
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">{tierName.replace(/ *\([^)]*\) */g, "").trim()} <span className="text-slate-400 font-medium ml-1">({tierKey})</span></h3>
               
               {showBrandToggle && (
-                  <div className="flex bg-slate-100/80 rounded-xl p-1 w-full flex-wrap gap-1 border border-slate-200/60 shadow-inner">
+                  <div className="flex bg-slate-50 rounded-xl p-1 w-full flex-wrap gap-1 border border-slate-100">
                      {validTracks.map((trk) => (
                         <button 
                            key={trk.id} 
                            onClick={(e) => { e.stopPropagation(); setFocusedTrackId(trk.id); }} 
-                           className={`flex-1 px-2 py-2 text-[10px] whitespace-nowrap font-black uppercase tracking-widest rounded-lg transition-all duration-300 ${focusedTrackId === trk.id ? 'bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] text-primary-700' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
+                           className={`flex-1 px-2 py-2 text-[10px] whitespace-nowrap font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${focusedTrackId === trk.id ? 'bg-white shadow-sm border border-slate-200/60 text-slate-900' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
                         >
                            {trk.title}
                         </button>
@@ -64,41 +64,38 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
               )}
           </div>
           
-          <div className="my-2 pb-6 border-b border-slate-100">
-             <div className="flex items-start text-slate-900">
-                <span className="text-xl font-bold mt-1.5 mr-0.5 text-slate-400">$</span>
-                <span className="text-5xl font-black tracking-tighter">{(activeData?.salesPrice || 0).toLocaleString()}</span>
-             </div>
-             <p className="text-[11px] text-slate-400 mt-2 font-bold uppercase tracking-widest">Fully Installed Price</p>
+          <div className="my-2 pb-6 border-b border-slate-100 flex items-baseline">
+             <span className="text-xl font-bold text-slate-400 mr-1 translate-y-[-0.25rem]">$</span>
+             <span className="text-[2.75rem] font-black tracking-tighter text-slate-900 leading-none">{(activeData?.salesPrice || 0).toLocaleString()}</span>
           </div>
           
-          <div className="flex-grow space-y-6 mb-6 mt-4">
+          <div className="flex-grow space-y-7 mb-8 mt-2">
              <div>
-                <p className="text-[10px] font-black text-primary-400/80 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-primary-400"></div>Equipment Package</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">Equipment Package</p>
                 {activeData?.equipmentList && activeData.equipmentList.length > 0 ? (
-                   <div className="space-y-1">
+                   <div className="space-y-1.5">
                       {activeData.equipmentList.map((eq, i) => (
-                          <p key={i} className="text-[15px] font-bold text-slate-800 leading-tight">{eq}</p>
+                          <p key={i} className="text-sm font-bold text-slate-800 leading-tight">{eq}</p>
                       ))}
-                      <div className="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 border border-slate-200/60 rounded text-[10px] font-black tracking-widest uppercase mt-2">Total: {activeData.tons} Tons</div>
+                      <div className="mt-2 text-xs font-semibold text-slate-500">Total: {activeData.tons} Tons</div>
                    </div>
                 ) : (
-                   <>
-                      <p className="font-bold text-[15px] text-slate-800 leading-tight">{activeData?.brand} {activeData?.series}</p>
-                      <div className="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 border border-slate-200/60 rounded text-[10px] font-black tracking-widest uppercase mt-2">{activeData?.tons} Ton System</div>
-                   </>
+                   <div className="flex flex-col">
+                      <span className="font-bold text-[15px] text-slate-800 leading-tight mb-1">{activeData?.brand} {activeData?.series}</span>
+                      <span className="text-xs font-semibold text-slate-500">{activeData?.tons} Ton System</span>
+                   </div>
                 )}
              </div>
              
              <div>
-                <p className="text-[10px] font-black text-emerald-500/80 uppercase tracking-widest mb-3 flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>Included Features</p>
-                <ul className="space-y-2.5">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">Included Features</p>
+                <ul className="space-y-3">
                    {(activeData?.features || []).map((feat, idx) => (
-                      <li key={idx} className="flex items-start gap-2.5 text-[13px] text-slate-600 font-medium">
-                         <div className="mt-[2px] bg-emerald-100 rounded-full p-0.5 shrink-0">
-                            <CheckCircle size={12} className="text-emerald-600" />
+                      <li key={idx} className="flex items-start gap-3 text-[13px] text-slate-600 font-medium leading-relaxed">
+                         <div className="mt-0.5 shrink-0">
+                            <CheckCircle size={15} className="text-primary-500" />
                          </div>
-                         <span className="leading-snug">{feat}</span>
+                         <span>{feat}</span>
                       </li>
                    ))}
                 </ul>
@@ -118,16 +115,16 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                      <button 
                         disabled={proposal.isReadOnly}
                         onClick={(e) => { e.stopPropagation(); !proposal.isReadOnly && onAccept && onAccept(tierKey, activeData, proposal); }}
-                        className={`w-full py-3.5 rounded-xl font-black transition-all flex items-center justify-center gap-2 tracking-widest text-[11px] uppercase shadow-sm ${proposal.isReadOnly ? 'bg-slate-100/50 text-slate-300 border border-slate-200/50 cursor-not-allowed' : isBest ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-500/20 ring-1 ring-primary-600' : 'bg-slate-100/80 border border-slate-200/80 text-slate-600 hover:bg-white hover:border-slate-300 hover:text-slate-800 hover:shadow-md'}`}
+                        className={`w-full py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-sm shadow-sm border focus:ring-2 focus:ring-offset-2 outline-none ${proposal.isReadOnly ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : isBest ? 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-600 border-primary-600' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'}`}
                      >
                         {proposal.isReadOnly ? 'Preview Only' : `Select ${tierName.split('(')[0].trim()}`}
                      </button>
                  ) : (
                      <button 
                         onClick={(e) => { e.stopPropagation(); onViewContract && onViewContract(proposal); }} 
-                        className={`w-full py-3.5 rounded-xl font-black flex items-center justify-center gap-2 tracking-widest text-[11px] uppercase transition-all ${isBest ? 'bg-emerald-500 hover:bg-emerald-600 border border-emerald-600/50 shadow-xl shadow-emerald-500/20 text-white text-sm scale-[102%]' : 'bg-emerald-50 border border-emerald-200/60 text-emerald-600 hover:bg-emerald-100'}`}
+                        className={`w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm transition-all focus:ring-2 focus:ring-offset-2 outline-none ${isBest ? 'bg-slate-900 border-slate-900 hover:bg-slate-800 focus:ring-slate-900 text-white shadow-lg' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}`}
                      >
-                        <FileText size={16}/> View Contract
+                        <FileText size={18}/> View Contract
                      </button>
                  )}
               </div>
@@ -326,7 +323,7 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                          <button 
                             disabled={!isCartComplete} 
                             onClick={handleFinalize}
-                            className={`px-6 py-3 rounded-lg font-black tracking-widest uppercase text-xs transition-all shadow-md ${isCartComplete ? 'bg-primary-600 text-white hover:bg-primary-700 ring-1 ring-primary-500 hover:shadow-primary-500/20 hover:shadow-xl' : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200/50'}`}
+                            className={`px-6 py-3 rounded-lg font-bold text-sm transition-all focus:ring-2 focus:ring-offset-2 outline-none ${!isCartComplete ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200' : 'bg-primary-600 text-white hover:bg-primary-700 border-primary-600 focus:ring-primary-600 shadow-lg'}`}
                          >
                             {isCartComplete ? 'Accept Configuration Package' : 'Select a Tier for Each System'}
                          </button>
