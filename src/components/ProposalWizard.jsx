@@ -887,7 +887,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                    </select>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                  {[ {k: 'good', l: 'Baseline (Good)'}, {k: 'best', l: 'Premium (Best)'}, {k: 'better', l: 'Core (Better)'} ].map(tier => (
+                  {[ {k: 'good', l: 'Baseline (Good)'}, {k: 'better', l: 'Core (Better)'}, {k: 'best', l: 'Premium (Best)'} ].map(tier => (
                      <div key={tier.k} className="bg-white p-5 border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                         <div className={`absolute top-0 left-0 right-0 h-1.5 ${tier.k === 'best' ? 'bg-primary-500' : tier.k === 'better' ? 'bg-emerald-500' : 'bg-slate-400'}`}></div>
                         <label className="block font-black uppercase text-slate-700 text-sm tracking-wider mb-4 mt-1">{tier.l}</label>
@@ -930,7 +930,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                               </select>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {[ {k: 'good', l: `Baseline (Good) - C${trackIndex + 1}`}, {k: 'best', l: `Premium (Best) - C${trackIndex + 1}`}, {k: 'better', l: `Core (Better) - C${trackIndex + 1}`} ].map(tier => (
+                            {[ {k: 'good', l: `Baseline (Good) - C${trackIndex + 1}`}, {k: 'better', l: `Core (Better) - C${trackIndex + 1}`}, {k: 'best', l: `Premium (Best) - C${trackIndex + 1}`} ].map(tier => (
                                <div key={tier.k} className="bg-white p-5 border border-indigo-200 rounded-xl shadow-sm relative overflow-hidden">
                                   <label className="block font-black uppercase text-slate-700 text-sm tracking-wider mb-4 mt-1">{tier.l}</label>
                                   <select className="input-field w-full text-sm font-semibold text-slate-600 bg-slate-50 transition-colors" value={track.tiers?.[tier.k]?.id || ''} onChange={e => {
@@ -1078,7 +1078,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                  <div key={trackIdx} className={`mb-8 last:mb-0 ${trackIdx === 1 ? 'bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100' : ''}`}>
                                      {trackIdx === 1 && <h5 className="font-bold text-sm uppercase tracking-widest text-indigo-500 mb-4 flex items-center gap-2"><Layers size={16}/> {track.title}</h5>}
                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        {[ {k: 'good', l: 'Baseline (Good)', m: margins.good_margin}, {k: 'best', l: 'Premium (Best)', m: margins.best_margin}, {k: 'better', l: 'Core (Better)', m: margins.better_margin} ].map(tier => {
+                                        {[ {k: 'good', l: 'Baseline (Good)', m: margins.good_margin}, {k: 'better', l: 'Core (Better)', m: margins.better_margin}, {k: 'best', l: 'Premium (Best)', m: margins.best_margin} ].map(tier => {
                                            if (!track.tiers || !track.tiers[tier.k]) return null;
                                            
                                            const raw = track.tiers[tier.k].system_cost || 0;
