@@ -898,7 +898,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                    </select>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                  {[ {k: 'best', l: 'Premium (Best)'}, {k: 'better', l: 'Core (Better)'}, {k: 'good', l: 'Baseline (Good)'} ].map(tier => (
+                  {[ {k: 'good', l: 'Baseline (Good)'}, {k: 'best', l: 'Premium (Best)'}, {k: 'better', l: 'Core (Better)'} ].map(tier => (
                      <div key={tier.k} className="bg-white p-5 border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                         <div className={`absolute top-0 left-0 right-0 h-1.5 ${tier.k === 'best' ? 'bg-primary-500' : tier.k === 'better' ? 'bg-emerald-500' : 'bg-slate-400'}`}></div>
                         <label className="block font-black uppercase text-slate-700 text-sm tracking-wider mb-4 mt-1">{tier.l}</label>
@@ -922,7 +922,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                           </select>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[ {k: 'best', l: 'Premium (Best) - Alt'}, {k: 'better', l: 'Core (Better) - Alt'}, {k: 'good', l: 'Baseline (Good) - Alt'} ].map(tier => (
+                        {[ {k: 'good', l: 'Baseline (Good) - Alt'}, {k: 'best', l: 'Premium (Best) - Alt'}, {k: 'better', l: 'Core (Better) - Alt'} ].map(tier => (
                            <div key={tier.k} className="bg-white p-5 border border-indigo-200 rounded-xl shadow-sm relative overflow-hidden">
                               <label className="block font-black uppercase text-slate-700 text-sm tracking-wider mb-4 mt-1">{tier.l}</label>
                               <select className="input-field w-full text-sm font-semibold text-slate-600 bg-slate-50 transition-colors" value={alternateTiers?.[tier.k]?.id || ''} onChange={e => setAlternateTiers({...(alternateTiers || {good: null, better: null, best: null}), [tier.k]: altFilteredCatalog.find(c => c.id.toString() === e.target.value)})}>
@@ -1066,7 +1066,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                  <div key={trackIdx} className={`mb-8 last:mb-0 ${trackIdx === 1 ? 'bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100' : ''}`}>
                                      {trackIdx === 1 && <h5 className="font-bold text-sm uppercase tracking-widest text-indigo-500 mb-4 flex items-center gap-2"><Layers size={16}/> {track.title}</h5>}
                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        {[ {k: 'best', l: 'Premium (Best Tier)', m: margins.best_margin}, {k: 'better', l: 'Core (Better Tier)', m: margins.better_margin}, {k: 'good', l: 'Baseline (Good Tier)', m: margins.good_margin} ].map(tier => {
+                                        {[ {k: 'good', l: 'Baseline (Good)', m: margins.good_margin}, {k: 'best', l: 'Premium (Best)', m: margins.best_margin}, {k: 'better', l: 'Core (Better)', m: margins.better_margin} ].map(tier => {
                                            if (!track.tiers || !track.tiers[tier.k]) return null;
                                            
                                            const raw = track.tiers[tier.k].system_cost || 0;
@@ -1086,8 +1086,13 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                            const equip = track.tiers[tier.k];
           
                                            return (
-                                           <div key={tier.k} className={`bg-white border rounded-2xl overflow-hidden shadow-lg flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 ${trackIdx === 1 ? 'border-indigo-200' : 'border-slate-200'} text-slate-800`}>
-                                              <div className={`${trackIdx === 1 ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200'} py-4 px-4 border-b text-center`}>
+                                           <div key={tier.k} className={`relative bg-white border rounded-2xl overflow-hidden shadow-lg flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 ${trackIdx === 1 ? 'border-indigo-200' : 'border-slate-200'} text-slate-800 ${tier.k === 'best' ? 'scale-105 z-10 border-primary-500' : ''}`}>
+                                              {tier.k === 'best' && (
+                                                 <div className={`absolute -top-3 left-1/2 -translate-x-1/2 ${trackIdx === 1 ? 'bg-indigo-500' : 'bg-primary-500'} text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-sm`}>
+                                                     Suggested
+                                                 </div>
+                                              )}
+                                              <div className={`${trackIdx === 1 ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200'} py-4 px-4 border-b text-center pt-6`}>
                                                  <h4 className={`font-black text-lg tracking-widest uppercase ${trackIdx === 1 ? 'text-indigo-900' : 'text-slate-800'}`}>{tier.l.split('(')[0].trim()}</h4>
                                                  <span className={`text-[10px] font-bold uppercase tracking-widest mt-1 block ${trackIdx === 1 ? 'text-indigo-400' : 'text-slate-400'}`}>Selected Tier</span>
                                               </div>

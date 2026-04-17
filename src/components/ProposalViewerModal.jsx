@@ -17,14 +17,14 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
 
   const { proposal_data } = proposal;
 
-const TierCard = ({ tierName, primaryData, altData, isBest, systemId, proposal, localSelections, setLocalSelections, onAccept, onViewContract }) => {
+const TierCard = ({ tierName, tierKey, primaryData, altData, isBest, systemId, proposal, localSelections, setLocalSelections, onAccept, onViewContract }) => {
     if (!primaryData && !altData) return null;
     
     // Multi-System Logic Check
     const isMultiSys = systemId !== null;
     const currentSelection = localSelections[systemId]; // e.g., 'Primary_Best', 'Alt_Best', 'None'
-    const isPrimarySelected = isMultiSys && currentSelection === `Primary_${tierName}`;
-    const isAltSelected = isMultiSys && currentSelection === `Alt_${tierName}`;
+    const isPrimarySelected = isMultiSys && currentSelection === `Primary_${tierKey}`;
+    const isAltSelected = isMultiSys && currentSelection === `Alt_${tierKey}`;
 
     // Active Toggle State
     const [focusedBrand, setFocusedBrand] = React.useState('Primary'); // 'Primary' or 'Alt'
@@ -41,9 +41,9 @@ const TierCard = ({ tierName, primaryData, altData, isBest, systemId, proposal, 
 
     return (
        <div className={`relative flex flex-col p-6 rounded-xl border-2 transition-all duration-200 ${borderClass}`}>
-          {((isBest && !isMultiSys) || (isMultiSys && tierName === 'Best')) && (
+          {((isBest && !isMultiSys) || (isMultiSys && tierKey === 'Best')) && (
              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-500 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-sm">
-                 Recommended
+                 Suggested
              </div>
           )}
           
@@ -99,7 +99,7 @@ const TierCard = ({ tierName, primaryData, altData, isBest, systemId, proposal, 
               <div className="mt-auto pt-4">
                  {isMultiSys ? (
                      <button 
-                        onClick={(e) => { e.stopPropagation(); setLocalSelections(p => ({...p, [systemId]: `${focusedBrand}_${tierName}`})); }}
+                        onClick={(e) => { e.stopPropagation(); setLocalSelections(p => ({...p, [systemId]: `${focusedBrand}_${tierKey}`})); }}
                         className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${isSelected ? 'bg-primary-500 text-white shadow-md' : 'bg-slate-200 text-slate-600 hover:bg-primary-100 hover:text-primary-700 border-2 border-transparent'}`}
                      >
                         {isSelected ? <><CheckCircle size={16}/> Option Selected</> : `Select ${tierName} Tier`}
@@ -107,7 +107,7 @@ const TierCard = ({ tierName, primaryData, altData, isBest, systemId, proposal, 
                  ) : proposal.status !== 'Approved' ? (
                      <button 
                         disabled={proposal.isReadOnly}
-                        onClick={(e) => { e.stopPropagation(); !proposal.isReadOnly && onAccept && onAccept(tierName, activeData, proposal); }}
+                        onClick={(e) => { e.stopPropagation(); !proposal.isReadOnly && onAccept && onAccept(tierKey, activeData, proposal); }}
                         className={`w-full py-3 rounded font-bold transition-all flex items-center justify-center gap-2 ${proposal.isReadOnly ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : isBest ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-md' : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300'}`}
                      >
                         {proposal.isReadOnly ? 'Preview Only' : `Accept ${tierName} Quote`}
@@ -177,9 +177,9 @@ const TierCard = ({ tierName, primaryData, altData, isBest, systemId, proposal, 
                             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Select Tier Option</p>
                          </div>
                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end">
-                            <TierCard tierName="Good" primaryData={sys.tiers?.good} altData={sys.altTiers?.good} isBest={false} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
-                            <TierCard tierName="Best" primaryData={sys.tiers?.best} altData={sys.altTiers?.best} isBest={true} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
-                            <TierCard tierName="Better" primaryData={sys.tiers?.better} altData={sys.altTiers?.better} isBest={false} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                            <TierCard tierName="Baseline (Good)" tierKey="Good" primaryData={sys.tiers?.good} altData={sys.altTiers?.good} isBest={false} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                            <TierCard tierName="Premium (Best)" tierKey="Best" primaryData={sys.tiers?.best} altData={sys.altTiers?.best} isBest={true} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                            <TierCard tierName="Core (Better)" tierKey="Better" primaryData={sys.tiers?.better} altData={sys.altTiers?.better} isBest={false} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
                          </div>
                          {!proposal?.isReadOnly && (
                             <div className="mt-8 flex justify-center">
@@ -196,9 +196,9 @@ const TierCard = ({ tierName, primaryData, altData, isBest, systemId, proposal, 
                 </div>
              ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end max-w-5xl mx-auto pt-4 pb-8">
-                   <TierCard tierName="Good" primaryData={proposal_data.tiers?.good} altData={null} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
-                   <TierCard tierName="Best" primaryData={proposal_data.tiers?.best} altData={null} isBest={true} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
-                   <TierCard tierName="Better" primaryData={proposal_data.tiers?.better} altData={null} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                   <TierCard tierName="Baseline (Good)" tierKey="Good" primaryData={proposal_data.tiers?.good} altData={null} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                   <TierCard tierName="Premium (Best)" tierKey="Best" primaryData={proposal_data.tiers?.best} altData={null} isBest={true} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                   <TierCard tierName="Core (Better)" tierKey="Better" primaryData={proposal_data.tiers?.better} altData={null} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
                 </div>
              )}
           </div>
