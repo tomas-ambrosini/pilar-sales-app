@@ -188,13 +188,22 @@ export default function Proposals() {
      if (!signingContract) return;
      const { tierName, tierData, proposal } = signingContract;
 
-     // 1. Build Work Order Payload
+     // 1. Array check to handle multi-system configuration payloads vs legacy single-tier selections
+     const isMulti = Array.isArray(tierData);
+     const systemsPayload = isMulti ? tierData : [{ systemName: 'Standard System', selectedTierData: tierData, tierName: tierName }];
+
+     // 2. Build Multi-System Scalable Work Order Notes
+     const equipmentNotes = systemsPayload.map(sys => `
+[${sys.systemName} - ${sys.tierName.toUpperCase()} TIER]
+Equipment: ${sys.selectedTierData?.brand} ${sys.selectedTierData?.series} (${sys.selectedTierData?.tons} Ton)
+Included Features:
+${(sys.selectedTierData?.features || []).map(f => `- ${f}`).join('\n')}
+`).join('\n');
+
      const workOrderNotes = `
 **FIELD WORK ORDER**
-Accepted Tier: ${tierName}
-Equipment: ${tierData.brand} ${tierData.series} (${tierData.tons} Ton)
-Included Add-ons / Features:
-${(tierData.features || []).map(f => `- ${f}`).join('\n')}
+Configuration Type: ${isMulti ? 'Multi-System Package' : tierName}
+${equipmentNotes}
 
 > System Note: Proposal ${proposal.id} electronically signed and converted to Job on ${new Date().toLocaleDateString()}.
 `.trim();
@@ -202,20 +211,21 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
      const oppId = proposal.proposal_data?.associated_opportunity_id;
      if (oppId) {
          try {
-             // 1. Get existing opportunity data
+             // Get existing opportunity data
              const { data: oppRow } = await supabase.from('opportunities').select('household_id, proposal_data').eq('id', oppId).single();
              
-             // 2. We inject the accepted tier and signature into the Opportunity's proposal_data payload
+             // Inject the accepted tier and signature into the Opportunity's proposal_data payload
              const updatedOppPayload = {
                  ...(oppRow?.proposal_data || proposal.proposal_data || {}),
                  selected_tier: tierName,
+                 accepted_tier_name: isMulti ? 'Configuration_Package' : tierName,
+                 accepted_tier_data: isMulti ? { systemsList: systemsPayload } : tierData,
                  signature: signatureData,
                  manager_approved: false // explicitly flag for Operations Queue
              };
 
-             // 3. Update Sales Pipeline Opportunity. (It will now sit in Operations waiting for Manager Approval)
+             // Update Sales Pipeline Opportunity.
              try {
-                // If it is generated from scratch, we assume it went from PROPOSAL_SENT to APPROVED.
                 await PipelineController.approveDeal(oppId, PIPELINE_STATES.PROPOSAL_SENT, {
                      dispatch_notes: workOrderNotes,
                      proposal_data: updatedOppPayload
@@ -224,18 +234,16 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
                 console.warn(e);
              }
 
-             // 3b. Simultaneously auto-generate the Operational Work Order for Dispatch
+             // Simultaneously auto-generate the Operational Work Order for Dispatch
              await supabase.from('work_orders').insert({
                  opportunity_id: oppId,
                  household_id: oppRow?.household_id,
                  status: 'Unscheduled',
                  urgency_level: 'Medium',
                  execution_payload: {
-                     tierName: tierName,
-                     systemSize: tierData.tons,
-                     brand: tierData.brand,
-                     series: tierData.series,
-                     features: tierData.features
+                     tierName: isMulti ? 'Configuration Package' : tierName,
+                     systemsList: systemsPayload,
+                     isMultiSystem: isMulti
                  },
                  dispatch_notes: workOrderNotes
              });
