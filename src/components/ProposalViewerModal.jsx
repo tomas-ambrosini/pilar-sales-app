@@ -47,7 +47,10 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
           )}
           
           <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">{tierName}</h3>
+              <div className="flex flex-col">
+                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">{tierName}</h3>
+                  <div className="text-xs text-red-500 font-bold">validTracks Length: {validTracks.length}</div>
+              </div>
               {showBrandToggle && (
                   <div className="flex bg-slate-200 rounded-lg p-1 w-max overflow-x-auto">
                      {validTracks.map((trk) => (
