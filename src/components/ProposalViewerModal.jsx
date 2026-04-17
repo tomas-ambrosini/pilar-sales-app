@@ -107,9 +107,9 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                  {isMultiSys ? (
                       <button 
                          onClick={(e) => { e.stopPropagation(); setLocalSelections(p => ({...p, [systemId]: `${focusedTrackId}_${tierKey}`})); }}
-                         className={`w-full py-3.5 rounded-xl font-black transition-all flex items-center justify-center gap-2 tracking-widest text-[11px] uppercase shadow-sm ${isSelected ? 'bg-primary-600 text-white hover:bg-primary-700 ring-4 ring-primary-500/20' : 'bg-slate-100/80 border border-slate-200/80 text-slate-600 hover:bg-white hover:border-slate-300 hover:text-slate-800'}`}
+                         className={`w-full py-3.5 flex items-center justify-center gap-2 rounded-xl text-sm font-bold border transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${isSelected ? 'bg-primary-600 border-primary-600 text-white shadow-md focus:ring-primary-600' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 shadow-sm'}`}
                       >
-                         {isSelected ? <><CheckCircle size={14}/> Option Selected</> : `Select ${tierName.split('(')[0].trim()}`}
+                         {isSelected ? <><CheckCircle size={16}/> Option Selected</> : `Select ${tierName.split('(')[0].trim()}`}
                       </button>
                  ) : proposal.status !== 'Approved' ? (
                      <button 
@@ -183,7 +183,7 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                             <h3 className="text-3xl font-black text-slate-800">{sys.systemName}</h3>
                             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Select Tier Option</p>
                          </div>
-                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 items-stretch">
+                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 items-stretch pt-2">
                             {(() => {
                                 const buildTracks = (key) => {
                                     const tracks = [];
@@ -309,21 +309,21 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
              }
 
              return (
-                 <div className="border-t border-slate-200 bg-white/95 backdrop-blur-md sticky bottom-0 z-50 p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0 w-full rounded-b-2xl">
-                     <div className="flex items-center gap-3 w-full sm:w-auto mb-4 sm:mb-0 justify-center">
+                 <div className="border-t border-slate-200 bg-white/95 backdrop-blur-md sticky bottom-0 z-50 p-5 flex flex-col sm:flex-row items-center justify-between shrink-0 w-full rounded-b-2xl">
+                     <div className="flex items-center gap-3 w-full sm:w-auto mb-4 sm:mb-0 justify-center sm:justify-start">
                          <div className="text-sm font-black text-slate-800 flex items-center gap-3">
-                             <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 font-black text-slate-700 shadow-inner">
+                             <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 font-black text-slate-700 shadow-inner shrink-0">
                                  {Object.keys(localSelections).length}
                              </div>
-                             <span className="tracking-tight">/ {proposal_data.systemTiers.length} Systems Configured</span>
+                             <span className="tracking-tight whitespace-nowrap">/ {proposal_data.systemTiers.length} Systems Configured</span>
                          </div>
                      </div>
-                     <div className="grid grid-cols-2 gap-3 w-full sm:w-auto sm:flex sm:items-center sm:gap-4 shrink-0">
-                         <button onClick={onClose} className="py-3 px-6 rounded-lg font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors bg-white border border-slate-200 text-sm w-full sm:w-auto shadow-sm">Close Planner</button>
+                     <div className="flex w-full sm:w-auto items-center justify-end gap-3 shrink-0">
+                         <button onClick={onClose} className="py-2.5 px-6 rounded-lg font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors bg-white border border-slate-200 text-sm whitespace-nowrap shadow-sm min-w-[140px]">Close Planner</button>
                          <button 
                             disabled={!isCartComplete} 
                             onClick={handleFinalize}
-                            className={`py-3 px-8 rounded-lg font-bold text-sm transition-all focus:ring-2 focus:ring-offset-2 outline-none w-full sm:w-auto ${!isCartComplete ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200' : 'bg-primary-600 text-white hover:bg-primary-700 border-primary-600 focus:ring-primary-600 shadow-md'}`}
+                            className={`py-2.5 px-6 rounded-lg font-bold text-sm transition-all focus:ring-2 focus:ring-offset-2 outline-none whitespace-nowrap w-full sm:w-auto sm:min-w-[180px] ${!isCartComplete ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200' : 'bg-primary-600 text-white hover:bg-primary-700 border-primary-600 focus:ring-primary-600 shadow-md'}`}
                          >
                             {isCartComplete ? 'Accept Configuration' : 'Selection Pending'}
                          </button>
