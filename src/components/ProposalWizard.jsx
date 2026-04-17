@@ -40,6 +40,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     photos: { condenser_wide: null, condenser_data_plate: null, indoor_unit_wide: null, indoor_data_plate: null, electrical_panel_open: null },
     tonnageFilter: '',
     selectedTiers: { best: null, better: null, good: null },
+    includeAlternateBrand: false,
+    alternateTiers: { best: null, better: null, good: null },
     addons: {}
   });
 
@@ -58,7 +60,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const [uploadingPhoto, setUploadingPhoto] = useState(null);
 
   const activeSystem = systems.find(s => s.id === activeSystemId) || systems[0];
-  const { survey, photos, tonnageFilter, selectedTiers, addons } = activeSystem;
+  const { survey, photos, tonnageFilter, selectedTiers, includeAlternateBrand, alternateTiers, addons } = activeSystem;
 
   const updateActiveSystem = (field, value) => {
      setSystems(prev => prev.map(sys => sys.id === activeSystemId ? { ...sys, [field]: value } : sys));
@@ -67,6 +69,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const setPhotos = (val) => updateActiveSystem('photos', typeof val === 'function' ? val(photos) : val);
   const setTonnageFilter = (val) => updateActiveSystem('tonnageFilter', typeof val === 'function' ? val(tonnageFilter) : val);
   const setSelectedTiers = (val) => updateActiveSystem('selectedTiers', typeof val === 'function' ? val(selectedTiers) : val);
+  const setIncludeAlternateBrand = (val) => updateActiveSystem('includeAlternateBrand', typeof val === 'function' ? val(includeAlternateBrand) : val);
+  const setAlternateTiers = (val) => updateActiveSystem('alternateTiers', typeof val === 'function' ? val(alternateTiers) : val);
   const setAddons = (val) => updateActiveSystem('addons', typeof val === 'function' ? val(addons) : val);
 
   // Live Database Arrays
@@ -456,11 +460,49 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                features: features
            };
        });
+
+       let altTiers = null;
+       if (sys.includeAlternateBrand) {
+           altTiers = { good: null, better: null, best: null };
+           ['best', 'better', 'good'].forEach(tierKey => {
+               if (!sys.alternateTiers[tierKey]) return;
+               
+               const raw = sys.alternateTiers[tierKey].system_cost || 0;
+               const baselinePrice = calculateSystemBaselineRetail(sys, raw, tierKey.charAt(0).toUpperCase() + tierKey.slice(1));
+               const percent = appliedPromo ? appliedPromo.discount_percent : 0;
+               const discountAmount = baselinePrice * (percent / 100);
+               const finalPrice = baselinePrice - discountAmount;
+               
+               let features = [];
+               if (tierKey === 'best') features = ["Variable Speed Ultra Quiet", "Highest Efficiency Ratings", "Premium 12-Year Parts Warranty", "Advanced Dehumidification Control"];
+               if (tierKey === 'better') features = ["Two-Stage Enhanced Comfort", "High Efficiency SEER2", "10-Year Parts Warranty", "Consistent Temperature Control"];
+               if (tierKey === 'good') features = ["Single-Stage Operation", "Base Efficiency Standard", "5-Year Parts Warranty", "Cost-Effective Reliable Cooling"];
+               
+               const activeAddonsList = Object.entries(sys.addons || {}).filter(([_, v]) => v).map(([k]) => {
+                  const name = laborRates.find(l => l.id.toString() === k.toString())?.item_name;
+                  return name ? `Includes: ${name}` : null;
+               }).filter(Boolean);
+
+               features = [...features, ...activeAddonsList];
+
+               altTiers[tierKey] = {
+                   id: tierKey,
+                   brand: sys.alternateTiers[tierKey].brand,
+                   series: sys.alternateTiers[tierKey].series,
+                   tons: sys.alternateTiers[tierKey].tons,
+                   baselinePrice: baselinePrice,
+                   saleDiscount: discountAmount,
+                   salesPrice: finalPrice,
+                   features: features
+               };
+           });
+       }
        
        return {
            systemId: sys.id,
            systemName: sys.name,
-           tiers: sysTiers
+           tiers: sysTiers,
+           altTiers: altTiers
        };
     });
 
@@ -825,10 +867,22 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
             {tonnageFilter && filteredCatalog.length > 0 && (
               <div className="mb-8">
-                <h4 className="font-bold mb-4 text-slate-700 border-b pb-2">Assign Consumer Options</h4>
+                <div className="flex items-center justify-between border-b pb-2 mb-4">
+                   <h4 className="font-bold text-slate-700">Assign Consumer Options</h4>
+                   <label className="flex items-center gap-2 text-sm font-bold text-slate-600 cursor-pointer">
+                      <input 
+                         type="checkbox" 
+                         className="rounded border-slate-300 text-primary-600 focus:ring-primary-500 w-4 h-4 cursor-pointer" 
+                         checked={includeAlternateBrand} 
+                         onChange={e => setIncludeAlternateBrand(e.target.checked)} 
+                      />
+                      Include Alternate Brand Comparison
+                   </label>
+                </div>
                 <p className="text-xs text-slate-500 mb-6">Map previously filtered {tonnageFilter}-Ton systems into the Good/Better/Best presentation model for the homeowner.</p>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <h5 className="font-bold text-xs uppercase tracking-widest text-slate-400 mb-3 ml-1">{includeAlternateBrand ? 'Primary Brand Choices' : 'Selected Systems'}</h5>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                   {[ {k: 'best', l: 'Premium (Best)'}, {k: 'better', l: 'Core (Better)'}, {k: 'good', l: 'Baseline (Good)'} ].map(tier => (
                      <div key={tier.k} className="bg-white p-5 border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                         <div className={`absolute top-0 left-0 right-0 h-1.5 ${tier.k === 'best' ? 'bg-primary-500' : tier.k === 'better' ? 'bg-emerald-500' : 'bg-slate-400'}`}></div>
@@ -840,6 +894,25 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                      </div>
                   ))}
                 </div>
+
+                {includeAlternateBrand && (
+                   <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 shadow-inner">
+                      <h5 className="font-bold text-xs uppercase tracking-widest text-indigo-500 mb-4 ml-1 flex items-center gap-2">
+                         <Layers size={14}/> Secondary Brand Comparison (Optional)
+                      </h5>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {[ {k: 'best', l: 'Premium (Best) - Alt'}, {k: 'better', l: 'Core (Better) - Alt'}, {k: 'good', l: 'Baseline (Good) - Alt'} ].map(tier => (
+                           <div key={tier.k} className="bg-white p-5 border border-indigo-200 rounded-xl shadow-sm relative overflow-hidden">
+                              <label className="block font-black uppercase text-slate-700 text-sm tracking-wider mb-4 mt-1">{tier.l}</label>
+                              <select className="input-field w-full text-sm font-semibold text-slate-600 bg-slate-50 transition-colors" value={alternateTiers[tier.k]?.id || ''} onChange={e => setAlternateTiers({...alternateTiers, [tier.k]: filteredCatalog.find(c => c.id.toString() === e.target.value)})}>
+                                 <option value="">-- Remove/Empty --</option>
+                                 {filteredCatalog.map(sys => <option key={sys.id} value={sys.id}>{sys.brand} {sys.series} {sys.seer} SEER</option>)}
+                              </select>
+                           </div>
+                        ))}
+                      </div>
+                   </div>
+                )}
               </div>
             )}
 
