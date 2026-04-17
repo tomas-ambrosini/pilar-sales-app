@@ -1056,82 +1056,94 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                      return (
                         <div key={sys.id} className="border-t border-slate-200 pt-8 first:border-0 first:pt-0">
                            <h4 className="font-black text-xl text-slate-800 mb-6">{sys.name} Pricing</h4>
-                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                              {[ {k: 'best', l: 'Premium (Best Tier)', m: margins.best_margin}, {k: 'better', l: 'Core (Better Tier)', m: margins.better_margin}, {k: 'good', l: 'Baseline (Good Tier)', m: margins.good_margin} ].map(tier => {
-                                 if (!sys.selectedTiers[tier.k]) return null;
-                                 
-                                 const raw = sys.selectedTiers[tier.k].system_cost || 0;
-                                 const floorCost = getSystemHardCostOnly(sys, raw);
-                                 const baselineRetail = calculateSystemBaselineRetail(sys, raw, tier.k.charAt(0).toUpperCase() + tier.k.slice(1));
-                     
-                                 const absoluteTotalFloor = floorCost * (1 + (margins.service_reserve || 0.05));
-                     
-                                 const baselineCommBase = calculateSystemBaselineRetail(sys, sys.selectedTiers.best?.system_cost || raw, 'Best');
-                                 const baseComm = computeCommission(baselineRetail, getRetailFromBest(baselineCommBase));
-                                 
-                                 const percent = appliedPromo ? appliedPromo.discount_percent : 0;
-                                 const discountAmount = baselineRetail * (percent / 100);
-                                 const finalPrice = baselineRetail - discountAmount;
-                                 const isBelowFloor = finalPrice < absoluteTotalFloor;
-                                 
-                                 const equip = sys.selectedTiers[tier.k];
-
-                                 return (
-                                 <div key={tier.k} className="bg-white border text-slate-800 rounded-2xl overflow-hidden shadow-lg flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 border-slate-200">
-                                    <div className="bg-slate-50 py-4 px-4 border-b border-slate-200 text-center">
-                                       <h4 className="font-black text-lg tracking-widest uppercase text-slate-800">{tier.l.split('(')[0].trim()}</h4>
-                                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 block">Selected Tier</span>
-                                    </div>
-                                    <div className="p-6 flex-1 flex flex-col justify-between gap-6">
-                                       
-                                       <div className="text-center pt-2 min-h-[60px] flex flex-col justify-center">
-                                          <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-2">Included Add-ons & Labor</label>
-                                          <div className="flex flex-wrap justify-center gap-1.5">
-                                             {Object.entries(sys.addons || {}).filter(([_, v]) => v).length > 0 ? (
-                                                Object.entries(sys.addons).filter(([_, v]) => v).map(([k]) => {
-                                                   const laborName = laborRates.find(l => l.id.toString() === k.toString())?.item_name || 'Component';
-                                                   
-                                                   return (
-                                                      <span key={k} className="text-[9px] font-bold bg-slate-50 text-slate-600 px-2.5 py-1 rounded-full border border-slate-200 uppercase flex items-center gap-1">
-                                                         <Check size={10} className="text-emerald-500"/> {laborName}
-                                                      </span>
-                                                   );
-                                                })
-                                             ) : (
-                                                <span className="text-xs text-slate-400 font-medium italic">Standard Installation</span>
-                                             )}
-                                          </div>
-                                       </div>
-               
-                                       <div className="space-y-1 py-4 border-y border-slate-100">
-                                          <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-2 text-center">Equipment Package</label>
-                                          <div className="flex flex-col items-center text-center gap-1">
-                                              <span className="font-black text-slate-800 text-xl">{equip.brand}</span>
-                                              <span className="text-sm font-medium text-slate-500 mb-2">{equip.series}</span>
-                                              <span className="font-mono text-xs bg-slate-100 text-slate-600 font-bold px-3 py-1 rounded-full">{equip.tons} TON SYSTEM</span>
-                                          </div>
-                                       </div>
-               
-                                       <div className="text-center pt-2">
-                                          {discountAmount > 0 && (
-                                              <div className="mb-4">
-                                                 <div className="text-lg font-black text-slate-300 line-through mb-1">${baselineRetail.toLocaleString()}</div>
-                                                 <div className="inline-block bg-emerald-50 text-emerald-600 font-black px-4 py-1.5 rounded-xl border border-emerald-100">
-                                                    - ${discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} Savings
-                                                 </div>
+                           
+                           {[
+                              { title: 'Primary Brand Options', tiers: sys.selectedTiers, active: sys.selectedTiers.best || sys.selectedTiers.better || sys.selectedTiers.good },
+                              { title: 'Secondary Brand Options', tiers: sys.alternateTiers, active: sys.includeAlternateBrand && (sys.alternateTiers?.best || sys.alternateTiers?.better || sys.alternateTiers?.good) }
+                           ].map((track, trackIdx) => {
+                              if (!track.active) return null;
+                              return (
+                                 <div key={trackIdx} className={`mb-8 last:mb-0 ${trackIdx === 1 ? 'bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100' : ''}`}>
+                                     {trackIdx === 1 && <h5 className="font-bold text-sm uppercase tracking-widest text-indigo-500 mb-4 flex items-center gap-2"><Layers size={16}/> {track.title}</h5>}
+                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        {[ {k: 'best', l: 'Premium (Best Tier)', m: margins.best_margin}, {k: 'better', l: 'Core (Better Tier)', m: margins.better_margin}, {k: 'good', l: 'Baseline (Good Tier)', m: margins.good_margin} ].map(tier => {
+                                           if (!track.tiers || !track.tiers[tier.k]) return null;
+                                           
+                                           const raw = track.tiers[tier.k].system_cost || 0;
+                                           const floorCost = getSystemHardCostOnly(sys, raw);
+                                           const baselineRetail = calculateSystemBaselineRetail(sys, raw, tier.k.charAt(0).toUpperCase() + tier.k.slice(1));
+                               
+                                           const absoluteTotalFloor = floorCost * (1 + (margins.service_reserve || 0.05));
+                               
+                                           const baselineCommBase = calculateSystemBaselineRetail(sys, track.tiers.best?.system_cost || raw, 'Best');
+                                           const baseComm = computeCommission(baselineRetail, getRetailFromBest(baselineCommBase));
+                                           
+                                           const percent = appliedPromo ? appliedPromo.discount_percent : 0;
+                                           const discountAmount = baselineRetail * (percent / 100);
+                                           const finalPrice = baselineRetail - discountAmount;
+                                           const isBelowFloor = finalPrice < absoluteTotalFloor;
+                                           
+                                           const equip = track.tiers[tier.k];
+          
+                                           return (
+                                           <div key={tier.k} className={`bg-white border rounded-2xl overflow-hidden shadow-lg flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 ${trackIdx === 1 ? 'border-indigo-200' : 'border-slate-200'} text-slate-800`}>
+                                              <div className={`${trackIdx === 1 ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200'} py-4 px-4 border-b text-center`}>
+                                                 <h4 className={`font-black text-lg tracking-widest uppercase ${trackIdx === 1 ? 'text-indigo-900' : 'text-slate-800'}`}>{tier.l.split('(')[0].trim()}</h4>
+                                                 <span className={`text-[10px] font-bold uppercase tracking-widest mt-1 block ${trackIdx === 1 ? 'text-indigo-400' : 'text-slate-400'}`}>Selected Tier</span>
                                               </div>
-                                          )}
-               
-                                          <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-1">Total System Investment</label>
-                                          <div className={`text-[42px] leading-none tracking-tight font-black ${isBelowFloor ? 'text-red-500' : 'text-primary-800'}`}>${finalPrice.toLocaleString()}</div>
-                                          {isBelowFloor && <p className="text-[10px] font-bold text-red-500 mt-3 bg-red-50 p-2 rounded">Error: Pricing below acceptable floor rules.</p>}
-                                       </div>
-               
-                                    </div>
+                                              <div className="p-6 flex-1 flex flex-col justify-between gap-6">
+                                                 
+                                                 <div className="text-center pt-2 min-h-[60px] flex flex-col justify-center">
+                                                    <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-2">Included Add-ons & Labor</label>
+                                                    <div className="flex flex-wrap justify-center gap-1.5">
+                                                       {Object.entries(sys.addons || {}).filter(([_, v]) => v).length > 0 ? (
+                                                          Object.entries(sys.addons).filter(([_, v]) => v).map(([k]) => {
+                                                             const laborName = laborRates.find(l => l.id.toString() === k.toString())?.item_name || 'Component';
+                                                             
+                                                             return (
+                                                                <span key={k} className="text-[9px] font-bold bg-slate-50 text-slate-600 px-2.5 py-1 rounded-full border border-slate-200 uppercase flex items-center gap-1">
+                                                                   <Check size={10} className="text-emerald-500"/> {laborName}
+                                                                </span>
+                                                             );
+                                                          })
+                                                       ) : (
+                                                          <span className="text-xs text-slate-400 font-medium italic">Standard Installation</span>
+                                                       )}
+                                                    </div>
+                                                 </div>
+                         
+                                                 <div className="space-y-1 py-4 border-y border-slate-100">
+                                                    <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-2 text-center">Equipment Package</label>
+                                                    <div className="flex flex-col items-center text-center gap-1">
+                                                        <span className={`font-black text-xl ${trackIdx === 1 ? 'text-indigo-900' : 'text-slate-800'}`}>{equip.brand}</span>
+                                                        <span className="text-sm font-medium text-slate-500 mb-2">{equip.series}</span>
+                                                        <span className="font-mono text-xs bg-slate-100 text-slate-600 font-bold px-3 py-1 rounded-full">{equip.tons} TON SYSTEM</span>
+                                                    </div>
+                                                 </div>
+                         
+                                                 <div className="text-center pt-2">
+                                                    {discountAmount > 0 && (
+                                                        <div className="mb-4">
+                                                           <div className="text-lg font-black text-slate-300 line-through mb-1">${baselineRetail.toLocaleString()}</div>
+                                                           <div className="inline-block bg-emerald-50 text-emerald-600 font-black px-4 py-1.5 rounded-xl border border-emerald-100">
+                                                              - ${discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} Savings
+                                                           </div>
+                                                        </div>
+                                                    )}
+                         
+                                                    <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-1">Total System Investment</label>
+                                                    <div className={`text-[42px] leading-none tracking-tight font-black ${isBelowFloor ? 'text-red-500' : 'text-primary-800'}`}>${finalPrice.toLocaleString()}</div>
+                                                    {isBelowFloor && <p className="text-[10px] font-bold text-red-500 mt-3 bg-red-50 p-2 rounded">Error: Pricing below acceptable floor rules.</p>}
+                                                 </div>
+                         
+                                              </div>
+                                           </div>
+                                           );
+                                        })}
+                                     </div>
                                  </div>
-                                 );
-                              })}
-                           </div>
+                              );
+                           })}
                         </div>
                      );
                   })}
