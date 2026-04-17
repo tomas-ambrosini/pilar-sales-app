@@ -465,7 +465,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        if (sys.includeAlternateBrand) {
            altTiers = { good: null, better: null, best: null };
            ['best', 'better', 'good'].forEach(tierKey => {
-               if (!sys.alternateTiers[tierKey]) return;
+               if (!sys.alternateTiers?.[tierKey]) return;
                
                const raw = sys.alternateTiers[tierKey].system_cost || 0;
                const baselinePrice = calculateSystemBaselineRetail(sys, raw, tierKey.charAt(0).toUpperCase() + tierKey.slice(1));
@@ -887,7 +887,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                      <div key={tier.k} className="bg-white p-5 border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                         <div className={`absolute top-0 left-0 right-0 h-1.5 ${tier.k === 'best' ? 'bg-primary-500' : tier.k === 'better' ? 'bg-emerald-500' : 'bg-slate-400'}`}></div>
                         <label className="block font-black uppercase text-slate-700 text-sm tracking-wider mb-4 mt-1">{tier.l}</label>
-                        <select className="input-field w-full text-sm font-semibold text-slate-600 bg-slate-50 focus:bg-white transition-colors" value={selectedTiers[tier.k]?.id || ''} onChange={e => setSelectedTiers({...selectedTiers, [tier.k]: filteredCatalog.find(c => c.id.toString() === e.target.value)})}>
+                        <select className="input-field w-full text-sm font-semibold text-slate-600 bg-slate-50 focus:bg-white transition-colors" value={selectedTiers?.[tier.k]?.id || ''} onChange={e => setSelectedTiers({...selectedTiers, [tier.k]: filteredCatalog.find(c => c.id.toString() === e.target.value)})}>
                            <option value="">-- Remove/Empty --</option>
                            {filteredCatalog.map(sys => <option key={sys.id} value={sys.id}>{sys.brand} {sys.series} {sys.seer} SEER</option>)}
                         </select>
@@ -904,7 +904,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                         {[ {k: 'best', l: 'Premium (Best) - Alt'}, {k: 'better', l: 'Core (Better) - Alt'}, {k: 'good', l: 'Baseline (Good) - Alt'} ].map(tier => (
                            <div key={tier.k} className="bg-white p-5 border border-indigo-200 rounded-xl shadow-sm relative overflow-hidden">
                               <label className="block font-black uppercase text-slate-700 text-sm tracking-wider mb-4 mt-1">{tier.l}</label>
-                              <select className="input-field w-full text-sm font-semibold text-slate-600 bg-slate-50 transition-colors" value={alternateTiers[tier.k]?.id || ''} onChange={e => setAlternateTiers({...alternateTiers, [tier.k]: filteredCatalog.find(c => c.id.toString() === e.target.value)})}>
+                              <select className="input-field w-full text-sm font-semibold text-slate-600 bg-slate-50 transition-colors" value={alternateTiers?.[tier.k]?.id || ''} onChange={e => setAlternateTiers({...(alternateTiers || {good: null, better: null, best: null}), [tier.k]: filteredCatalog.find(c => c.id.toString() === e.target.value)})}>
                                  <option value="">-- Remove/Empty --</option>
                                  {filteredCatalog.map(sys => <option key={sys.id} value={sys.id}>{sys.brand} {sys.series} {sys.seer} SEER</option>)}
                               </select>
