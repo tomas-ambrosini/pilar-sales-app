@@ -4,19 +4,6 @@ import { X, CheckCircle, Shield, Wind, Droplets, ArrowRight, FileText, AlertTria
 import Modal from './Modal';
 import { formatQuoteId } from '../utils/formatters';
 
-export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal, onAccept, onViewContract }) {
-  const [localSelections, setLocalSelections] = React.useState({});
-
-  React.useEffect(() => {
-     if (!isOpen) {
-         setLocalSelections({});
-     }
-  }, [isOpen, proposal?.id]);
-
-  if (!proposal) return null;
-
-  const { proposal_data } = proposal;
-
 const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, localSelections, setLocalSelections, onAccept, onViewContract }) => {
     const validTracks = tracks ? tracks.filter(t => t.data) : [];
     if (validTracks.length === 0) return null;
@@ -132,6 +119,20 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
        </div>
     );
   };
+
+export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal, onAccept, onViewContract }) {
+  const [localSelections, setLocalSelections] = React.useState({});
+
+  React.useEffect(() => {
+     if (!isOpen) {
+         setLocalSelections({});
+     }
+  }, [isOpen, proposal?.id]);
+
+  if (!proposal) return null;
+
+  const { proposal_data } = proposal;
+
 
   return typeof document !== 'undefined' ? createPortal(
     <div className={`fixed inset-0 z-[100] flex items-center justify-center modal-layout-wrapper transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
