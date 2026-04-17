@@ -25,18 +25,18 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
 
     const borderClass = isMultiSys 
          ? (isSelected 
-            ? 'border-primary-600 ring-2 ring-primary-600 bg-white shadow-2xl z-20' 
+            ? 'border-primary-600 ring-2 ring-primary-600 bg-white shadow-2xl z-20 scale-[1.02]' 
             : (isPremiumNode 
-               ? 'border-primary-300 ring-2 ring-primary-200/50 bg-gradient-to-b from-primary-50/50 to-white shadow-[0_8px_30px_rgb(37,99,235,0.12)] z-10' 
+               ? 'border-slate-200 border-t-4 border-t-slate-900 bg-white shadow-2xl z-10 scale-[1.04]' 
                : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-lg'))
          : (isPremiumNode 
-            ? 'border-primary-400 ring-2 ring-primary-400/60 shadow-[0_8px_30px_rgb(37,99,235,0.16)] bg-gradient-to-b from-primary-50/50 to-white z-20' 
+            ? 'border-slate-200 border-t-4 border-t-slate-900 shadow-2xl bg-white z-20 scale-[1.04]' 
             : 'border-slate-200 bg-white shadow-sm hover:shadow-md');
 
     return (
-       <div className={`relative flex flex-col p-8 rounded-[20px] transition-all duration-200 border ${borderClass}`}>
+       <div className={`relative flex flex-col p-8 rounded-[20px] transition-all duration-300 border ${borderClass}`}>
           {isPremiumNode && (
-             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-md z-30 border border-emerald-400/50">
+             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-md z-30 ring-2 ring-white">
                  Suggested
              </div>
           )}
