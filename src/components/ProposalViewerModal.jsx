@@ -177,6 +177,16 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                          <div className="mb-6 text-center">
                             <h3 className="text-3xl font-black text-slate-800">{sys.systemName}</h3>
                             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Select Tier Option</p>
+                            <div className="mt-4 p-2 bg-red-100 text-red-800 text-xs text-left overflow-auto rounded max-w-2xl mx-auto border border-red-300">
+                               <strong>DIAGNOSTIC DATA FOR OPTION 3 DROP:</strong><br />
+                               sys.altTracks length: {sys.altTracks ? sys.altTracks.length : 'NULL/UNDEFINED'}<br />
+                               sys.altTiers fallback exists? {sys.altTiers ? 'YES' : 'NO'}<br />
+                               {sys.altTracks && sys.altTracks.length > 0 && sys.altTracks.map((trk, i) => (
+                                  <div key={i} className="mt-1">
+                                    Option {i + 2} Track Tiers Present: {typeof trk.tiers === 'object' && trk.tiers !== null ? Object.keys(trk.tiers).join(', ') : 'BROKEN OBJECT'}
+                                  </div>
+                               ))}
+                            </div>
                          </div>
                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end">
                             {(() => {
