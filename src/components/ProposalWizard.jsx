@@ -1086,13 +1086,13 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                            const equip = track.tiers[tier.k];
           
                                            return (
-                                           <div key={tier.k} className={`relative bg-white border rounded-2xl overflow-hidden shadow-lg flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 ${trackIdx === 1 ? 'border-indigo-200' : 'border-slate-200'} text-slate-800 ${tier.k === 'best' ? 'scale-105 z-10 border-primary-500' : ''}`}>
+                                           <div key={tier.k} className={`relative bg-white border rounded-2xl shadow-lg flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 ${trackIdx === 1 ? 'border-indigo-200' : 'border-slate-200'} text-slate-800 ${tier.k === 'best' ? 'scale-105 z-10 border-primary-500' : ''}`}>
                                               {tier.k === 'best' && (
                                                  <div className={`absolute -top-3 left-1/2 -translate-x-1/2 ${trackIdx === 1 ? 'bg-indigo-500' : 'bg-primary-500'} text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-sm`}>
                                                      Suggested
                                                  </div>
                                               )}
-                                              <div className={`${trackIdx === 1 ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200'} py-4 px-4 border-b text-center pt-6`}>
+                                              <div className={`${trackIdx === 1 ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200'} rounded-t-[14px] py-4 px-4 border-b text-center pt-6`}>
                                                  <h4 className={`font-black text-lg tracking-widest uppercase ${trackIdx === 1 ? 'text-indigo-900' : 'text-slate-800'}`}>{tier.l.split('(')[0].trim()}</h4>
                                                  <span className={`text-[10px] font-bold uppercase tracking-widest mt-1 block ${trackIdx === 1 ? 'text-indigo-400' : 'text-slate-400'}`}>Selected Tier</span>
                                               </div>
