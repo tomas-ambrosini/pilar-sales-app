@@ -52,11 +52,11 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                   <div className="text-xs text-red-500 font-bold">validTracks Length: {validTracks.length}</div>
               </div>
               {showBrandToggle && (
-                  <div className="flex bg-slate-200 rounded-lg p-1 w-max overflow-x-auto">
-                     {validTracks.map((trk) => (
-                        <button key={trk.id} onClick={(e) => { e.stopPropagation(); setFocusedTrackId(trk.id); }} className={`px-3 py-1 text-[10px] whitespace-nowrap font-bold uppercase tracking-wider rounded-md transition-colors ${focusedTrackId === trk.id ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}>
-                           {trk.title}
-                        </button>
+                  <div className="flex flex-col bg-slate-200 rounded-lg p-1">
+                     {validTracks.map((trk, mapIndex) => (
+                        <div key={trk.id} className="text-[10px] text-blue-800 font-bold">
+                           [Map {mapIndex}]: {trk.title} ({trk.id})
+                        </div>
                      ))}
                   </div>
               )}
