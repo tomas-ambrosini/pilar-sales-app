@@ -37,12 +37,12 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
               <h3 className="text-xl font-black text-slate-900 tracking-tight">{tierName.replace(/ *\([^)]*\) */g, "").trim()} <span className="text-slate-400 font-medium ml-1">({tierKey})</span></h3>
               
               {showBrandToggle && (
-                  <div className="flex bg-slate-50/50 rounded-xl p-1 w-full flex-wrap gap-1 border border-slate-100/50">
+                  <div className="flex bg-slate-100 rounded-[14px] p-1.5 w-full flex-wrap gap-1 border border-slate-200/60 shadow-inner">
                      {validTracks.map((trk) => (
                         <button 
                            key={trk.id} 
                            onClick={(e) => { e.stopPropagation(); setFocusedTrackId(trk.id); }} 
-                           className={`flex-1 px-2 py-2 text-[10px] whitespace-nowrap font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${focusedTrackId === trk.id ? 'bg-white shadow-sm border border-slate-200/80 text-primary-600' : 'text-slate-400 hover:text-primary-600 hover:bg-primary-50'}`}
+                           className={`flex-1 px-2 py-2 text-[10px] whitespace-nowrap font-bold uppercase tracking-[0.15em] rounded-lg transition-all duration-200 ${focusedTrackId === trk.id ? 'bg-primary-600 text-white shadow-md shadow-primary-600/30 ring-1 ring-primary-500' : 'text-slate-500 hover:text-slate-800 hover:bg-white/80'}`}
                         >
                            {trk.title}
                         </button>
