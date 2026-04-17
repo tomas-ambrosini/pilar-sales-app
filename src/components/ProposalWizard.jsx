@@ -1167,11 +1167,11 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                               </div>
                                            </div>
                                            );
-                                        })}
+                                        })()}
                                      </div>
                                  </div>
                               );
-                           })}
+                           })()}
                         </div>
                      );
                   })}
