@@ -564,8 +564,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const filteredCatalog = catalog.filter(c => c.tons === parseFloat(tonnageFilter));
   const uniqueTonnages = [...new Set(catalog.map(c => c.tons).filter(Boolean))].sort();
   const filterByBrand = (c, bFilter) => bFilter ? c.brand === bFilter : true;
-  const primaryFilteredCatalog = filteredCatalog.filter(c => filterByBrand(c, primaryBrandFilter));
-  const altFilteredCatalog = filteredCatalog.filter(c => filterByBrand(c, alternateBrandFilter));
+  const primaryFilteredCatalog = filteredCatalog.filter(c => filterByBrand(c, primaryBrandFilter)).sort((a, b) => (a.system_cost || 0) - (b.system_cost || 0));
+  const altFilteredCatalog = filteredCatalog.filter(c => filterByBrand(c, alternateBrandFilter)).sort((a, b) => (a.system_cost || 0) - (b.system_cost || 0));
   const uniquePrimaryBrands = [...new Set(filteredCatalog.map(c => c.brand).filter(Boolean))].sort();
   const uniqueAltBrands = uniquePrimaryBrands;
 
