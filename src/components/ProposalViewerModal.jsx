@@ -196,9 +196,9 @@ const TierCard = ({ tierName, tierKey, primaryData, altData, isBest, systemId, p
                 </div>
              ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end max-w-5xl mx-auto pt-4 pb-8">
-                   <TierCard tierName="Baseline (Good)" tierKey="Good" primaryData={proposal_data.tiers?.good} altData={null} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
-                   <TierCard tierName="Premium (Best)" tierKey="Best" primaryData={proposal_data.tiers?.best} altData={null} isBest={true} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
-                   <TierCard tierName="Core (Better)" tierKey="Better" primaryData={proposal_data.tiers?.better} altData={null} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                   <TierCard tierName="Baseline (Good)" tierKey="Good" primaryData={proposal_data.tiers?.good || proposal_data.tiers?.Good} altData={null} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                   <TierCard tierName="Premium (Best)" tierKey="Best" primaryData={proposal_data.tiers?.best || proposal_data.tiers?.Best} altData={null} isBest={true} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                   <TierCard tierName="Core (Better)" tierKey="Better" primaryData={proposal_data.tiers?.better || proposal_data.tiers?.Better} altData={null} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
                 </div>
              )}
           </div>
