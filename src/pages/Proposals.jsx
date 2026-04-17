@@ -78,7 +78,7 @@ export default function Proposals() {
       setInspectingProposal(proposal);
   };
 
-  if (showWizard) return <ProposalWizard onComplete={() => setShowWizard(false)} addProposal={addProposal} updateProposal={updateProposal} editModeData={wizardConfig} />;
+  if (showWizard) return <ProposalWizard onComplete={() => { setShowWizard(false); setWizardConfig(null); }} addProposal={addProposal} updateProposal={updateProposal} editModeData={wizardConfig} />;
 
 
   const handleDeleteOpen = (proposal) => {
@@ -292,7 +292,7 @@ ${(tierData.features || []).map(f => `- ${f}`).join('\n')}
           <p className="text-slate-500 font-medium">Track and generate equipment replacement quotes.</p>
         </div>
         <button 
-          onClick={() => setShowWizard(true)}
+          onClick={() => { setWizardConfig(null); setShowWizard(true); }}
           className="bg-gradient-to-tr from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm hover:shadow-md active:scale-95 border border-slate-700"
         >
           <Plus size={18} /> Generate Quote
