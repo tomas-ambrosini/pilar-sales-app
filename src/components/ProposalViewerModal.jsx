@@ -41,7 +41,7 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
     return (
        <div className={`relative flex flex-col p-8 rounded-[20px] transition-all duration-200 border ${borderClass}`}>
           {((isBest && !isMultiSys) || (isMultiSys && tierKey === 'Best')) && (
-             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-md z-30">
+             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-md z-30 border border-emerald-400/50">
                  Suggested
              </div>
           )}
@@ -50,12 +50,12 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
               <h3 className="text-xl font-black text-slate-900 tracking-tight">{tierName.replace(/ *\([^)]*\) */g, "").trim()} <span className="text-slate-400 font-medium ml-1">({tierKey})</span></h3>
               
               {showBrandToggle && (
-                  <div className="flex bg-slate-50 rounded-xl p-1 w-full flex-wrap gap-1 border border-slate-100">
+                  <div className="flex bg-slate-50/50 rounded-xl p-1 w-full flex-wrap gap-1 border border-slate-100/50">
                      {validTracks.map((trk) => (
                         <button 
                            key={trk.id} 
                            onClick={(e) => { e.stopPropagation(); setFocusedTrackId(trk.id); }} 
-                           className={`flex-1 px-2 py-2 text-[10px] whitespace-nowrap font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${focusedTrackId === trk.id ? 'bg-white shadow-sm border border-slate-200/60 text-slate-900' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+                           className={`flex-1 px-2 py-2 text-[10px] whitespace-nowrap font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${focusedTrackId === trk.id ? 'bg-white shadow-sm border border-slate-200/80 text-primary-600' : 'text-slate-400 hover:text-primary-600 hover:bg-primary-50'}`}
                         >
                            {trk.title}
                         </button>
@@ -66,7 +66,7 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
           
           <div className="my-2 pb-6 border-b border-slate-100 flex items-baseline">
              <span className="text-xl font-bold text-slate-400 mr-1 translate-y-[-0.25rem]">$</span>
-             <span className="text-[2.75rem] font-black tracking-tighter text-slate-900 leading-none">{(activeData?.salesPrice || 0).toLocaleString()}</span>
+             <span className={`text-[2.75rem] font-black tracking-tighter leading-none ${isBest ? 'text-primary-900' : 'text-slate-900'}`}>{(activeData?.salesPrice || 0).toLocaleString()}</span>
           </div>
           
           <div className="flex-grow space-y-7 mb-8 mt-2">
@@ -77,12 +77,12 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                       {activeData.equipmentList.map((eq, i) => (
                           <p key={i} className="text-sm font-bold text-slate-800 leading-tight">{eq}</p>
                       ))}
-                      <div className="mt-2 text-xs font-semibold text-slate-500">Total: {activeData.tons} Tons</div>
+                      <div className="mt-2 text-xs font-semibold text-slate-500">Total: <span className="text-primary-600 font-bold">{activeData.tons}</span> Tons</div>
                    </div>
                 ) : (
                    <div className="flex flex-col">
                       <span className="font-bold text-[15px] text-slate-800 leading-tight mb-1">{activeData?.brand} {activeData?.series}</span>
-                      <span className="text-xs font-semibold text-slate-500">{activeData?.tons} Ton System</span>
+                      <span className="text-xs font-semibold text-slate-500">Total: <span className="text-primary-600 font-bold">{activeData?.tons}</span> Tons</span>
                    </div>
                 )}
              </div>
@@ -93,7 +93,7 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                    {(activeData?.features || []).map((feat, idx) => (
                       <li key={idx} className="flex items-start gap-3 text-[13px] text-slate-600 font-medium leading-relaxed">
                          <div className="mt-0.5 shrink-0">
-                            <CheckCircle size={15} className="text-primary-500" />
+                            <CheckCircle size={15} className="text-emerald-500" strokeWidth={2.5}/>
                          </div>
                          <span>{feat}</span>
                       </li>
@@ -107,7 +107,7 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                  {isMultiSys ? (
                       <button 
                          onClick={(e) => { e.stopPropagation(); setLocalSelections(p => ({...p, [systemId]: `${focusedTrackId}_${tierKey}`})); }}
-                         className={`w-full py-3.5 flex items-center justify-center gap-2 rounded-xl text-sm font-bold border-2 transition-all duration-200 focus:outline-none ${isSelected ? 'bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-600/30 ring-1 ring-primary-600 translate-y-[-1px]' : 'bg-white border-slate-200/80 text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 shadow-sm'}`}
+                         className={`w-full py-3.5 flex items-center justify-center gap-2 rounded-xl text-sm font-bold border-2 transition-all duration-200 focus:outline-none ${isSelected ? 'bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-600/30 ring-1 ring-primary-600 translate-y-[-1px]' : 'bg-white border-primary-100 text-primary-600 hover:bg-primary-50 hover:border-primary-200 hover:text-primary-700 shadow-sm'}`}
                       >
                          {isSelected ? <><CheckCircle size={16} strokeWidth={2.5}/> Option Selected</> : `Select ${tierName.split('(')[0].trim()}`}
                       </button>
@@ -115,14 +115,14 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                      <button 
                         disabled={proposal.isReadOnly}
                         onClick={(e) => { e.stopPropagation(); !proposal.isReadOnly && onAccept && onAccept(tierKey, activeData, proposal); }}
-                        className={`w-full py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-sm shadow-sm border focus:ring-2 focus:ring-offset-2 outline-none ${proposal.isReadOnly ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : isBest ? 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-600 border-primary-600' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'}`}
+                        className={`w-full py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-sm shadow-sm border-2 focus:ring-2 focus:ring-offset-2 outline-none ${proposal.isReadOnly ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : isBest ? 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-600 border-primary-600' : 'bg-white border-primary-100 text-primary-600 hover:bg-primary-50 hover:border-primary-200'}`}
                      >
                         {proposal.isReadOnly ? 'Preview Only' : `Select ${tierName.split('(')[0].trim()}`}
                      </button>
                  ) : (
                      <button 
                         onClick={(e) => { e.stopPropagation(); onViewContract && onViewContract(proposal); }} 
-                        className={`w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm transition-all focus:ring-2 focus:ring-offset-2 outline-none ${isBest ? 'bg-slate-900 border-slate-900 hover:bg-slate-800 focus:ring-slate-900 text-white shadow-lg' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                        className={`w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm transition-all focus:ring-2 focus:ring-offset-2 outline-none ${isBest ? 'bg-emerald-600 border-emerald-600 hover:bg-emerald-700 focus:ring-emerald-600 text-white shadow-lg shadow-emerald-600/20' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}`}
                      >
                         <FileText size={18}/> View Contract
                      </button>
