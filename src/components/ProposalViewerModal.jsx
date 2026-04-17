@@ -46,17 +46,19 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
              </div>
           )}
           
-          <div className="flex justify-between items-start mb-4">
-              <div className="flex flex-col">
-                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">{tierName}</h3>
-                  <div className="text-xs text-red-500 font-bold">validTracks Length: {validTracks.length}</div>
-              </div>
+          <div className="flex flex-col gap-3 mb-5">
+              <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">{tierName}</h3>
+              
               {showBrandToggle && (
-                  <div className="flex flex-col bg-slate-200 rounded-lg p-1">
-                     {validTracks.map((trk, mapIndex) => (
-                        <div key={trk.id} className="text-[10px] text-blue-800 font-bold">
-                           [Map {mapIndex}]: {trk.title} ({trk.id})
-                        </div>
+                  <div className="flex bg-slate-100 rounded-lg p-1 w-full flex-wrap gap-1">
+                     {validTracks.map((trk) => (
+                        <button 
+                           key={trk.id} 
+                           onClick={(e) => { e.stopPropagation(); setFocusedTrackId(trk.id); }} 
+                           className={`flex-1 px-2 py-1.5 text-[10px] whitespace-nowrap font-bold uppercase tracking-wider rounded-md transition-all duration-200 ${focusedTrackId === trk.id ? 'bg-white shadow-sm text-primary-700 border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
+                        >
+                           {trk.title}
+                        </button>
                      ))}
                   </div>
               )}
@@ -180,16 +182,6 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                          <div className="mb-6 text-center">
                             <h3 className="text-3xl font-black text-slate-800">{sys.systemName}</h3>
                             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Select Tier Option</p>
-                            <div className="mt-4 p-2 bg-red-100 text-red-800 text-xs text-left overflow-auto rounded max-w-2xl mx-auto border border-red-300">
-                               <strong>DIAGNOSTIC DATA FOR OPTION 3 DROP:</strong><br />
-                               sys.altTracks length: {sys.altTracks ? sys.altTracks.length : 'NULL/UNDEFINED'}<br />
-                               sys.altTiers fallback exists? {sys.altTiers ? 'YES' : 'NO'}<br />
-                               {sys.altTracks && sys.altTracks.length > 0 && sys.altTracks.map((trk, i) => (
-                                  <div key={i} className="mt-1">
-                                    Option {i + 2} Track Tiers Present: {typeof trk.tiers === 'object' && trk.tiers !== null ? Object.keys(trk.tiers).join(', ') : 'BROKEN OBJECT'}
-                                  </div>
-                               ))}
-                            </div>
                          </div>
                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end">
                             {(() => {

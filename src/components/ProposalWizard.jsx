@@ -1085,9 +1085,9 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                               return (
                                  <div className="mb-8 last:mb-0">
                                      {showBrandToggle && (
-                                         <div className="flex bg-slate-200 rounded-lg p-1 w-max overflow-x-auto mb-6">
+                                         <div className="flex bg-slate-100 rounded-lg p-1 w-full flex-wrap gap-1 mb-6">
                                             {allTracks.map((trk, idx) => (
-                                               <button key={trk.id} onClick={() => setActiveStep5Track(prev => ({...prev, [sys.id]: idx}))} className={`px-4 py-1.5 text-[11px] whitespace-nowrap font-black uppercase tracking-wider rounded-md transition-colors shadow-sm ${activeIdx === idx ? 'bg-white text-slate-800' : 'text-slate-500 hover:text-slate-700 bg-transparent shadow-none'}`}>
+                                               <button key={trk.id} onClick={() => setActiveStep5Track(prev => ({...prev, [sys.id]: idx}))} className={`px-4 py-2 text-[11px] whitespace-nowrap font-black uppercase tracking-wider rounded-md transition-all duration-200 ${activeIdx === idx ? 'bg-white shadow-sm text-primary-700 border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}>
                                                   {trk.title}
                                                </button>
                                             ))}
