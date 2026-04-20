@@ -167,10 +167,10 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                     {/* Header Section */}
                     <div className="flex justify-between items-start mb-6">
                         <div>
-                            <h1 className="text-3xl font-bold mb-2 text-slate-800" title={proposal?.proposal_number ? `Legacy ID: ${proposal?.id}` : ''}>Quote # <span className="font-normal text-slate-600 underline decoration-slate-300 underline-offset-4">{formatQuoteId(proposal).replace('Quote ', '').replace('#', '')}</span></h1>
-                            <div className="flex gap-4 mt-4 font-bold text-slate-700">
-                                <span>Quote #: <span className="border-b border-slate-300 font-normal px-4 text-slate-600 truncate max-w-[250px] inline-block align-bottom">{formatQuoteId(proposal).replace('Quote ', '').replace('#', '')}</span></span>
-                                <span>Date: <span className="border-b border-slate-300 font-normal px-4 text-slate-600">{date}</span></span>
+                            <h1 className="text-3xl font-bold mb-2 text-slate-800" title={proposal?.proposal_number ? `Legacy ID: ${proposal?.id}` : ''}>Quote # <span className="font-normal text-slate-600 tracking-tight">{formatQuoteId(proposal).replace('Quote ', '').replace('#', '')}</span></h1>
+                            <div className="flex gap-6 mt-4 font-bold text-slate-700">
+                                <span>Quote #: <span className="font-normal px-2 text-slate-600 truncate max-w-[250px] inline-block">{formatQuoteId(proposal).replace('Quote ', '').replace('#', '')}</span></span>
+                                <span>Date: <span className="font-normal px-2 text-slate-600">{date}</span></span>
                             </div>
                         </div>
                         <div className="text-right flex items-center justify-end">
@@ -264,8 +264,8 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                                     </div>
                                 </div>
                                 <div className="w-32 border-l border-slate-300 flex flex-col justify-end pb-3 text-center bg-[#f8fafc]">
-                                    <div className="px-3 flex items-center text-slate-500 gap-1 font-bold">
-                                        $ <span className="flex-1 border-b border-slate-400 text-slate-800 text-right pr-2">{(sys.tierData?.salesPrice || 0).toLocaleString()}</span>
+                                    <div className="px-3 flex items-center justify-end text-slate-800 gap-1 font-black text-lg">
+                                        $ <span>{(sys.tierData?.salesPrice || 0).toLocaleString()}</span>
                                     </div>
                                 </div>
                             </div>
@@ -309,8 +309,8 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                                 </div>
                             </div>
                             <div className="w-32 border-l border-slate-300 flex flex-col justify-end pb-3 text-center bg-[#f8fafc]">
-                                <div className="px-3 flex items-center text-slate-500 gap-1 font-bold">
-                                    $ <span className="flex-1 border-b border-slate-400 text-slate-800 text-right pr-2">{(tierData?.salesPrice || 0).toLocaleString()}</span>
+                                <div className="px-3 flex items-center justify-end text-slate-800 gap-1 font-black text-lg">
+                                    $ <span>{(tierData?.salesPrice || 0).toLocaleString()}</span>
                                 </div>
                             </div>
                         </div>
@@ -324,27 +324,39 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                         <div className="w-32 px-3 py-1.5 text-center">Price</div>
                     </div>
                     <div className="flex flex-col bg-[#f8fafc]">
-                         {[...(tierData.features || []), ...templateConfig.materials]
-                          .slice(0, 4)
-                          .map((f, i) => (
-                            <div key={i} className="flex border-b border-slate-200">
-                                 <div className="flex-1 px-3 py-2 border-r border-slate-300 flex items-center gap-2 text-slate-600">
-                                     <div className="w-1 h-1 bg-slate-500 rounded-full shrink-0"></div>
-                                     {f}
-                                 </div>
-                                 <div className="w-32 px-3 py-2 flex items-center justify-start gap-1 font-bold text-slate-500">
-                                     $ <span className="flex-1 border-b border-slate-300"></span>
-                                 </div>
-                            </div>
-                         ))}
-                         
-                         {/* Total Row */}
-                         <div className="flex font-bold text-slate-800">
-                              <div className="flex-1 px-3 py-2 border-r border-slate-300 text-right uppercase text-[10px] tracking-wider text-slate-600">Total:</div>
-                              <div className="w-32 px-3 py-2 flex items-center justify-start gap-1 bg-[#e2e8f0]/30 border-t border-slate-300">
-                                  $ <span className="flex-1 border-b border-transparent">{(tierData.salesPrice || 0).toLocaleString()}</span>
-                              </div>
-                         </div>
+                         {(() => {
+                             const allMaterials = resolvedSystemsList && resolvedSystemsList.length > 0
+                                 ? resolvedSystemsList.flatMap(sys => (sys.tierData?.features || []).map(f => `[${sys.systemName}]: ${f}`))
+                                 : [...(tierData?.features || []), ...(templateConfig.materials || [])].filter(Boolean);
+                             
+                             const totalPrice = resolvedSystemsList && resolvedSystemsList.length > 0 
+                                 ? resolvedSystemsList.reduce((sum, sys) => sum + (sys.tierData?.salesPrice || 0), 0)
+                                 : (tierData?.salesPrice || 0);
+
+                             return (
+                                 <>
+                                     {allMaterials.map((f, i) => (
+                                         <div key={i} className="flex border-b border-slate-200">
+                                              <div className="flex-1 px-3 py-2 border-r border-slate-300 flex items-center gap-2 text-slate-600">
+                                                  <div className="w-1 h-1 bg-slate-500 rounded-full shrink-0"></div>
+                                                  {f}
+                                              </div>
+                                              <div className="w-32 px-3 py-2 flex items-center justify-center font-bold text-slate-400 text-[10px] uppercase tracking-wider">
+                                                  Included
+                                              </div>
+                                         </div>
+                                     ))}
+                                     
+                                     {/* Total Row */}
+                                     <div className="flex font-bold text-slate-800 bg-[#e2e8f0]/40">
+                                          <div className="flex-1 px-3 py-3 border-r border-slate-300 text-right uppercase text-xs tracking-wider text-slate-800">Total Contract Price:</div>
+                                          <div className="w-32 px-3 py-3 flex items-center justify-end gap-1 text-primary-700 font-black text-lg border-t-2 border-slate-300">
+                                              $ <span>{totalPrice.toLocaleString()}</span>
+                                          </div>
+                                     </div>
+                                 </>
+                             );
+                         })()}
                     </div>
                 </div>
 
