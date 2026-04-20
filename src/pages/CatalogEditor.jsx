@@ -14,6 +14,7 @@ export default function CatalogEditor() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterValue, setFilterValue] = useState('All');
   const [laborSort, setLaborSort] = useState('Alphabetical');
+  const [equipSort, setEquipSort] = useState('Default');
 
   // Forms State
   const [isEquipModalOpen, setIsEquipModalOpen] = useState(false);
@@ -186,6 +187,10 @@ export default function CatalogEditor() {
       item.ahu_model?.toLowerCase().includes(searchLower);
     const matchesFilter = filterValue === 'All' || item.brand === filterValue;
     return matchesSearch && matchesFilter;
+  }).sort((a, b) => {
+     if (equipSort === 'PriceAsc') return (a.system_cost || 0) - (b.system_cost || 0);
+     if (equipSort === 'PriceDesc') return (b.system_cost || 0) - (a.system_cost || 0);
+     return 0;
   });
 
   const filteredLabor = laborRates.filter(labor => {
@@ -265,9 +270,9 @@ export default function CatalogEditor() {
                     </select>
                  </div>
 
-                  {activeTab === 'labor' && (
-                     <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 shadow-sm select-wrapper relative">
-                        <ListOrdered size={14} className="text-slate-400" />
+                  <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 shadow-sm select-wrapper relative">
+                     <ListOrdered size={14} className="text-slate-400" />
+                     {activeTab === 'labor' ? (
                         <select 
                            className="border-none bg-transparent focus:ring-0 py-1.5 text-xs font-bold text-slate-700 outline-none cursor-pointer"
                            value={laborSort}
@@ -276,8 +281,18 @@ export default function CatalogEditor() {
                            <option value="Alphabetical">A-Z Name</option>
                            <option value="SKU">By SKU #</option>
                         </select>
-                     </div>
-                  )}
+                     ) : (
+                        <select 
+                           className="border-none bg-transparent focus:ring-0 py-1.5 text-xs font-bold text-slate-700 outline-none cursor-pointer"
+                           value={equipSort}
+                           onChange={(e) => setEquipSort(e.target.value)}
+                        >
+                           <option value="Default">Default</option>
+                           <option value="PriceAsc">Price (Low)</option>
+                           <option value="PriceDesc">Price (High)</option>
+                        </select>
+                     )}
+                  </div>
 
              </div>
           </div>
