@@ -60,7 +60,7 @@ export const calculateTierPrice = (rawEquipCost, tierType, margins) => {
   let targetMargin = margins?.good_margin || 0.35;
   if (tierType === 'Better') targetMargin = margins?.better_margin || 0.40;
   if (tierType === 'Best') targetMargin = margins?.best_margin || 0.45;
-  const salesPrice = costWithReserve / (1 - targetMargin);
+  const salesPrice = costWithReserve * (1 + targetMargin);
   return Math.round(salesPrice);
 };
 
