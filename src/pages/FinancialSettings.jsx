@@ -78,8 +78,7 @@ export default function FinancialSettings() {
                 better_margin: settings.better_margin,
                 best_margin: settings.best_margin,
                 service_reserve: settings.service_reserve,
-                sales_tax: settings.sales_tax,
-                updated_at: new Date().toISOString()
+                sales_tax: settings.sales_tax
             };
             
             const { error } = await supabase.from('margin_settings').update(payload).eq('id', 1);
