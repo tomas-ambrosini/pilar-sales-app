@@ -50,18 +50,25 @@ export const computeCommission = (price, retail) => {
  * centralisation. It can be imported wherever pricing is needed.
  */
 export const calculateTierPrice = (rawEquipCost, tierType, margins) => {
-  // Replicate the original calculation steps (tax, reserve, margin).
   const taxableMaterials = 0; // placeholder – actual addons handled elsewhere
   const nontaxableLabor = 0; // placeholder – actual addons handled elsewhere
-  const taxRate = margins?.sales_tax || 0.07;
-  const equipWithTax = (rawEquipCost + taxableMaterials) * (1 + taxRate);
-  const totalHardCost = equipWithTax + nontaxableLabor;
-  const costWithReserve = totalHardCost * (1 + (margins?.service_reserve || 0.05));
-  let targetMargin = margins?.good_margin || 0.35;
-  if (tierType === 'Better') targetMargin = margins?.better_margin || 0.40;
-  if (tierType === 'Best') targetMargin = margins?.best_margin || 0.45;
-  const salesPrice = costWithReserve * (1 + targetMargin);
-  return Math.round(salesPrice);
+  
+  const taxRate = parseFloat(margins?.sales_tax) || 0.07;
+  let targetMargin = parseFloat(margins?.good_margin) || 0.35;
+  if (tierType === 'Better') targetMargin = parseFloat(margins?.better_margin) || 0.40;
+  if (tierType === 'Best') targetMargin = parseFloat(margins?.best_margin) || 0.45;
+  
+  const rawMaterialsTotal = rawEquipCost + taxableMaterials;
+  const subtotalCost = rawMaterialsTotal + nontaxableLabor;
+  const taxAmount = rawMaterialsTotal * taxRate;
+  
+  const serviceReserve = parseFloat(margins?.service_reserve) || 0.05;
+  const markupMultiplier = 1.0 + targetMargin + serviceReserve;
+  
+  const markedUpSubtotal = subtotalCost * markupMultiplier;
+  const grandTotal = markedUpSubtotal + taxAmount;
+  
+  return Math.round(grandTotal);
 };
 
 /**

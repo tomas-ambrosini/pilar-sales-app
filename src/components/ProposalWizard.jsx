@@ -372,12 +372,17 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     if (tierType.toLowerCase() === 'better') targetMargin = parseFloat(margins?.better_margin) || 0.40;
     if (tierType.toLowerCase() === 'best') targetMargin = parseFloat(margins?.best_margin) || 0.45;
 
-    // Standard dynamic pure margin calculation
-    const equipWithTax = (parsedEquipCost + taxableMaterials) * (1 + taxRate); 
-    const totalHardCost = equipWithTax + nontaxableLabor;
-    const costWithReserve = totalHardCost * (1 + (parseFloat(margins?.service_reserve) || 0.05)); 
+    const rawMaterialsTotal = parsedEquipCost + taxableMaterials;
+    const subtotalCost = rawMaterialsTotal + nontaxableLabor;
+    const taxAmount = rawMaterialsTotal * taxRate;
     
-    return Math.max(Math.round(costWithReserve * (1 + targetMargin)), 0);
+    const serviceReserve = parseFloat(margins?.service_reserve) || 0.05;
+    const markupMultiplier = 1.0 + targetMargin + serviceReserve;
+    
+    const markedUpSubtotal = subtotalCost * markupMultiplier;
+    const grandTotal = markedUpSubtotal + taxAmount;
+    
+    return Math.max(Math.round(grandTotal), 0);
   };
 
   const getSystemHardCostOnly = (sys, rawEquipCost) => {
@@ -396,7 +401,12 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        .reduce((s, i) => s + (parseFloat(i.cost) || 0), 0);
        
     const taxRate = parseFloat(margins?.sales_tax) || 0.07;
-    return ((parsedEquipCost + taxableMaterials) * (1 + taxRate)) + nontaxableLabor;
+    
+    const rawMaterialsTotal = parsedEquipCost + taxableMaterials;
+    const subtotalCost = rawMaterialsTotal + nontaxableLabor;
+    const taxAmount = rawMaterialsTotal * taxRate;
+    
+    return subtotalCost + taxAmount;
   };
 
   const generateProposal = async () => {
