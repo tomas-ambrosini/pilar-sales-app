@@ -89,7 +89,7 @@ export default function FinancialSettings() {
             toast.success("Global Margins Synchronized.", { icon: '🔐' });
         } catch (err) {
             console.error(err);
-            toast.error("System failure committing margin arrays.");
+            toast.error(`Fault: ${err?.message || "System failure committing margin arrays."}`);
         } finally {
             setIsSaving(false);
         }
