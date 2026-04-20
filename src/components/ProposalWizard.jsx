@@ -337,18 +337,34 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
      setAddons({});
   };
 
-  const calculateSystemBaselineRetail = (sys, rawEquipCost, tierType = 'Good') => {
-    if (!rawEquipCost) return 0;
+  const calculateSystemBaselineRetail = (sys, equipTierData, tierType = 'Good') => {
+    const rawEquipCost = equipTierData?.system_cost || 0;
+    const explicitRetailEquipPrice = equipTierData?.retail_price || 0;
+    
+    if (!rawEquipCost && !explicitRetailEquipPrice) return 0;
+    
     const activeAddons = laborRates.filter(l => sys.addons[l.id]);
     const taxableMaterials = activeAddons.filter(l => !['Labor', 'Install', 'Subcontract', 'Permit'].includes(l.category)).reduce((s, i) => s + i.cost, 0);
     const nontaxableLabor = activeAddons.filter(l => ['Labor', 'Install', 'Subcontract', 'Permit'].includes(l.category)).reduce((s, i) => s + i.cost, 0);
+    
     const taxRate = margins.sales_tax || 0.07;
-    const equipWithTax = (rawEquipCost + taxableMaterials) * (1 + taxRate); 
-    const totalHardCost = equipWithTax + nontaxableLabor;
-    const costWithReserve = totalHardCost * (1 + (margins.service_reserve || 0.05)); 
     let targetMargin = margins.good_margin || 0.35;
     if (tierType === 'Better') targetMargin = margins.better_margin || 0.40;
     if (tierType === 'Best') targetMargin = margins.best_margin || 0.45;
+
+    if (explicitRetailEquipPrice > 0) {
+       // Honor explicit retail price, calculate retail strictly on addons.
+       const addonsWithTax = taxableMaterials * (1 + taxRate);
+       const addonsHardCost = addonsWithTax + nontaxableLabor;
+       const addonsWithReserve = addonsHardCost * (1 + (margins.service_reserve || 0.05));
+       const addonsRetail = addonsWithReserve > 0 ? (addonsWithReserve / (1 - targetMargin)) : 0;
+       return Math.round(explicitRetailEquipPrice + addonsRetail);
+    }
+
+    // Standard dynamic margin calculation for full system bundle
+    const equipWithTax = (rawEquipCost + taxableMaterials) * (1 + taxRate); 
+    const totalHardCost = equipWithTax + nontaxableLabor;
+    const costWithReserve = totalHardCost * (1 + (margins.service_reserve || 0.05)); 
     return Math.round(costWithReserve / (1 - targetMargin));
   };
 
@@ -432,8 +448,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        ['best', 'better', 'good'].forEach(tierKey => {
            if (!sys.selectedTiers[tierKey]) return;
            
-           const raw = sys.selectedTiers[tierKey].system_cost || 0;
-           const baselinePrice = calculateSystemBaselineRetail(sys, raw, tierKey.charAt(0).toUpperCase() + tierKey.slice(1));
+           const baselinePrice = calculateSystemBaselineRetail(sys, sys.selectedTiers[tierKey], tierKey.charAt(0).toUpperCase() + tierKey.slice(1));
            const percent = appliedPromo ? appliedPromo.discount_percent : 0;
            const discountAmount = baselinePrice * (percent / 100);
            const finalPrice = baselinePrice - discountAmount;
@@ -469,8 +484,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
            ['best', 'better', 'good'].forEach(tierKey => {
                if (!track.tiers?.[tierKey]) return;
                
-               const raw = track.tiers[tierKey].system_cost || 0;
-               const baselinePrice = calculateSystemBaselineRetail(sys, raw, tierKey.charAt(0).toUpperCase() + tierKey.slice(1));
+               const baselinePrice = calculateSystemBaselineRetail(sys, track.tiers[tierKey], tierKey.charAt(0).toUpperCase() + tierKey.slice(1));
                const percent = appliedPromo ? appliedPromo.discount_percent : 0;
                const discountAmount = baselinePrice * (percent / 100);
                const finalPrice = baselinePrice - discountAmount;
