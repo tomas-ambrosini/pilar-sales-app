@@ -190,8 +190,8 @@ export default function CatalogEditor() {
       item.condenser_model?.toLowerCase().includes(searchLower) ||
       item.ahu_model?.toLowerCase().includes(searchLower);
     const matchesFilter = filterValue === 'All' || item.brand === filterValue;
-    const matchesTons = filterTons === 'All' || item.tons === filterTons;
-    const matchesSeer = filterSeer === 'All' || item.seer === filterSeer;
+    const matchesTons = filterTons === 'All' || String(item.tons) === String(filterTons);
+    const matchesSeer = filterSeer === 'All' || String(item.seer) === String(filterSeer);
     return matchesSearch && matchesFilter && matchesTons && matchesSeer;
   }).sort((a, b) => {
      if (equipSort === 'PriceAsc') return (a.system_cost || 0) - (b.system_cost || 0);
