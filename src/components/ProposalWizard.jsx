@@ -908,7 +908,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                         <label className="block font-black uppercase text-slate-700 text-sm tracking-wider mb-4 mt-1">{tier.l}</label>
                         <select className="input-field w-full text-sm font-semibold text-slate-600 bg-slate-50 focus:bg-white transition-colors" value={selectedTiers?.[tier.k]?.id || ''} onChange={e => setSelectedTiers({...selectedTiers, [tier.k]: primaryFilteredCatalog.find(c => c.id.toString() === e.target.value)})}>
                            <option value="">-- Remove/Empty --</option>
-                           {primaryFilteredCatalog.map(sys => <option key={sys.id} value={sys.id}>{sys.brand} {sys.series} {sys.seer} SEER</option>)}
+                           {primaryFilteredCatalog.map(sys => <option key={sys.id} value={sys.id}>{sys.brand} {sys.series} {sys.seer} SEER - [Base: ${parseFloat(sys.system_cost || 0).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0})}]</option>)}
                         </select>
                      </div>
                   ))}
@@ -925,7 +925,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
                  {alternateTracks.map((track, trackIndex) => {
                     const trackUniqueBrands = [...new Set(filteredCatalog.map(x => x.brand))].sort();
-                    const trackFilteredCatalog = track.brandFilter ? filteredCatalog.filter(c => c.brand === track.brandFilter) : filteredCatalog;
+                    const trackFilteredCatalog = (track.brandFilter ? filteredCatalog.filter(c => c.brand === track.brandFilter) : filteredCatalog).sort((a, b) => (a.system_cost || 0) - (b.system_cost || 0));
 
                     return (
                        <div key={track.id} className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 shadow-inner mb-6 relative">
@@ -953,7 +953,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                       setAlternateTracks(alternateTracks.map(t => t.id === track.id ? { ...t, tiers: newTiers } : t));
                                   }}>
                                      <option value="">-- Remove/Empty --</option>
-                                     {trackFilteredCatalog.map(sys => <option key={sys.id} value={sys.id}>{sys.brand} {sys.series} {sys.seer} SEER</option>)}
+                                     {trackFilteredCatalog.map(sys => <option key={sys.id} value={sys.id}>{sys.brand} {sys.series} {sys.seer} SEER - [Base: ${parseFloat(sys.system_cost || 0).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0})}]</option>)}
                                   </select>
                                </div>
                             ))}
