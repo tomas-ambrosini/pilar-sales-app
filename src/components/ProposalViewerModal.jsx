@@ -72,9 +72,10 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                       {activeData.equipmentList.map((eq, i) => (
                           <p key={i} className="text-[15px] font-black text-slate-800 leading-tight">{eq}</p>
                       ))}
-                      <div className="flex items-center gap-2 mt-1">
-                          <span className="font-mono text-xs bg-slate-100 text-slate-600 font-black px-3 py-1 rounded-full border border-slate-200">{activeData.tons} TON TOTAL</span>
-                      </div>
+                       <div className="flex flex-wrap items-center gap-2 mt-1">
+                           <span className="font-mono text-xs bg-slate-100 text-slate-600 font-black px-3 py-1.5 rounded-full border border-slate-200 tracking-tight">{activeData.tons} TON TOTAL</span>
+                           {activeData?.seer ? <span className="font-mono text-xs bg-slate-100 text-slate-600 font-black px-3 py-1.5 rounded-full border border-slate-200 tracking-tight">{activeData.seer} SEER</span> : null}
+                       </div>
                    </div>
                 ) : (
                    <div className="flex flex-col gap-0.5">

@@ -444,6 +444,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
            brand: sysBrands.length > 1 ? "Multiple" : sysBrands[0]?.split(': ')[1]?.split(' ')[0],
            series: sysBrands.length > 1 ? "Systems" : sysBrands[0]?.split(': ')[1]?.split(' ')[1],
            tons: totalTons,
+           seer: systems.find(s => s.selectedTiers[tierKey])?.selectedTiers[tierKey]?.seer,
            baselinePrice: totalBaseline, 
            saleDiscount: discountAmount, 
            salesPrice: finalPrice,
