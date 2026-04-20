@@ -1201,7 +1201,10 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                                     <div className="flex flex-col items-center text-center gap-1">
                                                         <span className={`font-black text-xl text-slate-800`}>{equip.brand}</span>
                                                         <span className="text-sm font-medium text-slate-500 mb-2">{equip.series}</span>
-                                                        <span className="font-mono text-xs bg-slate-100 text-slate-600 font-bold px-3 py-1 rounded-full">{equip.tons} TON SYSTEM</span>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="font-mono text-xs bg-slate-100 text-slate-600 font-black px-3 py-1 rounded-full border border-slate-200">{equip.tons} TON SYSTEM</span>
+                                                            {equip.seer && <span className="font-mono text-xs bg-emerald-50 text-emerald-700 font-black px-3 py-1 rounded-full border border-emerald-100">{equip.seer} SEER</span>}
+                                                        </div>
                                                     </div>
                                                  </div>
                          
