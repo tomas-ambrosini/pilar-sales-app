@@ -780,6 +780,10 @@ ${equipmentNotes}
         } : undefined}
         proposal={viewingProposal}
         onAccept={handleInitiateAcceptance}
+        onDeclineFull={(p) => {
+           setViewingProposal(null);
+           setTimeout(() => setMarkingLost(p), 50);
+        }}
         onViewContract={(proposalData) => {
            setViewingProposal(null);
            // Build a dummy state to view past contracts natively
