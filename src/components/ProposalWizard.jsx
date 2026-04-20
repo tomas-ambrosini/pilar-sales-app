@@ -902,16 +902,25 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                    </select>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                  {[ {k: 'good', l: 'Baseline (Good)'}, {k: 'better', l: 'Core (Better)'}, {k: 'best', l: 'Premium (Best)'} ].map(tier => (
+                  {[ {k: 'good', l: 'Baseline (Good)'}, {k: 'better', l: 'Core (Better)'}, {k: 'best', l: 'Premium (Best)'} ].map(tier => {
+                     const marginKey = `${tier.k}_margin`;
+                     const targetMargin = margins ? margins[marginKey] : (tier.k === 'best' ? 0.45 : tier.k === 'better' ? 0.40 : 0.35);
+                     return (
                      <div key={tier.k} className="bg-white p-5 border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                         <div className={`absolute top-0 left-0 right-0 h-1.5 ${tier.k === 'best' ? 'bg-primary-500' : tier.k === 'better' ? 'bg-emerald-500' : 'bg-slate-400'}`}></div>
                         <label className="block font-black uppercase text-slate-700 text-sm tracking-wider mb-4 mt-1">{tier.l}</label>
                         <select className="input-field w-full text-sm font-semibold text-slate-600 bg-slate-50 focus:bg-white transition-colors" value={selectedTiers?.[tier.k]?.id || ''} onChange={e => setSelectedTiers({...selectedTiers, [tier.k]: primaryFilteredCatalog.find(c => c.id.toString() === e.target.value)})}>
                            <option value="">-- Remove/Empty --</option>
-                           {primaryFilteredCatalog.map(sys => <option key={sys.id} value={sys.id}>{sys.brand} {sys.series} {sys.seer} SEER - [Base: ${parseFloat(sys.system_cost || 0).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0})}]</option>)}
+                           {primaryFilteredCatalog.map(sys => {
+                              const rawCost = parseFloat(sys.system_cost || 0);
+                              const taxRate = margins?.sales_tax || 0.07;
+                              const reserve = margins?.service_reserve || 0.05;
+                              const displayPrice = rawCost * (1 + taxRate) * (1 + reserve) * (1 + targetMargin);
+                              return <option key={sys.id} value={sys.id}>{sys.brand} {sys.series} {sys.seer} SEER - [Retail: ${displayPrice.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0})}]</option>;
+                           })}
                         </select>
                      </div>
-                  ))}
+                  )})}
                 </div>
 
                  <div className="flex justify-end mb-6">
@@ -945,7 +954,10 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                               </select>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {[ {k: 'good', l: `Baseline (Good) - C${trackIndex + 1}`}, {k: 'better', l: `Core (Better) - C${trackIndex + 1}`}, {k: 'best', l: `Premium (Best) - C${trackIndex + 1}`} ].map(tier => (
+                            {[ {k: 'good', l: `Baseline (Good) - C${trackIndex + 1}`}, {k: 'better', l: `Core (Better) - C${trackIndex + 1}`}, {k: 'best', l: `Premium (Best) - C${trackIndex + 1}`} ].map(tier => {
+                               const marginKey = `${tier.k}_margin`;
+                               const targetMargin = margins ? margins[marginKey] : (tier.k === 'best' ? 0.45 : tier.k === 'better' ? 0.40 : 0.35);
+                               return (
                                <div key={tier.k} className="bg-white p-5 border border-indigo-200 rounded-xl shadow-sm relative overflow-hidden">
                                   <label className="block font-black uppercase text-slate-700 text-sm tracking-wider mb-4 mt-1">{tier.l}</label>
                                   <select className="input-field w-full text-sm font-semibold text-slate-600 bg-slate-50 transition-colors" value={track.tiers?.[tier.k]?.id || ''} onChange={e => {
@@ -953,10 +965,16 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                       setAlternateTracks(alternateTracks.map(t => t.id === track.id ? { ...t, tiers: newTiers } : t));
                                   }}>
                                      <option value="">-- Remove/Empty --</option>
-                                     {trackFilteredCatalog.map(sys => <option key={sys.id} value={sys.id}>{sys.brand} {sys.series} {sys.seer} SEER - [Base: ${parseFloat(sys.system_cost || 0).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0})}]</option>)}
+                                     {trackFilteredCatalog.map(sys => {
+                                        const rawCost = parseFloat(sys.system_cost || 0);
+                                        const taxRate = margins?.sales_tax || 0.07;
+                                        const reserve = margins?.service_reserve || 0.05;
+                                        const displayPrice = rawCost * (1 + taxRate) * (1 + reserve) * (1 + targetMargin);
+                                        return <option key={sys.id} value={sys.id}>{sys.brand} {sys.series} {sys.seer} SEER - [Retail: ${displayPrice.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0})}]</option>;
+                                     })}
                                   </select>
                                </div>
-                            ))}
+                            )})}
                           </div>
                        </div>
                     );
