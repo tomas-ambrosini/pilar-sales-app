@@ -343,9 +343,32 @@ export default function CatalogEditor() {
                               <span className="font-black text-slate-700 text-base">{item.system_cost?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                            </td>
                            <td className="p-4 text-right">
-                              <span className="font-black text-white bg-emerald-600 shadow-sm px-3.5 py-1.5 rounded-full inline-block text-[13px] tracking-wide border border-emerald-500">
-                                 ${item.retail_price?.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                              </span>
+                              {(() => {
+                                 const explicitPrice = parseFloat(item.retail_price || 0);
+                                 if (explicitPrice > 0) {
+                                    return (
+                                       <span className="font-black text-white bg-emerald-600 shadow-sm px-3.5 py-1.5 rounded-full inline-block text-[13px] tracking-wide border border-emerald-500" title="Explicitly Override Price">
+                                          ${explicitPrice.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                       </span>
+                                    );
+                                 }
+                                 
+                                 const rawCost = parseFloat(item.system_cost || 0);
+                                 const taxRate = margins?.sales_tax || 0.07; // usually tax doesn't apply to the display of base cost without addons but lets mirror wizard
+                                 const reserve = margins?.service_reserve || 0.05;
+                                 const margin = margins?.good_margin || 0.35;
+                                 
+                                 // Additive logic matching the wizard fix
+                                 const equipWithTax = rawCost * (1 + taxRate);
+                                 const equipWithReserve = equipWithTax * (1 + reserve);
+                                 const projectedRetail = equipWithReserve * (1 + margin);
+
+                                 return (
+                                    <span className="font-black text-white bg-emerald-600 shadow-sm px-3.5 py-1.5 rounded-full inline-block text-[13px] tracking-wide border border-emerald-500">
+                                       ${projectedRetail.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                    </span>
+                                 );
+                              })()}
                            </td>
                            <td className="p-4 text-center relative" onClick={(e) => e.stopPropagation()}>
                               <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
