@@ -134,7 +134,7 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
     );
   };
 
-export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal, onAccept, onViewContract }) {
+export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal, onAccept, onViewContract, onDeclineFull }) {
   const [localSelections, setLocalSelections] = React.useState({});
 
   React.useEffect(() => {
@@ -241,28 +241,49 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                    ))}
                 </div>
              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end max-w-5xl mx-auto pt-4 pb-8">
-                   <TierCard tierName="Baseline (Good)" tierKey="Good" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.good || proposal_data.tiers?.Good }]} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
-                   <TierCard tierName="Premium (Best)" tierKey="Best" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.best || proposal_data.tiers?.Best }]} isBest={true} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
-                   <TierCard tierName="Core (Better)" tierKey="Better" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.better || proposal_data.tiers?.Better }]} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                <div className="max-w-5xl mx-auto pt-4 pb-8">
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end">
+                      <TierCard tierName="Baseline (Good)" tierKey="Good" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.good || proposal_data.tiers?.Good }]} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                      <TierCard tierName="Premium (Best)" tierKey="Best" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.best || proposal_data.tiers?.Best }]} isBest={true} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                      <TierCard tierName="Core (Better)" tierKey="Better" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.better || proposal_data.tiers?.Better }]} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                   </div>
+                   {!proposal?.isReadOnly && proposal?.status !== 'Approved' && (
+                      <div className="mt-12 flex justify-center">
+                         <button 
+                            onClick={() => onDeclineFull && onDeclineFull(proposal)} 
+                            className="px-8 py-3 rounded-full font-bold text-sm transition-all border shadow-sm bg-white text-rose-500 border-rose-200 hover:bg-rose-50 hover:border-rose-300 flex items-center gap-2"
+                         >
+                           <ThumbsDown size={16} /> Decline Proposal (Lost)
+                         </button>
+                      </div>
+                   )}
                 </div>
              )}
           </div>
           
           {/* Footer Actions */}
           {proposal_data?.systemTiers && proposal_data.systemTiers.length > 0 && proposal.status !== 'Approved' ? (() => {
-             const isCartComplete = Object.keys(localSelections).length === proposal_data.systemTiers.length &&
-                                    Object.values(localSelections).some(v => v !== 'None');
+             const isCartComplete = Object.keys(localSelections).length === proposal_data.systemTiers.length;
+             const isAllDeclined = isCartComplete && Object.values(localSelections).every(v => v === 'None');
              
              const handleFinalize = () => {
+                 if (isAllDeclined) {
+                     onDeclineFull && onDeclineFull(proposal);
+                     return;
+                 }
+
                  let totalSalesPrice = 0;
                  let totalTons = 0;
                  const combinedFeatures = [];
                  const systemsList = [];
+                 const extractedSystems = [];
                  
                  proposal_data.systemTiers.forEach(sys => {
                      const selection = localSelections[sys.systemId];
-                     if (!selection || selection === 'None') return;
+                     if (!selection || selection === 'None') {
+                         extractedSystems.push(sys);
+                         return;
+                     }
                      
                      const [brandOpt, tierStr] = selection.split('_');
                      let td = null;
@@ -306,7 +327,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                      systemsList: systemsList
                  };
                  
-                 onAccept && onAccept('Custom Network', combinedData, proposal);
+                 onAccept && onAccept('Custom Network', combinedData, proposal, extractedSystems);
              };
 
              if (proposal?.isReadOnly) {
@@ -338,9 +359,13 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                          <button 
                             disabled={!isCartComplete} 
                             onClick={handleFinalize}
-                            className={`py-3 px-8 rounded-lg font-bold text-sm transition-all focus:outline-none min-w-[200px] flex justify-center items-center ${!isCartComplete ? 'bg-slate-200/60 text-slate-400 cursor-not-allowed border border-slate-200' : 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-600/20 translate-y-[-1px]'}`}
+                            className={`py-3 px-8 rounded-lg font-bold text-sm transition-all focus:outline-none min-w-[200px] flex justify-center items-center ${
+                                !isCartComplete ? 'bg-slate-200/60 text-slate-400 cursor-not-allowed border border-slate-200' : 
+                                isAllDeclined ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-lg shadow-rose-500/20 translate-y-[-1px]' :
+                                'bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-600/20 translate-y-[-1px]'
+                            }`}
                          >
-                            {isCartComplete ? 'Confirm Package' : 'Selection Pending'}
+                            {!isCartComplete ? 'Selection Pending' : isAllDeclined ? 'Decline Entire Package' : 'Confirm Package'}
                          </button>
                      </div>
                  </div>

@@ -178,15 +178,15 @@ export default function Proposals() {
       }
   };
 
-  const handleInitiateAcceptance = (tierName, tierData, proposal) => {
+  const handleInitiateAcceptance = (tierName, tierData, proposal, extractedSystems = []) => {
      // Instead of instantly fulfilling the database, we launch the Signature Capture
      setViewingProposal(null);
-     setSigningContract({ proposal, tierName, tierData, date: new Date().toLocaleDateString() });
+     setSigningContract({ proposal, tierName, tierData, date: new Date().toLocaleDateString(), extractedSystems });
   };
 
   const executeSignedContract = async (signatureData) => {
      if (!signingContract) return;
-     const { tierName, tierData, proposal } = signingContract;
+     const { tierName, tierData, proposal, extractedSystems } = signingContract;
 
      // 1. Array check to handle multi-system configuration payloads vs legacy single-tier selections
      const isMulti = Array.isArray(tierData);
@@ -262,12 +262,38 @@ ${equipmentNotes}
          }
      }
 
-     // 5. Update Proposal Status, Lock Amount, and Save Signature in JSON Payload!
+     // 5. Build Extracted "Lead" Draft if Split Occurred
+     if (extractedSystems && extractedSystems.length > 0) {
+         try {
+             await addProposal({
+                 customer: proposal.customer,
+                 status: 'Lead',
+                 amount: 0,
+                 proposal_data: {
+                     ...(proposal.proposal_data || {}),
+                     associated_opportunity_id: proposal.proposal_data?.associated_opportunity_id || null,
+                     systemTiers: extractedSystems
+                 }
+             });
+             toast.success(`Extracted ${extractedSystems.length} systems to a new pipeline Lead!`);
+         } catch (e) {
+             console.error("Failed to extract systems to Lead bucket", e);
+         }
+     }
+
+     // 6. Scrub Extracted Systems from Original and Update Status
+     let finalizedSystemTiers = proposal.proposal_data?.systemTiers || [];
+     if (extractedSystems && extractedSystems.length > 0) {
+         const extractedIds = extractedSystems.map(es => es.systemId);
+         finalizedSystemTiers = finalizedSystemTiers.filter(sys => !extractedIds.includes(sys.systemId));
+     }
+
      const finalDbObj = { 
          status: 'Approved',
          amount: tierData.salesPrice,
          proposal_data: {
              ...(proposal.proposal_data || {}),
+             systemTiers: finalizedSystemTiers,
              signature_data: signatureData,
              accepted_tier_data: tierData,
              accepted_tier_name: tierName
@@ -311,7 +337,7 @@ ${equipmentNotes}
           
           <div className="p-4 border-b border-slate-100 flex justify-between gap-2 overflow-x-auto bg-slate-50 custom-scrollbar">
              <div className="flex gap-2">
-                {['All', 'Draft', 'Sent', 'Approved', 'Lost'].map(mode => (
+                {['All', 'Lead', 'Draft', 'Sent', 'Approved', 'Lost'].map(mode => (
                     <button 
                        key={mode} 
                        onClick={() => setFilterMode(mode)}
@@ -360,10 +386,11 @@ ${equipmentNotes}
                     
                     {layoutMode === 'kanban' && !loading ? (
                         <div className="p-6 flex gap-6 overflow-x-auto min-h-[500px] bg-slate-50/30">
-                           {(filterMode === 'All' ? ['Draft', 'Sent', 'Approved', 'Lost'] : [filterMode]).map(colName => {
+                           {(filterMode === 'All' ? ['Lead', 'Draft', 'Sent', 'Approved', 'Lost'] : [filterMode]).map(colName => {
                               const colProposals = filteredProposals.filter(p => p.status === colName);
                               
                               let headerColor = 'border-slate-200 bg-slate-50 text-slate-700';
+                              if (colName === 'Lead') headerColor = 'border-purple-200 bg-purple-50 text-purple-700';
                               if (colName === 'Sent') headerColor = 'border-blue-200 bg-blue-50 text-blue-700';
                               if (colName === 'Approved') headerColor = 'border-emerald-200 bg-emerald-50 text-emerald-700';
                               if (colName === 'Lost') headerColor = 'border-red-200 bg-red-50 text-red-700';
@@ -420,6 +447,7 @@ ${equipmentNotes}
                                                         proposal.status === 'Approved' ? 'bg-emerald-500 text-white hover:bg-emerald-600' :
                                                         proposal.status === 'Sent' ? 'bg-blue-600 text-white hover:bg-blue-700' :
                                                         proposal.status === 'Lost' ? 'bg-red-50 text-red-600 hover:bg-red-100 shadow-none border border-red-200' :
+                                                        proposal.status === 'Lead' ? 'bg-purple-600 text-white hover:bg-purple-700' :
                                                         'bg-slate-600 text-white hover:bg-slate-700'
                                                     }`}
                                                     onClick={(e) => {
