@@ -338,21 +338,25 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                              return (
                                  <>
                                      {allMaterials.length > 0 ? (
-                                         allMaterials.map((f, i) => (
-                                             <div key={i} className="flex border-b border-slate-200 group hover:bg-slate-50/50 transition-colors">
-                                                  <div className="flex-1 px-3 py-2 border-r border-slate-300 flex items-center gap-2 text-slate-700 font-medium">
+                                         allMaterials.map((f, i) => {
+                                             const isLabor = f.toLowerCase().includes('labor');
+                                             return (
+                                             <div key={i} className="flex border-b border-slate-200 group transition-colors hover:bg-slate-50/50">
+                                                  <div className={`flex-1 px-3 py-2 flex items-center gap-2 text-slate-700 font-medium ${isLabor ? 'border-r border-slate-300' : ''}`}>
                                                       <div className="w-1.5 h-1.5 bg-slate-400 rounded-full shrink-0"></div>
                                                       <span contentEditable suppressContentEditableWarning className="outline-none focus:bg-white focus:ring-1 focus:ring-primary-300 rounded px-1 w-full">{f}</span>
                                                   </div>
-                                                  <div className="w-32 px-3 py-2 flex items-center justify-start gap-1 font-bold text-slate-600">
-                                                      $ <span 
-                                                           contentEditable 
-                                                           suppressContentEditableWarning 
-                                                           className="flex-1 outline-none focus:bg-white focus:ring-1 focus:ring-primary-300 border-b border-dashed border-slate-300 text-right pr-2 min-w-[50px] min-h-[1.2rem] rounded-t-sm"
-                                                        ></span>
-                                                  </div>
+                                                  {isLabor && (
+                                                      <div className="w-32 px-3 py-2 flex items-center justify-start gap-1 font-bold text-slate-600 shrink-0">
+                                                          $ <span 
+                                                               contentEditable 
+                                                               suppressContentEditableWarning 
+                                                               className="flex-1 outline-none focus:bg-white focus:ring-1 focus:ring-primary-300 border-b border-dashed border-slate-300 text-right pr-2 min-w-[50px] min-h-[1.2rem] rounded-t-sm"
+                                                            ></span>
+                                                      </div>
+                                                  )}
                                              </div>
-                                         ))
+                                         )})
                                      ) : (
                                          <div className="p-4 text-center text-slate-500 italic text-sm">
                                              Standard Installation Package (No Additional Materials Specified)

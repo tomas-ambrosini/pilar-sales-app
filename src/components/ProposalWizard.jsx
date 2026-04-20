@@ -1068,9 +1068,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                               <span className="font-mono text-[10px] font-bold text-slate-400">SKU {labor.sku || 'N/A'}</span>
                            </div>
                         </div>
-                        
                         <div className="flex flex-col items-end shrink-0 hidden sm:flex">
-                           <span className="font-mono font-black text-slate-700 text-[13px]">${labor.cost}</span>
+                           {labor.sku === '5001' && <span className="font-mono font-black text-slate-700 text-[13px]">${labor.cost}</span>}
                         </div>
                       </label>
                   )})}
