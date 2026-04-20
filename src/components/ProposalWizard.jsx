@@ -357,7 +357,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        const addonsWithTax = taxableMaterials * (1 + taxRate);
        const addonsHardCost = addonsWithTax + nontaxableLabor;
        const addonsWithReserve = addonsHardCost * (1 + (margins.service_reserve || 0.05));
-       const addonsRetail = addonsWithReserve > 0 ? (addonsWithReserve / (1 - targetMargin)) : 0;
+       const addonsRetail = addonsWithReserve > 0 ? (addonsWithReserve * (1 + targetMargin)) : 0;
        return Math.round(explicitRetailEquipPrice + addonsRetail);
     }
 
@@ -365,7 +365,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     const equipWithTax = (rawEquipCost + taxableMaterials) * (1 + taxRate); 
     const totalHardCost = equipWithTax + nontaxableLabor;
     const costWithReserve = totalHardCost * (1 + (margins.service_reserve || 0.05)); 
-    return Math.round(costWithReserve / (1 - targetMargin));
+    return Math.round(costWithReserve * (1 + targetMargin));
   };
 
   const getSystemHardCostOnly = (sys, rawEquipCost) => {
