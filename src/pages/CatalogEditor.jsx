@@ -13,6 +13,8 @@ export default function CatalogEditor() {
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
   const [filterValue, setFilterValue] = useState('All');
+  const [filterTons, setFilterTons] = useState('All');
+  const [filterSeer, setFilterSeer] = useState('All');
   const [laborSort, setLaborSort] = useState('Alphabetical');
   const [equipSort, setEquipSort] = useState('Default');
 
@@ -176,6 +178,8 @@ export default function CatalogEditor() {
 
   // --- Derived State & Filters ---
   const uniqueBrands = [...new Set(equipment.map(e => e.brand).filter(Boolean))];
+  const uniqueTons = [...new Set(equipment.map(e => e.tons).filter(Boolean))].sort((a,b) => parseFloat(a) - parseFloat(b));
+  const uniqueSeer = [...new Set(equipment.map(e => e.seer).filter(Boolean))].sort((a,b) => parseFloat(a) - parseFloat(b));
   const uniqueLaborCategories = [...new Set(laborRates.map(l => l.category).filter(Boolean))];
 
   const filteredEquipment = equipment.filter(item => {
@@ -186,7 +190,9 @@ export default function CatalogEditor() {
       item.condenser_model?.toLowerCase().includes(searchLower) ||
       item.ahu_model?.toLowerCase().includes(searchLower);
     const matchesFilter = filterValue === 'All' || item.brand === filterValue;
-    return matchesSearch && matchesFilter;
+    const matchesTons = filterTons === 'All' || item.tons === filterTons;
+    const matchesSeer = filterSeer === 'All' || item.seer === filterSeer;
+    return matchesSearch && matchesFilter && matchesTons && matchesSeer;
   }).sort((a, b) => {
      if (equipSort === 'PriceAsc') return (a.system_cost || 0) - (b.system_cost || 0);
      if (equipSort === 'PriceDesc') return (b.system_cost || 0) - (a.system_cost || 0);
@@ -269,6 +275,33 @@ export default function CatalogEditor() {
                        }
                     </select>
                  </div>
+
+                  {activeTab === 'equipment' && (
+                     <>
+                        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 shadow-sm select-wrapper relative hidden lg:flex">
+                           <Filter size={14} className="text-slate-400" />
+                           <select 
+                              className="border-none bg-transparent focus:ring-0 py-1.5 text-xs font-bold text-slate-700 outline-none cursor-pointer"
+                              value={filterTons}
+                              onChange={(e) => setFilterTons(e.target.value)}
+                           >
+                              <option value="All">All Tons</option>
+                              {uniqueTons.map(t => <option key={t} value={t}>{t} TON</option>)}
+                           </select>
+                        </div>
+                        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 shadow-sm select-wrapper relative hidden lg:flex">
+                           <Filter size={14} className="text-slate-400" />
+                           <select 
+                              className="border-none bg-transparent focus:ring-0 py-1.5 text-xs font-bold text-slate-700 outline-none cursor-pointer"
+                              value={filterSeer}
+                              onChange={(e) => setFilterSeer(e.target.value)}
+                           >
+                              <option value="All">All SEER</option>
+                              {uniqueSeer.map(s => <option key={s} value={s}>{s} SEER</option>)}
+                           </select>
+                        </div>
+                     </>
+                  )}
 
                   <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 shadow-sm select-wrapper relative">
                      <ListOrdered size={14} className="text-slate-400" />
