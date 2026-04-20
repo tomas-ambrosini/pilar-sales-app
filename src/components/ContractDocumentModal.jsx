@@ -167,10 +167,9 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                     {/* Header Section */}
                     <div className="flex justify-between items-start mb-6">
                         <div>
-                            <h1 className="text-3xl font-bold mb-2 text-slate-800" title={proposal?.proposal_number ? `Legacy ID: ${proposal?.id}` : ''}>Quote # <span className="font-normal text-slate-600 tracking-tight">{formatQuoteId(proposal).replace('Quote ', '').replace('#', '')}</span></h1>
-                            <div className="flex gap-6 mt-4 font-bold text-slate-700">
-                                <span>Quote #: <span className="font-normal px-2 text-slate-600 truncate max-w-[250px] inline-block">{formatQuoteId(proposal).replace('Quote ', '').replace('#', '')}</span></span>
-                                <span>Date: <span className="font-normal px-2 text-slate-600">{date}</span></span>
+                            <h1 className="text-3xl font-black mb-1 text-slate-800 tracking-tight">Quote # <span className="font-normal text-slate-500">{formatQuoteId(proposal).replace('Quote ', '').replace('#', '')}</span></h1>
+                            <div className="flex gap-6 mt-1 mb-4 font-bold text-slate-700">
+                                <span>Contract Date: <span className="font-normal px-2 text-slate-600">{date}</span></span>
                             </div>
                         </div>
                         <div className="text-right flex items-center justify-end">
@@ -325,9 +324,12 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                     </div>
                     <div className="flex flex-col bg-[#f8fafc]">
                          {(() => {
-                             const allMaterials = resolvedSystemsList && resolvedSystemsList.length > 0
-                                 ? resolvedSystemsList.flatMap(sys => (sys.tierData?.features || []).map(f => `[${sys.systemName}]: ${f}`))
-                                 : [...(tierData?.features || []), ...(templateConfig.materials || [])].filter(Boolean);
+                             // Extract only custom addons and default materials, removing bulky system features.
+                             const extractedAddons = resolvedSystemsList && resolvedSystemsList.length > 0
+                                 ? resolvedSystemsList.flatMap(sys => (sys.tierData?.features || []).filter(f => f.includes('Includes:')).map(f => `[${sys.systemName}] ${f.replace('Includes:', '').trim()}`))
+                                 : (tierData?.features || []).filter(f => f.includes('Includes:')).map(f => f.replace('Includes:', '').trim());
+                                 
+                             const allMaterials = [...(templateConfig.materials || []), ...extractedAddons].filter(Boolean);
                              
                              const totalPrice = resolvedSystemsList && resolvedSystemsList.length > 0 
                                  ? resolvedSystemsList.reduce((sum, sys) => sum + (sys.tierData?.salesPrice || 0), 0)
@@ -335,17 +337,27 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
 
                              return (
                                  <>
-                                     {allMaterials.map((f, i) => (
-                                         <div key={i} className="flex border-b border-slate-200">
-                                              <div className="flex-1 px-3 py-2 border-r border-slate-300 flex items-center gap-2 text-slate-600">
-                                                  <div className="w-1 h-1 bg-slate-500 rounded-full shrink-0"></div>
-                                                  {f}
-                                              </div>
-                                              <div className="w-32 px-3 py-2 flex items-center justify-center font-bold text-slate-400 text-[10px] uppercase tracking-wider">
-                                                  Included
-                                              </div>
+                                     {allMaterials.length > 0 ? (
+                                         allMaterials.map((f, i) => (
+                                             <div key={i} className="flex border-b border-slate-200 group hover:bg-slate-50/50 transition-colors">
+                                                  <div className="flex-1 px-3 py-2 border-r border-slate-300 flex items-center gap-2 text-slate-700 font-medium">
+                                                      <div className="w-1.5 h-1.5 bg-slate-400 rounded-full shrink-0"></div>
+                                                      <span contentEditable suppressContentEditableWarning className="outline-none focus:bg-white focus:ring-1 focus:ring-primary-300 rounded px-1 w-full">{f}</span>
+                                                  </div>
+                                                  <div className="w-32 px-3 py-2 flex items-center justify-start gap-1 font-bold text-slate-600">
+                                                      $ <span 
+                                                           contentEditable 
+                                                           suppressContentEditableWarning 
+                                                           className="flex-1 outline-none focus:bg-white focus:ring-1 focus:ring-primary-300 border-b border-dashed border-slate-300 text-right pr-2 min-w-[50px] min-h-[1.2rem] rounded-t-sm"
+                                                        ></span>
+                                                  </div>
+                                             </div>
+                                         ))
+                                     ) : (
+                                         <div className="p-4 text-center text-slate-500 italic text-sm">
+                                             Standard Installation Package (No Additional Materials Specified)
                                          </div>
-                                     ))}
+                                     )}
                                      
                                      {/* Total Row */}
                                      <div className="flex font-bold text-slate-800 bg-[#e2e8f0]/40">
