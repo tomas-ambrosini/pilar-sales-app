@@ -436,9 +436,6 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        const commission = computeCommission(totalBaseline, approximateRetailForComm);
 
        let features = [];
-       if (tierKey === 'best') features = ["Variable Speed Ultra Quiet", "Highest Efficiency Ratings", "Premium 12-Year Parts Warranty", "Advanced Dehumidification Control"];
-       if (tierKey === 'better') features = ["Two-Stage Enhanced Comfort", "High Efficiency SEER2", "10-Year Parts Warranty", "Consistent Temperature Control"];
-       if (tierKey === 'good') features = ["Single-Stage Operation", "Base Efficiency Standard", "5-Year Parts Warranty", "Cost-Effective Reliable Cooling"];
 
        features = [...features, ...Array.from(aggregatedAddons)];
 
@@ -476,9 +473,6 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
            const finalPrice = baselinePrice - discountAmount;
            
            let features = [];
-           if (tierKey === 'best') features = ["Variable Speed Ultra Quiet", "Highest Efficiency Ratings", "Premium 12-Year Parts Warranty", "Advanced Dehumidification Control"];
-           if (tierKey === 'better') features = ["Two-Stage Enhanced Comfort", "High Efficiency SEER2", "10-Year Parts Warranty", "Consistent Temperature Control"];
-           if (tierKey === 'good') features = ["Single-Stage Operation", "Base Efficiency Standard", "5-Year Parts Warranty", "Cost-Effective Reliable Cooling"];
            
            const activeAddonsList = Object.entries(sys.addons || {}).filter(([_, v]) => v).map(([k]) => {
               const name = laborRates.find(l => l.id.toString() === k.toString())?.item_name;
@@ -512,9 +506,6 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                const finalPrice = baselinePrice - discountAmount;
                
                let features = [];
-               if (tierKey === 'best') features = ["Variable Speed Ultra Quiet", "Highest Efficiency Ratings", "Premium 12-Year Parts Warranty", "Advanced Dehumidification Control"];
-               if (tierKey === 'better') features = ["Two-Stage Enhanced Comfort", "High Efficiency SEER2", "10-Year Parts Warranty", "Consistent Temperature Control"];
-               if (tierKey === 'good') features = ["Single-Stage Operation", "Base Efficiency Standard", "5-Year Parts Warranty", "Cost-Effective Reliable Cooling"];
                
                const activeAddonsList = Object.entries(sys.addons || {}).filter(([_, v]) => v).map(([k]) => {
                   const name = laborRates.find(l => l.id.toString() === k.toString())?.item_name;
