@@ -351,44 +351,52 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
      setAddons({});
   };
 
-  const calculateSystemBaselineRetail = (sys, equipTierData, tierType = 'Good') => {
-    const rawEquipCost = equipTierData?.system_cost || 0;
-    const explicitRetailEquipPrice = equipTierData?.retail_price || 0;
+  const calculateSystemBaselineRetail = (sys, rawEquipCost, tierType = 'Good') => {
+    const rawVal = typeof rawEquipCost === 'object' ? (rawEquipCost?.system_cost || 0) : rawEquipCost;
+    const parsedEquipCost = parseFloat(rawVal) || 0;
     
-    if (!rawEquipCost && !explicitRetailEquipPrice) return 0;
+    // Protect against uninitialized addons array, although it should be {}
+    const safeAddons = sys.addons || {};
+    const activeAddons = laborRates.filter(l => safeAddons[l.id]);
     
-    const activeAddons = laborRates.filter(l => sys.addons[l.id]);
-    const taxableMaterials = activeAddons.filter(l => !['Labor', 'Install', 'Subcontract', 'Permit'].includes(l.category)).reduce((s, i) => s + i.cost, 0);
-    const nontaxableLabor = activeAddons.filter(l => ['Labor', 'Install', 'Subcontract', 'Permit'].includes(l.category)).reduce((s, i) => s + i.cost, 0);
+    const taxableMaterials = activeAddons
+       .filter(l => !['Labor', 'Install', 'Subcontract', 'Permit'].some(c => l.category?.toLowerCase()?.includes(c.toLowerCase())))
+       .reduce((s, i) => s + (parseFloat(i.cost) || 0), 0);
+       
+    const nontaxableLabor = activeAddons
+       .filter(l => ['Labor', 'Install', 'Subcontract', 'Permit'].some(c => l.category?.toLowerCase()?.includes(c.toLowerCase())))
+       .reduce((s, i) => s + (parseFloat(i.cost) || 0), 0);
     
-    const taxRate = margins.sales_tax || 0.07;
-    let targetMargin = margins.good_margin || 0.35;
-    if (tierType === 'Better') targetMargin = margins.better_margin || 0.40;
-    if (tierType === 'Best') targetMargin = margins.best_margin || 0.45;
+    const taxRate = parseFloat(margins?.sales_tax) || 0.07;
+    let targetMargin = parseFloat(margins?.good_margin) || 0.35;
+    if (tierType.toLowerCase() === 'better') targetMargin = parseFloat(margins?.better_margin) || 0.40;
+    if (tierType.toLowerCase() === 'best') targetMargin = parseFloat(margins?.best_margin) || 0.45;
 
-    if (explicitRetailEquipPrice > 0) {
-       // Honor explicit retail price, calculate retail strictly on addons.
-       const addonsWithTax = taxableMaterials * (1 + taxRate);
-       const addonsHardCost = addonsWithTax + nontaxableLabor;
-       const addonsWithReserve = addonsHardCost * (1 + (margins.service_reserve || 0.05));
-       const addonsRetail = addonsWithReserve > 0 ? (addonsWithReserve * (1 + targetMargin)) : 0;
-       return Math.round(explicitRetailEquipPrice + addonsRetail);
-    }
-
-    // Standard dynamic margin calculation for full system bundle
-    const equipWithTax = (rawEquipCost + taxableMaterials) * (1 + taxRate); 
+    // Standard dynamic pure margin calculation
+    const equipWithTax = (parsedEquipCost + taxableMaterials) * (1 + taxRate); 
     const totalHardCost = equipWithTax + nontaxableLabor;
-    const costWithReserve = totalHardCost * (1 + (margins.service_reserve || 0.05)); 
-    return Math.round(costWithReserve * (1 + targetMargin));
+    const costWithReserve = totalHardCost * (1 + (parseFloat(margins?.service_reserve) || 0.05)); 
+    
+    return Math.max(Math.round(costWithReserve * (1 + targetMargin)), 0);
   };
 
   const getSystemHardCostOnly = (sys, rawEquipCost) => {
-    if (!rawEquipCost) return 0;
-    const activeAddons = laborRates.filter(l => sys.addons[l.id]);
-    const taxableMaterials = activeAddons.filter(l => !['Labor', 'Install', 'Subcontract', 'Permit'].includes(l.category)).reduce((s, i) => s + i.cost, 0);
-    const nontaxableLabor = activeAddons.filter(l => ['Labor', 'Install', 'Subcontract', 'Permit'].includes(l.category)).reduce((s, i) => s + i.cost, 0);
-    const taxRate = margins.sales_tax || 0.07;
-    return ((rawEquipCost + taxableMaterials) * (1 + taxRate)) + nontaxableLabor;
+    const rawVal = typeof rawEquipCost === 'object' ? (rawEquipCost?.system_cost || 0) : rawEquipCost;
+    const parsedEquipCost = parseFloat(rawVal) || 0;
+    
+    const safeAddons = sys.addons || {};
+    const activeAddons = laborRates.filter(l => safeAddons[l.id]);
+    
+    const taxableMaterials = activeAddons
+       .filter(l => !['Labor', 'Install', 'Subcontract', 'Permit'].some(c => l.category?.toLowerCase()?.includes(c.toLowerCase())))
+       .reduce((s, i) => s + (parseFloat(i.cost) || 0), 0);
+       
+    const nontaxableLabor = activeAddons
+       .filter(l => ['Labor', 'Install', 'Subcontract', 'Permit'].some(c => l.category?.toLowerCase()?.includes(c.toLowerCase())))
+       .reduce((s, i) => s + (parseFloat(i.cost) || 0), 0);
+       
+    const taxRate = parseFloat(margins?.sales_tax) || 0.07;
+    return ((parsedEquipCost + taxableMaterials) * (1 + taxRate)) + nontaxableLabor;
   };
 
   const generateProposal = async () => {
