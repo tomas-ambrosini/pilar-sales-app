@@ -344,17 +344,8 @@ export default function CatalogEditor() {
                            </td>
                            <td className="p-4 text-right">
                               {(() => {
-                                 const explicitPrice = parseFloat(item.retail_price || 0);
-                                 if (explicitPrice > 0) {
-                                    return (
-                                       <span className="font-black text-white bg-emerald-600 shadow-sm px-3.5 py-1.5 rounded-full inline-block text-[13px] tracking-wide border border-emerald-500" title="Explicitly Override Price">
-                                          ${explicitPrice.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                                       </span>
-                                    );
-                                 }
-                                 
                                  const rawCost = parseFloat(item.system_cost || 0);
-                                 const taxRate = margins?.sales_tax || 0.07; // usually tax doesn't apply to the display of base cost without addons but lets mirror wizard
+                                 const taxRate = margins?.sales_tax || 0.07;
                                  const reserve = margins?.service_reserve || 0.05;
                                  const margin = margins?.good_margin || 0.35;
                                  
