@@ -70,19 +70,19 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                 {activeData?.equipmentList && activeData.equipmentList.length > 0 ? (
                    <div className="space-y-1.5">
                       {activeData.equipmentList.map((eq, i) => (
-                          <p key={i} className="text-[15px] font-black text-slate-800 leading-tight">{eq}</p>
+                          <p key={i} className="text-xl font-black text-slate-800 leading-tight mb-2">{eq}</p>
                       ))}
                        <div className="flex flex-wrap items-center gap-2 mt-1">
-                           <span className="font-mono text-xs bg-slate-100 text-slate-600 font-black px-3 py-1.5 rounded-full border border-slate-200 tracking-tight">{activeData.tons} TON TOTAL</span>
-                           {activeData?.seer ? <span className="font-mono text-xs bg-slate-100 text-slate-600 font-black px-3 py-1.5 rounded-full border border-slate-200 tracking-tight">{activeData.seer} SEER</span> : null}
+                           <span className="font-mono text-xs bg-slate-800 text-white font-black px-4 py-1.5 rounded-full shadow-md shadow-slate-800/20 tracking-wide">{activeData.tons} TON TOTAL</span>
+                           {activeData?.seer ? <span className="font-mono text-xs bg-slate-800 text-white font-black px-4 py-1.5 rounded-full shadow-md shadow-slate-800/20 tracking-wide">{activeData.seer} SEER</span> : null}
                        </div>
                    </div>
                 ) : (
                    <div className="flex flex-col gap-0.5">
-                      <span className="font-black text-[15px] text-slate-800 leading-tight mb-2">{activeData?.brand} {activeData?.series}</span>
+                      <span className="font-black text-xl text-slate-800 leading-tight mb-3">{activeData?.brand} {activeData?.series}</span>
                       <div className="flex flex-wrap items-center gap-2">
-                          {activeData?.tons ? <span className="font-mono text-xs bg-slate-100 text-slate-600 font-black px-3 py-1.5 rounded-full border border-slate-200 tracking-tight">{activeData.tons} TON SYSTEM</span> : null}
-                          {activeData?.seer ? <span className="font-mono text-xs bg-slate-100 text-slate-600 font-black px-3 py-1.5 rounded-full border border-slate-200 tracking-tight">{activeData.seer} SEER</span> : null}
+                          {activeData?.tons ? <span className="font-mono text-xs bg-slate-800 text-white font-black px-4 py-1.5 rounded-full shadow-md shadow-slate-800/20 tracking-wide">{activeData.tons} TON SYSTEM</span> : null}
+                          {activeData?.seer ? <span className="font-mono text-xs bg-slate-800 text-white font-black px-4 py-1.5 rounded-full shadow-md shadow-slate-800/20 tracking-wide">{activeData.seer} SEER</span> : null}
                       </div>
                    </div>
                 )}

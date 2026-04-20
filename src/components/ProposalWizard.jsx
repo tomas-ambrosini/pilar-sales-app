@@ -1196,8 +1196,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                                         <span className={`font-black text-xl text-slate-800`}>{equip.brand}</span>
                                                         <span className="text-sm font-medium text-slate-500 mb-2">{equip.series}</span>
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <span className="font-mono text-xs bg-slate-100 text-slate-600 font-black px-3 py-1 rounded-full border border-slate-200">{equip.tons} TON SYSTEM</span>
-                                                            {equip.seer && <span className="font-mono text-xs bg-slate-100 text-slate-600 font-black px-3 py-1 rounded-full border border-slate-200">{equip.seer} SEER</span>}
+                                                            <span className="font-mono text-xs bg-slate-800 text-white font-black px-4 py-1.5 rounded-full shadow-md shadow-slate-800/20 tracking-wide">{equip.tons} TON SYSTEM</span>
+                                                            {equip.seer && <span className="font-mono text-xs bg-slate-800 text-white font-black px-4 py-1.5 rounded-full shadow-md shadow-slate-800/20 tracking-wide">{equip.seer} SEER</span>}
                                                         </div>
                                                     </div>
                                                  </div>
