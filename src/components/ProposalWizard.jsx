@@ -265,7 +265,17 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
       ]);
 
       if (equip.data) setCatalog(equip.data);
-      if (labor.data) setLaborRates(labor.data);
+      if (labor.data) {
+          setLaborRates(labor.data);
+          const lockedIds = labor.data.filter(l => ['5001'].includes(l.sku)).map(l => l.id.toString());
+          if (lockedIds.length > 0) {
+             setSystems(prev => prev.map(sys => {
+                const newAddons = { ...sys.addons };
+                lockedIds.forEach(id => newAddons[id] = true);
+                return { ...sys, addons: newAddons };
+             }));
+          }
+      }
       if (marg.data) setMargins(marg.data);
       setDbReady(true);
     }
@@ -291,7 +301,11 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     }
   };
 
-  const toggleAddon = (laborId) => setAddons(prev => ({ ...prev, [laborId]: !prev[laborId] }));
+  const toggleAddon = (laborId) => {
+     const laborItem = laborRates.find(l => l.id.toString() === laborId.toString());
+     if (laborItem && ['5001'].includes(laborItem.sku)) return;
+     setAddons(prev => ({ ...prev, [laborId]: !prev[laborId] }));
+  };
 
   const updateSurveyAndTriggerSafetyNet = (field, value) => {
     setSurvey(prev => {
@@ -1037,14 +1051,16 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                        labor.category.toLowerCase().includes(addonSearchTerm.toLowerCase())
                     )
                     .sort((a, b) => (parseInt(a.sku) || Number.MAX_SAFE_INTEGER) - (parseInt(b.sku) || Number.MAX_SAFE_INTEGER))
-                    .map(labor => (
-                      <label key={labor.id} className={`flex items-start gap-4 p-3.5 border rounded-xl cursor-pointer transition-all shadow-sm group select-none relative overflow-hidden ${addons[labor.id] ? 'bg-primary-50/80 border-primary-300 ring-1 ring-primary-200' : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-md'}`}>
-                        {addons[labor.id] && <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-primary-200/40 to-transparent flex justify-end items-start p-1.5"><Check size={14} className="text-primary-600 shadow-sm"/></div>}
+                    .map(labor => {
+                       const isLocked = ['5001'].includes(labor.sku);
+                       return (
+                      <label key={labor.id} className={`flex items-start gap-4 p-3.5 border rounded-xl transition-all shadow-sm group select-none relative overflow-hidden ${addons[labor.id] ? 'bg-primary-50/80 border-primary-300 ring-1 ring-primary-200' : 'bg-white border-slate-200'} ${isLocked ? 'cursor-not-allowed opacity-90' : 'hover:border-slate-300 hover:shadow-md cursor-pointer'}`}>
+                        {addons[labor.id] && <div className={`absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl ${isLocked ? 'from-slate-300/40' : 'from-primary-200/40'} to-transparent flex justify-end items-start p-1.5`}><Check size={14} className={`${isLocked ? 'text-slate-600' : 'text-primary-600'} shadow-sm`}/></div>}
                         
-                        <input type="checkbox" className="w-[18px] h-[18px] mt-0.5 shrink-0 text-primary-600 border-gray-300 rounded focus:ring-primary-500 cursor-pointer shadow-sm transition-colors" checked={!!addons[labor.id]} onChange={() => toggleAddon(labor.id)} />
+                        <input type="checkbox" className={`w-[18px] h-[18px] mt-0.5 shrink-0 text-primary-600 border-gray-300 rounded focus:ring-primary-500 shadow-sm transition-colors ${isLocked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`} checked={!!addons[labor.id]} onChange={() => { if (!isLocked) toggleAddon(labor.id); }} disabled={isLocked} />
                         
                         <div className="flex-1 min-w-0 pr-6">
-                           <span className={`block font-black text-[13px] leading-tight mb-1.5 truncate ${addons[labor.id] ? 'text-primary-900' : 'text-slate-800'}`}>{labor.item_name}</span>
+                           <span className={`block font-black text-[13px] leading-tight mb-1.5 truncate ${addons[labor.id] ? 'text-primary-900' : 'text-slate-800'}`}>{labor.item_name} {isLocked && <span className="text-[9px] uppercase font-bold text-slate-500 ml-2 bg-slate-200/80 border border-slate-300 px-1.5 py-0.5 rounded shadow-sm">Required Base</span>}</span>
                            <div className="flex items-center gap-2">
                               <span className="text-[9px] uppercase font-bold tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 shadow-sm">{labor.category}</span>
                               <span className="font-mono text-[10px] font-bold text-slate-400">SKU {labor.sku || 'N/A'}</span>
@@ -1055,7 +1071,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                            <span className="font-mono font-black text-slate-700 text-[13px]">${labor.cost}</span>
                         </div>
                       </label>
-                  ))}
+                  )})}
                 </div>
                 
                 {laborRates.filter(l => addonSearchTerm === '' || l.item_name.toLowerCase().includes(addonSearchTerm.toLowerCase())).length === 0 && (
