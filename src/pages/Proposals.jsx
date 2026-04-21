@@ -272,7 +272,7 @@ ${equipmentNotes}
              // Rebuild the wizard systems array strictly with only the declined systems
              const filteredWizardSystems = (originalWizardState.systems || []).filter(sys => extractedIds.includes(sys.id));
              
-             await addProposal({
+             const newLead = await addProposal({
                  customer: proposal.customer,
                  status: 'Lead',
                  amount: 0, // Reset projected amount as pricing gets updated upon drafting
@@ -289,6 +289,26 @@ ${equipmentNotes}
                      }
                  }
              });
+             
+             if (newLead?.id) {
+                 const leadQuoteId = formatQuoteId(newLead);
+                 const oldQuoteId = formatQuoteId(proposal);
+                 
+                 // Interlink tracking comments across both deals
+                 await supabase.from('proposal_comments').insert([
+                     {
+                         proposal_id: newLead.id,
+                         user_id: user?.id,
+                         content: `System actively extracted from live Deal ${oldQuoteId} following partial decline.`
+                     },
+                     {
+                         proposal_id: proposal.id,
+                         user_id: user?.id,
+                         content: `System(s) declined by customer. Extracted remaining systems to Pipeline Lead ${leadQuoteId}.`
+                     }
+                 ]);
+             }
+             
              toast.success(`Extracted ${extractedSystems.length} systems to a new pipeline Lead!`);
          } catch (e) {
              console.error("Failed to extract systems to Lead bucket", e);
