@@ -419,7 +419,7 @@ ${equipmentNotes}
                  <div className="w-full">
                     
                     {layoutMode === 'kanban' && !loading ? (
-                        <div className="p-6 flex gap-6 overflow-x-auto min-h-[500px] bg-slate-50/30">
+                        <div className={`p-6 min-h-[500px] bg-slate-50/30 ${filterMode === 'All' ? 'flex gap-6 overflow-x-auto' : ''}`}>
                            {(filterMode === 'All' ? ['Lead', 'Draft', 'Sent', 'Approved', 'Lost'] : [filterMode]).map(colName => {
                               const colProposals = filteredProposals.filter(p => p.status === colName);
                               
@@ -430,13 +430,15 @@ ${equipmentNotes}
                               if (colName === 'Lost') headerColor = 'border-red-200 bg-red-50 text-red-700';
 
                               return (
-                                 <div key={colName} className="flex flex-col flex-1 min-w-[300px] max-w-md shrink-0 bg-slate-100/50 rounded-xl border border-slate-200 p-4 relative h-max mt-4">
-                                    <div className={`px-4 py-2 border rounded-lg mb-4 font-black uppercase tracking-wider text-[11px] ${headerColor} flex justify-between items-center shadow-sm absolute -top-5 left-4 right-4 bg-white`}>
-                                       <span>{colName}</span>
-                                       <span className="bg-white/80 px-2 py-0.5 rounded-full text-[10px] shadow-sm">{colProposals.length}</span>
-                                    </div>
+                                 <div key={colName} className={filterMode === 'All' ? "flex flex-col flex-1 min-w-[300px] max-w-md shrink-0 bg-slate-100/50 rounded-xl border border-slate-200 p-4 relative h-max mt-4" : "w-full h-max"}>
+                                    {filterMode === 'All' && (
+                                        <div className={`px-4 py-2 border rounded-lg mb-4 font-black uppercase tracking-wider text-[11px] ${headerColor} flex justify-between items-center shadow-sm absolute -top-5 left-4 right-4 bg-white`}>
+                                           <span>{colName}</span>
+                                           <span className="bg-white/80 px-2 py-0.5 rounded-full text-[10px] shadow-sm">{colProposals.length}</span>
+                                        </div>
+                                    )}
                                     
-                                    <div className="flex flex-col gap-3 mt-3">
+                                    <div className={filterMode === 'All' ? "flex flex-col gap-3 mt-3" : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"}>
                                        {colProposals.map(proposal => (
                                            <div key={proposal.id} onClick={() => handleRowClick(proposal)} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-slate-400 transition-all cursor-pointer group">
                                               <div className="flex justify-between items-start mb-3">
