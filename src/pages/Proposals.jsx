@@ -556,7 +556,9 @@ ${equipmentNotes}
                    <tbody className="divide-y divide-slate-100">
                      {filteredProposals.map(proposal => {
                         let badgeColors = 'bg-slate-100 text-slate-600 border-slate-200';
-                        if (proposal.status === 'Sent') {
+                        if (proposal.status === 'Lead') {
+                           badgeColors = 'bg-purple-50 text-purple-700 border-purple-200';
+                        } else if (proposal.status === 'Sent') {
                            badgeColors = 'bg-blue-50 text-blue-700 border-blue-200';
                         } else if (proposal.status === 'Approved') {
                            badgeColors = 'bg-emerald-50 text-emerald-700 border-emerald-200';
@@ -594,7 +596,7 @@ ${equipmentNotes}
                             {/* COL 3: Pricing */}
                             <td className="p-4 px-6 text-left">
                               <div className="flex flex-col items-start justify-center truncate">
-                                 {(!proposal.status || ['Draft', 'Sent', 'Opened', 'Lost'].includes(proposal.status)) ? (() => {
+                                 {(!proposal.status || ['Draft', 'Lead', 'Sent', 'Opened', 'Lost'].includes(proposal.status)) ? (() => {
                                      const tiers = proposal.proposal_data?.tiers || {};
                                      const prices = [tiers.good?.salesPrice, tiers.better?.salesPrice, tiers.best?.salesPrice].filter(Boolean);
                                      if (prices.length > 0) {
@@ -668,7 +670,9 @@ ${equipmentNotes}
                                  {/* Main Action Button */}
                                  <button 
                                    className={`flex items-center justify-center gap-1.5 text-xs font-black py-2.5 rounded-lg shrink-0 w-[110px] shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none ${
-                                       proposal.status === 'Approved' 
+                                       proposal.status === 'Lead'
+                                          ? 'bg-purple-600 text-white hover:bg-purple-700 focus:ring-purple-600 border border-purple-700'
+                                          : proposal.status === 'Approved' 
                                           ? 'bg-emerald-500 text-white hover:bg-emerald-600 focus:ring-emerald-500 border border-emerald-600' 
                                           : proposal.status === 'Sent'
                                           ? 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-600 border border-blue-700'
