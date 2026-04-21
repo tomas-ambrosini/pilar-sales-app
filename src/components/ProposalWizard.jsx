@@ -660,7 +660,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                 {systems.map(sys => {
                    const isSysValidStep2 = !!(sys.survey.systemType && sys.survey.currentTonnage);
                    const isSysValidStep3 = !!(sys.selectedTiers.good || sys.selectedTiers.better || sys.selectedTiers.best);
-                   const isSysValidStep4 = Object.keys(sys.addons).some(k => sys.addons[k]);
+                   const isSysValidStep4 = Object.keys(sys.addons).some(k => sys.addons[k] && !['5001'].includes(laborRates.find(l => l.id.toString() === k)?.sku));
                    const showWarning = (step === 2 && !isSysValidStep2) || (step === 3 && !isSysValidStep3) || (step === 4 && !isSysValidStep4);
 
                    return (
@@ -1011,24 +1011,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
               </div>
             )}
 
-            {tonnageFilter && (
-               <div className="bg-slate-50 p-6 rounded border border-slate-200">
-                  <div className="flex items-center gap-2 border-b border-primary-100 pb-2 mb-4">
-                     <Layers className="text-primary-500" size={18}/>
-                     <h4 className="font-bold text-primary-800 uppercase tracking-widest text-sm">Matching Equipment Pool Found</h4>
-                  </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                     {filteredCatalog.map(item => (
-                        <div key={item.id} className="bg-white border border-slate-100 rounded-md p-3 shadow-sm hover:shadow-md transition-shadow">
-                           <div className="font-black text-slate-800 text-sm tracking-tight">{item.brand}</div>
-                           <div className="text-[10px] text-slate-500 font-mono mb-2">{item.series}</div>
-                           <div className="bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs font-bold text-slate-600 w-max">{item.seer} SEER2</div>
-                        </div>
-                     ))}
-                  </div>
-                  {filteredCatalog.length === 0 && <p className="text-sm text-slate-500 italic mt-2">No matching systems found in the catalog for {tonnageFilter}T. Please adjust.</p>}
-               </div>
-            )}
+
 
             <div className="flex justify-between items-center mt-10 pt-4 border-t border-slate-100">
                <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(2)}><ArrowLeft size={16}/> Back</button>
@@ -1102,8 +1085,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
              <div className="flex justify-between items-center mt-8 pt-4 border-t border-slate-100">
                <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(3)}><ArrowLeft size={16}/> Back</button>
                <div className="flex items-center gap-3">
-                 {!systems.every(s => Object.keys(s.addons).some(k => s.addons[k])) && <span className="text-xs font-bold text-amber-600">Please select at least one labor/add-on item for all units.</span>}
-                 <button className="btn-primary flex items-center gap-2" disabled={!systems.every(s => Object.keys(s.addons).some(k => s.addons[k]))} onClick={() => setStep(5)}><DollarSign size={16}/> View Global Margins <ArrowRight size={16}/></button>
+                 {!systems.every(s => Object.keys(s.addons).some(k => s.addons[k] && !['5001'].includes(laborRates.find(l => l.id.toString() === k)?.sku))) && <span className="text-xs font-bold text-amber-600">Please select at least one labor/add-on item for all units.</span>}
+                 <button className="btn-primary flex items-center gap-2" disabled={!systems.every(s => Object.keys(s.addons).some(k => s.addons[k] && !['5001'].includes(laborRates.find(l => l.id.toString() === k)?.sku)))} onClick={() => setStep(5)}><DollarSign size={16}/> View Global Margins <ArrowRight size={16}/></button>
                </div>
             </div>
           </div>
