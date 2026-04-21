@@ -104,7 +104,7 @@ export function ProposalProvider({ children }) {
             customer: proposalData.customer,
             amount: proposalData.amount,
             date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-            status: 'Sent',
+            status: proposalData.status || 'Sent',
             associated_opportunity_id: proposalData.associated_opportunity_id || null,
             proposal_data: proposalData.proposal_data || null,
             created_by: user?.id,
