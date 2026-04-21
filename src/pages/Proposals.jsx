@@ -265,14 +265,28 @@ ${equipmentNotes}
      // 5. Build Extracted "Lead" Draft if Split Occurred
      if (extractedSystems && extractedSystems.length > 0) {
          try {
+             // Preserve the original wizard state for the extracted elements
+             const originalWizardState = proposal.proposal_data?.wizard_state || {};
+             const extractedIds = extractedSystems.map(es => es.systemId);
+             
+             // Rebuild the wizard systems array strictly with only the declined systems
+             const filteredWizardSystems = (originalWizardState.systems || []).filter(sys => extractedIds.includes(sys.id));
+             
              await addProposal({
                  customer: proposal.customer,
                  status: 'Lead',
-                 amount: 0,
+                 amount: 0, // Reset projected amount as pricing gets updated upon drafting
                  proposal_data: {
                      ...(proposal.proposal_data || {}),
                      associated_opportunity_id: proposal.proposal_data?.associated_opportunity_id || null,
-                     systemTiers: extractedSystems
+                     systemTiers: extractedSystems,
+                     signature_data: null,      // Erase previous signatures from new doc
+                     accepted_tier_data: null,  // Erase previous acceptance
+                     wizard_state: {
+                         ...originalWizardState,
+                         systems: filteredWizardSystems,
+                         step: 3 // Push them back to the mapping tier step automatically
+                     }
                  }
              });
              toast.success(`Extracted ${extractedSystems.length} systems to a new pipeline Lead!`);
@@ -667,12 +681,14 @@ ${equipmentNotes}
                                           const matchedTierName = proposal.proposal_data?.accepted_tier_name || ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers?.[t]?.salesPrice === proposal.amount) || 'good';
                                           const matchedTierData = proposal.proposal_data?.accepted_tier_data || proposal.proposal_data?.tiers?.[matchedTierName];
                                           setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
-                                       } else if (proposal.status === 'Draft') {
+                                       } else if (proposal.status === 'Draft' || proposal.status === 'Lead') {
                                           if (proposal.created_by && proposal.created_by !== user?.id) {
                                               toast.error('Access Denied: This draft is locked by its creator.');
                                               return;
                                           }
-                                          setWizardConfig({ id: proposal.id, ...proposal });
+                                          
+                                          // Ensure it launches as a native editable draft
+                                          setWizardConfig({ id: proposal.id, ...proposal, isDraft: true });
                                           setShowWizard(true);
                                        } else {
                                           setViewingProposal(proposal.status === 'Lost' ? { ...proposal, isReadOnly: true } : proposal);

@@ -368,19 +368,22 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        .reduce((s, i) => s + (parseFloat(i.cost) || 0), 0);
     
     const taxRate = parseFloat(margins?.sales_tax) || 0.07;
-    let targetMargin = parseFloat(margins?.good_margin) || 0.35;
-    if (tierType.toLowerCase() === 'better') targetMargin = parseFloat(margins?.better_margin) || 0.40;
-    if (tierType.toLowerCase() === 'best') targetMargin = parseFloat(margins?.best_margin) || 0.45;
+    // Fix logical OR bugs when margins are exactly 0
+    let targetMargin = margins?.good_margin !== undefined ? parseFloat(margins.good_margin) : 0.35;
+    if (tierType.toLowerCase() === 'better') targetMargin = margins?.better_margin !== undefined ? parseFloat(margins.better_margin) : 0.40;
+    if (tierType.toLowerCase() === 'best') targetMargin = margins?.best_margin !== undefined ? parseFloat(margins.best_margin) : 0.45;
 
     const rawMaterialsTotal = parsedEquipCost + taxableMaterials;
-    const subtotalCost = rawMaterialsTotal + nontaxableLabor;
+    // Labor is NOT subjected to sales tax in most jurisdictions
     const taxAmount = rawMaterialsTotal * taxRate;
     
-    const serviceReserve = parseFloat(margins?.service_reserve) || 0.05;
+    // Core systemic change: Stop marking up labor! 
+    // Subcontractors/Labor should be flat pass-through to prevent $10k+ single-node blowouts
+    const serviceReserve = margins?.service_reserve !== undefined ? parseFloat(margins.service_reserve) : 0.05;
     const markupMultiplier = 1.0 + targetMargin + serviceReserve;
     
-    const markedUpSubtotal = subtotalCost * markupMultiplier;
-    const grandTotal = markedUpSubtotal + taxAmount;
+    const markedUpMaterials = rawMaterialsTotal * markupMultiplier;
+    const grandTotal = markedUpMaterials + taxAmount + nontaxableLabor;
     
     return Math.max(Math.round(grandTotal), 0);
   };
