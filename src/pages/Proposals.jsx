@@ -69,6 +69,7 @@ export default function Proposals() {
   const [signingContract, setSigningContract] = useState(null);
   const [deletingProposal, setDeletingProposal] = useState(null);
   const [markingLost, setMarkingLost] = useState(null);
+  const [pendingExtraction, setPendingExtraction] = useState(null);
   const [lostReason, setLostReason] = useState('');
   const [lostNotes, setLostNotes] = useState('');
   const [filterMode, setFilterMode] = useState('All');
@@ -180,9 +181,21 @@ export default function Proposals() {
   };
 
   const handleInitiateAcceptance = (tierName, tierData, proposal, extractedSystems = []) => {
-     // Instead of instantly fulfilling the database, we launch the Signature Capture
+     // Suspend execution to verify extraction logic before signatures
      setViewingProposal(null);
-     setSigningContract({ proposal, tierName, tierData, date: new Date().toLocaleDateString(), extractedSystems });
+     
+     if (extractedSystems && extractedSystems.length > 0) {
+         setPendingExtraction({ tierName, tierData, proposal, extractedSystems });
+     } else {
+         setSigningContract({ proposal, tierName, tierData, date: new Date().toLocaleDateString(), extractedSystems });
+     }
+  };
+
+  const handleConfirmExtraction = () => {
+      if (!pendingExtraction) return;
+      const { proposal, tierName, tierData, extractedSystems } = pendingExtraction;
+      setPendingExtraction(null);
+      setSigningContract({ proposal, tierName, tierData, date: new Date().toLocaleDateString(), extractedSystems });
   };
 
   const executeSignedContract = async (signatureData) => {
@@ -296,7 +309,7 @@ ${equipmentNotes}
                  const oldQuoteId = formatQuoteId(proposal);
                  
                  // Interlink tracking comments across both deals
-                 await supabase.from('proposal_comments').insert([
+                 const { error: commentError } = await supabase.from('proposal_comments').insert([
                      {
                          proposal_id: newLead.id,
                          user_id: user?.id,
@@ -308,6 +321,10 @@ ${equipmentNotes}
                          content: `System(s) declined by customer. Extracted remaining systems to Pipeline Lead ${leadQuoteId}.`
                      }
                  ]);
+                 if (commentError) {
+                     console.error("Failed to insert extraction comments:", commentError);
+                     toast.error(`Comment sync failed: ${commentError.message}`);
+                 }
              }
              
              toast.success(`Extracted ${extractedSystems.length} systems to a new pipeline Lead!`);
@@ -827,6 +844,44 @@ ${equipmentNotes}
             <div className="flex gap-3 justify-end pt-4 border-t border-slate-100 mt-6">
                <button className="px-5 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-bold transition-colors" onClick={() => setMarkingLost(null)}>Cancel</button>
                <button className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition-colors shadow-sm" onClick={handleMarkLostConfirm} disabled={!lostReason}>Mark as Lost</button>
+            </div>
+         </div>
+      </Modal>
+
+      {/* Extraction Warning Modal */}
+      <Modal isOpen={!!pendingExtraction} onClose={() => setPendingExtraction(null)} title="Confirm Extraction Splinter">
+         <div className="p-4 space-y-5">
+             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 text-amber-800">
+                <AlertTriangle size={24} className="shrink-0 text-amber-600 mt-0.5" />
+                <div>
+                   <h4 className="font-bold mb-1">Proposal Splinter Detected</h4>
+                   <p className="text-sm">You've elected to decline one or more HVAC units from this master proposal. Continuing will permanently split this document into two distinct entities.</p>
+                </div>
+             </div>
+
+             {pendingExtraction && (
+                <div className="space-y-3">
+                    <div className="flex justify-between items-center bg-slate-50 border border-slate-200 rounded-lg p-3">
+                        <div>
+                           <span className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1">Proceeding To Contract</span>
+                           <span className="font-black text-slate-800">{Array.isArray(pendingExtraction.tierData) ? pendingExtraction.tierData.length : 1} System(s)</span>
+                        </div>
+                        <CheckCircle size={20} className="text-emerald-500" />
+                    </div>
+
+                    <div className="flex justify-between items-center bg-purple-50 border border-purple-200 rounded-lg p-3">
+                        <div>
+                           <span className="text-xs font-bold text-purple-500 uppercase tracking-widest block mb-1">Extracting To New Lead</span>
+                           <span className="font-black text-purple-900">{pendingExtraction.extractedSystems.length} Declined System(s)</span>
+                        </div>
+                        <ArrowRight size={20} className="text-purple-500" />
+                    </div>
+                </div>
+             )}
+
+            <div className="flex gap-3 justify-end pt-4 border-t border-slate-100 mt-6 md:col-span-2">
+               <button className="px-5 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-bold transition-colors" onClick={() => setPendingExtraction(null)}>Cancel / Edit Priorities</button>
+               <button className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold transition-colors shadow-sm" onClick={handleConfirmExtraction}>Yes, Extract & Execute Contract</button>
             </div>
          </div>
       </Modal>

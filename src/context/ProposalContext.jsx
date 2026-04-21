@@ -120,7 +120,8 @@ export function ProposalProvider({ children }) {
         if (error) {
             console.error('Failed to create proposal live:', error);
             // Revert on failure by refreshing the real list
-            fetchProposals(); 
+            fetchProposals();
+            return null;
         } else {
             // Update local UI state with the exact database response (so user_profiles is included)
             setProposals(prev => [data, ...prev]);
@@ -132,6 +133,7 @@ export function ProposalProvider({ children }) {
                     console.warn("Skipped transition: ", e.message);
                 }
             }
+            return data;
         }
     };
 
