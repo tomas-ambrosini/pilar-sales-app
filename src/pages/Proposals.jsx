@@ -73,6 +73,7 @@ export default function Proposals() {
   const [lostNotes, setLostNotes] = useState('');
   const [filterMode, setFilterMode] = useState('All');
   const [layoutMode, setLayoutMode] = useState('list');
+  const [dateFilter, setDateFilter] = useState('30days');
 
   const handleRowClick = (proposal) => {
       setInspectingProposal(proposal);
@@ -381,25 +382,58 @@ ${equipmentNotes}
                     </button>
                 ))}
              </div>
-             
-             <div className="flex bg-white rounded-lg p-0.5 border border-slate-200 shadow-sm shrink-0">
-                <button 
-                  onClick={() => setLayoutMode('list')}
-                  className={`p-1.5 rounded-md transition-colors ${layoutMode === 'list' ? 'bg-slate-100 text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                  title="List View"
-                ><ListIcon size={16} /></button>
-                <button 
-                  onClick={() => setLayoutMode('kanban')}
-                  className={`p-1.5 rounded-md transition-colors ${layoutMode === 'kanban' ? 'bg-slate-100 text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                  title="Kanban View"
-                ><LayoutGrid size={16} /></button>
+             <div className="flex gap-2 shrink-0">
+                 <select 
+                    className="bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-lg px-2 shadow-sm outline-none focus:ring-2 focus:ring-slate-800 transition-colors hover:bg-slate-50 cursor-pointer"
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    title="Filter by Timeline"
+                 >
+                    <option value="7days">Past 7 Days</option>
+                    <option value="30days">Past 30 Days</option>
+                    <option value="90days">Past 90 Days</option>
+                    <option value="1year">Past Year</option>
+                    <option value="all">All Time</option>
+                 </select>
+                 
+                 <div className="flex bg-white rounded-lg p-0.5 border border-slate-200 shadow-sm shrink-0">
+                    <button 
+                      onClick={() => setLayoutMode('list')}
+                      className={`p-1.5 rounded-md transition-colors ${layoutMode === 'list' ? 'bg-slate-100 text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                      title="List View"
+                    ><ListIcon size={16} /></button>
+                    <button 
+                      onClick={() => setLayoutMode('kanban')}
+                      className={`p-1.5 rounded-md transition-colors ${layoutMode === 'kanban' ? 'bg-slate-100 text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                      title="Kanban View"
+                    ><LayoutGrid size={16} /></button>
+                 </div>
              </div>
           </div>
 
           <div className="flex flex-col w-full">
 
             {(() => {
-               const filteredProposals = proposals.filter(p => filterMode === 'All' || p.status === filterMode);
+               const filteredProposals = proposals.filter(p => {
+                   const matchesStatus = filterMode === 'All' || p.status === filterMode;
+                   if (!matchesStatus) return false;
+                   if (dateFilter === 'all') return true;
+                   
+                   const dateString = p.updated_at || p.created_at || p.date;
+                   if (!dateString) return true;
+                   
+                   const targetDate = new Date(dateString);
+                   const now = new Date();
+                   const diffTime = Math.abs(now - targetDate);
+                   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                   
+                   if (dateFilter === '7days') return diffDays <= 7;
+                   if (dateFilter === '30days') return diffDays <= 30;
+                   if (dateFilter === '90days') return diffDays <= 90;
+                   if (dateFilter === '1year') return diffDays <= 365;
+                   
+                   return true;
+               });
                
                if (filteredProposals.length === 0) {
                   return (
