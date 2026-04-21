@@ -296,6 +296,7 @@ ${equipmentNotes}
                      systemTiers: extractedSystems,
                      signature_data: null,      // Erase previous signatures from new doc
                      accepted_tier_data: null,  // Erase previous acceptance
+                     tiers: null,               // Wipe old legacy total pricing
                      wizard_state: {
                          ...originalWizardState,
                          systems: filteredWizardSystems,
