@@ -203,8 +203,8 @@ export default function Proposals() {
      const { tierName, tierData, proposal, extractedSystems } = signingContract;
 
      // 1. Array check to handle multi-system configuration payloads vs legacy single-tier selections
-     const isMulti = Array.isArray(tierData);
-     const systemsPayload = isMulti ? tierData : [{ systemName: 'Standard System', selectedTierData: tierData, tierName: tierName }];
+     const isMulti = Array.isArray(tierData) || (tierData && Array.isArray(tierData.systemsList));
+     const systemsPayload = Array.isArray(tierData) ? tierData : (tierData?.systemsList ? tierData.systemsList : [{ systemName: 'Standard System', selectedTierData: tierData, tierName: tierName }]);
 
      // 2. Build Multi-System Scalable Work Order Notes
      const equipmentNotes = systemsPayload.map(sys => `
@@ -304,7 +304,9 @@ ${equipmentNotes}
                  }
              });
              
-             if (newLead?.id) {
+             console.log("Extraction Payload Return:", newLead);
+             
+             if (newLead && newLead.id) {
                  const leadQuoteId = formatQuoteId(newLead);
                  const oldQuoteId = formatQuoteId(proposal);
                  
@@ -864,7 +866,7 @@ ${equipmentNotes}
                     <div className="flex justify-between items-center bg-slate-50 border border-slate-200 rounded-lg p-3">
                         <div>
                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1">Proceeding To Contract</span>
-                           <span className="font-black text-slate-800">{Array.isArray(pendingExtraction.tierData) ? pendingExtraction.tierData.length : 1} System(s)</span>
+                           <span className="font-black text-slate-800">{Array.isArray(pendingExtraction.tierData) ? pendingExtraction.tierData.length : (pendingExtraction.tierData?.systemsList ? pendingExtraction.tierData.systemsList.length : 1)} System(s)</span>
                         </div>
                         <CheckCircle size={20} className="text-emerald-500" />
                     </div>
