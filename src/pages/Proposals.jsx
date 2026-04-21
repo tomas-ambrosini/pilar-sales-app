@@ -19,6 +19,46 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { formatQuoteId } from '../utils/formatters';
 
+const getEstValueDisplay = (proposal) => {
+    let finalMin, finalMax, hasRange = false;
+    
+    if (proposal.proposal_data?.systemTiers && proposal.proposal_data.systemTiers.length > 0) {
+        let totalMin = 0;
+        let totalMax = 0;
+        let validSystemsCount = 0;
+        
+        proposal.proposal_data.systemTiers.forEach(sys => {
+            const sysTiersObj = sys.tiers || (sys.altTracks && sys.altTracks[0]?.tiers) || sys.altTiers;
+            if (sysTiersObj) {
+                const sysPrices = [sysTiersObj.good?.salesPrice, sysTiersObj.better?.salesPrice, sysTiersObj.best?.salesPrice].filter(Boolean);
+                if (sysPrices.length > 0) {
+                    totalMin += Math.min(...sysPrices);
+                    totalMax += Math.max(...sysPrices);
+                    validSystemsCount++;
+                }
+            }
+        });
+        
+        if (validSystemsCount > 0) {
+            finalMin = totalMin;
+            finalMax = totalMax;
+            hasRange = true;
+        }
+    }
+    
+    if (!hasRange) {
+        const tiers = proposal.proposal_data?.tiers || {};
+        const legacyPrices = [tiers.good?.salesPrice, tiers.better?.salesPrice, tiers.best?.salesPrice].filter(Boolean);
+        if (legacyPrices.length > 0) {
+            finalMin = Math.min(...legacyPrices);
+            finalMax = Math.max(...legacyPrices);
+            hasRange = true;
+        }
+    }
+    
+    return { min: finalMin, max: finalMax, hasRange };
+};
+
 export default function Proposals() {
   const { user } = useAuth();
   const { proposals, addProposal, updateProposal, deleteProposal, loading } = useProposals();
@@ -509,10 +549,12 @@ ${equipmentNotes}
                                                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Est. Value</span>
                                                   <span className="font-black text-slate-700 text-base leading-none">
                                                      {(() => {
-                                                        if (['Draft', 'Sent', 'Lost'].includes(proposal.status)) {
-                                                           const tiers = proposal.proposal_data?.tiers || {};
-                                                           const prices = [tiers.good?.salesPrice, tiers.better?.salesPrice, tiers.best?.salesPrice].filter(Boolean);
-                                                           if (prices.length > 0) return `$${Math.max(...prices).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+                                                        if (['Draft', 'Lead', 'Sent', 'Opened', 'Lost'].includes(proposal.status) && !proposal.status?.includes('Lead')) {
+                                                            // Wait, Lead should actually show range if it exists! Let's correct that based on user's feedback.
+                                                        }
+                                                        if (['Draft', 'Lead', 'Sent', 'Opened', 'Lost'].includes(proposal.status) || (!proposal.status)) {
+                                                           const { max, hasRange } = getEstValueDisplay(proposal);
+                                                           if (hasRange) return `$${max.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
                                                         }
                                                         return `$${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
                                                      })()}
@@ -673,11 +715,8 @@ ${equipmentNotes}
                             <td className="p-4 px-6 text-left">
                               <div className="flex flex-col items-start justify-center truncate">
                                  {(!proposal.status || ['Draft', 'Lead', 'Sent', 'Opened', 'Lost'].includes(proposal.status)) ? (() => {
-                                     const tiers = proposal.proposal_data?.tiers || {};
-                                     const prices = [tiers.good?.salesPrice, tiers.better?.salesPrice, tiers.best?.salesPrice].filter(Boolean);
-                                     if (prices.length > 0) {
-                                         const min = Math.min(...prices);
-                                         const max = Math.max(...prices);
+                                     const { min, max, hasRange } = getEstValueDisplay(proposal);
+                                     if (hasRange) {
                                          return (
                                             <>
                                               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Est. Range</span>
