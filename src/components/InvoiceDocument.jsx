@@ -1,10 +1,16 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Printer, Download, Mail, Send } from 'lucide-react';
+import { X, Printer, Download, Banknote, Loader2 } from 'lucide-react';
 import { formatQuoteId } from '../utils/formatters';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import '../components/ContractDocumentModal.css';
 
 export default function InvoiceDocument({ isOpen, onClose, invoice }) {
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+    const pdfRef = useRef(null);
+
     if (!isOpen || !invoice) return null;
 
     const isPaid = invoice.status === 'Paid in Full';
@@ -14,152 +20,189 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
         window.print();
     };
 
+    const handleDownloadPDF = async () => {
+        if (!pdfRef.current || isGeneratingPDF) return;
+        setIsGeneratingPDF(true);
+  
+        try {
+            const element = pdfRef.current;
+            
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: "#ffffff",
+            });
+  
+            const imgWidth = 850; 
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            const pdf = new jsPDF('p', 'pt', [imgWidth, imgHeight]);
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            
+            pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+            pdf.save(`Pilar_Invoice_${invoice.id.substring(0,8).toUpperCase()}.pdf`);
+        } catch (err) {
+            console.error("Failed to generate PDF", err);
+        } finally {
+            setIsGeneratingPDF(false);
+        }
+    };
+
     return createPortal(
         <AnimatePresence>
             <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm print:bg-white print:p-0 print:block"
+                className="fixed inset-0 z-[120] flex flex-col items-center justify-center modal-layout-wrapper transition-all duration-300 print:static print:block print:inset-auto opacity-100 pointer-events-auto"
             >
-                <div className="w-full max-w-5xl h-full max-h-[90vh] flex flex-col print:h-auto print:max-h-none print:w-full">
-                    
-                    {/* Floating Toolbar (Hidden on Print) */}
-                    <div className="bg-slate-800 text-white p-3 rounded-t-xl flex justify-between items-center print:hidden shadow-lg border-b border-slate-700">
-                        <div className="flex items-center gap-4 px-2">
-                            <span className="font-bold text-sm tracking-widest uppercase">Invoice #{invoice.id.substring(0,6).toUpperCase()}</span>
-                        </div>
-                        <div className="flex gap-2">
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs font-bold transition-colors">
-                                <Mail size={14} /> Email
-                            </button>
-                            <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs font-bold transition-colors">
-                                <Printer size={14} /> Print
-                            </button>
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs font-bold transition-colors">
-                                <Download size={14} /> PDF
-                            </button>
-                            <button onClick={onClose} className="p-1.5 ml-2 text-slate-400 hover:text-white transition-colors">
-                                <X size={20} />
-                            </button>
-                        </div>
+                {/* Print Backdrop */}
+                <div className="absolute -inset-10 bg-slate-900/60 backdrop-blur-sm print:hidden" onClick={onClose}></div>
+                
+                {/* Top Action Bar (Hidden on print) */}
+                <div className="action-bar absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 print:hidden bg-slate-900/80 backdrop-blur border-b border-slate-700 shadow-xl">
+                    <div className="text-white flex items-center gap-2">
+                        <Banknote className="text-emerald-400" />
+                        <span className="font-bold tracking-widest text-sm uppercase">Official Invoice Generated</span>
                     </div>
-
-                    {/* Document Body */}
-                    <div className="bg-white flex-1 overflow-y-auto rounded-b-xl shadow-2xl print:shadow-none print:overflow-visible">
-                        <div className="max-w-4xl mx-auto p-12 print:p-8 bg-white min-h-full font-sans">
-                            
-                            {/* Header Section */}
-                            <div className="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
-                                <div>
-                                    <h1 className="text-4xl font-black text-slate-900 tracking-tighter mb-2">INVOICE</h1>
-                                    <div className="text-slate-500 text-sm leading-relaxed">
-                                        <strong>Pilar Services, Inc.</strong><br/>
-                                        123 Service Blvd, Suite 100<br/>
-                                        Miami, FL 33101<br/>
-                                        (800) 555-0199
-                                    </div>
-                                </div>
-                                <div className="text-right flex flex-col items-end">
-                                    <div className={`mb-4 px-4 py-1.5 text-xs font-black uppercase tracking-widest border-2 ${
-                                        isPaid ? 'border-emerald-500 text-emerald-600' : 
-                                        isPartial ? 'border-amber-500 text-amber-600' : 'border-rose-500 text-rose-600'
-                                    }`}>
-                                        {invoice.status.toUpperCase()}
-                                    </div>
-                                    <table className="text-sm text-slate-600 text-right border-collapse">
-                                        <tbody>
-                                            <tr><td className="pr-4 py-1 font-bold">Invoice Date:</td><td>{new Date(invoice.created_at).toLocaleDateString()}</td></tr>
-                                            <tr><td className="pr-4 py-1 font-bold">Invoice #:</td><td className="font-mono">{invoice.id.substring(0,8).toUpperCase()}</td></tr>
-                                            <tr><td className="pr-4 py-1 font-bold">Terms:</td><td>Net 30</td></tr>
-                                            <tr><td className="pr-4 py-1 font-bold">Due Date:</td><td>{new Date(invoice.due_date || invoice.created_at).toLocaleDateString()}</td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            {/* Bill To & Location */}
-                            <div className="grid grid-cols-2 gap-12 mb-10">
-                                <div>
-                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-100 pb-1">Bill To</h3>
-                                    <div className="text-slate-800 font-medium text-sm leading-relaxed">
-                                        <div className="font-bold text-base text-primary-700">{invoice.proposals?.customer || 'Unknown Customer'}</div>
-                                        <div>{invoice.proposals?.proposal_data?.contactEmail || 'No Email Provided'}</div>
-                                        <div>{invoice.proposals?.proposal_data?.contactPhone || 'No Phone Provided'}</div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-100 pb-1">Primary Service Location</h3>
-                                    <div className="text-slate-800 font-medium text-sm leading-relaxed">
-                                        {invoice.proposals?.proposal_data?.address || 'Address Not Specified'}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Line Items Table */}
-                            <table className="w-full text-left mb-10 border-collapse">
-                                <thead>
-                                    <tr className="border-y-2 border-slate-800 text-xs font-black uppercase tracking-widest text-slate-700">
-                                        <th className="py-3 px-2">Job Date</th>
-                                        <th className="py-3 px-2">Quote / PO#</th>
-                                        <th className="py-3 px-2">Description</th>
-                                        <th className="py-3 px-2 text-right">Job Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="text-sm font-medium text-slate-700">
-                                    <tr className="border-b border-slate-100">
-                                        <td className="py-4 px-2">{new Date(invoice.created_at).toLocaleDateString()}</td>
-                                        <td className="py-4 px-2 text-primary-600 font-bold">{formatQuoteId({id: invoice.proposal_id})}</td>
-                                        <td className="py-4 px-2">
-                                            HVAC Equipment Installation / Service
-                                            <div className="text-xs text-slate-400 mt-1 font-normal">{invoice.notes || 'Contract execution per signed proposal.'}</div>
-                                        </td>
-                                        <td className="py-4 px-2 text-right font-bold text-slate-900">
-                                            ${(parseFloat(invoice.total_contract_amount || invoice.amount) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-
-                            {/* Totals Section */}
-                            <div className="flex justify-between items-end mb-16">
-                                <div className="w-1/2">
-                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Customer Message</h3>
-                                    <p className="text-sm text-slate-600 italic">Thank you for your business. Please contact us if you have any questions regarding this invoice.</p>
-                                </div>
-                                <div className="w-[300px]">
-                                    <table className="w-full text-sm">
-                                        <tbody>
-                                            <tr className="border-b border-slate-100">
-                                                <td className="py-2 font-bold text-slate-500 uppercase text-xs tracking-wider">Invoice Total:</td>
-                                                <td className="py-2 text-right font-black text-slate-800">
-                                                    ${(parseFloat(invoice.total_contract_amount || invoice.amount) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                                                </td>
-                                            </tr>
-                                            <tr className="border-b border-slate-100 text-emerald-600">
-                                                <td className="py-2 font-bold uppercase text-xs tracking-wider">Deposits/Payments (-):</td>
-                                                <td className="py-2 text-right font-black">
-                                                    ${(parseFloat(invoice.deposit_collected || invoice.amount) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                                                </td>
-                                            </tr>
-                                            <tr className="border-y-2 border-slate-800 bg-slate-50">
-                                                <td className="py-3 px-2 font-black text-slate-900 uppercase tracking-wider">Total Due:</td>
-                                                <td className="py-3 px-2 text-right font-black text-lg text-slate-900">
-                                                    ${(parseFloat(invoice.balance_due ?? 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            {/* Footer */}
-                            <div className="text-center text-xs text-slate-400 font-medium border-t border-slate-100 pt-8 mt-auto">
-                                Invoice generated by Pilar Sales Platform &copy; {new Date().getFullYear()}
-                            </div>
-                        </div>
+                    <div className="flex gap-4">
+                        <button onClick={handlePrint} className="flex items-center gap-2 text-white bg-slate-700/50 hover:bg-slate-700 px-4 py-2 rounded font-bold text-sm transition-colors border border-slate-600/50">
+                            <Printer size={16} /> Print Physical Copy
+                        </button>
+                        <button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="flex items-center gap-2 bg-primary-600 text-white hover:bg-primary-700 px-4 py-2 rounded font-bold text-sm shadow transition-colors">
+                            {isGeneratingPDF ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} 
+                            {isGeneratingPDF ? 'Rendering PDF...' : 'Download Universal PDF'}
+                        </button>
+                        <button onClick={onClose} className="p-2 text-white/70 hover:text-white bg-white/10 rounded-full transition-colors">
+                            <X size={20} />
+                        </button>
                     </div>
                 </div>
+
+                {/* The 8.5x11 Paper Container */}
+                <motion.div 
+                    initial={{ scale: 0.95, y: 10, opacity: 0 }}
+                    animate={{ scale: 1, y: 0, opacity: 1 }}
+                    exit={{ scale: 0.95, y: 10, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                    className="printable-contract relative bg-white shadow-2xl overflow-y-auto w-full max-w-[850px] mx-auto flex flex-col print:block mt-24 mb-12 shrink max-h-[calc(100vh-140px)] print:max-h-none print:m-0 text-slate-800 text-[11px] leading-relaxed"
+                >
+                    <div className="p-8 pb-12" ref={pdfRef}>
+                        
+                        {/* Header Section */}
+                        <div className="flex justify-between items-start mb-6">
+                            <div>
+                                <h1 className="text-3xl font-black mb-1 text-slate-800 tracking-tight">Invoice # <span className="font-normal text-slate-500">{invoice.id.substring(0,8).toUpperCase()}</span></h1>
+                                <div className="flex gap-6 mt-1 mb-4 font-bold text-slate-700">
+                                    <span>Invoice Date: <span className="font-normal px-2 text-slate-600">{new Date(invoice.created_at).toLocaleDateString()}</span></span>
+                                    <span>Due Date: <span className="font-normal px-2 text-slate-600">{new Date(invoice.due_date || invoice.created_at).toLocaleDateString()}</span></span>
+                                </div>
+                            </div>
+                            <div className="text-right flex items-center justify-end">
+                                <div className="text-primary-600 font-black text-2xl flex items-center gap-1 tracking-tighter mr-4">
+                                    <span className="text-3xl relative -top-1">^</span> PILAR HOME
+                                </div>
+                                <div className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest border-2 ${
+                                    isPaid ? 'border-emerald-500 text-emerald-600' : 
+                                    isPartial ? 'border-amber-500 text-amber-600' : 'border-rose-500 text-rose-600'
+                                }`}>
+                                    {invoice.status.toUpperCase()}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Customer / Company Info Grid */}
+                        <div className="grid grid-cols-2 gap-4 mb-4 print-safe-block">
+                            {/* Bill To Box */}
+                            <div className="border border-slate-300 rounded overflow-hidden">
+                                <div className="bg-[#e2e8f0] text-slate-700 font-bold px-3 py-1.5 border-b border-slate-300">Bill To</div>
+                                <div className="p-3 bg-[#f8fafc] flex flex-col gap-2">
+                                    <div className="flex border-b border-slate-200 pb-1">
+                                        <span className="w-16 text-slate-500">Name:</span> <span className="font-semibold text-slate-800">{invoice.proposals?.customer || 'Unknown Customer'}</span>
+                                    </div>
+                                    <div className="flex border-b border-slate-200 pb-1">
+                                        <span className="w-16 text-slate-500">Address:</span> <span className="text-slate-600">{invoice.proposals?.proposal_data?.address || '(Digital Record)'}</span>
+                                    </div>
+                                    <div className="flex border-b border-slate-200 pb-1">
+                                        <span className="w-16 text-slate-500">Phone:</span> <span className="text-slate-600">{invoice.proposals?.proposal_data?.contactPhone || ''}</span>
+                                    </div>
+                                    <div className="flex pb-1">
+                                        <span className="w-16 text-slate-500">Email:</span> <span className="text-slate-600">{invoice.proposals?.proposal_data?.contactEmail || ''}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Service Location Box */}
+                            <div className="border border-slate-300 rounded overflow-hidden">
+                                <div className="bg-[#e2e8f0] text-slate-700 font-bold px-3 py-1.5 border-b border-slate-300">Primary Service Location</div>
+                                <div className="p-3 bg-[#f8fafc] flex flex-col gap-2 h-full">
+                                    <div className="flex pb-1">
+                                        <span className="text-slate-600">{invoice.proposals?.proposal_data?.address || 'Address Not Specified'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Line Items */}
+                        <div className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
+                            <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
+                                <div className="w-32 px-3 py-1.5 border-r border-slate-300">Quote / PO#</div>
+                                <div className="flex-1 px-3 py-1.5 border-r border-slate-300">Description</div>
+                                <div className="w-32 px-3 py-1.5 text-center">Job Total</div>
+                            </div>
+                            <div className="flex flex-col bg-[#f8fafc]">
+                                <div className="flex border-b border-slate-200 group transition-colors hover:bg-slate-50/50">
+                                    <div className="w-32 px-3 py-3 border-r border-slate-300 text-slate-700 font-bold font-mono">
+                                        {formatQuoteId({id: invoice.proposal_id})}
+                                    </div>
+                                    <div className="flex-1 px-3 py-3 border-r border-slate-300 text-slate-700 font-medium">
+                                        HVAC Equipment Installation / Service
+                                        <div className="text-[10px] text-slate-500 mt-1 italic">{invoice.notes || 'Contract execution per signed proposal.'}</div>
+                                    </div>
+                                    <div className="w-32 px-3 py-3 flex items-center justify-end gap-1 text-slate-800 font-bold text-sm">
+                                        $ <span>{(parseFloat(invoice.total_contract_amount || invoice.amount) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Totals Section */}
+                        <div className="flex justify-between items-start mb-6 print-safe-block">
+                            <div className="w-1/2 pr-8 mt-2">
+                                <div className="font-bold text-slate-800 mb-1 px-1">Customer Message:</div>
+                                <p className="text-[11px] text-slate-500 italic px-1">Thank you for your business. Please contact us if you have any questions regarding this invoice or your service.</p>
+                            </div>
+                            
+                            <div className="w-[300px] border border-slate-300 rounded overflow-hidden bg-[#f8fafc]">
+                                <div className="flex border-b border-slate-200">
+                                    <div className="flex-1 px-3 py-2 text-right uppercase text-[10px] tracking-wider text-slate-600 font-bold">Invoice Total:</div>
+                                    <div className="w-32 px-3 py-2 text-right font-bold text-slate-800">
+                                        ${(parseFloat(invoice.total_contract_amount || invoice.amount) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                    </div>
+                                </div>
+                                <div className="flex border-b border-slate-300 text-emerald-600">
+                                    <div className="flex-1 px-3 py-2 text-right uppercase text-[10px] tracking-wider font-bold">Deposits/Payments (-):</div>
+                                    <div className="w-32 px-3 py-2 text-right font-bold">
+                                        ${(parseFloat(invoice.deposit_collected || invoice.amount) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                    </div>
+                                </div>
+                                <div className="flex font-bold bg-[#e2e8f0]/40">
+                                    <div className="flex-1 px-3 py-3 text-right uppercase text-xs tracking-wider text-slate-800 flex items-center justify-end">Total Due:</div>
+                                    <div className="w-32 px-3 py-3 text-right font-black text-lg text-primary-700">
+                                        ${(parseFloat(invoice.balance_due ?? 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Footer */}
+                        <div className="text-center text-[10px] text-slate-400 font-medium border-t border-slate-100 pt-8 mt-8">
+                            Invoice generated by Pilar Sales Platform &copy; {new Date().getFullYear()}
+                        </div>
+
+                    </div>
+                </motion.div>
             </motion.div>
         </AnimatePresence>,
         document.body
