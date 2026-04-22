@@ -638,8 +638,8 @@ ${equipmentNotes}
                                                   </span>
                                               </div>
 
-                                              <div className="mt-auto relative flex items-center justify-end border-t border-slate-100 pt-3 h-10" onClick={e => e.stopPropagation()}>
-                                                 <div className="absolute left-0 top-3 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white pr-2 z-10">
+                                              <div className="mt-auto flex flex-col justify-end gap-1 border-t border-slate-100 pt-2 h-[68px]" onClick={e => e.stopPropagation()}>
+                                                 <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity h-7">
                                                     {['super_admin', 'admin'].includes((user?.role || '').toLowerCase()) && (
                                                        <button className="p-1.5 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Force Delete"><Trash2 size={14} /></button>
                                                     )}
@@ -660,7 +660,8 @@ ${equipmentNotes}
                                                     )}
                                                     <button onClick={() => handleCopyMessage(proposal)} className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-50 rounded transition-colors" title="Copy Message"><Copy size={14} /></button>
                                                  </div>
-                                                 <button 
+                                                 <div className="flex justify-end h-7 w-full">
+                                                    <button 
                                                     className={`ml-auto flex items-center justify-center text-[10px] font-black px-4 py-1.5 rounded-md shadow-sm transition-all focus:ring-2 outline-none ${
                                                         proposal.status === 'Approved' ? 'bg-emerald-500 text-white hover:bg-emerald-600' :
                                                         proposal.status === 'Sent' ? 'bg-blue-600 text-white hover:bg-blue-700' :
@@ -694,7 +695,12 @@ ${equipmentNotes}
                                                         }
                                                     }}
                                                  >
-                                                    {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : ['Lost', 'Voided'].includes(proposal.status) ? 'Review' : proposal.status === 'Pending Void' ? (['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase()) ? 'View Request' : 'Undo Request') : 'Resume'}
+                                                    {proposal.status === 'Approved' ? 'Contract' :
+                                                     proposal.status === 'Sent' ? 'Preview' :
+                                                     proposal.status === 'Lost' ? 'Review' :
+                                                     proposal.status === 'Voided' ? 'Review' :
+                                                     proposal.status === 'Pending Void' ? (['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase()) ? 'View Request' : 'Undo Request') :
+                                                     'Resume'}
                                                  </button>
                                               </div>
                                            </div>
