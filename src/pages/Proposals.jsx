@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useProposals } from '../context/ProposalContext';
 import { useCustomers } from '../context/CustomerContext';
-import { Search, Plus, Calendar, Settings, ShieldCheck, Mail, Printer, AlertTriangle, FileText, Share, Clock, Home, PenTool, CheckCircle, Smartphone, Edit2, Trash2, ArrowRight, CalendarClock, Lock, Link, Copy, ThumbsDown, RotateCcw, LayoutGrid, List as ListIcon } from 'lucide-react';
+import { Search, Plus, Calendar, Settings, ShieldCheck, Mail, Printer, AlertTriangle, FileText, Share, Clock, Home, PenTool, CheckCircle, Smartphone, Edit2, Trash2, ArrowRight, CalendarClock, Lock, Link, Copy, ThumbsDown, RotateCcw, LayoutGrid, List as ListIcon, Ban, Check, X } from 'lucide-react';
 import Modal from '../components/Modal';
 import toast from 'react-hot-toast';
 import './Proposals.css';
@@ -112,6 +112,8 @@ export default function Proposals() {
   const [pendingExtraction, setPendingExtraction] = useState(null);
   const [lostReason, setLostReason] = useState('');
   const [lostNotes, setLostNotes] = useState('');
+  const [requestingVoid, setRequestingVoid] = useState(null);
+  const [voidReason, setVoidReason] = useState('');
   const [filterMode, setFilterMode] = useState('All');
   const [layoutMode, setLayoutMode] = useState('list');
   const [dateFilter, setDateFilter] = useState('30days');
@@ -151,6 +153,40 @@ export default function Proposals() {
   const handleReopen = async (proposal) => {
       await updateProposal(proposal.id, { status: 'Sent' });
       toast.success('Proposal re-opened successfully.');
+  };
+
+  const handleRequestVoidConfirm = async () => {
+    if (!voidReason) return toast.error('Please provide a reason for the void request.');
+    
+    await updateProposal(requestingVoid.id, {
+        status: 'Pending Void',
+        proposal_data: {
+            ...(requestingVoid.proposal_data || {}),
+            void_reason: voidReason,
+            void_requested_at: new Date().toISOString(),
+            void_requested_by: user?.id
+        }
+    });
+    setRequestingVoid(null);
+    setVoidReason('');
+    toast.success('Void successfully requested.');
+  };
+
+  const handleApproveVoid = async (proposal) => {
+      await updateProposal(proposal.id, { status: 'Voided' });
+      toast.success('Void request approved.');
+  };
+
+  const handleDenyVoid = async (proposal) => {
+      await updateProposal(proposal.id, { 
+          status: 'Sent',
+          proposal_data: {
+              ...(proposal.proposal_data || {}),
+              void_denied_at: new Date().toISOString(),
+              automated_comment: 'Void request was declined by an administrator.'
+          }
+      });
+      toast.error('Void request denied, returned to Sent.');
   };
 
   const getProposalUrl = (id) => {
@@ -432,7 +468,7 @@ ${equipmentNotes}
           
           <div className="p-4 border-b border-slate-100 flex justify-between gap-2 overflow-x-auto bg-slate-50 custom-scrollbar">
              <div className="flex gap-2">
-                {['All', 'Lead', 'Draft', 'Sent', 'Approved', 'Lost'].map(mode => (
+                {['All', 'Lead', 'Draft', 'Sent', 'Approved', 'Pending Void', 'Voided', 'Lost'].map(mode => (
                     <button 
                        key={mode} 
                        onClick={() => setFilterMode(mode)}
@@ -514,7 +550,7 @@ ${equipmentNotes}
                     
                     {layoutMode === 'kanban' && !loading ? (
                         <div className={`p-6 min-h-[500px] bg-slate-50/30 ${filterMode === 'All' ? 'flex gap-6 overflow-x-auto' : ''}`}>
-                           {(filterMode === 'All' ? ['Lead', 'Draft', 'Sent', 'Approved', 'Lost'] : [filterMode]).map(colName => {
+                           {(filterMode === 'All' ? ['Lead', 'Draft', 'Sent', 'Pending Void', 'Voided', 'Approved', 'Lost'] : [filterMode]).map(colName => {
                               const colProposals = filteredProposals.filter(p => p.status === colName);
                               
                               let headerColor = 'border-slate-200 bg-slate-50 text-slate-700';
@@ -552,7 +588,7 @@ ${equipmentNotes}
                                                         if (['Draft', 'Lead', 'Sent', 'Opened', 'Lost'].includes(proposal.status) && !proposal.status?.includes('Lead')) {
                                                             // Wait, Lead should actually show range if it exists! Let's correct that based on user's feedback.
                                                         }
-                                                        if (['Draft', 'Lead', 'Sent', 'Opened', 'Lost'].includes(proposal.status) || (!proposal.status)) {
+                                                        if (['Draft', 'Lead', 'Sent', 'Opened', 'Pending Void', 'Voided', 'Lost'].includes(proposal.status) || (!proposal.status)) {
                                                            const { max, hasRange } = getEstValueDisplay(proposal);
                                                            if (hasRange) return `$${max.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
                                                         }
@@ -567,9 +603,18 @@ ${equipmentNotes}
                                                        <button className="p-1.5 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Force Delete"><Trash2 size={14} /></button>
                                                     )}
                                                     {['Sent', 'Opened'].includes(proposal.status) && (
-                                                       <button className="p-1.5 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors" onClick={() => setMarkingLost(proposal)} title="Mark as Lost"><ThumbsDown size={14} /></button>
+                                                       <>
+                                                          <button className="p-1.5 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors" onClick={() => setMarkingLost(proposal)} title="Mark as Lost"><ThumbsDown size={14} /></button>
+                                                          <button className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" onClick={() => setRequestingVoid(proposal)} title="Request Void"><Ban size={14} /></button>
+                                                       </>
                                                     )}
-                                                    {proposal.status === 'Lost' && (
+                                                    {proposal.status === 'Pending Void' && ['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase()) && (
+                                                       <>
+                                                          <button className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" onClick={() => handleApproveVoid(proposal)} title="Approve Void"><Check size={14} /></button>
+                                                          <button className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" onClick={() => handleDenyVoid(proposal)} title="Deny Void"><X size={14} /></button>
+                                                       </>
+                                                    )}
+                                                    {['Lost', 'Voided'].includes(proposal.status) && (
                                                        <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" onClick={() => handleReopen(proposal)} title="Re-open Proposal"><RotateCcw size={14} /></button>
                                                     )}
                                                     <button onClick={() => handleCopyMessage(proposal)} className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-50 rounded transition-colors" title="Copy Message"><Copy size={14} /></button>
@@ -579,6 +624,8 @@ ${equipmentNotes}
                                                         proposal.status === 'Approved' ? 'bg-emerald-500 text-white hover:bg-emerald-600' :
                                                         proposal.status === 'Sent' ? 'bg-blue-600 text-white hover:bg-blue-700' :
                                                         proposal.status === 'Lost' ? 'bg-red-50 text-red-600 hover:bg-red-100 shadow-none border border-red-200' :
+                                                        proposal.status === 'Voided' ? 'bg-slate-100 text-slate-600 hover:bg-slate-200 shadow-none border border-slate-300' :
+                                                        proposal.status === 'Pending Void' ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 shadow-none border border-amber-300' :
                                                         proposal.status === 'Lead' ? 'bg-purple-600 text-white hover:bg-purple-700' :
                                                         'bg-slate-600 text-white hover:bg-slate-700'
                                                     }`}
@@ -596,7 +643,7 @@ ${equipmentNotes}
                                                            setWizardConfig({ id: proposal.id, ...proposal });
                                                            setShowWizard(true);
                                                         } else {
-                                                           setViewingProposal(proposal.status === 'Lost' ? { ...proposal, isReadOnly: true } : proposal);
+                                                           setViewingProposal(['Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
                                                         }
                                                     }}
                                                  >
@@ -770,9 +817,18 @@ ${equipmentNotes}
                                        <button className="p-2 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Force Delete"><Trash2 size={16} /></button>
                                     )}
                                     {['Sent', 'Opened'].includes(proposal.status) && (
-                                       <button className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors" onClick={() => setMarkingLost(proposal)} title="Mark as Lost"><ThumbsDown size={16} /></button>
+                                       <>
+                                          <button className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors" onClick={() => setMarkingLost(proposal)} title="Mark as Lost"><ThumbsDown size={16} /></button>
+                                          <button className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" onClick={() => setRequestingVoid(proposal)} title="Request Void"><Ban size={16} /></button>
+                                       </>
                                     )}
-                                    {proposal.status === 'Lost' && (
+                                    {proposal.status === 'Pending Void' && ['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase()) && (
+                                       <>
+                                          <button className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" onClick={() => handleApproveVoid(proposal)} title="Approve Void"><Check size={16} /></button>
+                                          <button className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" onClick={() => handleDenyVoid(proposal)} title="Deny Void"><X size={16} /></button>
+                                       </>
+                                    )}
+                                    {['Lost', 'Voided'].includes(proposal.status) && (
                                        <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" onClick={() => handleReopen(proposal)} title="Re-open Proposal"><RotateCcw size={16} /></button>
                                     )}
                                  </div>
@@ -793,6 +849,10 @@ ${equipmentNotes}
                                           ? 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-600 border border-blue-700'
                                           : proposal.status === 'Lost'
                                           ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 shadow-none'
+                                          : proposal.status === 'Voided'
+                                          ? 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-300 shadow-none'
+                                          : proposal.status === 'Pending Void'
+                                          ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 border border-amber-300 shadow-none'
                                           : 'bg-slate-500 text-white hover:bg-slate-600 focus:ring-slate-500 border border-slate-600'
                                    }`}
                                    onClick={() => {
@@ -928,6 +988,28 @@ ${equipmentNotes}
                    setViewingProposal(proposal);
                }}>Cancel / Edit Priorities</button>
                <button className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold transition-colors shadow-sm" onClick={handleConfirmExtraction}>Yes, Extract & Execute Contract</button>
+            </div>
+         </div>
+      </Modal>
+
+      {/* Request Void Modal */}
+      <Modal isOpen={!!requestingVoid} onClose={() => setRequestingVoid(null)} title="Request Proposal Void">
+         <div className="p-4 space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+               <p className="text-sm text-amber-800">You are requesting to officially void <strong>{requestingVoid ? formatQuoteId(requestingVoid) : ''}</strong>. A manager or admin will need to approve this action.</p>
+            </div>
+            <div>
+               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Detailed Reason for Void</label>
+               <textarea 
+                   className="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 min-h-[100px]" 
+                   value={voidReason} 
+                   onChange={e => setVoidReason(e.target.value)} 
+                   placeholder="e.g. Created with wrong property details, duplicated entry..." 
+               />
+            </div>
+            <div className="flex gap-3 justify-end pt-2 border-t border-slate-100 mt-4">
+               <button className="px-5 py-2 text-slate-500 hover:text-slate-700 font-bold transition-colors" onClick={() => { setRequestingVoid(null); setVoidReason(''); }}>Cancel</button>
+               <button className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold transition-colors shadow-sm" onClick={handleRequestVoidConfirm} disabled={!voidReason}>Submit Request</button>
             </div>
          </div>
       </Modal>

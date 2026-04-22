@@ -7,17 +7,21 @@ export const PIPELINE_STATES = {
   PROPOSAL_BUILDING: 'PROPOSAL_BUILDING',
   PROPOSAL_SENT: 'PROPOSAL_SENT',
   APPROVED: 'APPROVED',
-  LOST: 'LOST'
+  LOST: 'LOST',
+  PENDING_VOID: 'PENDING_VOID',
+  VOIDED: 'VOIDED'
 };
 
 const TRANSITIONS = {
-  [PIPELINE_STATES.NEW_LEAD]: [PIPELINE_STATES.CONTACTED, PIPELINE_STATES.LOST],
-  [PIPELINE_STATES.CONTACTED]: [PIPELINE_STATES.SURVEY_SCHEDULED, PIPELINE_STATES.PROPOSAL_BUILDING, PIPELINE_STATES.LOST],
-  [PIPELINE_STATES.SURVEY_SCHEDULED]: [PIPELINE_STATES.PROPOSAL_BUILDING, PIPELINE_STATES.LOST],
-  [PIPELINE_STATES.PROPOSAL_BUILDING]: [PIPELINE_STATES.PROPOSAL_SENT, PIPELINE_STATES.LOST],
-  [PIPELINE_STATES.PROPOSAL_SENT]: [PIPELINE_STATES.APPROVED, PIPELINE_STATES.LOST],
+  [PIPELINE_STATES.NEW_LEAD]: [PIPELINE_STATES.CONTACTED, PIPELINE_STATES.LOST, PIPELINE_STATES.PENDING_VOID],
+  [PIPELINE_STATES.CONTACTED]: [PIPELINE_STATES.SURVEY_SCHEDULED, PIPELINE_STATES.PROPOSAL_BUILDING, PIPELINE_STATES.LOST, PIPELINE_STATES.PENDING_VOID],
+  [PIPELINE_STATES.SURVEY_SCHEDULED]: [PIPELINE_STATES.PROPOSAL_BUILDING, PIPELINE_STATES.LOST, PIPELINE_STATES.PENDING_VOID],
+  [PIPELINE_STATES.PROPOSAL_BUILDING]: [PIPELINE_STATES.PROPOSAL_SENT, PIPELINE_STATES.LOST, PIPELINE_STATES.PENDING_VOID],
+  [PIPELINE_STATES.PROPOSAL_SENT]: [PIPELINE_STATES.APPROVED, PIPELINE_STATES.LOST, PIPELINE_STATES.PENDING_VOID],
   [PIPELINE_STATES.APPROVED]: [PIPELINE_STATES.PROPOSAL_SENT],
-  [PIPELINE_STATES.LOST]: []
+  [PIPELINE_STATES.LOST]: [],
+  [PIPELINE_STATES.PENDING_VOID]: [PIPELINE_STATES.VOIDED, PIPELINE_STATES.PROPOSAL_SENT, PIPELINE_STATES.PROPOSAL_BUILDING, PIPELINE_STATES.NEW_LEAD, PIPELINE_STATES.CONTACTED, PIPELINE_STATES.SURVEY_SCHEDULED],
+  [PIPELINE_STATES.VOIDED]: []
 };
 
 function canTransition(current, next) {
@@ -63,5 +67,35 @@ export const PipelineController = {
           });
       }
       return executeTransition(id, current, PIPELINE_STATES.LOST);
+  },
+  requestVoid: async (id, current, householdId, reason) => {
+      if (householdId) {
+          await supabase.from('activity_logs').insert({
+             household_id: householdId,
+             activity_type: 'Void Requested',
+             description: `Deal void requested. Reason: ${reason}`
+          });
+      }
+      return executeTransition(id, current, PIPELINE_STATES.PENDING_VOID);
+  },
+  approveVoid: async (id, current, householdId) => {
+      if (householdId) {
+          await supabase.from('activity_logs').insert({
+             household_id: householdId,
+             activity_type: 'Void Approved',
+             description: `Admin approved the void request.`
+          });
+      }
+      return executeTransition(id, current, PIPELINE_STATES.VOIDED);
+  },
+  denyVoid: async (id, current, householdId, returnState = PIPELINE_STATES.PROPOSAL_SENT) => {
+      if (householdId) {
+          await supabase.from('activity_logs').insert({
+             household_id: householdId,
+             activity_type: 'Void Denied',
+             description: `Admin denied the void request. Returning to active pipeline.`
+          });
+      }
+      return executeTransition(id, current, returnState);
   }
 };
