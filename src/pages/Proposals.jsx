@@ -185,10 +185,20 @@ export default function Proposals() {
           status: 'Sent',
           proposal_data: {
               ...(proposal.proposal_data || {}),
-              void_denied_at: new Date().toISOString(),
-              automated_comment: 'Void request was declined by an administrator.'
+              void_denied_at: new Date().toISOString()
           }
       });
+      
+      try {
+          await supabase.from('proposal_comments').insert({
+              proposal_id: proposal.id,
+              user_id: user?.id,
+              content: 'Void request was declined by an administrator.'
+          });
+      } catch (e) {
+          console.error("Failed to post declined void comment:", e);
+      }
+      
       toast.error('Void request denied, returned to Sent.');
   };
 
