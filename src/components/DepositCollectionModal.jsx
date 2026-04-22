@@ -43,13 +43,21 @@ export default function DepositCollectionModal({ isOpen, onClose, contractData, 
 
         try {
             // Create Invoice
+            const isPaidInFull = depositAmount >= totalAmount;
+            
             const invoiceData = {
                 proposal_id: proposal.id,
                 customer_id: proposal.customer_id || null,
-                amount: depositAmount,
+                invoice_type: 'Deposit',
+                total_contract_amount: totalAmount,
+                deposit_collected: depositAmount,
+                balance_due: Math.max(0, totalAmount - depositAmount),
+                amount: depositAmount, // the actual payment mapped to this record
                 payment_method: paymentMethod,
-                status: 'Paid',
-                notes: `Deposit. Reference: ${reference || 'None'}. Total Contract: $${totalAmount}. Balance Due: $${totalAmount - depositAmount}.`
+                payment_reference: reference || null,
+                status: isPaidInFull ? 'Paid in Full' : 'Partial Payment',
+                notes: `Initial Contract Deposit. Reference: ${reference || 'None'}.`,
+                due_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString() // Net 30 default
             };
 
             const { error: invoiceError } = await supabase
