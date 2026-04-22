@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import PromoCodes from './PromoCodes';
 import FinancialSettings from './FinancialSettings';
-import { Landmark, Megaphone, Calculator } from 'lucide-react';
+import Invoices from './Invoices';
+import { Landmark, Megaphone, Calculator, Banknote } from 'lucide-react';
 
 export default function FinanceDashboard() {
   const [activeTab, setActiveTab] = useState('promos');
@@ -32,12 +33,24 @@ export default function FinanceDashboard() {
             <Calculator size={16} />
             Global Margins & Taxes
           </button>
+          <button
+            onClick={() => setActiveTab('invoices')}
+            className={`pb-3 font-bold text-sm flex items-center gap-2 transition-all border-b-[3px] ${
+                activeTab === 'invoices' 
+                ? 'border-primary-600 text-primary-700' 
+                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+            }`}
+          >
+            <Banknote size={16} />
+            Deposits & Invoices
+          </button>
       </div>
 
       {/* Content Area */}
       <div>
         {activeTab === 'promos' && <PromoCodes isSubView={true} />}
         {activeTab === 'margins' && <FinancialSettings isSubView={true} />}
+        {activeTab === 'invoices' && <Invoices isSubView={true} />}
       </div>
     </div>
   );

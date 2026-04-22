@@ -45,15 +45,11 @@ export default function DepositCollectionModal({ isOpen, onClose, contractData, 
             // Create Invoice
             const invoiceData = {
                 proposal_id: proposal.id,
-                customer_id: proposal.customer_id || null, // Assuming customer_id exists or map it
-                invoice_type: 'Deposit',
-                status: 'Paid',
-                total_contract_amount: totalAmount,
-                deposit_collected: depositAmount,
-                balance_due: totalAmount - depositAmount,
+                customer_id: proposal.customer_id || null,
+                amount: depositAmount,
                 payment_method: paymentMethod,
-                payment_reference: reference,
-                due_date: new Date().toISOString()
+                status: 'Paid',
+                notes: `Deposit. Reference: ${reference || 'None'}. Total Contract: $${totalAmount}. Balance Due: $${totalAmount - depositAmount}.`
             };
 
             const { error: invoiceError } = await supabase
