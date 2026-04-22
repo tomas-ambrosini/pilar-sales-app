@@ -704,6 +704,7 @@ ${equipmentNotes}
                                                  </button>
                                               </div>
                                            </div>
+                                        </div>
                                        ))}
                                        {colProposals.length === 0 && (
                                            <div className="p-4 border-2 border-dashed border-slate-200 rounded-xl text-center">
