@@ -580,9 +580,11 @@ ${equipmentNotes}
                               
                               let headerColor = 'border-slate-200 bg-slate-50 text-slate-700';
                               if (colName === 'Lead') headerColor = 'border-purple-200 bg-purple-50 text-purple-700';
+                              if (colName === 'Draft') headerColor = 'border-slate-600 bg-slate-500 text-white';
                               if (colName === 'Sent') headerColor = 'border-blue-200 bg-blue-50 text-blue-700';
                               if (colName === 'Approved') headerColor = 'border-emerald-200 bg-emerald-50 text-emerald-700';
                               if (colName === 'Lost') headerColor = 'border-red-200 bg-red-50 text-red-700';
+                              if (colName === 'Pending Void') headerColor = 'border-amber-200 bg-amber-50 text-amber-700';
 
                               return (
                                  <div key={colName} className={filterMode === 'All' ? "flex flex-col flex-1 min-w-[300px] max-w-md shrink-0 bg-slate-100/50 rounded-xl border border-slate-200 p-4 relative h-max mt-4" : "w-full h-max"}>
@@ -754,6 +756,8 @@ ${equipmentNotes}
                         let badgeColors = 'bg-slate-100 text-slate-600 border-slate-200';
                         if (proposal.status === 'Lead') {
                            badgeColors = 'bg-purple-50 text-purple-700 border-purple-200';
+                        } else if (proposal.status === 'Draft') {
+                           badgeColors = 'bg-slate-500 text-white border-slate-600';
                         } else if (proposal.status === 'Sent') {
                            badgeColors = 'bg-blue-50 text-blue-700 border-blue-200';
                         } else if (proposal.status === 'Approved') {
