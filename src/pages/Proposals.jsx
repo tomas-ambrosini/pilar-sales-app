@@ -588,7 +588,7 @@ ${equipmentNotes}
                  <div className="w-full">
                     
                     {layoutMode === 'kanban' && !loading ? (
-                        <div className={`p-6 min-h-[500px] bg-slate-50/30 ${filterMode === 'All' ? 'flex gap-6 overflow-x-auto' : ''}`}>
+                        <div className={`p-6 min-h-[500px] bg-slate-50/30 ${filterMode === 'All' ? 'flex gap-4 overflow-x-auto' : ''}`}>
                            {(filterMode === 'All' ? ['Lead', 'Draft', 'Sent', 'Pending Void', 'Voided', 'Approved', 'Lost'] : [filterMode]).map(colName => {
                               const colProposals = filteredProposals.filter(p => p.status === colName);
                               
@@ -601,7 +601,7 @@ ${equipmentNotes}
                               if (colName === 'Pending Void') headerColor = 'border-amber-200 bg-amber-50 text-amber-700';
 
                               return (
-                                 <div key={colName} className={filterMode === 'All' ? "flex flex-col flex-1 min-w-[240px] max-w-md shrink-0 bg-slate-100/50 rounded-xl border border-slate-200 p-4 relative h-max mt-4" : "w-full h-max"}>
+                                 <div key={colName} className={filterMode === 'All' ? "flex flex-col flex-1 min-w-[180px] max-w-md shrink-0 bg-slate-100/50 rounded-xl border border-slate-200 p-4 relative h-max mt-4" : "w-full h-max"}>
                                     {filterMode === 'All' && (
                                         <div className={`px-4 py-2 border rounded-lg mb-4 font-black uppercase tracking-wider text-[11px] ${headerColor} flex justify-between items-center shadow-sm absolute -top-5 left-4 right-4`}>
                                            <span>{colName}</span>
