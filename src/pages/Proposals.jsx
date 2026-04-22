@@ -177,6 +177,18 @@ export default function Proposals() {
 
   const handleApproveVoid = async (proposal) => {
       await updateProposal(proposal.id, { status: 'Voided' });
+      
+      try {
+          const reason = proposal.proposal_data?.void_reason || "No reason provided.";
+          await supabase.from('proposal_comments').insert({
+              proposal_id: proposal.id,
+              user_id: user?.id,
+              content: `Void request approved by an administrator. \n\nReason given: "${reason}"`
+          });
+      } catch (e) {
+          console.error("Failed to post approved void comment:", e);
+      }
+      
       toast.success('Void request approved.');
   };
 
