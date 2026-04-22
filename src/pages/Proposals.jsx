@@ -642,12 +642,14 @@ ${equipmentNotes}
                                                            }
                                                            setWizardConfig({ id: proposal.id, ...proposal });
                                                            setShowWizard(true);
+                                                        } else if (proposal.status === 'Pending Void') {
+                                                           handleReopen(proposal);
                                                         } else {
                                                            setViewingProposal(['Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
                                                         }
                                                     }}
                                                  >
-                                                    {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : proposal.status === 'Lost' ? 'Review' : 'Resume'}
+                                                    {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : ['Lost', 'Voided'].includes(proposal.status) ? 'Review' : proposal.status === 'Pending Void' ? 'Undo Request' : 'Resume'}
                                                  </button>
                                               </div>
                                            </div>
@@ -729,6 +731,8 @@ ${equipmentNotes}
                            badgeColors = 'bg-emerald-50 text-emerald-700 border-emerald-200';
                         } else if (proposal.status === 'Lost') {
                            badgeColors = 'bg-red-50 text-red-700 border-red-200';
+                        } else if (proposal.status === 'Pending Void') {
+                           badgeColors = 'bg-amber-50 text-amber-700 border-amber-200';
                         }
             
                         return (
@@ -869,12 +873,14 @@ ${equipmentNotes}
                                           // Ensure it launches as a native editable draft
                                           setWizardConfig({ id: proposal.id, ...proposal, isDraft: true });
                                           setShowWizard(true);
+                                       } else if (proposal.status === 'Pending Void') {
+                                           handleReopen(proposal);
                                        } else {
-                                          setViewingProposal(proposal.status === 'Lost' ? { ...proposal, isReadOnly: true } : proposal);
+                                          setViewingProposal(['Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
                                        }
                                    }}
                                  >
-                                    {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : proposal.status === 'Lost' ? 'Review' : 'Resume'}
+                                    {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : ['Lost', 'Voided'].includes(proposal.status) ? 'Review' : proposal.status === 'Pending Void' ? 'Undo Request' : 'Resume'}
                                  </button>
                               </div>
                             </td>
@@ -1025,7 +1031,7 @@ ${equipmentNotes}
                const matchedTierData = proposal.proposal_data?.accepted_tier_data || proposal.proposal_data?.tiers?.[matchedTierName];
                setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
             } else {
-               setViewingProposal(proposal.status === 'Lost' ? { ...proposal, isReadOnly: true } : proposal);
+               setViewingProposal(['Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
             }
         }}
       />
