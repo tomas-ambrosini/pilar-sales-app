@@ -170,6 +170,20 @@ export default function Proposals() {
             ...(isAdmin && { void_at: new Date().toISOString(), void_by: user?.id })
         }
     });
+
+    if (isAdmin) {
+       try {
+           const reason = voidReason || 'Auto-voided by Administrator';
+           await supabase.from('proposal_comments').insert({
+               proposal_id: requestingVoid.id,
+               user_id: user?.id,
+               content: `Proposal forcefully voided by an administrator. \n\nReason given: "${reason}"`
+           });
+       } catch (e) {
+           console.error("Failed to post force void comment:", e);
+       }
+    }
+
     setRequestingVoid(null);
     setVoidReason('');
     toast.success(isAdmin ? 'Proposal auto-voided.' : 'Void successfully requested.');
@@ -578,7 +592,7 @@ ${equipmentNotes}
                            {(filterMode === 'All' ? ['Lead', 'Draft', 'Sent', 'Pending Void', 'Voided', 'Approved', 'Lost'] : [filterMode]).map(colName => {
                               const colProposals = filteredProposals.filter(p => p.status === colName);
                               
-                              let headerColor = 'border-slate-200 bg-slate-50 text-slate-700';
+                              let headerColor = 'border-slate-200 bg-white text-slate-700';
                               if (colName === 'Lead') headerColor = 'border-purple-200 bg-purple-50 text-purple-700';
                               if (colName === 'Draft') headerColor = 'border-slate-600 bg-slate-500 text-white';
                               if (colName === 'Sent') headerColor = 'border-blue-200 bg-blue-50 text-blue-700';
@@ -587,11 +601,11 @@ ${equipmentNotes}
                               if (colName === 'Pending Void') headerColor = 'border-amber-200 bg-amber-50 text-amber-700';
 
                               return (
-                                 <div key={colName} className={filterMode === 'All' ? "flex flex-col flex-1 min-w-[300px] max-w-md shrink-0 bg-slate-100/50 rounded-xl border border-slate-200 p-4 relative h-max mt-4" : "w-full h-max"}>
+                                 <div key={colName} className={filterMode === 'All' ? "flex flex-col flex-1 min-w-[240px] max-w-md shrink-0 bg-slate-100/50 rounded-xl border border-slate-200 p-4 relative h-max mt-4" : "w-full h-max"}>
                                     {filterMode === 'All' && (
-                                        <div className={`px-4 py-2 border rounded-lg mb-4 font-black uppercase tracking-wider text-[11px] ${headerColor} flex justify-between items-center shadow-sm absolute -top-5 left-4 right-4 bg-white`}>
+                                        <div className={`px-4 py-2 border rounded-lg mb-4 font-black uppercase tracking-wider text-[11px] ${headerColor} flex justify-between items-center shadow-sm absolute -top-5 left-4 right-4`}>
                                            <span>{colName}</span>
-                                           <span className="bg-white/80 px-2 py-0.5 rounded-full text-[10px] shadow-sm">{colProposals.length}</span>
+                                           <span className="bg-white/90 text-slate-800 px-2 py-0.5 rounded-full text-[10px] shadow-sm">{colProposals.length}</span>
                                         </div>
                                     )}
                                     
@@ -798,7 +812,7 @@ ${equipmentNotes}
                             {/* COL 3: Pricing */}
                             <td className="p-4 px-6 text-left">
                               <div className="flex flex-col items-start justify-center truncate">
-                                 {(!proposal.status || ['Draft', 'Lead', 'Sent', 'Opened', 'Lost'].includes(proposal.status)) ? (() => {
+                                 {(!proposal.status || ['Draft', 'Lead', 'Sent', 'Opened', 'Pending Void', 'Voided', 'Lost'].includes(proposal.status)) ? (() => {
                                      const { min, max, hasRange } = getEstValueDisplay(proposal);
                                      if (hasRange) {
                                          return (
