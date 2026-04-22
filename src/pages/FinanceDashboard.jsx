@@ -35,9 +35,9 @@ export default function FinanceDashboard() {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-hidden relative">
-        {activeTab === 'promos' && <div className="absolute inset-0 overflow-y-auto"><PromoCodes isSubView={true} /></div>}
-        {activeTab === 'margins' && <div className="absolute inset-0 overflow-y-auto"><FinancialSettings isSubView={true} /></div>}
+      <div>
+        {activeTab === 'promos' && <PromoCodes isSubView={true} />}
+        {activeTab === 'margins' && <FinancialSettings isSubView={true} />}
       </div>
     </div>
   );
