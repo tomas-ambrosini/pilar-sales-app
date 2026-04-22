@@ -13,6 +13,7 @@ import ProposalWizard from '../components/ProposalWizard';
 import ProposalDetailsModal from '../components/ProposalDetailsModal';
 import ProposalViewerModal from '../components/ProposalViewerModal';
 import ContractDocumentModal from '../components/ContractDocumentModal';
+import DepositCollectionModal from '../components/DepositCollectionModal';
 import SignaturePad from '../components/SignaturePad';
 import ProposalComments from '../components/ProposalComments';
 import { useSearchParams } from 'react-router-dom';
@@ -107,6 +108,7 @@ export default function Proposals() {
   const [viewingProposal, setViewingProposal] = useState(null);
   const [viewingContract, setViewingContract] = useState(null);
   const [signingContract, setSigningContract] = useState(null);
+  const [collectingDeposit, setCollectingDeposit] = useState(null);
   const [deletingProposal, setDeletingProposal] = useState(null);
   const [markingLost, setMarkingLost] = useState(null);
   const [pendingExtraction, setPendingExtraction] = useState(null);
@@ -472,11 +474,11 @@ ${equipmentNotes}
      
      await updateProposal(proposal.id, finalDbObj);
 
-     // Move to the View Contract state
+     // Move to the Deposit Collection state
      const finalContractData = { ...signingContract };
      finalContractData.proposal.proposal_data = { ...(finalContractData.proposal.proposal_data || {}), signature_data: signatureData };
      setSigningContract(null);
-     setViewingContract(finalContractData);
+     setCollectingDeposit(finalContractData);
   };
 
   const handleDeleteConfirm = () => {
@@ -622,7 +624,12 @@ ${equipmentNotes}
                                                  </div>
                                               </div>
                                               
-                                              <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 mb-4 flex justify-between items-end">
+                                              <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 mb-4 flex justify-between items-end relative">
+                                                  {proposal.status === 'Approved' && proposal.proposal_data?.deposit_collected && (
+                                                      <span className="absolute -top-2.5 -right-2 bg-emerald-100 text-emerald-700 text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm border border-emerald-200 z-10 flex items-center gap-0.5">
+                                                          <CheckCircle size={8} /> DEPOSIT PAID
+                                                      </span>
+                                                  )}
                                                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Est. Value</span>
                                                   <span className="font-black text-slate-700 text-base leading-none">
                                                      {(() => {
@@ -1157,6 +1164,19 @@ ${equipmentNotes}
         isOpen={!!viewingContract}
         onClose={() => setViewingContract(null)}
         contractData={viewingContract}
+      />
+      <DepositCollectionModal 
+        isOpen={!!collectingDeposit}
+        onClose={() => {
+            setViewingContract(collectingDeposit);
+            setCollectingDeposit(null);
+        }}
+        contractData={collectingDeposit}
+        onSuccess={(amount) => {
+            toast.success(`Recorded $${amount.toLocaleString()} deposit payment successfully!`);
+            setViewingContract(collectingDeposit);
+            setCollectingDeposit(null);
+        }}
       />
     </div>
   );
