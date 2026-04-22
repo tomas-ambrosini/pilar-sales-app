@@ -611,7 +611,7 @@ ${equipmentNotes}
                                     
                                     <div className={filterMode === 'All' ? "flex flex-col gap-3 mt-3" : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"}>
                                        {colProposals.map(proposal => (
-                                           <div key={proposal.id} onClick={() => handleRowClick(proposal)} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-slate-400 transition-all cursor-pointer group flex flex-col relative">
+                                           <div key={proposal.id} onClick={() => handleRowClick(proposal)} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-slate-400 transition-all cursor-pointer group flex flex-col relative" style={{ height: '210px' }}>
                                               <div className="flex justify-between items-start mb-3">
                                                  <div>
                                                     <h3 className="font-black text-slate-800 text-sm truncate max-w-[180px]">{proposal.customer}</h3>
