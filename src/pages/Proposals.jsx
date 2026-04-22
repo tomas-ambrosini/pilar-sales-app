@@ -113,6 +113,7 @@ export default function Proposals() {
   const [lostReason, setLostReason] = useState('');
   const [lostNotes, setLostNotes] = useState('');
   const [requestingVoid, setRequestingVoid] = useState(null);
+  const [reviewingVoid, setReviewingVoid] = useState(null);
   const [voidReason, setVoidReason] = useState('');
   const [filterMode, setFilterMode] = useState('All');
   const [layoutMode, setLayoutMode] = useState('list');
@@ -156,20 +157,22 @@ export default function Proposals() {
   };
 
   const handleRequestVoidConfirm = async () => {
-    if (!voidReason) return toast.error('Please provide a reason for the void request.');
+    const isAdmin = ['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase());
+    if (!voidReason && !isAdmin) return toast.error('Please provide a reason for the void request.');
     
     await updateProposal(requestingVoid.id, {
-        status: 'Pending Void',
+        status: isAdmin ? 'Voided' : 'Pending Void',
         proposal_data: {
             ...(requestingVoid.proposal_data || {}),
-            void_reason: voidReason,
+            void_reason: voidReason || 'Auto-voided by Administrator',
             void_requested_at: new Date().toISOString(),
-            void_requested_by: user?.id
+            void_requested_by: user?.id,
+            ...(isAdmin && { void_at: new Date().toISOString(), void_by: user?.id })
         }
     });
     setRequestingVoid(null);
     setVoidReason('');
-    toast.success('Void successfully requested.');
+    toast.success(isAdmin ? 'Proposal auto-voided.' : 'Void successfully requested.');
   };
 
   const handleApproveVoid = async (proposal) => {
@@ -643,13 +646,17 @@ ${equipmentNotes}
                                                            setWizardConfig({ id: proposal.id, ...proposal });
                                                            setShowWizard(true);
                                                         } else if (proposal.status === 'Pending Void') {
-                                                           handleReopen(proposal);
+                                                            if (['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase())) {
+                                                                setReviewingVoid(proposal);
+                                                            } else {
+                                                                handleReopen(proposal);
+                                                            }
                                                         } else {
                                                            setViewingProposal(['Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
                                                         }
                                                     }}
                                                  >
-                                                    {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : ['Lost', 'Voided'].includes(proposal.status) ? 'Review' : proposal.status === 'Pending Void' ? 'Undo Request' : 'Resume'}
+                                                    {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : ['Lost', 'Voided'].includes(proposal.status) ? 'Review' : proposal.status === 'Pending Void' ? (['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase()) ? 'View Request' : 'Undo Request') : 'Resume'}
                                                  </button>
                                               </div>
                                            </div>
@@ -874,13 +881,17 @@ ${equipmentNotes}
                                           setWizardConfig({ id: proposal.id, ...proposal, isDraft: true });
                                           setShowWizard(true);
                                        } else if (proposal.status === 'Pending Void') {
-                                           handleReopen(proposal);
+                                           if (['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase())) {
+                                               setReviewingVoid(proposal);
+                                           } else {
+                                               handleReopen(proposal);
+                                           }
                                        } else {
                                           setViewingProposal(['Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
                                        }
                                    }}
                                  >
-                                    {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : ['Lost', 'Voided'].includes(proposal.status) ? 'Review' : proposal.status === 'Pending Void' ? 'Undo Request' : 'Resume'}
+                                    {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : ['Lost', 'Voided'].includes(proposal.status) ? 'Review' : proposal.status === 'Pending Void' ? (['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase()) ? 'View Request' : 'Undo Request') : 'Resume'}
                                  </button>
                               </div>
                             </td>
@@ -999,13 +1010,17 @@ ${equipmentNotes}
       </Modal>
 
       {/* Request Void Modal */}
-      <Modal isOpen={!!requestingVoid} onClose={() => setRequestingVoid(null)} title="Request Proposal Void">
+      <Modal isOpen={!!requestingVoid} onClose={() => setRequestingVoid(null)} title={['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase()) ? "Force Void Proposal" : "Request Proposal Void"}>
          <div className="p-4 space-y-4">
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-               <p className="text-sm text-amber-800">You are requesting to officially void <strong>{requestingVoid ? formatQuoteId(requestingVoid) : ''}</strong>. A manager or admin will need to approve this action.</p>
+               <p className="text-sm text-amber-800">
+                   {['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase()) 
+                       ? `You are an admin. Voiding ${requestingVoid ? formatQuoteId(requestingVoid) : ''} will bypass approval and take effect immediately.` 
+                       : `You are requesting to officially void ${requestingVoid ? formatQuoteId(requestingVoid) : ''}. A manager or admin will need to approve this action.`}
+               </p>
             </div>
             <div>
-               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Detailed Reason for Void</label>
+               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Detailed Reason for Void {['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase()) && '(Optional)'}</label>
                <textarea 
                    className="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 min-h-[100px]" 
                    value={voidReason} 
@@ -1015,7 +1030,26 @@ ${equipmentNotes}
             </div>
             <div className="flex gap-3 justify-end pt-2 border-t border-slate-100 mt-4">
                <button className="px-5 py-2 text-slate-500 hover:text-slate-700 font-bold transition-colors" onClick={() => { setRequestingVoid(null); setVoidReason(''); }}>Cancel</button>
-               <button className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold transition-colors shadow-sm" onClick={handleRequestVoidConfirm} disabled={!voidReason}>Submit Request</button>
+               <button className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold transition-colors shadow-sm" onClick={handleRequestVoidConfirm} disabled={!voidReason && !['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase())}>
+                   {['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase()) ? "Force Void" : "Submit Request"}
+               </button>
+            </div>
+         </div>
+      </Modal>
+
+      {/* Admin Review Void Modal */}
+      <Modal isOpen={!!reviewingVoid} onClose={() => setReviewingVoid(null)} title="Review Void Request">
+         <div className="p-4 space-y-4">
+            <div>
+               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Salesperson Reason</label>
+               <div className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-slate-700 min-h-[100px] whitespace-pre-wrap">
+                  {reviewingVoid?.proposal_data?.void_reason || "No reason provided."}
+               </div>
+            </div>
+            <div className="flex gap-3 justify-end pt-2 border-t border-slate-100 mt-4">
+               <button className="px-5 py-2 hover:bg-slate-100 text-slate-600 rounded-lg font-bold transition-colors shadow-sm" onClick={() => setReviewingVoid(null)}>Cancel</button>
+               <button className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition-colors shadow-sm" onClick={() => { handleDenyVoid(reviewingVoid); setReviewingVoid(null); }}>Deny Request</button>
+               <button className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-colors shadow-sm" onClick={() => { handleApproveVoid(reviewingVoid); setReviewingVoid(null); }}>Approve Void</button>
             </div>
          </div>
       </Modal>
