@@ -611,7 +611,7 @@ ${equipmentNotes}
                                     
                                     <div className={filterMode === 'All' ? "flex flex-col gap-3 mt-3" : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"}>
                                        {colProposals.map(proposal => (
-                                           <div key={proposal.id} onClick={() => handleRowClick(proposal)} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-slate-400 transition-all cursor-pointer group flex flex-col h-[190px]">
+                                           <div key={proposal.id} onClick={() => handleRowClick(proposal)} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-slate-400 transition-all cursor-pointer group flex flex-col relative">
                                               <div className="flex justify-between items-start mb-3">
                                                  <div>
                                                     <h3 className="font-black text-slate-800 text-sm truncate max-w-[180px]">{proposal.customer}</h3>
@@ -638,8 +638,8 @@ ${equipmentNotes}
                                                   </span>
                                               </div>
 
-                                              <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3" onClick={e => e.stopPropagation()}>
-                                                 <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                              <div className="mt-auto relative flex items-center justify-end border-t border-slate-100 pt-3 h-10" onClick={e => e.stopPropagation()}>
+                                                 <div className="absolute left-0 top-3 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white pr-2 z-10">
                                                     {['super_admin', 'admin'].includes((user?.role || '').toLowerCase()) && (
                                                        <button className="p-1.5 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Force Delete"><Trash2 size={14} /></button>
                                                     )}
