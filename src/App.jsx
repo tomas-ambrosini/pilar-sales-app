@@ -12,6 +12,7 @@ import PromoCodes from './pages/PromoCodes';
 import AccountManagement from './pages/AccountManagement';
 import TemplateSettings from './pages/TemplateSettings';
 import FinancialSettings from './pages/FinancialSettings';
+import FinanceDashboard from './pages/FinanceDashboard';
 import SalesPipeline from './pages/SalesPipeline';
 import DispatchHub from './pages/DispatchHub';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -66,14 +67,13 @@ function MainRouter() {
           
           {/* MANAGER DOMAINS */}
           <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><Catalog /></RoleRoute>} />
-          <Route path="promo-codes/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><PromoCodes /></RoleRoute>} />
           <Route path="pipeline/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><SalesPipeline /></RoleRoute>} />
           <Route path="dispatch/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><DispatchHub /></RoleRoute>} />
 
           {/* SUPER ADMIN EXCLUSIVE DOMAINS */}
           <Route path="account-management/*" element={<RoleRoute allowedRoles={['ADMIN']}><AccountManagement /></RoleRoute>} />
           <Route path="template-settings/*" element={<RoleRoute allowedRoles={['ADMIN']}><TemplateSettings /></RoleRoute>} />
-          <Route path="financial-settings/*" element={<RoleRoute allowedRoles={['ADMIN']}><FinancialSettings /></RoleRoute>} />
+          <Route path="finance/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><FinanceDashboard /></RoleRoute>} />
           
           {/* WILDCARDS / DEFAULTS */}
           <Route index element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Dashboard /></RoleRoute>} />
