@@ -3,7 +3,8 @@ import Modal from './Modal';
 import ProposalComments from './ProposalComments';
 import { formatQuoteId } from '../utils/formatters';
 import { useCustomers } from '../context/CustomerContext';
-import { User, FileText, Calendar, Activity, Mail, Phone, MapPin, Grid, Camera, ThermometerSun, AlertCircle, CheckCircle, PackageCheck } from 'lucide-react';
+import { User, FileText, Calendar, Activity, Mail, Phone, MapPin, Grid, Camera, ThermometerSun, AlertCircle, CheckCircle, PackageCheck, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const MEASUREMENTS = {
   m1: "Ret W", m2: "Ret D", m3: "Sup W", m4: "Sup D", m5: "Ret Box W",
@@ -32,6 +33,8 @@ const PHOTO_LABELS = {
 
 export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer }) {
     const { customers } = useCustomers();
+    const [activeImage, setActiveImage] = React.useState(null);
+    
     if (!proposal) return null;
 
     const data = proposal?.proposal_data || {};
@@ -60,6 +63,7 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
         };
     });
     return (
+        <>
         <Modal 
             isOpen={!!proposal} 
             onClose={onClose} 
@@ -330,7 +334,11 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
                                                 ) : (
                                                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                                         {populatedPhotos.map(([tag, url]) => (
-                                                            <div key={tag} className="flex flex-col pointer-events-none group rounded-xl overflow-hidden border border-slate-200 bg-white hover:shadow-lg transition-shadow">
+                                                            <div 
+                                                                key={tag} 
+                                                                className="flex flex-col group rounded-xl overflow-hidden border border-slate-200 bg-white hover:shadow-lg transition-shadow cursor-pointer"
+                                                                onClick={() => setActiveImage(url)}
+                                                            >
                                                                 <div className="aspect-[4/3] bg-slate-100 overflow-hidden relative">
                                                                     <img src={url} alt={tag} className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105" />
                                                                 </div>
@@ -366,5 +374,32 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
                 </div>
             </div>
         </Modal>
+
+        <AnimatePresence>
+            {activeImage && (
+                <div 
+                    className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-md" 
+                    onClick={() => setActiveImage(null)}
+                >
+                    <button 
+                        className="absolute top-6 right-6 text-white/50 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors z-[3001]" 
+                        onClick={() => setActiveImage(null)}
+                    >
+                        <X size={24} />
+                    </button>
+                    <motion.img 
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                        src={activeImage} 
+                        alt="Full screen view" 
+                        className="max-w-[95vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
+        </AnimatePresence>
+        </>
     );
 }
