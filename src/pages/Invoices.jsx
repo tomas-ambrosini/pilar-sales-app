@@ -56,13 +56,13 @@ export default function Invoices({ isSubView = false }) {
                     
                     {/* Header & Tabs */}
                     <div className="border-b border-slate-200 bg-white">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-slate-50/50 gap-4 sm:gap-0">
-                            <div className="flex gap-4 sm:gap-6 px-2 w-full sm:w-auto overflow-x-auto whitespace-nowrap custom-scrollbar">
+                        <div className="flex flex-wrap items-center justify-between p-4 bg-slate-50/50 gap-4">
+                            <div className="flex gap-4 sm:gap-6 px-2 overflow-x-auto whitespace-nowrap custom-scrollbar" style={{ flex: '1 1 auto' }}>
                                 <button onClick={() => setViewTab('unpaid')} className={`pb-2 font-bold text-sm transition-all border-b-2 ${viewTab === 'unpaid' ? 'border-primary-600 text-primary-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>Unpaid Invoices</button>
                                 <button onClick={() => setViewTab('paid')} className={`pb-2 font-bold text-sm transition-all border-b-2 ${viewTab === 'paid' ? 'border-primary-600 text-primary-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>Paid Invoices</button>
                                 <button onClick={() => setViewTab('all')} className={`pb-2 font-bold text-sm transition-all border-b-2 ${viewTab === 'all' ? 'border-primary-600 text-primary-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>All Invoices</button>
                             </div>
-                            <div className="relative w-full sm:w-64 shrink-0">
+                            <div className="relative shrink-0" style={{ width: '100%', maxWidth: '256px' }}>
                                 <Search className="absolute left-3 top-2.5 text-slate-400" size={14} />
                                 <input 
                                     type="text" 
