@@ -50,9 +50,9 @@ export default function Invoices({ isSubView = false }) {
     return (
         <div className={`${isSubView ? 'p-6' : 'page-container p-8'} h-full flex flex-col bg-slate-50 overflow-y-auto`}>
             
-            <div className="flex flex-col md:flex-row gap-6 h-full min-h-[600px]">
+            <div className="responsive-invoices-layout">
                 {/* Main Ledger Area */}
-                <div className="flex-1 flex flex-col bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden min-w-0">
+                <div className="responsive-invoices-main bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
                     
                     {/* Header & Tabs */}
                     <div className="border-b border-slate-200 bg-white">
@@ -134,25 +134,27 @@ export default function Invoices({ isSubView = false }) {
                 </div>
 
                 {/* Right Side Summary Panel */}
-                <div className="w-full md:w-72 lg:w-80 shrink-0 flex flex-col sm:flex-row md:flex-col gap-4 order-first md:order-last">
-                    <div className="flex-1 bg-white border border-slate-200 rounded-xl p-5 shadow-sm text-center">
-                        <div className="w-12 h-12 bg-primary-50 text-primary-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <FileText size={24} />
+                <div className="responsive-invoices-sidebar">
+                    <div className="responsive-invoices-sidebar-cards">
+                        <div className="flex-1 bg-white border border-slate-200 rounded-xl p-5 shadow-sm text-center">
+                            <div className="w-12 h-12 bg-primary-50 text-primary-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <FileText size={24} />
+                            </div>
+                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Grand Total Due of All Unpaid</h3>
+                            <p className="text-3xl font-black text-slate-800 tracking-tight">${grandTotalUnpaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
                         </div>
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Grand Total Due of All Unpaid</h3>
-                        <p className="text-3xl font-black text-slate-800 tracking-tight">${grandTotalUnpaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-                    </div>
 
-                    <div className="flex-1 bg-white border border-slate-200 rounded-xl p-5 shadow-sm text-center">
-                        <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <Banknote size={24} />
+                        <div className="flex-1 bg-white border border-slate-200 rounded-xl p-5 shadow-sm text-center">
+                            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <Banknote size={24} />
+                            </div>
+                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Deposits / Paid</h3>
+                            <p className="text-3xl font-black text-slate-800 tracking-tight">${grandTotalCollected.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
                         </div>
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Deposits / Paid</h3>
-                        <p className="text-3xl font-black text-slate-800 tracking-tight">${grandTotalCollected.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
                     </div>
                     
                     <div className="flex-1 bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 shadow-md text-center text-white lg:mt-auto flex flex-col justify-center">
-                        <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest mb-2 flex justify-center items-center gap-2"><CheckCircle2 size={14}/> Live Accounting Sync</h3>
+                        <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest mb-2 flex justify-center items-center gap-2"><CheckCircle2 size={14}/> LIVE ACCOUNTING SYNC v2</h3>
                         <p className="text-sm font-medium text-slate-400 mb-4 leading-relaxed hidden md:block">Pilar automatically syncs paid invoices to your primary ledger. QuickBooks integration is active.</p>
                         <button className="w-full py-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-bold transition-colors">Force Ledger Sync</button>
                     </div>
