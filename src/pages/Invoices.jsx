@@ -50,7 +50,7 @@ export default function Invoices({ isSubView = false }) {
     return (
         <div className={`${isSubView ? 'p-6' : 'page-container p-8'} h-full flex flex-col bg-slate-50 overflow-y-auto`}>
             
-            <div className="flex flex-col lg:flex-row gap-6 h-full min-h-[600px]">
+            <div className="flex flex-col md:flex-row gap-6 h-full min-h-[600px]">
                 {/* Main Ledger Area */}
                 <div className="flex-1 flex flex-col bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
                     
@@ -134,7 +134,7 @@ export default function Invoices({ isSubView = false }) {
                 </div>
 
                 {/* Right Side Summary Panel */}
-                <div className="w-full lg:w-[300px] shrink-0 flex flex-col sm:flex-row lg:flex-col gap-4 order-first lg:order-last">
+                <div className="w-full md:w-[300px] shrink-0 flex flex-col gap-4 order-first md:order-last">
                     <div className="flex-1 bg-white border border-slate-200 rounded-xl p-5 shadow-sm text-center">
                         <div className="w-12 h-12 bg-primary-50 text-primary-600 rounded-full flex items-center justify-center mx-auto mb-3">
                             <FileText size={24} />

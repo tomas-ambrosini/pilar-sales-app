@@ -47,7 +47,7 @@ export default function FinanceDashboard() {
       </div>
 
       {/* Content Area */}
-      <div>
+      <div className="flex-1 overflow-hidden">
         {activeTab === 'promos' && <PromoCodes isSubView={true} />}
         {activeTab === 'margins' && <FinancialSettings isSubView={true} />}
         {activeTab === 'invoices' && <Invoices isSubView={true} />}
