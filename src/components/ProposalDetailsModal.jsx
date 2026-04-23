@@ -3,7 +3,8 @@ import Modal from './Modal';
 import ProposalComments from './ProposalComments';
 import { formatQuoteId } from '../utils/formatters';
 import { useCustomers } from '../context/CustomerContext';
-import { User, FileText, Calendar, Activity, Mail, Phone, MapPin, Grid, Camera, ThermometerSun, AlertCircle, CheckCircle, PackageCheck, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { User, FileText, Calendar, Activity, Mail, Phone, MapPin, Grid, Camera, ThermometerSun, AlertCircle, CheckCircle, PackageCheck, X, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const MEASUREMENTS = {
@@ -375,31 +376,48 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
             </div>
         </Modal>
 
-        <AnimatePresence>
-            {activeImage && (
-                <div 
-                    className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-md" 
-                    onClick={() => setActiveImage(null)}
-                >
-                    <button 
-                        className="absolute top-6 right-6 text-white/50 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors z-[3001]" 
+        {typeof document !== 'undefined' && createPortal(
+            <AnimatePresence>
+                {activeImage && (
+                    <div 
+                        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-md" 
                         onClick={() => setActiveImage(null)}
                     >
-                        <X size={24} />
-                    </button>
-                    <motion.img 
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.9, opacity: 0 }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        src={activeImage} 
-                        alt="Full screen view" 
-                        className="max-w-[95vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                </div>
-            )}
-        </AnimatePresence>
+                        <div className="absolute top-6 right-6 flex items-center gap-3 z-[10000]">
+                            <a 
+                                href={activeImage} 
+                                download="inspection-image.jpg" 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="text-white/50 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-colors flex items-center justify-center"
+                                onClick={(e) => e.stopPropagation()}
+                                title="Download Image"
+                            >
+                                <Download size={20} />
+                            </a>
+                            <button 
+                                className="text-white/50 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-colors flex items-center justify-center" 
+                                onClick={() => setActiveImage(null)}
+                                title="Close"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <motion.img 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            src={activeImage} 
+                            alt="Full screen view" 
+                            className="max-w-[95vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </div>
+                )}
+            </AnimatePresence>,
+            document.body
+        )}
         </>
     );
 }
