@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User, Edit2, Trash2, Reply, Paperclip, FileText, Loader2, Image as ImageIcon, SmilePlus } from 'lucide-react';
+import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User, Edit2, Trash2, Reply, Paperclip, FileText, Loader2, Image as ImageIcon, SmilePlus, Minimize2, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNotifications } from '../context/NotificationsContext';
 import { formatQuoteId } from '../utils/formatters';
 import ProposalViewerModal from './ProposalViewerModal';
 import './MessagesDrawer.css';
 
-export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearForceChannel, onUnreadStatusChange }) {
+export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearForceChannel, onUnreadStatusChange, isDocked, onToggleDock, onMinimize }) {
   const { user } = useAuth();
   const { createNotification } = useNotifications() || {};
   const [channels, setChannels] = useState([]);
@@ -889,14 +889,16 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div 
-            className="drawer-overlay" 
-            onClick={onClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          />
+          {!isDocked && (
+             <motion.div 
+               className="drawer-overlay" 
+               onClick={onClose}
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               exit={{ opacity: 0 }}
+               transition={{ duration: 0.3 }}
+             />
+          )}
 
           <motion.div 
             className="messages-drawer"
@@ -960,15 +962,36 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                   ) : (
                      <div className="drawer-title">Pilar <span className="text-primary-600">Comms</span></div>
                   )}
-                  <motion.button 
-                    className="icon-btn-minimal" 
-                    onClick={onClose}
-                    whileHover={{ scale: 1.1, rotate: 90 }}
-                    whileTap={{ scale: 0.9 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-                  >
-                    <X size={20} strokeWidth={2.5} />
-                  </motion.button>
+                  <div className="flex items-center gap-1.5 ml-auto">
+                     <motion.button 
+                       className="icon-btn-minimal hover:text-slate-700 hover:bg-slate-100" 
+                       onClick={onMinimize}
+                       title="Minimize to Chat Head"
+                       whileHover={{ scale: 1.05 }}
+                       whileTap={{ scale: 0.95 }}
+                     >
+                       <Minimize2 size={18} strokeWidth={2.5} />
+                     </motion.button>
+                     <motion.button 
+                       className={`icon-btn-minimal hover:text-slate-700 hover:bg-slate-100 ${isDocked ? 'text-primary-600' : 'text-slate-400'}`} 
+                       onClick={onToggleDock}
+                       title={isDocked ? "Float Chat" : "Dock Chat"}
+                       whileHover={{ scale: 1.05 }}
+                       whileTap={{ scale: 0.95 }}
+                     >
+                       {isDocked ? <PanelRightOpen size={18} strokeWidth={2.5} /> : <PanelRightClose size={18} strokeWidth={2.5} />}
+                     </motion.button>
+                     <div className="w-px h-4 bg-slate-200 mx-1"></div>
+                     <motion.button 
+                       className="icon-btn-minimal hover:text-rose-500 hover:bg-rose-50" 
+                       onClick={onClose}
+                       whileHover={{ scale: 1.1, rotate: 90 }}
+                       whileTap={{ scale: 0.9 }}
+                       transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+                     >
+                       <X size={20} strokeWidth={2.5} />
+                     </motion.button>
+                  </div>
                 </header>
 
                 {/* Content Area */}

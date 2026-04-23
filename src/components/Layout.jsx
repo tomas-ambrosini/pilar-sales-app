@@ -59,7 +59,21 @@ export default function Layout() {
     return false;
   });
 
+  const [isChatDocked, setIsChatDocked] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('pilar-chat-docked') === 'true';
+    }
+    return false;
+  });
+  const [isChatMinimized, setIsChatMinimized] = useState(false);
+
   const isMessagesOpenRef = useRef(isMessagesOpen);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pilar-chat-docked', isChatDocked);
+    }
+  }, [isChatDocked]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -197,7 +211,10 @@ export default function Layout() {
         </div>
       </aside>
 
-      <div className="main-wrapper">
+      <div 
+        className="main-wrapper transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)]"
+        style={{ paddingRight: isMessagesOpen && isChatDocked && !isChatMinimized ? '400px' : '0' }}
+      >
         {/* Top App Bar */}
         <header className="top-bar">
           <div className="mobile-header">
@@ -305,13 +322,36 @@ export default function Layout() {
           <ProfileSettingsModal onClose={handleCloseModal} />
         )}
       </AnimatePresence>
+      <AnimatePresence>
+        {isChatMinimized && (
+          <motion.button
+            initial={{ scale: 0, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0, opacity: 0, y: 20 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            onClick={() => { setIsChatMinimized(false); setMessagesOpen(true); }}
+            className="fixed bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full shadow-2xl flex items-center justify-center text-white hover:bg-primary-700 transition-colors z-[1900] group outline-none focus:ring-4 focus:ring-primary-500/30"
+          >
+            <MessageCircle size={24} />
+            {hasUnreadMessages && (
+              <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+            )}
+            <div className="absolute right-full mr-4 bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg pointer-events-none">
+              Open Chat
+            </div>
+          </motion.button>
+        )}
+      </AnimatePresence>
       <CommandMenu isOpen={isCommandMenuOpen} setIsOpen={setCommandMenuOpen} />
       <MessagesDrawer 
-        isOpen={isMessagesOpen} 
+        isOpen={isMessagesOpen && !isChatMinimized} 
         onClose={() => setMessagesOpen(false)} 
         forceChannel={forceChannelId}
         onClearForceChannel={() => setForceChannelId(null)}
         onUnreadStatusChange={setHasUnreadMessages}
+        isDocked={isChatDocked}
+        onToggleDock={() => setIsChatDocked(!isChatDocked)}
+        onMinimize={() => { setIsChatMinimized(true); setMessagesOpen(false); }}
       />
     </div>
   );
