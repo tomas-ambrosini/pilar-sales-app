@@ -771,7 +771,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
             </div>
             <div className="bg-slate-50 p-6 rounded border border-slate-200 mb-6 font-medium text-sm">
                <h4 className="text-sm font-bold border-b pb-2 mb-4 text-primary-600 uppercase">A. Current Equipment</h4>
-               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                  <div><label className="text-[10px] uppercase font-bold text-slate-500">System Type</label><select className="input-field w-full mt-1" value={survey.systemType} onChange={e => updateSurveyAndTriggerSafetyNet('systemType', e.target.value)}><option value="">Select...</option><option>Split AC & Furnace</option><option>Heat Pump</option><option>Package Unit</option></select></div>
                  <div><label className="text-[10px] uppercase font-bold text-slate-500">Current Tonnage</label><select className="input-field w-full mt-1" value={survey.currentTonnage} onChange={e => updateSurveyAndTriggerSafetyNet('currentTonnage', e.target.value)}><option value="">Select...</option><option>1.5</option><option>2.0</option><option>2.5</option><option>3.0</option><option>3.5</option><option>4.0</option><option>5.0</option></select></div>
                  <div><label className="text-[10px] uppercase font-bold text-slate-500">Refrigerant (Triggers Flush)</label><select className="input-field w-full mt-1" value={survey.gasRefrigerant} onChange={e => updateSurveyAndTriggerSafetyNet('gasRefrigerant', e.target.value)}><option value="R410A">R-410A</option><option value="R-22">R-22</option></select></div>
@@ -779,7 +779,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                </div>
 
                <h4 className="text-sm font-bold border-b pb-2 mb-4 text-primary-600 uppercase mt-4">B. Physical Safety Constraints</h4>
-               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                  <div><label className="text-[10px] uppercase font-bold text-slate-500">Condenser Location</label><select className="input-field w-full mt-1" value={survey.condenserLocation} onChange={e => updateSurveyAndTriggerSafetyNet('condenserLocation', e.target.value)}><option value="">Select...</option><option value="Ground">Ground Level</option><option value="Roof">Roof (Triggers Crane)</option><option value="Side">Side Yard Narrow</option></select></div>
                  <div><label className="text-[10px] uppercase font-bold text-slate-500">Air Handler Location</label><select className="input-field w-full mt-1" value={survey.ahuLocation} onChange={e => updateSurveyAndTriggerSafetyNet('ahuLocation', e.target.value)}><option value="">Select...</option><option value="Closet">Closet</option><option value="Garage">Garage</option><option value="Attic">Attic (+Labor)</option></select></div>
                  <div><label className="text-[10px] uppercase font-bold text-slate-500">Disconnect Box</label><select className="input-field w-full mt-1" value={survey.disconnectCondition} onChange={e => updateSurveyAndTriggerSafetyNet('disconnectCondition', e.target.value)}><option value="Pass">Pass</option><option value="Replace Required">Replace Required</option></select></div>
@@ -792,7 +792,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                  {/* Box 1: Front View */}
                  <div className="bg-slate-50 p-4 border border-slate-200 rounded shadow-sm">
                    <h5 className="font-black text-center text-slate-700 tracking-wider mb-4 border-b border-slate-200 pb-2">FRONT VIEW</h5>
-                   <div className="grid grid-cols-2 gap-3 text-xs">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                      <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">1</div><input className="input-field w-full py-1 text-center" placeholder="Plenum W" value={survey.m1} onChange={e=>setSurvey({...survey, m1: e.target.value})}/></div>
                      <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">2</div><input className="input-field w-full py-1 text-center" placeholder="AHU W" value={survey.m2} onChange={e=>setSurvey({...survey, m2: e.target.value})}/></div>
                      <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">3</div><input className="input-field w-full py-1 text-center" placeholder="Ret Box W" value={survey.m3} onChange={e=>setSurvey({...survey, m3: e.target.value})}/></div>
@@ -809,7 +809,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                  {/* Box 2: Side View */}
                  <div className="bg-slate-50 p-4 border border-slate-200 rounded shadow-sm">
                    <h5 className="font-black text-center text-slate-700 tracking-wider mb-4 border-b border-slate-200 pb-2">SIDE VIEW</h5>
-                   <div className="grid grid-cols-2 gap-3 text-xs">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                      <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">11</div><input className="input-field w-full py-1 text-center" placeholder="Ceil H" value={survey.m11} onChange={e=>setSurvey({...survey, m11: e.target.value})}/></div>
                      <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">12</div><input className="input-field w-full py-1 text-center" placeholder="Clearance" value={survey.m12} onChange={e=>setSurvey({...survey, m12: e.target.value})}/></div>
                      <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">13</div><input className="input-field w-full py-1 text-center" placeholder="Plenum D" value={survey.m13} onChange={e=>setSurvey({...survey, m13: e.target.value})}/></div>
@@ -823,7 +823,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                  {/* Box 3: Horizontal */}
                  <div className="bg-slate-50 p-4 border border-slate-200 rounded shadow-sm">
                    <h5 className="font-black text-center text-slate-700 tracking-wider mb-4 border-b border-slate-200 pb-2">HORIZONTAL</h5>
-                   <div className="grid grid-cols-2 gap-3 text-xs">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                      <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">18</div><input className="input-field w-full py-1 text-center" placeholder="Access W" value={survey.m18} onChange={e=>setSurvey({...survey, m18: e.target.value})}/></div>
                      <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">19</div><input className="input-field w-full py-1 text-center" placeholder="Access D" value={survey.m19} onChange={e=>setSurvey({...survey, m19: e.target.value})}/></div>
                      <div className="flex items-center gap-2"><div className="bg-slate-300 text-slate-700 rounded w-6 h-6 flex items-center justify-center font-bold font-mono">20</div><input className="input-field w-full py-1 text-center" placeholder="AHU L" value={survey.m20} onChange={e=>setSurvey({...survey, m20: e.target.value})}/></div>

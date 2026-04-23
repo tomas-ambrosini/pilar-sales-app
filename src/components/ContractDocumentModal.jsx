@@ -129,35 +129,37 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
          <div className="absolute -inset-10 bg-slate-900/60 backdrop-blur-sm print:hidden" onClick={onClose}></div>
          
          {/* Top Action Bar (Hidden on print) */}
-         <div className="action-bar absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 print:hidden bg-slate-900/80 backdrop-blur border-b border-slate-700 shadow-xl">
+         <div className="action-bar absolute top-0 left-0 right-0 p-3 sm:p-4 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0 z-10 print:hidden bg-slate-900/80 backdrop-blur border-b border-slate-700 shadow-xl">
              <div className="text-white flex items-center gap-2">
                 <ShieldCheck className="text-emerald-400" />
-                <span className="font-bold tracking-widest text-sm uppercase">Official Contract Generated</span>
+                <span className="font-bold tracking-widest text-xs sm:text-sm uppercase text-center">Official Contract Generated</span>
              </div>
-             <div className="flex gap-4">
-                 <button onClick={handlePrint} className="flex items-center gap-2 text-white bg-slate-700/50 hover:bg-slate-700 px-4 py-2 rounded font-bold text-sm transition-colors border border-slate-600/50">
-                     <Printer size={16} /> Print Physical Copy
+             <div className="flex gap-2 sm:gap-4 w-full sm:w-auto justify-center">
+                 <button onClick={handlePrint} className="hidden sm:flex items-center gap-2 text-white bg-slate-700/50 hover:bg-slate-700 px-4 py-2 rounded font-bold text-sm transition-colors border border-slate-600/50">
+                     <Printer size={16} /> Print
                  </button>
-                 <button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="flex items-center gap-2 bg-primary-600 text-white hover:bg-primary-700 px-4 py-2 rounded font-bold text-sm shadow transition-colors">
+                 <button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="flex-1 sm:flex-none flex justify-center items-center gap-2 bg-primary-600 text-white hover:bg-primary-700 px-4 py-2 rounded font-bold text-sm shadow transition-colors">
                      {isGeneratingPDF ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} 
-                     {isGeneratingPDF ? 'Rendering PDF...' : 'Download Universal PDF'}
+                     <span className="hidden sm:inline">{isGeneratingPDF ? 'Rendering PDF...' : 'Download PDF'}</span>
+                     <span className="sm:hidden">{isGeneratingPDF ? 'Rendering...' : 'Download'}</span>
                  </button>
-                 <button onClick={onClose} className="p-2 text-white/70 hover:text-white bg-white/10 rounded-full transition-colors">
+                 <button onClick={onClose} className="p-2 text-white/70 hover:text-white bg-white/10 rounded-full transition-colors shrink-0">
                      <X size={20} />
                  </button>
              </div>
          </div>
 
          {/* The 8.5x11 Paper Container */}
-         <motion.div 
-            initial={{ scale: 0.95, y: 10, opacity: 0 }}
-            animate={{ scale: 1, y: 0, opacity: 1 }}
-            exit={{ scale: 0.95, y: 10, opacity: 0 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="printable-contract relative bg-white shadow-2xl overflow-y-auto w-full max-w-[850px] mx-auto flex flex-col print:block mt-24 mb-12 shrink max-h-[calc(100vh-140px)] print:max-h-none print:m-0 text-slate-800 text-[11px] leading-relaxed"
-         >
-            {isLoadingTemplate ? (
-                <div className="flex flex-col items-center justify-center h-96 w-full text-slate-400">
+         <div className="w-full h-full overflow-auto flex justify-center mt-[100px] sm:mt-24 mb-12 print:m-0 pb-20 px-4 sm:px-8">
+             <motion.div 
+                initial={{ scale: 0.95, y: 10, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.95, y: 10, opacity: 0 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                className="printable-contract relative bg-white shadow-2xl flex flex-col print:block shrink-0 w-[850px] min-h-[1100px] h-max print:max-h-none print:m-0 text-slate-800 text-[11px] leading-relaxed"
+             >
+                {isLoadingTemplate ? (
+                    <div className="flex flex-col items-center justify-center h-96 w-full text-slate-400">
                     <Loader2 size={32} className="animate-spin mb-4 text-primary-500" />
                     <p className="font-bold tracking-widest text-sm uppercase">Loading Contract Template...</p>
                 </div>
@@ -440,6 +442,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
             </div>
             )}
          </motion.div>
+         </div>
             </motion.div>
          )}
       </AnimatePresence>,

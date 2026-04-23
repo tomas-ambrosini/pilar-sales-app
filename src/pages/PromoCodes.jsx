@@ -256,7 +256,7 @@ export default function PromoCodes() {
           <form onSubmit={handleSubmit} className="p-0">
             <div className="p-6 space-y-6">
               {/* Top Row: Code & Percentage */}
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="col-span-1">
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Promo Code *</label>
                   <div className="relative">
@@ -288,7 +288,7 @@ export default function PromoCodes() {
                 <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
                   <CheckCircle className="text-slate-400" size={14}/> Validity Window
                 </h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="col-span-1">
                     <label className="block text-xs font-semibold text-slate-500 mb-1.5">Starts At</label>
                     <input type="datetime-local" className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" value={formData.starts_at} onChange={e => setFormData({...formData, starts_at: e.target.value})} />

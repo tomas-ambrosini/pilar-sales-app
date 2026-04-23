@@ -50,19 +50,19 @@ export default function Invoices({ isSubView = false }) {
     return (
         <div className={`${isSubView ? 'p-6' : 'page-container p-8'} h-full flex flex-col bg-slate-50 overflow-y-auto`}>
             
-            <div className="flex gap-6 h-full min-h-[600px]">
+            <div className="flex flex-col lg:flex-row gap-6 h-full min-h-[600px]">
                 {/* Main Ledger Area */}
                 <div className="flex-1 flex flex-col bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
                     
                     {/* Header & Tabs */}
                     <div className="border-b border-slate-200 bg-white">
-                        <div className="flex items-center justify-between p-4 bg-slate-50/50">
-                            <div className="flex gap-6 px-2">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-slate-50/50 gap-4 sm:gap-0">
+                            <div className="flex gap-4 sm:gap-6 px-2 w-full sm:w-auto overflow-x-auto whitespace-nowrap custom-scrollbar">
                                 <button onClick={() => setViewTab('unpaid')} className={`pb-2 font-bold text-sm transition-all border-b-2 ${viewTab === 'unpaid' ? 'border-primary-600 text-primary-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>Unpaid Invoices</button>
                                 <button onClick={() => setViewTab('paid')} className={`pb-2 font-bold text-sm transition-all border-b-2 ${viewTab === 'paid' ? 'border-primary-600 text-primary-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>Paid Invoices</button>
                                 <button onClick={() => setViewTab('all')} className={`pb-2 font-bold text-sm transition-all border-b-2 ${viewTab === 'all' ? 'border-primary-600 text-primary-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>All Invoices</button>
                             </div>
-                            <div className="relative w-64">
+                            <div className="relative w-full sm:w-64">
                                 <Search className="absolute left-3 top-2 text-slate-400" size={14} />
                                 <input 
                                     type="text" 
@@ -134,8 +134,8 @@ export default function Invoices({ isSubView = false }) {
                 </div>
 
                 {/* Right Side Summary Panel */}
-                <div className="w-[300px] shrink-0 flex flex-col gap-4">
-                    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm text-center">
+                <div className="w-full lg:w-[300px] shrink-0 flex flex-col sm:flex-row lg:flex-col gap-4 order-first lg:order-last">
+                    <div className="flex-1 bg-white border border-slate-200 rounded-xl p-5 shadow-sm text-center">
                         <div className="w-12 h-12 bg-primary-50 text-primary-600 rounded-full flex items-center justify-center mx-auto mb-3">
                             <FileText size={24} />
                         </div>
@@ -143,7 +143,7 @@ export default function Invoices({ isSubView = false }) {
                         <p className="text-3xl font-black text-slate-800 tracking-tight">${grandTotalUnpaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
                     </div>
 
-                    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm text-center">
+                    <div className="flex-1 bg-white border border-slate-200 rounded-xl p-5 shadow-sm text-center">
                         <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
                             <Banknote size={24} />
                         </div>
@@ -151,7 +151,7 @@ export default function Invoices({ isSubView = false }) {
                         <p className="text-3xl font-black text-slate-800 tracking-tight">${grandTotalCollected.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
                     </div>
                     
-                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 shadow-md text-center text-white mt-auto">
+                    <div className="flex-1 bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 shadow-md text-center text-white lg:mt-auto">
                         <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest mb-2 flex justify-center items-center gap-2"><CheckCircle2 size={14}/> Accounting Sync</h3>
                         <p className="text-sm font-medium text-slate-400 mb-4 leading-relaxed">Pilar automatically syncs paid invoices to your primary ledger. QuickBooks integration is active.</p>
                         <button className="w-full py-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-bold transition-colors">Force Ledger Sync</button>

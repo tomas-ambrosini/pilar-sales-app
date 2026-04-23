@@ -120,7 +120,7 @@ function CatalogList() {
       {/* Admin Add Equipment Modal */}
       <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add Database Equipment">
         <form onSubmit={handleAddSubmit} className="modal-form">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
              <div className="form-group">
                 <label htmlFor="brand">Brand</label>
                 <input id="brand" className="input-field" value={formData.brand} onChange={handleInputChange} required />
@@ -131,7 +131,7 @@ function CatalogList() {
              </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
              <div className="form-group">
                 <label htmlFor="type">System Type</label>
                 <select id="type" className="input-field" value={formData.type} onChange={handleInputChange}>
@@ -146,7 +146,7 @@ function CatalogList() {
              </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
              <div className="form-group">
                 <label htmlFor="tons">Tonnage</label>
                 <input id="tons" type="number" step="0.5" className="input-field" value={formData.tons} onChange={handleInputChange} />
@@ -157,13 +157,13 @@ function CatalogList() {
              </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
              <div className="form-group"><label htmlFor="seer">SEER2</label><input id="seer" type="number" step="0.1" className="input-field" value={formData.seer} onChange={handleInputChange} /></div>
              <div className="form-group"><label htmlFor="afue">AFUE</label><input id="afue" className="input-field" value={formData.afue} onChange={handleInputChange} /></div>
              <div className="form-group"><label htmlFor="decibels">Decibels</label><input id="decibels" className="input-field" value={formData.decibels} onChange={handleInputChange} /></div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
              <div className="form-group">
                 <label htmlFor="system_cost">Dealer Cost (System)</label>
                 <input id="system_cost" type="number" step="0.01" className="input-field" value={formData.system_cost} onChange={handleInputChange} required />

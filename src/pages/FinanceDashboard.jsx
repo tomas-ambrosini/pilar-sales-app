@@ -10,7 +10,7 @@ export default function FinanceDashboard() {
   return (
     <div className="flex flex-col h-full w-full bg-slate-50/50">
       {/* Sleek Top Navigation / Tab Bar */}
-      <div className="border-b border-slate-200 bg-white px-8 pt-4 flex gap-8 shadow-sm z-10 relative">
+      <div className="border-b border-slate-200 bg-white px-4 sm:px-8 pt-4 flex gap-4 sm:gap-8 shadow-sm z-10 relative overflow-x-auto whitespace-nowrap custom-scrollbar">
           <button
             onClick={() => setActiveTab('promos')}
             className={`pb-3 font-bold text-sm flex items-center gap-2 transition-all border-b-[3px] ${

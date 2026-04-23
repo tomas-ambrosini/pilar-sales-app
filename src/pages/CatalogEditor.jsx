@@ -524,7 +524,7 @@ export default function CatalogEditor() {
             <div className="p-6 space-y-6">
                
                {/* Core Information */}
-               <div className="grid grid-cols-2 gap-5">
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Brand Name</label>
                      <input className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 font-bold text-slate-800 focus:ring-2 ring-primary-500 outline-none transition-all shadow-inner" list="brand-options" value={activeEquip.brand || ''} onChange={e => setActiveEquip({...activeEquip, brand: e.target.value})} required placeholder="e.g. Trane"/>
@@ -539,7 +539,7 @@ export default function CatalogEditor() {
                </div>
 
                {/* Performance Specs */}
-               <div className="grid grid-cols-2 gap-5">
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Tonnage Rating</label>
                      <input type="number" step="0.5" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 font-mono text-slate-800 font-bold focus:ring-2 ring-primary-500 outline-none transition-all shadow-inner" value={activeEquip.tons || ''} onChange={e => setActiveEquip({...activeEquip, tons: e.target.value})} required placeholder="3.0"/>
@@ -619,7 +619,7 @@ export default function CatalogEditor() {
             <div className="p-6 space-y-6">
                
                {/* Identity Row */}
-               <div className="grid grid-cols-2 gap-5">
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">SKU / Code Number</label>
                      <input className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 font-mono text-slate-800 font-bold focus:ring-2 ring-primary-500 outline-none transition-all shadow-inner" value={activeLabor.sku || ''} onChange={e => setActiveLabor({...activeLabor, sku: e.target.value})} placeholder="e.g. 1007"/>

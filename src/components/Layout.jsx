@@ -155,7 +155,7 @@ export default function Layout() {
   return (
     <div className="layout">
       {/* Sidebar for Desktop/Tablet */}
-      <aside className={`sidebar flex flex-col ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+      <aside className={`sidebar hidden md:flex flex-col ${isSidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-brand">
           <div className="brand-logo shadow-sm" style={{ background: 'var(--color-primary-900)' }}>P</div>
           <span className="brand-text text-gradient">Pilar Home</span>

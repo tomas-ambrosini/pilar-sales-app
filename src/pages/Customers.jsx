@@ -350,7 +350,7 @@ function PropertyDetailsCard({ location, index }) {
           </div>
           
           {isEditing ? (
-             <div className="grid grid-cols-2 gap-4">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                <div className="form-group mb-0">
                   <label className="text-xs">Year Built</label>
                   <input type="text" className="w-full border p-1 rounded mt-1" value={formData.year_built} onChange={e => setFormData({...formData, year_built: e.target.value})} placeholder="e.g. 1995" />
@@ -670,7 +670,7 @@ function CustomerDetail() {
           </div>
           
           {customerProposals.length > 0 ? (
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                {customerProposals.map(prop => (
                  <div key={prop.id} className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col justify-between" onClick={() => {
                         if (prop.status === 'Approved') {

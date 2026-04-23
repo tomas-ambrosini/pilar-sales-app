@@ -450,11 +450,11 @@ Details: ${formData.notes}
             </div>
          </header>
          
-         <div className="flex flex-1 overflow-hidden gap-6 h-full pb-4 items-stretch">
+         <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden gap-6 h-full pb-4 items-stretch">
             
             {/* LEFT PANEL: SMART INTAKE FORM (30%) */}
             {activeRole !== ROLES.SUBCONTRACTOR && (
-            <div className="w-[400px] shrink-0 bg-white border border-slate-200 rounded-xl shadow-lg flex flex-col h-full overflow-hidden z-10">
+            <div className="w-full lg:w-[400px] shrink-0 bg-white border border-slate-200 rounded-xl shadow-lg flex flex-col h-auto lg:h-full overflow-hidden z-10">
                {/* Premium Header */}
                <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-5 shrink-0 flex items-center justify-between shadow-md relative overflow-hidden">
                   <div className="absolute -right-4 -top-4 opacity-10 blur-[2px]"><Phone size={80} /></div>
@@ -498,7 +498,7 @@ Details: ${formData.notes}
                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><User size={12}/> Client Profile</label>
                         <div className="space-y-3">
-                           <div className="grid grid-cols-2 gap-3">
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               <input required type="text" placeholder="First Name" value={formData.firstName} onChange={e=>setFormData({...formData, firstName: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-500 focus:bg-white transition-colors" />
                               <input required type="text" placeholder="Last Name" value={formData.lastName} onChange={e=>setFormData({...formData, lastName: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-500 focus:bg-white transition-colors" />
                            </div>
@@ -527,7 +527,7 @@ Details: ${formData.notes}
                               </select>
                            </div>
 
-                           <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
                               <div>
                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1">System Age</label>
                                  <select className="w-full bg-white border border-slate-200 rounded text-xs px-2 py-1.5 outline-none focus:border-primary-400 text-slate-700 font-medium cursor-pointer" value={formData.systemAge} onChange={e=>setFormData({...formData, systemAge: e.target.value})}>
@@ -641,7 +641,7 @@ Details: ${formData.notes}
                         <div className="space-y-4">
                            <h3 className="font-bold text-slate-700 border-b pb-2 mb-4">Edit {selectedJob?.type === 'work_order' ? 'Work Order' : 'Survey'} #{selectedJob?.displayId}</h3>
 
-                           <div className="grid grid-cols-2 gap-4">
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="col-span-2 md:col-span-1 form-group">
                                   <label className="text-xs font-bold text-slate-600 mb-1 block">Scheduled Time Block</label>
                                   <select 
@@ -919,7 +919,7 @@ Details: ${formData.notes}
                            <p className="text-xs text-slate-500 max-w-xs">The advisor did not upload any site survey images for this assignment.</p>
                         </div>
                      ) : (
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                            {Object.entries(selectedJob.surveyPhotos).map(([key, url]) => {
                               if (!url) return null;
                               const labels = {
