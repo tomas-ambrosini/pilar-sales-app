@@ -242,15 +242,15 @@ export default function CatalogEditor() {
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
           
           {/* Action Bar Inside Card */}
-          <div className="p-4 border-b border-slate-100 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 bg-slate-50">
+          <div className="p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4 bg-slate-50">
              
-             <div className="flex items-center gap-2 bg-slate-200/50 p-1 rounded-xl w-full xl:w-auto shrink-0">
-               <button className={`px-5 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none flex-1 xl:flex-none ${activeTab === 'equipment' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`} onClick={() => { setActiveTab('equipment'); setFilterValue('All'); setSearchTerm(''); }}>Systems</button>
-               <button className={`px-5 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none flex-1 xl:flex-none ${activeTab === 'labor' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`} onClick={() => { setActiveTab('labor'); setFilterValue('All'); setSearchTerm(''); }}>Service & Materials</button>
+             <div className="flex items-center gap-2 bg-slate-200/50 p-1 rounded-xl w-full sm:w-auto shrink-0">
+               <button className={`px-5 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none flex-1 sm:flex-none ${activeTab === 'equipment' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`} onClick={() => { setActiveTab('equipment'); setFilterValue('All'); setSearchTerm(''); }}>Systems</button>
+               <button className={`px-5 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none flex-1 sm:flex-none ${activeTab === 'labor' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`} onClick={() => { setActiveTab('labor'); setFilterValue('All'); setSearchTerm(''); }}>Service & Materials</button>
              </div>
 
-             <div className="flex flex-col sm:flex-row flex-wrap w-full xl:w-auto items-start sm:items-center gap-3">
-                 <div className="relative w-full sm:flex-1 min-w-[200px] xl:w-64 shrink-0">
+             <div className="flex flex-wrap flex-1 justify-end items-center gap-3 min-w-[280px]">
+                 <div className="relative w-full sm:w-auto sm:flex-1 max-w-md shrink-0">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                     <input 
                        type="text" 
@@ -260,8 +260,8 @@ export default function CatalogEditor() {
                        onChange={(e) => setSearchTerm(e.target.value)}
                     />
                  </div>
-                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                     <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 shadow-sm select-wrapper relative flex-1 sm:flex-none min-w-[140px]">
+                 <div className="flex flex-wrap items-center gap-2">
+                     <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 shadow-sm select-wrapper relative">
                         <Filter size={14} className="text-slate-400" />
                     <select 
                        className="border-none bg-transparent focus:ring-0 py-1.5 text-xs font-bold text-slate-700 outline-none cursor-pointer"
@@ -278,7 +278,7 @@ export default function CatalogEditor() {
 
                   {activeTab === 'equipment' && (
                      <>
-                        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 shadow-sm select-wrapper relative flex-1 sm:flex-none min-w-[110px]">
+                        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 shadow-sm select-wrapper relative">
                            <Filter size={14} className="text-slate-400" />
                            <select 
                               className="border-none bg-transparent focus:ring-0 py-1.5 text-xs font-bold text-slate-700 outline-none cursor-pointer"
@@ -289,7 +289,7 @@ export default function CatalogEditor() {
                               {uniqueTons.map(t => <option key={t} value={t}>{t} TON</option>)}
                            </select>
                         </div>
-                        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 shadow-sm select-wrapper relative flex-1 sm:flex-none min-w-[110px]">
+                        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 shadow-sm select-wrapper relative">
                            <Filter size={14} className="text-slate-400" />
                            <select 
                               className="border-none bg-transparent focus:ring-0 py-1.5 text-xs font-bold text-slate-700 outline-none cursor-pointer"
@@ -303,7 +303,7 @@ export default function CatalogEditor() {
                      </>
                   )}
 
-                  <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 shadow-sm select-wrapper relative flex-1 sm:flex-none min-w-[140px]">
+                  <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 shadow-sm select-wrapper relative">
                      <ListOrdered size={14} className="text-slate-400" />
                      {activeTab === 'labor' ? (
                         <select 
