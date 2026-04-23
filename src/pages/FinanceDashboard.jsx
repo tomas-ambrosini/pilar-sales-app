@@ -1,18 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import PromoCodes from './PromoCodes';
 import FinancialSettings from './FinancialSettings';
 import Invoices from './Invoices';
 import { Landmark, Megaphone, Calculator, Banknote } from 'lucide-react';
 
 export default function FinanceDashboard() {
-  const [activeTab, setActiveTab] = useState('promos');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'promos');
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['promos', 'margins', 'invoices'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
 
   return (
     <div className="flex flex-col h-full w-full bg-slate-50/50">
       {/* Sleek Top Navigation / Tab Bar */}
       <div className="border-b border-slate-200 bg-white px-4 sm:px-8 pt-4 flex gap-4 sm:gap-8 shadow-sm z-10 relative overflow-x-auto whitespace-nowrap custom-scrollbar">
           <button
-            onClick={() => setActiveTab('promos')}
+            onClick={() => handleTabChange('promos')}
             className={`pb-3 font-bold text-sm flex items-center gap-2 transition-all border-b-[3px] ${
                 activeTab === 'promos' 
                 ? 'border-primary-600 text-primary-700' 
@@ -23,7 +37,7 @@ export default function FinanceDashboard() {
             Promo Campaigns
           </button>
           <button
-            onClick={() => setActiveTab('margins')}
+            onClick={() => handleTabChange('margins')}
             className={`pb-3 font-bold text-sm flex items-center gap-2 transition-all border-b-[3px] ${
                 activeTab === 'margins' 
                 ? 'border-primary-600 text-primary-700' 
@@ -34,7 +48,7 @@ export default function FinanceDashboard() {
             Global Margins & Taxes
           </button>
           <button
-            onClick={() => setActiveTab('invoices')}
+            onClick={() => handleTabChange('invoices')}
             className={`pb-3 font-bold text-sm flex items-center gap-2 transition-all border-b-[3px] ${
                 activeTab === 'invoices' 
                 ? 'border-primary-600 text-primary-700' 
