@@ -55,8 +55,8 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
        setTagPopup(p => ({ ...p, isLoading: true }));
        const { data } = await supabase
          .from('proposals')
-         .select('id, customer_name, total_value')
-         .ilike('customer_name', `%${tagPopup.query}%`)
+         .select('id, customer, amount')
+         .ilike('customer', `%${tagPopup.query}%`)
          .limit(5);
        
        setTagPopup(p => ({ ...p, results: data || [], isLoading: false }));
@@ -717,7 +717,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     
     const match = textBefore.match(/(?<=\s|^)#([A-Za-z0-9_]*)$/);
     if (match) {
-      const newTextBefore = textBefore.substring(0, match.index) + `#[Proposal for ${proposal.customer_name}](${proposal.id}) `;
+      const newTextBefore = textBefore.substring(0, match.index) + `#[Proposal for ${proposal.customer}](${proposal.id}) `;
       setInputValue(newTextBefore + textAfter);
       
       setTimeout(() => {
@@ -1374,7 +1374,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                                        className={`mention-popup-item flex-col items-start ${i === tagPopup.index ? 'active' : ''}`}
                                        onClick={() => insertTag(prop)}
                                      >
-                                        <div className="font-bold text-sm text-slate-800 truncate w-full">Proposal for {prop.customer_name}</div>
+                                        <div className="font-bold text-sm text-slate-800 truncate w-full">Proposal for {prop.customer}</div>
                                         <div className="text-[10px] text-slate-500 font-semibold uppercase">{prop.id.split('-')[0]}</div>
                                      </div>
                                   ))
