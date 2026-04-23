@@ -52,7 +52,7 @@ export default function Invoices({ isSubView = false }) {
             
             <div className="flex flex-col md:flex-row gap-6 h-full min-h-[600px]">
                 {/* Main Ledger Area */}
-                <div className="flex-1 flex flex-col bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
+                <div className="flex-1 flex flex-col bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden min-w-0">
                     
                     {/* Header & Tabs */}
                     <div className="border-b border-slate-200 bg-white">
@@ -62,8 +62,8 @@ export default function Invoices({ isSubView = false }) {
                                 <button onClick={() => setViewTab('paid')} className={`pb-2 font-bold text-sm transition-all border-b-2 ${viewTab === 'paid' ? 'border-primary-600 text-primary-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>Paid Invoices</button>
                                 <button onClick={() => setViewTab('all')} className={`pb-2 font-bold text-sm transition-all border-b-2 ${viewTab === 'all' ? 'border-primary-600 text-primary-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>All Invoices</button>
                             </div>
-                            <div className="relative w-full sm:w-64">
-                                <Search className="absolute left-3 top-2 text-slate-400" size={14} />
+                            <div className="relative w-full sm:w-64 shrink-0">
+                                <Search className="absolute left-3 top-2.5 text-slate-400" size={14} />
                                 <input 
                                     type="text" 
                                     placeholder="Search..." 
@@ -100,7 +100,7 @@ export default function Invoices({ isSubView = false }) {
                                     filteredInvoices.map((inv) => (
                                         <tr key={inv.id} className="hover:bg-slate-50 transition-colors">
                                             <td className="p-3 text-slate-600 font-medium">{new Date(inv.created_at).toLocaleDateString()}</td>
-                                            <td className="p-3 font-bold text-primary-600">{inv.proposals?.customer || 'Unknown Customer'}</td>
+                                            <td className="p-3 font-bold text-primary-600 truncate max-w-[150px]">{inv.proposals?.customer || 'Unknown Customer'}</td>
                                             <td className="p-3 font-mono text-slate-600">{inv.id.substring(0,6).toUpperCase()}</td>
                                             <td className="p-3 font-mono text-slate-500">{formatQuoteId({id: inv.proposal_id})}</td>
                                             <td className="p-3">
@@ -134,7 +134,7 @@ export default function Invoices({ isSubView = false }) {
                 </div>
 
                 {/* Right Side Summary Panel */}
-                <div className="w-full md:w-[300px] shrink-0 flex flex-col gap-4 order-first md:order-last">
+                <div className="w-full md:w-72 lg:w-80 shrink-0 flex flex-col sm:flex-row md:flex-col gap-4 order-first md:order-last">
                     <div className="flex-1 bg-white border border-slate-200 rounded-xl p-5 shadow-sm text-center">
                         <div className="w-12 h-12 bg-primary-50 text-primary-600 rounded-full flex items-center justify-center mx-auto mb-3">
                             <FileText size={24} />
@@ -151,9 +151,9 @@ export default function Invoices({ isSubView = false }) {
                         <p className="text-3xl font-black text-slate-800 tracking-tight">${grandTotalCollected.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
                     </div>
                     
-                    <div className="flex-1 bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 shadow-md text-center text-white lg:mt-auto">
+                    <div className="flex-1 bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 shadow-md text-center text-white lg:mt-auto flex flex-col justify-center">
                         <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest mb-2 flex justify-center items-center gap-2"><CheckCircle2 size={14}/> Accounting Sync</h3>
-                        <p className="text-sm font-medium text-slate-400 mb-4 leading-relaxed">Pilar automatically syncs paid invoices to your primary ledger. QuickBooks integration is active.</p>
+                        <p className="text-sm font-medium text-slate-400 mb-4 leading-relaxed hidden md:block">Pilar automatically syncs paid invoices to your primary ledger. QuickBooks integration is active.</p>
                         <button className="w-full py-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-bold transition-colors">Force Ledger Sync</button>
                     </div>
                 </div>
