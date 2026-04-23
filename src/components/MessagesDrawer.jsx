@@ -46,6 +46,26 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
   const typingTimeoutRef = useRef(null);
   const [channelMembers, setChannelMembers] = useState([]);
 
+  // Phase 4 ERP Context (Hashtags)
+  const [tagPopup, setTagPopup] = useState({ show: false, query: '', index: 0, results: [], isLoading: false });
+
+  useEffect(() => {
+    if (!tagPopup.show) return;
+    const searchProposals = async () => {
+       setTagPopup(p => ({ ...p, isLoading: true }));
+       const { data } = await supabase
+         .from('proposals')
+         .select('id, customer_name, total_value')
+         .ilike('customer_name', `%${tagPopup.query}%`)
+         .limit(5);
+       
+       setTagPopup(p => ({ ...p, results: data || [], isLoading: false }));
+    };
+    
+    const timer = setTimeout(searchProposals, 300);
+    return () => clearTimeout(timer);
+  }, [tagPopup.query, tagPopup.show]);
+
   // Generate a deterministic gradient for an avatar based on a string (name)
   const getAvatarGradient = (name) => {
     if (!name) return 'linear-gradient(135deg, #94a3b8, #cbd5e1)';
@@ -563,8 +583,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
        if (createNotification) {
           allUsers.forEach(u => {
               if (u.id === user.id) return;
-              const cleanName = (u.full_name || u.name || '').replace(/\s+/g, '').toLowerCase();
-              if (cleanName && newMsg.body.toLowerCase().includes(`@${cleanName}`)) {
+              if (newMsg.body.includes(`](${u.id})`)) {
                   createNotification({
                       userId: u.id,
                       type: 'chat_mention',
@@ -624,16 +643,27 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
 
   const renderTextWithMentions = (text) => {
     if (!text) return null;
-    const parts = text.split(/(@[A-Za-z0-9_]+)/g);
+    const parts = text.split(/(@\[.*?\]\(.*?\)|#\[.*?\]\(.*?\))/g);
     return parts.map((part, i) => {
-      if (part.startsWith('@')) {
-        const username = part.slice(1);
-        const isSelf = user?.name && username.toLowerCase() === user.full_name.replace(/\s+/g, '').toLowerCase();
+      const mentionMatch = part.match(/^@\[(.*?)\]\((.*?)\)$/);
+      if (mentionMatch) {
+        const name = mentionMatch[1];
+        const userId = mentionMatch[2];
+        const isSelf = user?.id === userId;
         return (
           <span key={i} className={isSelf ? 'mention-highlight-self' : 'mention-highlight'}>
-            {part}
+            @{name}
           </span>
         );
+      }
+      
+      const tagMatch = part.match(/^#\[(.*?)\]\((.*?)\)$/);
+      if (tagMatch) {
+         return (
+           <span key={i} className="px-1.5 py-0.5 bg-indigo-100 text-indigo-800 font-bold rounded cursor-pointer text-[0.8rem] mx-0.5 shadow-sm border border-indigo-200">
+             🏷️ {tagMatch[1]}
+           </span>
+         );
       }
       return part;
     });
@@ -654,6 +684,13 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
       setMentionPopup(p => ({ ...p, show: false }));
     }
 
+    const tagsMatch = textBeforeCursor.match(/#([A-Za-z0-9_\s]*)$/);
+    if (tagsMatch && !mentionsMatch) {
+      setTagPopup(p => ({ ...p, show: true, query: tagsMatch[1].toLowerCase(), index: 0 }));
+    } else {
+      setTagPopup(p => ({ ...p, show: false }));
+    }
+
     // Typing presence sync
     if (presenceChannelRef.current && user) {
         presenceChannelRef.current.track({
@@ -672,16 +709,39 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
 
   const filteredMentions = mentionPopup.show ? allUsers.filter(u => (u.full_name || u.name || '').replace(/\s+/g, '').toLowerCase().includes(mentionPopup.query) && u.id !== user?.id) : [];
 
-  const insertMention = (nameRaw) => {
-    if (!nameRaw) return;
-    const name = nameRaw.replace(/\s+/g, '');
+  const insertTag = (proposal) => {
+    if (!proposal) return;
+    const cursorPos = inputRef.current?.selectionStart || inputValue.length;
+    const textBefore = inputValue.substring(0, cursorPos);
+    const textAfter = inputValue.substring(cursorPos);
+    
+    const match = textBefore.match(/#([A-Za-z0-9_\s]*)$/);
+    if (match) {
+      const newTextBefore = textBefore.substring(0, match.index) + `#[Proposal for ${proposal.customer_name}](${proposal.id}) `;
+      setInputValue(newTextBefore + textAfter);
+      
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.selectionStart = newTextBefore.length;
+          inputRef.current.selectionEnd = newTextBefore.length;
+          inputRef.current.focus();
+        }
+      }, 0);
+    }
+    setTagPopup(p => ({ ...p, show: false }));
+  };
+
+  const insertMention = (targetUser) => {
+    if (!targetUser) return;
+    const name = targetUser.full_name || targetUser.name || 'User';
+    const id = targetUser.id;
     const cursorPos = inputRef.current?.selectionStart || inputValue.length;
     const textBefore = inputValue.substring(0, cursorPos);
     const textAfter = inputValue.substring(cursorPos);
     
     const match = textBefore.match(/@([A-Za-z0-9_]*)$/);
     if (match) {
-      const newTextBefore = textBefore.substring(0, match.index) + `@${name} `;
+      const newTextBefore = textBefore.substring(0, match.index) + `@[${name}](${id}) `;
       setInputValue(newTextBefore + textAfter);
       
       // Typing presence sync
@@ -706,6 +766,29 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
   };
 
   const handleKeyDown = (e) => {
+    if (tagPopup.show && tagPopup.results.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setTagPopup(p => ({ ...p, index: (p.index + 1) % tagPopup.results.length }));
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setTagPopup(p => ({ ...p, index: (p.index - 1 + tagPopup.results.length) % tagPopup.results.length }));
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        insertTag(tagPopup.results[tagPopup.index]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setTagPopup(p => ({ ...p, show: false }));
+        return;
+      }
+    }
+
     if (mentionPopup.show && filteredMentions.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -719,7 +802,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
       }
       if (e.key === 'Enter') {
         e.preventDefault();
-        insertMention(filteredMentions[mentionPopup.index]?.full_name || filteredMentions[mentionPopup.index]?.name || '');
+        insertMention(filteredMentions[mentionPopup.index]);
         return;
       }
       if (e.key === 'Escape') {
@@ -1278,13 +1361,33 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                               </button>
                             </div>
                           )}
+                          {tagPopup.show && (
+                            <div className="mention-popup custom-scrollbar w-64">
+                               {tagPopup.isLoading && tagPopup.results.length === 0 ? (
+                                  <div className="p-3 flex items-center justify-center text-slate-500"><Loader2 size={16} className="animate-spin" /></div>
+                               ) : tagPopup.results.length === 0 ? (
+                                  <div className="p-3 text-center text-xs text-slate-500 font-semibold">No proposals found</div>
+                               ) : (
+                                  tagPopup.results.map((prop, i) => (
+                                     <div 
+                                       key={prop.id}
+                                       className={`mention-popup-item flex-col items-start ${i === tagPopup.index ? 'active' : ''}`}
+                                       onClick={() => insertTag(prop)}
+                                     >
+                                        <div className="font-bold text-sm text-slate-800 truncate w-full">Proposal for {prop.customer_name}</div>
+                                        <div className="text-[10px] text-slate-500 font-semibold uppercase">{prop.id.split('-')[0]}</div>
+                                     </div>
+                                  ))
+                               )}
+                            </div>
+                          )}
                           {mentionPopup.show && filteredMentions.length > 0 && (
                             <div className="mention-popup">
                               {filteredMentions.map((u, i) => (
                                 <div 
                                   key={u.id} 
                                   className={`mention-popup-item ${i === mentionPopup.index ? 'active' : ''}`}
-                                  onClick={() => insertMention(u.full_name)}
+                                  onClick={() => insertMention(u)}
                                 >
                                   {u.avatar_url ? (
                                     <img src={u.avatar_url} alt={u.full_name} className="w-5 h-5 rounded-md object-cover" />
