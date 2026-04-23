@@ -647,23 +647,37 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const uniqueAltBrands = uniquePrimaryBrands;
 
   return (
-    <div className="page-container fade-in">
+    <div className="page-container fade-in flex flex-col pt-6">
+      <AnimatePresence>
       {showRestoreBanner && (
-        <div className="bg-slate-800 text-white p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg sticky top-0 z-50">
-           <div className="flex items-center gap-3">
-              <Clock className="text-blue-400" size={24} />
-              <div>
-                 <h4 className="font-bold text-sm">Unsaved Session Recovered</h4>
-                 <p className="text-xs text-slate-300">We found a quote you were working on recently. Would you like to resume it?</p>
-              </div>
-           </div>
-           <div className="flex items-center gap-2 shrink-0">
-              <button onClick={() => setShowRestoreBanner(false)} className="px-4 py-2 text-xs font-bold text-slate-300 hover:text-white transition-colors">Discard</button>
-              <button onClick={handleRestoreLocalDraft} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg shadow-sm transition-colors">Resume Progress</button>
-           </div>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="max-w-[1000px] mx-auto w-full mb-6"
+        >
+          <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl relative overflow-hidden">
+             {/* Decorative glow */}
+             <div className="absolute top-0 left-0 w-32 h-full bg-gradient-to-r from-blue-500/20 to-transparent pointer-events-none" />
+             
+             <div className="flex items-center gap-4 relative z-10">
+                <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shrink-0">
+                   <Clock className="text-blue-400" size={20} />
+                </div>
+                <div>
+                   <div className="font-bold text-sm text-white mb-0.5">Unsaved Session Recovered</div>
+                   <p className="text-xs text-slate-300">We found a quote you were working on recently. Would you like to resume it?</p>
+                </div>
+             </div>
+             <div className="flex items-center gap-3 shrink-0 relative z-10 w-full sm:w-auto">
+                <button onClick={() => setShowRestoreBanner(false)} className="flex-1 sm:flex-none px-4 py-2 text-xs font-bold text-slate-400 hover:text-white transition-colors bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700">Discard</button>
+                <button onClick={handleRestoreLocalDraft} className="flex-1 sm:flex-none px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg shadow-sm transition-all border border-blue-500">Resume Progress</button>
+             </div>
+          </div>
+        </motion.div>
       )}
-      <div className="glass-panel p-4 md:p-8 max-w-[1000px] mx-auto">
+      </AnimatePresence>
+      <div className="glass-panel p-4 md:p-8 max-w-[1000px] mx-auto w-full">
         <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
           <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
              <Calculator className="text-primary-600"/> 
