@@ -44,6 +44,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
   // Phase 2 Typing Indicators & Receipts
   const [typingUsers, setTypingUsers] = useState([]);
   const typingTimeoutRef = useRef(null);
+  const [channelMembers, setChannelMembers] = useState([]);
 
   // Generate a deterministic gradient for an avatar based on a string (name)
   const getAvatarGradient = (name) => {
@@ -194,40 +195,36 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
   useEffect(() => {
     if (!activeChannelId || !isOpen) return;
 
-    const fetchMessages = async () => {
-      const { data, error } = await supabase
+    const fetchMessagesAndMembers = async () => {
+      // Fetch Messages
+      const { data: msgData, error: msgError } = await supabase
         .from('chat_messages')
         .select(`
-          id,
-          body,
-          created_at,
-          updated_at,
-          sender_id,
-          is_deleted,
-          reply_to_id,
-          attachment_url,
-          attachment_type,
+          id, body, created_at, updated_at, sender_id, is_deleted, reply_to_id, attachment_url, attachment_type,
           sender:user_profiles ( full_name, role, avatar_url ),
-          chat_reactions (
-            id,
-            user_id,
-            emoji
-          )
+          chat_reactions ( id, user_id, emoji )
         `)
         .eq('channel_id', activeChannelId)
         .order('created_at', { ascending: false })
         .limit(MESSAGES_PER_PAGE);
 
-      if (!error && data) {
-        setMessages(data.reverse());
-        setHasMoreMessages(data.length === MESSAGES_PER_PAGE);
+      if (!msgError && msgData) {
+        setMessages(msgData.reverse());
+        setHasMoreMessages(msgData.length === MESSAGES_PER_PAGE);
         scrollToBottom();
       } else {
-        console.error("Error fetching messages", error);
+        console.error("Error fetching messages", msgError);
       }
+
+      // Fetch Channel Members for Read Receipts
+      const { data: memData } = await supabase
+        .from('channel_members')
+        .select('user_id, last_read_at, user:user_profiles (full_name, avatar_url)')
+        .eq('channel_id', activeChannelId);
+      if (memData) setChannelMembers(memData);
     };
 
-    fetchMessages();
+    fetchMessagesAndMembers();
 
     const globalChannelListener = supabase.channel(`chat_update_${activeChannelId}_msgs_${Date.now()}`)
       .on(
@@ -300,6 +297,25 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
       )
       .subscribe();
 
+    const membersListener = supabase.channel(`chat_update_${activeChannelId}_members_${Date.now()}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'channel_members' },
+        async (payload) => {
+          if (payload.new.channel_id === activeChannelRef.current) {
+             const { data: memUser } = await supabase.from('user_profiles').select('full_name, avatar_url').eq('id', payload.new.user_id).single();
+             setChannelMembers(prev => {
+                const exists = prev.find(p => p.user_id === payload.new.user_id);
+                if (exists) {
+                  return prev.map(p => p.user_id === payload.new.user_id ? { ...p, last_read_at: payload.new.last_read_at } : p);
+                }
+                return [...prev, { ...payload.new, user: memUser }];
+             });
+          }
+        }
+      )
+      .subscribe();
+
     const presenceChannel = supabase.channel(`presence_${activeChannelId}`, {
       config: { presence: { key: user?.id }, broadcast: { self: false } }
     });
@@ -338,6 +354,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     return () => {
       supabase.removeChannel(globalChannelListener);
       supabase.removeChannel(reactionsListener);
+      supabase.removeChannel(membersListener);
       supabase.removeChannel(presenceChannel);
       presenceChannelRef.current = null;
     };
@@ -742,6 +759,27 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     }
     return channel.name;
   };
+
+  // Pre-calculate which members have read up to which message
+  const readReceiptsByMsgId = {};
+  if (messages.length > 0) {
+    channelMembers.forEach(mem => {
+      if (mem.user_id === user?.id || !mem.last_read_at) return;
+      const memReadTime = new Date(mem.last_read_at).getTime();
+      let lastReadMsgId = null;
+      for (let i = messages.length - 1; i >= 0; i--) {
+         const msgTime = new Date(messages[i].created_at).getTime();
+         if (msgTime <= memReadTime) {
+            lastReadMsgId = messages[i].id;
+            break;
+         }
+      }
+      if (lastReadMsgId) {
+         if (!readReceiptsByMsgId[lastReadMsgId]) readReceiptsByMsgId[lastReadMsgId] = [];
+         readReceiptsByMsgId[lastReadMsgId].push(mem);
+      }
+    });
+  }
 
   return (
     <AnimatePresence>
@@ -1155,6 +1193,28 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                                         </>
                                       )}
                                     </div>
+                                  )}
+                                  
+                                  {/* Read Receipts UI */}
+                                  {readReceiptsByMsgId[msg.id] && (
+                                     <div className="absolute -bottom-2 right-6 flex items-center justify-end z-10 space-x-0.5 pointer-events-none">
+                                        {readReceiptsByMsgId[msg.id].slice(0, 5).map((mem, i) => (
+                                           <div key={mem.user_id} className="relative z-10" style={{ zIndex: 10 - i }}>
+                                              {mem.user?.avatar_url ? (
+                                                <img src={mem.user.avatar_url} className="w-3.5 h-3.5 rounded-full border border-white shadow-sm object-cover" />
+                                              ) : (
+                                                <div className="w-3.5 h-3.5 rounded-full border border-white shadow-sm flex items-center justify-center text-[7px] font-bold text-white bg-slate-400" style={{background: getAvatarGradient(mem.user?.full_name || mem.user?.name)}}>
+                                                   {(mem.user?.full_name || mem.user?.name || 'U').charAt(0).toUpperCase()}
+                                                </div>
+                                              )}
+                                           </div>
+                                        ))}
+                                        {readReceiptsByMsgId[msg.id].length > 5 && (
+                                           <div className="w-3.5 h-3.5 rounded-full border border-white shadow-sm bg-slate-200 text-slate-500 flex items-center justify-center text-[6px] font-bold relative z-0">
+                                              +{readReceiptsByMsgId[msg.id].length - 5}
+                                           </div>
+                                        )}
+                                     </div>
                                   )}
                                 </motion.div>
                               );
