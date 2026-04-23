@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { getActiveContractTemplate } from '../utils/contracts/getActiveContractTemplate';
 import { normalizeContractTemplate } from '../utils/contracts/normalizeContractTemplate';
-import { Loader2, Save, FileText, Plus, Trash2, ShieldCheck, Pen, UploadCloud, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Save, FileText, Plus, Trash2, ShieldCheck, Pen, UploadCloud, Image as ImageIcon, Banknote } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function TemplateSettings() {
@@ -25,6 +25,9 @@ export default function TemplateSettings() {
     
     const [terms, setTerms] = useState([]);
     const [materials, setMaterials] = useState([]);
+
+    const [invoiceMessage, setInvoiceMessage] = useState('');
+    const [invoiceFooter, setInvoiceFooter] = useState('');
 
     useEffect(() => {
         let isMounted = true;
@@ -50,6 +53,9 @@ export default function TemplateSettings() {
             setBrandName(normalized.branding.brandName);
             setTitleLegalSection(normalized.sectionTitles.legal);
             setTitleUnitSection(normalized.sectionTitles.unitInfo);
+            
+            setInvoiceMessage(normalized.invoiceMessage);
+            setInvoiceFooter(normalized.invoiceFooter);
             
             setIsLoading(false);
         });
@@ -79,7 +85,9 @@ export default function TemplateSettings() {
                 logo_url: logoUrl || null,
                 brand_name: brandName,
                 title_legal_section: titleLegalSection,
-                title_unit_section: titleUnitSection
+                title_unit_section: titleUnitSection,
+                invoice_customer_message: invoiceMessage,
+                invoice_footer_text: invoiceFooter
             };
             
             const { error } = await supabase
@@ -134,10 +142,10 @@ export default function TemplateSettings() {
                 <div>
                     <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
                         <ShieldCheck className="text-primary-600" size={32} />
-                        Contract Settings
+                        Company & Document Settings
                     </h1>
                     <p className="text-slate-500 mt-2 font-medium">
-                        Manage the legal boilerplate and company identity for all generated Pilar sales proposals.
+                        Manage the legal boilerplate and company identity for all generated proposals and invoices.
                     </p>
                 </div>
                 <button
@@ -347,11 +355,47 @@ export default function TemplateSettings() {
                     </div>
                 </div>
 
-                {/* 4. Signature Sign-off */}
-                <div className="p-8 bg-slate-50/50">
+                {/* 4. Invoice Settings */}
+                <div className="p-8 border-b border-slate-200 bg-slate-50/50">
+                    <div className="flex items-center gap-2 mb-6">
+                        <Banknote className="text-primary-600" size={20} />
+                        <h2 className="text-xl font-bold text-slate-800">4. Invoice Boilerplate</h2>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-6">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Customer Message</label>
+                            <textarea 
+                                className="w-full bg-white border border-slate-200 rounded-lg px-4 py-3 text-slate-800 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none leading-relaxed min-h-[80px] resize-y"
+                                value={invoiceMessage}
+                                onChange={e => setInvoiceMessage(e.target.value)}
+                                placeholder="Thank you for your business..."
+                            />
+                            <p className="text-xs text-slate-400 mt-2">
+                                Displayed below the line items on all generated invoices.
+                            </p>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Invoice Footer</label>
+                            <input 
+                                type="text"
+                                className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 font-medium focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all"
+                                value={invoiceFooter}
+                                onChange={e => setInvoiceFooter(e.target.value)}
+                                placeholder="e.g. Invoice generated by Pilar Sales Platform"
+                            />
+                            <p className="text-xs text-slate-400 mt-2">
+                                Centered text block at the very bottom of the invoice document.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 5. Signature Sign-off */}
+                <div className="p-8 bg-slate-50/50 border-t border-slate-200">
                     <div className="flex items-center gap-2 mb-6">
                         <Pen className="text-primary-500" size={20} />
-                        <h2 className="text-xl font-bold text-slate-800">4. Signature Watermark</h2>
+                        <h2 className="text-xl font-bold text-slate-800">5. Signature Watermark</h2>
                     </div>
                     
                     <div className="max-w-md">
