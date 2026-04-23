@@ -684,7 +684,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
       setMentionPopup(p => ({ ...p, show: false }));
     }
 
-    const tagsMatch = textBeforeCursor.match(/#([A-Za-z0-9_\s]*)$/);
+    const tagsMatch = textBeforeCursor.match(/(?<=\s|^)#([A-Za-z0-9_]*)$/);
     if (tagsMatch && !mentionsMatch) {
       setTagPopup(p => ({ ...p, show: true, query: tagsMatch[1].toLowerCase(), index: 0 }));
     } else {
@@ -715,7 +715,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     const textBefore = inputValue.substring(0, cursorPos);
     const textAfter = inputValue.substring(cursorPos);
     
-    const match = textBefore.match(/#([A-Za-z0-9_\s]*)$/);
+    const match = textBefore.match(/(?<=\s|^)#([A-Za-z0-9_]*)$/);
     if (match) {
       const newTextBefore = textBefore.substring(0, match.index) + `#[Proposal for ${proposal.customer_name}](${proposal.id}) `;
       setInputValue(newTextBefore + textAfter);
