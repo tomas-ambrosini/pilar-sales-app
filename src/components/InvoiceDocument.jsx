@@ -205,9 +205,18 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                         <div className="flex justify-between items-start mb-6 print-safe-block">
                             <div className="w-1/2 pr-8 mt-2">
                                 <div className="font-bold text-slate-800 mb-1 px-1">Customer Message:</div>
-                                <p className="text-[11px] text-slate-500 italic px-1 whitespace-pre-wrap">
+                                <p className="text-[11px] text-slate-500 italic px-1 whitespace-pre-wrap mb-4">
                                     {isLoadingTemplate ? 'Loading message...' : templateConfig?.invoiceMessage}
                                 </p>
+                                
+                                {templateConfig?.invoicePaymentTerms && (
+                                    <>
+                                        <div className="font-bold text-slate-800 mb-1 px-1">Payment Terms:</div>
+                                        <p className="text-[11px] text-slate-600 font-medium px-1">
+                                            {templateConfig.invoicePaymentTerms}
+                                        </p>
+                                    </>
+                                )}
                             </div>
                             
                             <div className="w-[300px] border border-slate-300 rounded overflow-hidden bg-[#f8fafc]">

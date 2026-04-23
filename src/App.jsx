@@ -10,7 +10,7 @@ import Login from './pages/Login';
 import FirstSetup from './pages/FirstSetup';
 import PromoCodes from './pages/PromoCodes';
 import AccountManagement from './pages/AccountManagement';
-import TemplateSettings from './pages/TemplateSettings';
+import TemplateDashboard from './pages/TemplateDashboard';
 import FinancialSettings from './pages/FinancialSettings';
 import FinanceDashboard from './pages/FinanceDashboard';
 import SalesPipeline from './pages/SalesPipeline';
@@ -72,7 +72,7 @@ function MainRouter() {
 
           {/* SUPER ADMIN EXCLUSIVE DOMAINS */}
           <Route path="account-management/*" element={<RoleRoute allowedRoles={['ADMIN']}><AccountManagement /></RoleRoute>} />
-          <Route path="template-settings/*" element={<RoleRoute allowedRoles={['ADMIN']}><TemplateSettings /></RoleRoute>} />
+          <Route path="template-settings/*" element={<RoleRoute allowedRoles={['ADMIN']}><TemplateDashboard /></RoleRoute>} />
           <Route path="finance/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><FinanceDashboard /></RoleRoute>} />
           
           {/* WILDCARDS / DEFAULTS */}
