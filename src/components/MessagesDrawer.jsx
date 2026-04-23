@@ -652,8 +652,22 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
   const renderTextWithMentions = (text) => {
     if (!text) return null;
     // Support legacy string mentions and new tag format
-    const parts = text.split(/(@[A-Za-z0-9_]+|#P[0-9]{4}-[A-Z0-9]{6,8}-TEST)/gi);
+    const parts = text.split(/(@\[.*?\]\(.*?\)|#\[.*?\]\(.*?\)|@[A-Za-z0-9_]+|#P[0-9]{4}-[A-Z0-9]{6,8}-TEST)/gi);
     return parts.map((part, i) => {
+      // Markdown Mention
+      const markdownMention = part.match(/^@\[(.*?)\]\((.*?)\)$/);
+      if (markdownMention) {
+         const isSelf = user?.id === markdownMention[2];
+         return <span key={i} className={isSelf ? 'mention-highlight-self' : 'mention-highlight'}>@{markdownMention[1]}</span>;
+      }
+      
+      // Markdown Tag
+      const markdownTag = part.match(/^#\[(.*?)\]\((.*?)\)$/);
+      if (markdownTag) {
+         const shortId = markdownTag[2].split('-')[0];
+         return <span key={i} onClick={() => handleOpenProposal(shortId)} className="px-1.5 py-0.5 bg-indigo-100 text-indigo-800 font-bold rounded cursor-pointer text-[0.8rem] mx-0.5 shadow-sm border border-indigo-200 hover:bg-indigo-200 transition-colors">🏷️ {markdownTag[1].replace('Proposal for ', '')}</span>;
+      }
+
       if (part.startsWith('@')) {
         const username = part.slice(1);
         const isSelf = user?.name && username.toLowerCase() === (user.full_name || user.name || '').replace(/\s+/g, '').toLowerCase();
