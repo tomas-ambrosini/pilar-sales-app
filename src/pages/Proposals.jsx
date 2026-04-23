@@ -603,17 +603,17 @@ ${equipmentNotes}
                               if (colName === 'Pending Void') headerColor = 'border-amber-200 bg-amber-50 text-amber-700';
 
                               return (
-                                 <div key={colName} className={filterMode === 'All' ? "flex flex-col flex-1 w-[85vw] min-w-[280px] sm:min-w-[320px] max-w-[350px] md:max-w-md shrink-0 bg-slate-100/50 rounded-xl border border-slate-200 p-4 relative h-max mt-4 snap-center sm:snap-start" : "w-full h-max"}>
+                                 <div key={colName} className={filterMode === 'All' ? "flex flex-col flex-1 w-[85vw] min-w-[280px] sm:min-w-[320px] max-w-[350px] md:max-w-md shrink-0 bg-slate-100/50 rounded-xl border border-slate-200 p-4 pt-0 mt-8 snap-center sm:snap-start" : "w-full"}>
                                     {filterMode === 'All' && (
-                                        <div className={`px-4 py-2 border rounded-lg mb-4 font-black uppercase tracking-wider text-[11px] ${headerColor} flex justify-between items-center shadow-sm absolute -top-5 left-4 right-4`}>
+                                        <div className={`px-4 py-2 border rounded-lg mb-4 font-black uppercase tracking-wider text-[11px] ${headerColor} flex justify-between items-center shadow-sm -mt-4 mx-0 z-10 sticky top-0`}>
                                            <span>{colName}</span>
                                            <span className="bg-white/90 text-slate-800 px-2 py-0.5 rounded-full text-[10px] shadow-sm">{colProposals.length}</span>
                                         </div>
                                     )}
                                     
-                                    <div className={filterMode === 'All' ? "flex flex-col gap-3 mt-3" : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"}>
+                                    <div className={filterMode === 'All' ? "flex flex-col gap-3" : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"}>
                                        {colProposals.map(proposal => (
-                                           <div key={proposal.id} onClick={() => handleRowClick(proposal)} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-slate-400 transition-all cursor-pointer group flex flex-col relative" style={{ height: '210px' }}>
+                                           <div key={proposal.id} onClick={() => handleRowClick(proposal)} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-slate-400 transition-all cursor-pointer group flex flex-col relative h-[220px] shrink-0">
                                               <div className="flex justify-between items-start mb-3">
                                                  <div>
                                                     <h3 className="font-black text-slate-800 text-sm truncate max-w-[180px]">{proposal.customer}</h3>
