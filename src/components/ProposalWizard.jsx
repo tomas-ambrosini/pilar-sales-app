@@ -613,7 +613,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
   return (
     <div className="page-container fade-in">
-      <div className="glass-panel" style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
+      <div className="glass-panel p-4 md:p-8 max-w-[1000px] mx-auto">
         <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
           <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
              <Calculator className="text-primary-600"/> 

@@ -274,11 +274,10 @@ export default function Layout() {
       </div>
 
       {/* Bottom Nav for Mobile */}
-      <nav className="bottom-nav glass-panel">
+      <nav className="bottom-nav glass-panel custom-scrollbar">
         {navGroups
           .flatMap(g => g.items)
           .filter(item => item.allowedRoles.includes(activeRole))
-          .slice(0, 5)
           .map((item) => (
           <NavLink
             key={item.path}
