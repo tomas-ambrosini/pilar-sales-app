@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { Users, Shield, UserX, UserCheck, Key, Plus, Lock, Search, Copy } from 'lucide-react';
+import { Users, Shield, UserX, UserCheck, Key, Plus, Lock, Search, Copy, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import UserBadges from '../components/UserBadges';
 import { MANUAL_BADGE_KEYS, BADGE_REGISTRY } from '../utils/badges';
@@ -360,37 +361,74 @@ export default function AccountManagement() {
                   </div>
 
                   {/* Badge Awards Section */}
-                  <div className="border-t pt-4">
-                     <label className="text-xs font-bold text-slate-500 uppercase mb-3 block">Award Badges</label>
-                     <div className="grid grid-cols-2 gap-2">
+                  <div className="border-t pt-6 mt-6">
+                     <div className="flex items-center justify-between mb-4">
+                        <label className="text-xs font-black text-slate-800 uppercase tracking-widest">Honorary Badges</label>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase bg-slate-100 px-2 py-0.5 rounded-full">{editBadges.length} Selected</span>
+                     </div>
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {MANUAL_BADGE_KEYS.map(key => {
                            const badge = BADGE_REGISTRY[key];
                            const isActive = editBadges.includes(key);
                            return (
-                              <button
+                              <motion.button
                                  key={key}
                                  type="button"
+                                 whileHover={{ scale: 1.02 }}
+                                 whileTap={{ scale: 0.98 }}
                                  onClick={() => {
                                     setEditBadges(prev =>
                                        prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
                                     );
                                  }}
-                                 className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all ${
+                                 className={`relative overflow-hidden flex items-center gap-3.5 px-4 py-3.5 rounded-2xl border text-left transition-all duration-300 group ${
                                     isActive
-                                       ? 'bg-slate-900 text-white border-slate-700 shadow-md ring-2 ring-offset-1 ring-slate-400'
-                                       : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300 hover:text-slate-600'
+                                       ? 'shadow-lg border-transparent ring-2 ring-offset-2'
+                                       : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:shadow-md'
                                  }`}
+                                 style={{ 
+                                    background: isActive ? badge.gradient : undefined,
+                                    color: isActive ? 'white' : undefined,
+                                    boxShadow: isActive ? `0 8px 20px -4px ${badge.glow}` : undefined,
+                                    borderColor: isActive ? 'transparent' : undefined,
+                                    '--tw-ring-color': isActive ? badge.glow : undefined
+                                 }}
                               >
-                                 <span
-                                    className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-white [&>svg]:w-3 [&>svg]:h-3"
-                                    style={{ background: badge.gradient, boxShadow: isActive ? `0 0 8px ${badge.glow}` : 'none' }}
+                                 {/* Dark overlay to ensure text contrast on light gradients */}
+                                 {isActive && <div className="absolute inset-0 bg-black/10 mix-blend-overlay"></div>}
+                                 
+                                 <div
+                                    className={`relative z-10 shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 [&>svg]:w-5 [&>svg]:h-5 ${
+                                       isActive 
+                                       ? 'bg-white text-slate-900 shadow-xl scale-110' 
+                                       : 'text-white group-hover:scale-110'
+                                    }`}
+                                    style={{ 
+                                        background: !isActive ? badge.gradient : undefined,
+                                        boxShadow: !isActive ? `0 4px 12px ${badge.glow}` : undefined 
+                                    }}
                                     dangerouslySetInnerHTML={{ __html: badge.svg }}
                                  />
-                                 <div className="text-left">
-                                    <div className="leading-tight">{badge.label}</div>
-                                    <div className={`text-[9px] font-medium mt-0.5 ${isActive ? 'text-slate-400' : 'text-slate-300'}`}>{badge.subtitle}</div>
+                                 <div className="relative z-10 min-w-0 pr-6">
+                                    <div className={`font-black text-sm tracking-tight truncate ${isActive ? 'text-white drop-shadow-sm' : 'text-slate-700'}`}>{badge.label}</div>
+                                    <div className={`text-[9px] font-bold uppercase tracking-widest truncate mt-0.5 ${isActive ? 'text-white/90 drop-shadow-sm' : 'text-slate-400'}`}>{badge.subtitle}</div>
                                  </div>
-                              </button>
+                                 
+                                 {/* Checkmark overlay for active state */}
+                                 <AnimatePresence>
+                                     {isActive && (
+                                         <motion.div 
+                                             initial={{ scale: 0, opacity: 0 }}
+                                             animate={{ scale: 1, opacity: 1 }}
+                                             exit={{ scale: 0, opacity: 0 }}
+                                             transition={{ type: "spring", bounce: 0.5 }}
+                                             className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-6 h-6 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md shadow-sm border border-white/20"
+                                         >
+                                             <Check size={14} className="text-white drop-shadow-sm" />
+                                         </motion.div>
+                                     )}
+                                 </AnimatePresence>
+                              </motion.button>
                            );
                         })}
                      </div>
