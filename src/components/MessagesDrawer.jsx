@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User, Edit2, Trash2, Reply, Paperclip, FileText, Loader2, Image as ImageIcon, SmilePlus, Minimize2, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User, Edit2, Trash2, Reply, Paperclip, FileText, Loader2, Image as ImageIcon, SmilePlus, Minus, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNotifications } from '../context/NotificationsContext';
 import { formatQuoteId } from '../utils/formatters';
@@ -970,7 +970,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                        whileHover={{ scale: 1.05 }}
                        whileTap={{ scale: 0.95 }}
                      >
-                       <Minimize2 size={18} strokeWidth={2.5} />
+                       <Minus size={18} strokeWidth={2.5} />
                      </motion.button>
                      <motion.button 
                        className={`icon-btn-minimal hover:text-slate-700 hover:bg-slate-100 ${isDocked ? 'text-primary-600' : 'text-slate-400'}`} 
