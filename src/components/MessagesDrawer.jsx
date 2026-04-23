@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User, Edit2, Trash2, Reply, Paperclip, FileText, Loader2, Image as ImageIcon, SmilePlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNotifications } from '../context/NotificationsContext';
+import { formatQuoteId } from '../utils/formatters';
+import ProposalViewerModal from './ProposalViewerModal';
 import './MessagesDrawer.css';
 
 export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearForceChannel, onUnreadStatusChange }) {
@@ -48,6 +50,12 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
 
   // Phase 4 ERP Context (Hashtags)
   const [tagPopup, setTagPopup] = useState({ show: false, query: '', index: 0, results: [], isLoading: false });
+  const [selectedProposal, setSelectedProposal] = useState(null);
+
+  const handleOpenProposal = async (shortId) => {
+      const { data } = await supabase.from('proposals').select('*, user_profiles(full_name)').ilike('id', `${shortId}%`).single();
+      if (data) setSelectedProposal(data);
+  };
 
   useEffect(() => {
     if (!tagPopup.show) return;
@@ -55,7 +63,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
        setTagPopup(p => ({ ...p, isLoading: true }));
        const { data } = await supabase
          .from('proposals')
-         .select('id, customer, amount')
+         .select('id, customer, amount, proposal_number, created_at, updated_at')
          .ilike('customer', `%${tagPopup.query}%`)
          .limit(5);
        
@@ -643,24 +651,23 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
 
   const renderTextWithMentions = (text) => {
     if (!text) return null;
-    const parts = text.split(/(@\[.*?\]\(.*?\)|#\[.*?\]\(.*?\))/g);
+    // Support legacy string mentions and new tag format
+    const parts = text.split(/(@[A-Za-z0-9_]+|#P[0-9]{4}-[A-Z0-9]{6,8}-TEST)/gi);
     return parts.map((part, i) => {
-      const mentionMatch = part.match(/^@\[(.*?)\]\((.*?)\)$/);
-      if (mentionMatch) {
-        const name = mentionMatch[1];
-        const userId = mentionMatch[2];
-        const isSelf = user?.id === userId;
+      if (part.startsWith('@')) {
+        const username = part.slice(1);
+        const isSelf = user?.name && username.toLowerCase() === (user.full_name || user.name || '').replace(/\s+/g, '').toLowerCase();
         return (
           <span key={i} className={isSelf ? 'mention-highlight-self' : 'mention-highlight'}>
-            @{name}
+            {part}
           </span>
         );
       }
       
-      const tagMatch = part.match(/^#\[(.*?)\]\((.*?)\)$/);
+      const tagMatch = part.match(/^#(P[0-9]{4}-([A-Z0-9]{6,8})-TEST)$/i);
       if (tagMatch) {
          return (
-           <span key={i} className="px-1.5 py-0.5 bg-indigo-100 text-indigo-800 font-bold rounded cursor-pointer text-[0.8rem] mx-0.5 shadow-sm border border-indigo-200">
+           <span key={i} onClick={() => handleOpenProposal(tagMatch[2])} className="px-1.5 py-0.5 bg-indigo-100 text-indigo-800 font-bold rounded cursor-pointer text-[0.8rem] mx-0.5 shadow-sm border border-indigo-200 hover:bg-indigo-200 transition-colors">
              🏷️ {tagMatch[1]}
            </span>
          );
@@ -734,14 +741,14 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
   const insertMention = (targetUser) => {
     if (!targetUser) return;
     const name = targetUser.full_name || targetUser.name || 'User';
-    const id = targetUser.id;
+    const cleanName = name.replace(/\s+/g, '');
     const cursorPos = inputRef.current?.selectionStart || inputValue.length;
     const textBefore = inputValue.substring(0, cursorPos);
     const textAfter = inputValue.substring(cursorPos);
     
     const match = textBefore.match(/@([A-Za-z0-9_]*)$/);
     if (match) {
-      const newTextBefore = textBefore.substring(0, match.index) + `@[${name}](${id}) `;
+      const newTextBefore = textBefore.substring(0, match.index) + `@${cleanName} `;
       setInputValue(newTextBefore + textAfter);
       
       // Typing presence sync
@@ -1375,7 +1382,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                                        onClick={() => insertTag(prop)}
                                      >
                                         <div className="font-bold text-sm text-slate-800 truncate w-full">Proposal for {prop.customer}</div>
-                                        <div className="text-[10px] text-slate-500 font-semibold uppercase">{prop.id.split('-')[0]}</div>
+                                        <div className="text-[10px] text-slate-500 font-semibold uppercase">{formatQuoteId(prop)}</div>
                                      </div>
                                   ))
                                )}
@@ -1482,6 +1489,13 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
              <X size={24} />
            </button>
         </motion.div>
+      )}
+      {selectedProposal && (
+         <ProposalViewerModal
+            isOpen={!!selectedProposal}
+            onClose={() => setSelectedProposal(null)}
+            proposal={selectedProposal}
+         />
       )}
     </AnimatePresence>
   );
