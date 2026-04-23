@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCustomers } from '../context/CustomerContext';
 import { useProposals } from '../context/ProposalContext';
 import { formatQuoteId } from '../utils/formatters';
+import { computeDashboardMetrics } from '../utils/dashboardMetrics';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -14,9 +15,14 @@ export default function Dashboard() {
   const { customers } = useCustomers();
   const { proposals } = useProposals();
 
-  const totalCustomers = customers ? customers.length : 0;
-  const sentProposals = proposals ? proposals.filter(p => p.status === 'Sent').length : 0;
-  const approvedProposals = proposals ? proposals.filter(p => p.status === 'Approved').length : 0;
+  // Real Analytics Metrics (7 days)
+  const customerMetrics = computeDashboardMetrics(customers, 'created_at', 7);
+  
+  const activeProposals = proposals ? proposals.filter(p => p.status === 'Sent') : [];
+  const activeMetrics = computeDashboardMetrics(activeProposals, 'updated_at', 7);
+  
+  const closedProposals = proposals ? proposals.filter(p => p.status === 'Approved') : [];
+  const closedMetrics = computeDashboardMetrics(closedProposals, 'updated_at', 7);
 
   // Sorting strictly chronologically and taking top 5
   const recentProposals = proposals
@@ -87,6 +93,7 @@ export default function Dashboard() {
          <FileText size={16} className="text-slate-400" /> Pipeline Stats
       </motion.h3>
       <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Total Customers */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between">
           <div className="p-5 pb-0">
             <div className="flex items-center gap-2 mb-3">
@@ -94,19 +101,23 @@ export default function Dashboard() {
                <p className="text-sm font-medium text-slate-600">Total Customers</p>
             </div>
             <div className="flex items-baseline gap-3 mb-1">
-               <p className="text-3xl font-black text-slate-900 tracking-tight">{totalCustomers}</p>
-               <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full z-10">+4.2%</span>
+               <p className="text-3xl font-black text-slate-900 tracking-tight">{customerMetrics.currentValue}</p>
+               <span className={`text-xs font-bold px-2 py-0.5 rounded-full z-10 ${
+                 customerMetrics.isPositive === true ? 'text-emerald-600 bg-emerald-50' :
+                 customerMetrics.isPositive === false ? 'text-rose-600 bg-rose-50' : 'text-slate-500 bg-slate-100'
+               }`}>{customerMetrics.growthText}</span>
             </div>
           </div>
           <div className="h-12 w-full mt-2 pointer-events-none">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={[{v:10},{v:11},{v:11},{v:12},{v:14},{v:15},{v:18}]} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+              <AreaChart data={customerMetrics.chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                  <Area type="monotone" dataKey="v" stroke="#10b981" fill="#10b981" fillOpacity={0.1} strokeWidth={2} isAnimationActive={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
+        {/* Active Proposals */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between">
           <div className="p-5 pb-0">
             <div className="flex items-center gap-2 mb-3">
@@ -114,19 +125,23 @@ export default function Dashboard() {
                <p className="text-sm font-medium text-slate-600">Active Proposals</p>
             </div>
             <div className="flex items-baseline gap-3 mb-1">
-               <p className="text-3xl font-black text-slate-900 tracking-tight">{sentProposals + 1}</p>
-               <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full z-10">+12.0%</span>
+               <p className="text-3xl font-black text-slate-900 tracking-tight">{activeMetrics.currentValue}</p>
+               <span className={`text-xs font-bold px-2 py-0.5 rounded-full z-10 ${
+                 activeMetrics.isPositive === true ? 'text-emerald-600 bg-emerald-50' :
+                 activeMetrics.isPositive === false ? 'text-rose-600 bg-rose-50' : 'text-slate-500 bg-slate-100'
+               }`}>{activeMetrics.growthText}</span>
             </div>
           </div>
           <div className="h-12 w-full mt-2 pointer-events-none">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={[{v:2},{v:4},{v:3},{v:5},{v:6},{v:6},{v:9}]} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+              <AreaChart data={activeMetrics.chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                  <Area type="monotone" dataKey="v" stroke="#10b981" fill="#10b981" fillOpacity={0.1} strokeWidth={2} isAnimationActive={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
+        {/* Closed Won */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between">
           <div className="p-5 pb-0">
             <div className="flex items-center gap-2 mb-3">
@@ -134,13 +149,16 @@ export default function Dashboard() {
                <p className="text-sm font-medium text-slate-600">Closed Won</p>
             </div>
             <div className="flex items-baseline gap-3 mb-1">
-               <p className="text-3xl font-black text-slate-900 tracking-tight">{approvedProposals}</p>
-               <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full z-10">+2.1%</span>
+               <p className="text-3xl font-black text-slate-900 tracking-tight">{closedMetrics.currentValue}</p>
+               <span className={`text-xs font-bold px-2 py-0.5 rounded-full z-10 ${
+                 closedMetrics.isPositive === true ? 'text-blue-600 bg-blue-50' :
+                 closedMetrics.isPositive === false ? 'text-rose-600 bg-rose-50' : 'text-slate-500 bg-slate-100'
+               }`}>{closedMetrics.growthText}</span>
             </div>
           </div>
           <div className="h-12 w-full mt-2 pointer-events-none">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={[{v:1},{v:1},{v:2},{v:2},{v:3},{v:3},{v:5}]} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+              <AreaChart data={closedMetrics.chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                  <Area type="monotone" dataKey="v" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} strokeWidth={2} isAnimationActive={false} />
               </AreaChart>
             </ResponsiveContainer>
