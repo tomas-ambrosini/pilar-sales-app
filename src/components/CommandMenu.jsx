@@ -76,7 +76,7 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[999] p-4 pt-[10vh] flex justify-center items-start">
+        <div className="fixed inset-0 z-[999] p-4 pt-[10vh] flex justify-center items-start modal-layout-wrapper">
           {/* Backdrop Blur */}
           <motion.div
             initial={{ opacity: 0 }}

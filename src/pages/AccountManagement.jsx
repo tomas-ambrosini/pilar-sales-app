@@ -263,7 +263,7 @@ export default function AccountManagement() {
 
       {/* CREATE MODAL */}
       {showCreateModal && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200 modal-layout-wrapper">
             <div className="absolute -inset-10 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowCreateModal(false)}></div>
             <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
                <h3 className="text-xl font-black text-slate-800 mb-6 border-b pb-2">Provision Employee</h3>
@@ -307,7 +307,7 @@ export default function AccountManagement() {
 
       {/* EDIT MODAL */}
        {showEditModal && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200 modal-layout-wrapper">
             <div className="absolute -inset-10 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowEditModal(null)}></div>
             <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
                <h3 className="text-xl font-black text-slate-800 mb-6 border-b pb-2">Edit Access & Badges</h3>
@@ -407,7 +407,7 @@ export default function AccountManagement() {
 
       {/* RESET PASSWORD MODAL */}
       {showResetModal && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200 modal-layout-wrapper">
             <div className="absolute -inset-10 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowResetModal(null)}></div>
             <div className="relative bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 border-t-8 border-amber-500">
                <h3 className="text-lg font-black text-slate-800 mb-2">Force Auth Reset</h3>
@@ -429,7 +429,7 @@ export default function AccountManagement() {
 
       {/* SUCCESS MODAL (ONBOARDING MESSAGE) */}
       {successPayload && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200 modal-layout-wrapper">
             <div className="absolute -inset-10 bg-slate-900/40 backdrop-blur-sm" onClick={() => setSuccessPayload(null)}></div>
             <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border-t-8 border-emerald-500">
                <h3 className="text-xl font-black text-slate-800 mb-2">Account Provisioned!</h3>

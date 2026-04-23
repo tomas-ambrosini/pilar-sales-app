@@ -72,8 +72,10 @@ export default function Layout() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('pilar-chat-docked', isChatDocked);
+      const isDockedActive = isMessagesOpen && isChatDocked && !isChatMinimized;
+      document.documentElement.style.setProperty('--chat-dock-offset', isDockedActive ? '400px' : '0px');
     }
-  }, [isChatDocked]);
+  }, [isChatDocked, isMessagesOpen, isChatMinimized]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {

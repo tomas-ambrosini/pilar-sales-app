@@ -151,3 +151,9 @@ h1, h2, h3, h4, h5, h6 {
         flex-direction: column;
     }
 }
+
+/* Modal layout wrapper for centering modals in remaining available space when chat is docked */
+.modal-layout-wrapper {
+  padding-right: var(--chat-dock-offset, 0px);
+  transition: padding-right 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}

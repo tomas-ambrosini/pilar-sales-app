@@ -264,7 +264,7 @@ export default function PublicQuoteView() {
                 
                 {/* Double Opt-In Modal Overlay */}
                 {showConfirmation && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200 modal-layout-wrapper">
                         <div className="absolute -inset-10 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowConfirmation(false)}></div>
                         <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200">
                             <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mb-4">
