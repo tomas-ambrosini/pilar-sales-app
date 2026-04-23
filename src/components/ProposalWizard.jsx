@@ -18,7 +18,21 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
       if (hasPreloadedData) return null;
       try {
           const d = localStorage.getItem('pilar_wizard_draft');
-          return d ? JSON.parse(d) : null;
+          if (!d) return null;
+          const parsed = JSON.parse(d);
+          
+          let isEmpty = true;
+          if (parsed.step > 1) isEmpty = false;
+          else if (parsed.selectedCustomerId) isEmpty = false;
+          else if (parsed.appliedPromo) isEmpty = false;
+          else if (parsed.systems && parsed.systems[0]) {
+             const survey = parsed.systems[0].survey;
+             if (survey && (survey.systemType || survey.currentTonnage || survey.existingBrand)) isEmpty = false;
+             for (let i = 1; i <= 27; i++) {
+                if (survey && survey[`m${i}`]) isEmpty = false;
+             }
+          }
+          return isEmpty ? null : parsed;
       } catch(e) { return null; }
   });
   const [showRestoreBanner, setShowRestoreBanner] = useState(!!localDraftPayload);
@@ -654,24 +668,21 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="max-w-[1000px] mx-auto w-full mb-6"
+          className="max-w-[1000px] mx-auto w-full mb-6 px-4 md:px-8"
         >
-          <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl relative overflow-hidden">
-             {/* Decorative glow */}
-             <div className="absolute top-0 left-0 w-32 h-full bg-gradient-to-r from-blue-500/20 to-transparent pointer-events-none" />
-             
-             <div className="flex items-center gap-4 relative z-10">
+          <div className="bg-slate-900 p-4 md:p-5 rounded-xl border border-slate-700 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 shadow-xl">
+             <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shrink-0">
                    <Clock className="text-blue-400" size={20} />
                 </div>
                 <div>
-                   <div className="font-bold text-sm text-white mb-0.5">Unsaved Session Recovered</div>
-                   <p className="text-xs text-slate-300">We found a quote you were working on recently. Would you like to resume it?</p>
+                   <h4 className="text-white font-bold text-sm m-0">Unsaved Session Recovered</h4>
+                   <p className="text-slate-400 text-xs m-0 mt-1 max-w-lg">We found a quote you were working on recently. Would you like to resume it?</p>
                 </div>
              </div>
-             <div className="flex items-center gap-3 shrink-0 relative z-10 w-full sm:w-auto">
-                <button onClick={() => setShowRestoreBanner(false)} className="flex-1 sm:flex-none px-4 py-2 text-xs font-bold text-slate-400 hover:text-white transition-colors bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700">Discard</button>
-                <button onClick={handleRestoreLocalDraft} className="flex-1 sm:flex-none px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg shadow-sm transition-all border border-blue-500">Resume Progress</button>
+             <div className="flex gap-3 w-full md:w-auto shrink-0">
+                <button onClick={() => setShowRestoreBanner(false)} className="flex-1 md:flex-none px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg border border-slate-600 transition-colors">Discard</button>
+                <button onClick={handleRestoreLocalDraft} className="flex-1 md:flex-none px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors border border-blue-500 whitespace-nowrap shadow-sm">Resume Progress</button>
              </div>
           </div>
         </motion.div>
