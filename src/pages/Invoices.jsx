@@ -152,7 +152,7 @@ export default function Invoices({ isSubView = false }) {
                     </div>
                     
                     <div className="flex-1 bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 shadow-md text-center text-white lg:mt-auto flex flex-col justify-center">
-                        <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest mb-2 flex justify-center items-center gap-2"><CheckCircle2 size={14}/> Accounting Sync</h3>
+                        <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest mb-2 flex justify-center items-center gap-2"><CheckCircle2 size={14}/> Live Accounting Sync</h3>
                         <p className="text-sm font-medium text-slate-400 mb-4 leading-relaxed hidden md:block">Pilar automatically syncs paid invoices to your primary ledger. QuickBooks integration is active.</p>
                         <button className="w-full py-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-bold transition-colors">Force Ledger Sync</button>
                     </div>
