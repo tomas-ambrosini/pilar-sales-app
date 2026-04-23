@@ -12,6 +12,16 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const isDraftLaunch = hasPreloadedData && (editModeData.isDraft === true || editModeData.status === 'Draft');
   const isEditing = hasPreloadedData && editModeData.id != null && !isDraftLaunch;
   const editingId = isEditing ? editModeData.id : null;
+
+  // Local Storage Draft Recovery
+  const [localDraftPayload, setLocalDraftPayload] = useState(() => {
+      if (hasPreloadedData) return null;
+      try {
+          const d = localStorage.getItem('pilar_wizard_draft');
+          return d ? JSON.parse(d) : null;
+      } catch(e) { return null; }
+  });
+  const [showRestoreBanner, setShowRestoreBanner] = useState(!!localDraftPayload);
   
   const [step, setStep] = useState(() => {
      if (isEditing) return 6;
@@ -126,6 +136,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
             });
         }
         
+        localStorage.removeItem('pilar_wizard_draft');
         onComplete();
     } catch (err) {
         setManualSaveStatus('error');
@@ -178,6 +189,13 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     
     return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
   }, [step, selectedCustomerId, selectedLocationId, systems, appliedPromo, dbReady, isEditing, draftServerId]);
+
+  // Aggressive Local Storage Auto-Save
+  useEffect(() => {
+      if (showRestoreBanner) return; // Don't overwrite if they haven't decided yet
+      const payload = { step, selectedCustomerId, selectedLocationId, systems, appliedPromo, draftServerId };
+      localStorage.setItem('pilar_wizard_draft', JSON.stringify(payload));
+  }, [step, selectedCustomerId, selectedLocationId, systems, appliedPromo, draftServerId, showRestoreBanner]);
 
   // Handle Edit/Clone Mode Rehydration
   useEffect(() => {
@@ -254,6 +272,21 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     } finally {
       setValidatingPromo(false);
     }
+  };
+
+  const handleRestoreLocalDraft = () => {
+     if (localDraftPayload) {
+         if (localDraftPayload.step) setStep(localDraftPayload.step);
+         if (localDraftPayload.selectedCustomerId) setSelectedCustomerId(localDraftPayload.selectedCustomerId);
+         if (localDraftPayload.selectedLocationId) setSelectedLocationId(localDraftPayload.selectedLocationId);
+         if (localDraftPayload.systems) {
+             setSystems(localDraftPayload.systems);
+             setActiveSystemId(localDraftPayload.systems[0].id);
+         }
+         if (localDraftPayload.appliedPromo !== undefined) setAppliedPromo(localDraftPayload.appliedPromo);
+         if (localDraftPayload.draftServerId) setDraftServerId(localDraftPayload.draftServerId);
+     }
+     setShowRestoreBanner(false);
   };
 
   useEffect(() => {
@@ -599,6 +632,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
           addProposal({ customer: customerName, amount: finalAmount, proposal_data: { ...finalProposalData, wizard_state: wizardState } });
        }
     }
+    
+    localStorage.removeItem('pilar_wizard_draft');
     onComplete();
   };
 
@@ -613,6 +648,21 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
   return (
     <div className="page-container fade-in">
+      {showRestoreBanner && (
+        <div className="bg-slate-800 text-white p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg sticky top-0 z-50">
+           <div className="flex items-center gap-3">
+              <Clock className="text-blue-400" size={24} />
+              <div>
+                 <h4 className="font-bold text-sm">Unsaved Session Recovered</h4>
+                 <p className="text-xs text-slate-300">We found a quote you were working on recently. Would you like to resume it?</p>
+              </div>
+           </div>
+           <div className="flex items-center gap-2 shrink-0">
+              <button onClick={() => setShowRestoreBanner(false)} className="px-4 py-2 text-xs font-bold text-slate-300 hover:text-white transition-colors">Discard</button>
+              <button onClick={handleRestoreLocalDraft} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg shadow-sm transition-colors">Resume Progress</button>
+           </div>
+        </div>
+      )}
       <div className="glass-panel p-4 md:p-8 max-w-[1000px] mx-auto">
         <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
           <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">

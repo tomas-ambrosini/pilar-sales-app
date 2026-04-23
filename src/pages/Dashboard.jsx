@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Users, Send, CheckCircle, Clock, ChevronRight, FileText, ArrowUpRight } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
@@ -14,15 +14,16 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { customers } = useCustomers();
   const { proposals } = useProposals();
+  const [timeRange, setTimeRange] = useState(7);
 
-  // Real Analytics Metrics (7 days)
-  const customerMetrics = computeDashboardMetrics(customers, 'created_at', 7);
+  // Real Analytics Metrics
+  const customerMetrics = computeDashboardMetrics(customers, 'created_at', timeRange);
   
   const activeProposals = proposals ? proposals.filter(p => p.status === 'Sent') : [];
-  const activeMetrics = computeDashboardMetrics(activeProposals, 'updated_at', 7);
+  const activeMetrics = computeDashboardMetrics(activeProposals, 'updated_at', timeRange);
   
   const closedProposals = proposals ? proposals.filter(p => p.status === 'Approved') : [];
-  const closedMetrics = computeDashboardMetrics(closedProposals, 'updated_at', 7);
+  const closedMetrics = computeDashboardMetrics(closedProposals, 'updated_at', timeRange);
 
   // Sorting strictly chronologically and taking top 5
   const recentProposals = proposals
@@ -49,8 +50,15 @@ export default function Dashboard() {
           </h1>
           <p className="text-slate-500 font-medium">Here's your pipeline overview for today.</p>
         </div>
-        <div className="hidden sm:flex text-sm text-slate-400 font-bold bg-white px-4 py-2 border border-slate-200 rounded-xl shadow-sm">
-           {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        <div className="flex items-center gap-4">
+           <div className="flex bg-slate-200/50 p-1 rounded-md shadow-inner border border-slate-200">
+              <button className={`px-4 py-1.5 text-xs font-bold rounded transition-all ${timeRange === 7 ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setTimeRange(7)}>7D</button>
+              <button className={`px-4 py-1.5 text-xs font-bold rounded transition-all ${timeRange === 30 ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setTimeRange(30)}>30D</button>
+              <button className={`px-4 py-1.5 text-xs font-bold rounded transition-all ${timeRange === 365 ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setTimeRange(365)}>YTD</button>
+           </div>
+           <div className="hidden sm:flex text-sm text-slate-400 font-bold bg-white px-4 py-2 border border-slate-200 rounded-xl shadow-sm">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+           </div>
         </div>
       </motion.header>
 
