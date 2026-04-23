@@ -326,8 +326,6 @@ export default function CatalogEditor() {
                         </select>
                      )}
                   </div>
-
-                  </div>
                  </div>
              </div>
           </div>
