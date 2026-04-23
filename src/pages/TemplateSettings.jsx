@@ -23,6 +23,9 @@ export default function TemplateSettings() {
     const [titleLegalSection, setTitleLegalSection] = useState('');
     const [titleUnitSection, setTitleUnitSection] = useState('');
     
+    // Tab State
+    const [activeTab, setActiveTab] = useState('contract');
+    
     const [terms, setTerms] = useState([]);
     const [materials, setMaterials] = useState([]);
 
@@ -245,9 +248,36 @@ export default function TemplateSettings() {
                     </div>
                 </div>
 
-                {/* 1c. Section Header Customization */}
-                <div className="p-8 border-b border-slate-200">
-                    <div className="flex items-center gap-2 mb-6">
+                {/* Tab Navigation */}
+                <div className="flex border-b border-slate-200 bg-slate-50">
+                    <button 
+                        onClick={() => setActiveTab('contract')}
+                        className={`flex-1 py-4 px-6 text-sm font-black uppercase tracking-wider transition-colors ${
+                            activeTab === 'contract' 
+                            ? 'bg-white text-primary-600 border-b-2 border-primary-500' 
+                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+                        }`}
+                    >
+                        Contract Configuration
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('invoice')}
+                        className={`flex-1 py-4 px-6 text-sm font-black uppercase tracking-wider transition-colors border-l border-slate-200 ${
+                            activeTab === 'invoice' 
+                            ? 'bg-white text-primary-600 border-b-2 border-primary-500' 
+                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+                        }`}
+                    >
+                        Invoice Configuration
+                    </button>
+                </div>
+
+                {/* --- TAB CONTENT: CONTRACT SETTINGS --- */}
+                {activeTab === 'contract' && (
+                    <>
+                        {/* 1c. Section Header Customization */}
+                        <div className="p-8 border-b border-slate-200">
+                            <div className="flex items-center gap-2 mb-6">
                         <Pen className="text-indigo-500" size={20} />
                         <h2 className="text-xl font-bold text-slate-800">Layout Headers</h2>
                     </div>
@@ -355,8 +385,34 @@ export default function TemplateSettings() {
                     </div>
                 </div>
 
+                {/* 5. Signature Sign-off */}
+                <div className="p-8 bg-slate-50/50 border-t border-slate-200">
+                    <div className="flex items-center gap-2 mb-6">
+                        <Pen className="text-primary-500" size={20} />
+                        <h2 className="text-xl font-bold text-slate-800">5. Signature Watermark</h2>
+                    </div>
+                    
+                    <div className="max-w-md">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Company Countersign Stamp</label>
+                        <input 
+                            type="text"
+                            className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 font-[cursive] text-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all"
+                            value={signatureName}
+                            onChange={e => setSignatureName(e.target.value)}
+                        />
+                        <p className="text-xs text-slate-400 mt-2">
+                            This text appears diagonally across the company signature block on the contract representing internal authorization.
+                        </p>
+                    </div>
+                </div>
+                </>
+                )}
+
+                {/* --- TAB CONTENT: INVOICE SETTINGS --- */}
+                {activeTab === 'invoice' && (
+                <>
                 {/* 4. Invoice Settings */}
-                <div className="p-8 border-b border-slate-200 bg-slate-50/50">
+                <div className="p-8 border-b border-slate-200 bg-white">
                     <div className="flex items-center gap-2 mb-6">
                         <Banknote className="text-primary-600" size={20} />
                         <h2 className="text-xl font-bold text-slate-800">4. Invoice Boilerplate</h2>
@@ -390,27 +446,8 @@ export default function TemplateSettings() {
                         </div>
                     </div>
                 </div>
-
-                {/* 5. Signature Sign-off */}
-                <div className="p-8 bg-slate-50/50 border-t border-slate-200">
-                    <div className="flex items-center gap-2 mb-6">
-                        <Pen className="text-primary-500" size={20} />
-                        <h2 className="text-xl font-bold text-slate-800">5. Signature Watermark</h2>
-                    </div>
-                    
-                    <div className="max-w-md">
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Company Countersign Stamp</label>
-                        <input 
-                            type="text"
-                            className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 font-[cursive] text-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all"
-                            value={signatureName}
-                            onChange={e => setSignatureName(e.target.value)}
-                        />
-                        <p className="text-xs text-slate-400 mt-2">
-                            This text appears diagonally across the company signature block on the contract representing internal authorization.
-                        </p>
-                    </div>
-                </div>
+                </>
+                )}
 
             </div>
         </div>
