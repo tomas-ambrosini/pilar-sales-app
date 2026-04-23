@@ -35,6 +35,15 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
 
   // Broadcast Channel Ref
   const presenceChannelRef = useRef(null);
+  
+  // Phase 1 Pagination
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const MESSAGES_PER_PAGE = 50;
+
+  // Phase 2 Typing Indicators & Receipts
+  const [typingUsers, setTypingUsers] = useState([]);
+  const typingTimeoutRef = useRef(null);
 
   // Generate a deterministic gradient for an avatar based on a string (name)
   const getAvatarGradient = (name) => {
@@ -157,6 +166,31 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     }
   }, [activeChannelId, user?.id, isOpen]);
 
+  const loadMoreMessages = async () => {
+    if (!hasMoreMessages || isLoadingMore || messages.length === 0) return;
+    setIsLoadingMore(true);
+    
+    const oldestMessageDate = messages[0].created_at;
+
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .select(`
+          id, body, created_at, updated_at, sender_id, is_deleted, reply_to_id, attachment_url, attachment_type,
+          sender:user_profiles ( full_name, role, avatar_url ),
+          chat_reactions ( id, user_id, emoji )
+      `)
+      .eq('channel_id', activeChannelId)
+      .lt('created_at', oldestMessageDate)
+      .order('created_at', { ascending: false })
+      .limit(MESSAGES_PER_PAGE);
+
+    if (!error && data) {
+      setMessages(prev => [...data.reverse(), ...prev]);
+      setHasMoreMessages(data.length === MESSAGES_PER_PAGE);
+    }
+    setIsLoadingMore(false);
+  };
+
   useEffect(() => {
     if (!activeChannelId || !isOpen) return;
 
@@ -181,10 +215,12 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
           )
         `)
         .eq('channel_id', activeChannelId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false })
+        .limit(MESSAGES_PER_PAGE);
 
       if (!error && data) {
-        setMessages(data);
+        setMessages(data.reverse());
+        setHasMoreMessages(data.length === MESSAGES_PER_PAGE);
         scrollToBottom();
       } else {
         console.error("Error fetching messages", error);
@@ -269,6 +305,17 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     });
 
     presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState();
+        const currentlyTyping = [];
+        for (const id in state) {
+           const presences = state[id];
+           if (presences && presences[0]?.is_typing && presences[0]?.user_id !== user?.id) {
+               currentlyTyping.push(presences[0].full_name);
+           }
+        }
+        setTypingUsers(currentlyTyping);
+      })
       .on('broadcast', { event: 'new_message' }, ({ payload }) => {
          console.log("🔥 NATIVE BROADCAST RECEIVED 🔥", payload);
          if (payload.sender_id !== user?.id) {
@@ -478,6 +525,10 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     clearAttachment();
     scrollToBottom();
 
+    if (presenceChannelRef.current && user) {
+       presenceChannelRef.current.track({ user_id: user.id, full_name: user.full_name || user.name, is_typing: false });
+    }
+
      const { data: insertedData, error } = await supabase.from('chat_messages').insert([newMsg]).select().single();
     if (error) {
        console.error("Error sending message", error);
@@ -585,6 +636,21 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     } else {
       setMentionPopup(p => ({ ...p, show: false }));
     }
+
+    // Typing presence sync
+    if (presenceChannelRef.current && user) {
+        presenceChannelRef.current.track({
+            user_id: user.id,
+            full_name: user.full_name || user.name,
+            is_typing: val.length > 0
+        });
+        
+        // Debounce clearing typing state
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+             presenceChannelRef.current?.track({ user_id: user.id, full_name: user.full_name || user.name, is_typing: false });
+        }, 5000);
+    }
   };
 
   const filteredMentions = mentionPopup.show ? allUsers.filter(u => (u.full_name || u.name || '').replace(/\s+/g, '').toLowerCase().includes(mentionPopup.query) && u.id !== user?.id) : [];
@@ -601,6 +667,15 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
       const newTextBefore = textBefore.substring(0, match.index) + `@${name} `;
       setInputValue(newTextBefore + textAfter);
       
+      // Typing presence sync
+      if (presenceChannelRef.current && user) {
+          presenceChannelRef.current.track({
+              user_id: user.id,
+              full_name: user.full_name || user.name,
+              is_typing: true
+          });
+      }
+
       // Restore cursor position
       setTimeout(() => {
         if (inputRef.current) {
@@ -918,6 +993,18 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                         transition={{ duration: 0.2 }}
                       >
                         <div className="drawer-messages-list custom-scrollbar">
+                          {hasMoreMessages && messages.length > 0 && (
+                             <div className="flex justify-center mb-4 mt-2">
+                               <button 
+                                 className="text-xs font-bold text-primary-600 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 px-3 py-1.5 rounded-full transition-colors flex items-center gap-2"
+                                 onClick={loadMoreMessages}
+                                 disabled={isLoadingMore}
+                               >
+                                 {isLoadingMore ? <Loader2 size={12} className="animate-spin" /> : null}
+                                 Load Older Messages
+                               </button>
+                             </div>
+                          )}
                           {messages.length === 0 ? (
                             <div className="drawer-empty-state">
                               <MessageSquare size={48} strokeWidth={1} className="mb-4 text-slate-300" />
@@ -1072,6 +1159,21 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                                 </motion.div>
                               );
                             })
+                          )}
+                          {typingUsers.length > 0 && (
+                            <motion.div 
+                              initial={{ opacity: 0, y: 5 }} 
+                              animate={{ opacity: 1, y: 0 }} 
+                              exit={{ opacity: 0 }}
+                              className="px-6 py-2 text-xs font-semibold text-slate-400 italic flex items-center gap-2"
+                            >
+                              <div className="flex gap-1">
+                                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                              </div>
+                              {typingUsers.length === 1 ? `${typingUsers[0]} is typing...` : `${typingUsers.length} people are typing...`}
+                            </motion.div>
                           )}
                           <div ref={messagesEndRef} className="h-4" />
                         </div>
