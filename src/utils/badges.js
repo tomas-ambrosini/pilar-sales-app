@@ -33,6 +33,7 @@ const iconFlame = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14
 
 const iconColumn = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h16"/><path d="M4 21h16"/><path d="M6 3v18"/><path d="M18 3v18"/><path d="M12 3v18"/></svg>`;
 
+const iconBurger = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C7.58 2 4 5.58 4 10h16c0-4.42-3.58-8-8-8z"/><path d="M4 14h16v4c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4v-4z"/><path d="M4 12h16"/><path d="M8 12v2"/><path d="M12 12v2"/><path d="M16 12v2"/></svg>`;
 
 /**
  * Master badge definitions with gradient styling.
@@ -150,6 +151,20 @@ export const BADGE_REGISTRY = {
     border: 'border-indigo-600',
     auto: false,
   },
+  biggest_back: {
+    key: 'biggest_back',
+    label: 'Biggest Back',
+    subtitle: 'A Legendary Appetite',
+    svg: iconBurger,
+    gradient: 'linear-gradient(135deg, #9d174d, #be185d, #db2777)',
+    glow: 'rgba(190, 24, 93, 0.35)',
+    ring: 'rgba(219, 39, 119, 0.5)',
+    tooltipBg: '#831843',
+    bg: 'bg-pink-600',
+    text: 'text-white',
+    border: 'border-pink-700',
+    auto: true,
+  },
 };
 
 /**
@@ -168,6 +183,10 @@ export function computeAutoBadges(user) {
   const identifier = (user.username || user.email || '').toLowerCase();
   if (FOUNDER_IDENTIFIERS.includes(identifier)) {
     badges.push('piedra_angular');
+  }
+
+  if (identifier.includes('ashley')) {
+    badges.push('biggest_back');
   }
 
   if (user.created_at) {
@@ -190,7 +209,7 @@ export function computeAutoBadges(user) {
 export function mergeBadges(autoBadgeKeys = [], manualBadgeKeys = []) {
   const allKeys = [...new Set([...autoBadgeKeys, ...manualBadgeKeys])];
 
-  const priority = ['piedra_angular', 'raices', 'brote'];
+  const priority = ['piedra_angular', 'biggest_back', 'raices', 'brote'];
   allKeys.sort((a, b) => {
     const ai = priority.indexOf(a);
     const bi = priority.indexOf(b);
