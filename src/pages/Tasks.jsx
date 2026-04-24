@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { 
   CheckSquare, Square, Plus, Loader2, 
   SignalHigh, SignalMedium, SignalLow, CircleDashed, 
-  Calendar, Users, ChevronDown, Flame, AlertCircle, Clock, Check, CheckCircle2
+  Calendar, Users, ChevronDown, Flame, AlertCircle, Clock, Check, CheckCircle2, ChevronRight
 } from 'lucide-react';
 
 export default function Tasks() {
@@ -15,7 +15,9 @@ export default function Tasks() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState(null);
-  const [activeMenuType, setActiveMenuType] = useState(null); // 'status', 'priority', 'assignee'
+  const [activeMenuType, setActiveMenuType] = useState(null); // 'status', 'priority', 'assignee', 'progress'
+  const [expandedTaskId, setExpandedTaskId] = useState(null);
+  const [activeDescription, setActiveDescription] = useState("");
   
   const menuRef = useRef(null);
 
@@ -90,7 +92,7 @@ export default function Tasks() {
     const previousTasks = [...tasks];
     setTasks(tasks.map(t => t.id === taskId ? { ...t, [field]: value } : t));
     
-    if (field !== 'title' && field !== 'progress') {
+    if (field !== 'title' && field !== 'progress' && field !== 'description') {
         setActiveMenuId(null);
         setActiveMenuType(null);
     }
@@ -104,6 +106,19 @@ export default function Tasks() {
       console.error(error);
       setTasks(previousTasks); // Revert
     }
+  };
+
+  const toggleExpand = (task) => {
+    if (expandedTaskId === task.id) {
+      setExpandedTaskId(null);
+    } else {
+      setExpandedTaskId(task.id);
+      setActiveDescription(task.description || "");
+    }
+  };
+
+  const saveDescription = (taskId) => {
+    updateTask(taskId, 'description', activeDescription);
   };
 
   const toggleAssignee = async (taskId, userId) => {
@@ -213,32 +228,36 @@ export default function Tasks() {
                const assignees = teamMembers.filter(m => (task.assigned_to || []).includes(m.id));
 
                return (
-                 <div key={task.id} className={`grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px] gap-4 items-center px-6 py-3.5 border-b border-slate-50 last:border-0 hover:bg-slate-50/80 transition-colors group ${isDone ? 'opacity-50 grayscale' : ''}`}>
-                   {/* Checkbox */}
-                   <div className="w-8 flex justify-center">
-                     <button 
-                        onClick={() => updateTask(task.id, 'status', isDone ? 'To Do' : 'Done')} 
-                        className={`w-5 h-5 rounded flex items-center justify-center transition-all ${isDone ? 'bg-emerald-500 text-white' : 'border-2 border-slate-300 text-transparent hover:border-emerald-500'}`}
-                     >
-                       {isDone && <Check size={14} strokeWidth={3} />}
-                     </button>
-                   </div>
-                   
-                   {/* Title */}
-                   <div>
-                     <input 
-                       type="text" 
-                       value={task.title}
-                       onChange={(e) => {
-                          const newTasks = [...tasks];
-                          const t = newTasks.find(t => t.id === task.id);
-                          t.title = e.target.value;
-                          setTasks(newTasks);
-                       }}
-                       onBlur={(e) => updateTask(task.id, 'title', e.target.value)}
-                       className={`w-full bg-transparent border-none text-sm font-bold focus:ring-0 p-0 outline-none ${isDone ? 'line-through text-slate-400' : 'text-slate-800'}`}
-                     />
-                   </div>
+                 <div key={task.id} className="flex flex-col border-b border-slate-50 last:border-0 hover:bg-slate-50/80 transition-colors group">
+                   <div className={`grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px] gap-4 items-center px-6 py-3.5 ${isDone ? 'opacity-50 grayscale' : ''}`}>
+                     {/* Checkbox */}
+                     <div className="w-8 flex justify-center">
+                       <button 
+                          onClick={() => updateTask(task.id, 'status', isDone ? 'To Do' : 'Done')} 
+                          className={`w-5 h-5 rounded flex items-center justify-center transition-all ${isDone ? 'bg-emerald-500 text-white' : 'border-2 border-slate-300 text-transparent hover:border-emerald-500'}`}
+                       >
+                         {isDone && <Check size={14} strokeWidth={3} />}
+                       </button>
+                     </div>
+                     
+                     {/* Title */}
+                     <div className="flex items-center gap-2 w-full pr-4">
+                       <button onClick={() => toggleExpand(task)} className={`transition-colors flex-shrink-0 ${expandedTaskId === task.id ? 'text-primary-500' : 'text-slate-300 hover:text-primary-500'}`}>
+                          {expandedTaskId === task.id ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                       </button>
+                       <input 
+                         type="text" 
+                         value={task.title}
+                         onChange={(e) => {
+                            const newTasks = [...tasks];
+                            const t = newTasks.find(t => t.id === task.id);
+                            t.title = e.target.value;
+                            setTasks(newTasks);
+                         }}
+                         onBlur={(e) => updateTask(task.id, 'title', e.target.value)}
+                         className={`w-full bg-transparent border-none text-sm font-bold focus:ring-0 p-0 outline-none ${isDone ? 'line-through text-slate-400' : 'text-slate-800'}`}
+                       />
+                     </div>
 
                    {/* Assignees */}
                    <div className="relative">
@@ -370,6 +389,26 @@ export default function Tasks() {
                       </div>
                    </div>
 
+                 </div>
+
+                 {/* Expandable Area */}
+                 {expandedTaskId === task.id && (
+                   <div className="px-6 pb-4 pt-1 ml-[52px]">
+                     <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-4 shadow-inner">
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Description & Notes</label>
+                          <button onClick={() => saveDescription(task.id)} className="text-[10px] font-bold text-primary-600 bg-primary-50 border border-primary-100 px-3 py-1 rounded shadow-sm hover:bg-primary-100 transition-colors">Save Details</button>
+                        </div>
+                        <textarea
+                          value={activeDescription}
+                          onChange={(e) => setActiveDescription(e.target.value)}
+                          onBlur={() => saveDescription(task.id)}
+                          placeholder="Add extensive details, links, or a paragraph form of the task..."
+                          className="w-full min-h-[120px] bg-white border border-slate-200 rounded-lg p-3 text-sm text-slate-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-y"
+                        />
+                     </div>
+                   </div>
+                 )}
                  </div>
                );
             })}
