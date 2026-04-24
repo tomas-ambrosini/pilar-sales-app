@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, CheckCircle, Shield, Wind, Droplets, ArrowRight, FileText, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { X, CheckCircle, Shield, Wind, Droplets, ArrowRight, FileText, AlertTriangle, ArrowLeft, Printer } from 'lucide-react';
 import Modal from './Modal';
 import { formatQuoteId } from '../utils/formatters';
 
@@ -143,6 +143,10 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
      }
   }, [isOpen, proposal?.id]);
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (!proposal) return null;
 
   const { proposal_data } = proposal;
@@ -169,12 +173,16 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                 </div>
              </div>
              <div className="flex items-center gap-2">
+                <button onClick={handlePrint} className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 transition-colors shadow-sm print-hidden" title="Download PDF">
+                   <Printer size={16} />
+                   <span>Export PDF</span>
+                </button>
                 {onBack && (
-                   <button onClick={onBack} className="p-2 text-slate-400 hover:text-slate-800 bg-white rounded-full border border-slate-200 transition-colors" title="Back to Details">
+                   <button onClick={onBack} className="p-2 text-slate-400 hover:text-slate-800 bg-white rounded-full border border-slate-200 transition-colors print-hidden" title="Back to Details">
                       <ArrowLeft size={20} />
                    </button>
                 )}
-                <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-800 bg-white rounded-full border border-slate-200 transition-colors" title="Close Viewer">
+                <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-800 bg-white rounded-full border border-slate-200 transition-colors print-hidden" title="Close Viewer">
                    <X size={20} />
                 </button>
              </div>
@@ -228,7 +236,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                             })()}
                          </div>
                          {!proposal?.isReadOnly && (
-                            <div className="mt-8 flex justify-center">
+                            <div className="mt-8 flex justify-center print-hidden">
                                <button 
                                   onClick={() => setLocalSelections(p => ({...p, [sys.systemId]: 'None'}))} 
                                   className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all border shadow-sm ${localSelections[sys.systemId] === 'None' ? 'bg-rose-500 text-white border-rose-500 ring-4 ring-rose-500/20' : 'bg-white text-rose-500 border-rose-200 hover:bg-rose-50 hover:border-rose-300'}`}
@@ -332,7 +340,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
 
              if (proposal?.isReadOnly) {
                  return (
-                     <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 items-center">
+                     <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 items-center print-hidden">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded mr-auto">
                             <AlertTriangle size={14}/> Preview Only Mode
                         </div>
@@ -345,7 +353,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
              }
 
              return (
-                 <div className="border-t border-slate-200/80 bg-slate-50/95 backdrop-blur-xl sticky bottom-0 z-50 px-8 py-5 flex items-center w-full rounded-b-2xl">
+                 <div className="border-t border-slate-200/80 bg-slate-50/95 backdrop-blur-xl sticky bottom-0 z-50 px-8 py-5 flex items-center w-full rounded-b-2xl print-hidden">
                      <div className="flex-1 flex items-center gap-4">
                          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-slate-200 font-black text-slate-800 shadow-sm">
                              {Object.keys(localSelections).length}
@@ -371,7 +379,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                  </div>
              );
           })() : (
-             <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 items-center">
+             <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 items-center print-hidden">
                 {proposal?.isReadOnly && (
                     <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded mr-auto">
                         <AlertTriangle size={14}/> Preview Only Mode

@@ -157,3 +157,66 @@ h1, h2, h3, h4, h5, h6 {
   right: var(--chat-dock-offset, 0px) !important;
   transition: right 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
+
+/* --- PRINT STYLES --- */
+@media print {
+  /* Hide UI elements */
+  .print-hidden, 
+  nav, 
+  header, 
+  .drawer-container,
+  button:not(.print-visible) {
+    display: none !important;
+  }
+  
+  /* Reset body and layout */
+  body, html, #root {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* Expand Modal to fill page */
+  .modal-layout-wrapper {
+    position: static !important;
+    width: 100% !important;
+    height: 100% !important;
+    right: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+  }
+
+  .modal-layout-wrapper > div:first-child {
+    display: none !important; /* Hide Backdrop */
+  }
+
+  /* Modal Container itself */
+  .modal-layout-wrapper > div:nth-child(2) {
+    position: static !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    height: auto !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Force elements to avoid page breaks */
+  .print-break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Print specific color tweaks */
+  .bg-slate-50 { background-color: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .bg-slate-900 { background-color: #0f172a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; text-shadow: none !important; }
+}
