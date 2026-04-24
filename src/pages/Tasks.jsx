@@ -136,9 +136,9 @@ export default function Tasks() {
             {todoTasks.length === 0 ? (
                <div className="text-sm text-slate-400 px-8 py-4 border border-dashed border-slate-200 rounded-xl">No pending tasks.</div>
             ) : (
-               <div className="bg-white border border-slate-200 rounded-xl shadow-sm divide-y divide-slate-100 overflow-hidden">
+               <div className="bg-white border border-slate-200 rounded-xl shadow-sm divide-y divide-slate-100">
                  {todoTasks.map(task => (
-                    <div key={task.id} className="group flex items-center justify-between p-3.5 hover:bg-slate-50 transition-colors">
+                    <div key={task.id} className="group flex items-center justify-between p-3.5 hover:bg-slate-50 transition-colors first:rounded-t-xl last:rounded-b-xl">
                       <div className="flex items-center gap-3">
                         <button onClick={() => toggleTaskStatus(task)} className="text-slate-300 hover:text-primary-500 transition-colors focus:outline-none">
                           <Circle size={18} />
