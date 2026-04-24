@@ -241,11 +241,11 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                 <div className="space-y-16 max-w-5xl mx-auto pt-4 pb-12">
                    {proposal_data.systemTiers.map(sys => (
                       <div key={sys.systemId} className="border-t-2 border-slate-100 pt-8 first:border-0 first:pt-0">
-                         <div className="mb-6 text-center">
+                         <div className="mb-8 text-center">
                             <h3 className="text-3xl font-black text-slate-800">{sys.systemName}</h3>
                             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Select Tier Option</p>
                          </div>
-                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 items-stretch pt-2">
+                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 items-stretch pt-6">
                             {(() => {
                                 const buildTracks = (key) => {
                                     const tracks = [];
@@ -289,7 +289,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                 </div>
              ) : (
                 <div className="max-w-5xl mx-auto pt-4 pb-8">
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end">
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end pt-6">
                       <TierCard tierName="Baseline (Good)" tierKey="Good" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.good || proposal_data.tiers?.Good }]} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
                       <TierCard tierName="Premium (Best)" tierKey="Best" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.best || proposal_data.tiers?.Best }]} isBest={true} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
                       <TierCard tierName="Core (Better)" tierKey="Better" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.better || proposal_data.tiers?.Better }]} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
