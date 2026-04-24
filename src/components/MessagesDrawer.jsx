@@ -26,7 +26,6 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
   const activeChannelRef = useRef(activeChannelId);
   const [allUsers, setAllUsers] = useState([]);
   const [newChannelName, setNewChannelName] = useState('');
-  const [newChannelIsPrivate, setNewChannelIsPrivate] = useState(false);
   
   // Phase 5 Attachment States
   const [attachmentFile, setAttachmentFile] = useState(null);
@@ -415,26 +414,23 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     if (!newChannelName.trim()) return;
     
     const newId = crypto.randomUUID();
-    const isDirect = newChannelIsPrivate;
+    const channelNameSafe = newChannelName.toLowerCase().replace(/\s+/g, '-');
     const channelPayload = {
       id: newId,
-      name: newChannelName.toLowerCase().replace(/\s+/g, '-'),
-      channel_type: isDirect ? 'direct' : 'group',
+      name: channelNameSafe,
+      channel_type: 'group',
       created_by: user.id
     };
 
     const { error } = await supabase.from('chat_channels').insert([channelPayload]);
 
     if (!error) {
-      if (isDirect) {
-        await supabase.from('channel_members').insert([
-          { channel_id: newId, user_id: user.id }
-        ]);
-      }
       setChannels(prev => [...prev, channelPayload]);
       setActiveChannelId(newId);
       setViewState('chat');
       setNewChannelName('');
+    } else if (error.code === '23505') {
+      alert("A public channel with this name already exists.");
     } else {
       console.error("Error creating channel", error);
     }
@@ -444,27 +440,53 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     const sortedIds = [user.id, targetUser.id].sort();
     const dmName = `dm_${sortedIds[0]}_${sortedIds[1]}`;
 
-    // Check if exists
+    // 1. Check local state first
     let existingChannel = channels.find(c => c.name === dmName);
     
+    // 2. If not local, query database to see if it was created on another device/client
+    if (!existingChannel) {
+       const { data: fetchedChannel } = await supabase.from('chat_channels').select('*').eq('name', dmName).single();
+       if (fetchedChannel) {
+           existingChannel = fetchedChannel;
+           setChannels(prev => [...prev, existingChannel]);
+           
+           // Ensure membership is intact
+           await supabase.from('channel_members').upsert([
+               { channel_id: existingChannel.id, user_id: user.id }
+           ], { onConflict: 'channel_id,user_id', ignoreDuplicates: true });
+       }
+    }
+    
+    // 3. If STILL doesn't exist, create it (handling unique constraint races)
     if (!existingChannel) {
       const newId = crypto.randomUUID();
-      const { error } = await supabase.from('chat_channels').insert([{
+      const newChannelPayload = {
         id: newId,
         name: dmName,
         channel_type: 'direct',
         created_by: user.id
-      }]);
+      };
+
+      const { error } = await supabase.from('chat_channels').insert([newChannelPayload]);
 
       if (!error) {
         await supabase.from('channel_members').insert([
-          { channel_id: newId, user_id: user.id }
-        ]);
-        await supabase.from('channel_members').insert([
+          { channel_id: newId, user_id: user.id },
           { channel_id: newId, user_id: targetUser.id }
         ]);
-        existingChannel = { id: newId, name: dmName, channel_type: 'direct', created_by: user.id };
+        existingChannel = newChannelPayload;
         setChannels(prev => [...prev, existingChannel]);
+      } else if (error.code === '23505') { 
+        // 23505 is PostgreSQL unique_violation. 
+        // This means the other user literally just created this DM. We can just fetch it!
+        const { data: racedChannel } = await supabase.from('chat_channels').select('*').eq('name', dmName).single();
+        if (racedChannel) {
+           existingChannel = racedChannel;
+           setChannels(prev => [...prev, existingChannel]);
+           // The other user's insert logic already added us as a member!
+        } else {
+           console.error("Race condition fetch failed", error);
+        }
       } else {
         console.error("error creating dm", error);
       }
@@ -1089,16 +1111,6 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                             value={newChannelName}
                             onChange={(e) => setNewChannelName(e.target.value)}
                           />
-                        </div>
-                        <div className="mb-6 flex items-center gap-3">
-                          <input 
-                            type="checkbox" 
-                            id="private-check"
-                            className="w-4 h-4 text-primary-600 rounded"
-                            checked={newChannelIsPrivate}
-                            onChange={(e) => setNewChannelIsPrivate(e.target.checked)}
-                          />
-                          <label htmlFor="private-check" className="text-sm font-semibold text-slate-700 select-none">Make Private</label>
                         </div>
                         <button 
                           className="w-full bg-primary-600 text-white font-bold py-2 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
