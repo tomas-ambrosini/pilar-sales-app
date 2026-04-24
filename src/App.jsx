@@ -15,6 +15,7 @@ import FinancialSettings from './pages/FinancialSettings';
 import FinanceDashboard from './pages/FinanceDashboard';
 import SalesPipeline from './pages/SalesPipeline';
 import DispatchHub from './pages/DispatchHub';
+import Tasks from './pages/Tasks';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CustomerProvider } from './context/CustomerContext';
 import { CatalogProvider } from './context/CatalogContext';
@@ -64,6 +65,7 @@ function MainRouter() {
           {/* SALES DOMAINS */}
           <Route path="customers/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Customers /></RoleRoute>} />
           <Route path="proposals/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Proposals /></RoleRoute>} />
+          <Route path="tasks/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Tasks /></RoleRoute>} />
           
           {/* MANAGER DOMAINS */}
           <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><Catalog /></RoleRoute>} />
