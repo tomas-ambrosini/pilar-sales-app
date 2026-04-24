@@ -670,19 +670,15 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
           exit={{ opacity: 0, scale: 0.95 }}
           className="max-w-[1000px] mx-auto w-full mb-6 px-4 md:px-8"
         >
-          <div style={{ backgroundColor: '#0f172a', padding: '1.25rem 1.5rem', borderRadius: '1rem', border: '1px solid #1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem', width: '100%', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: '3rem', height: '3rem', borderRadius: '50%', backgroundColor: '#1e293b', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                   <Clock color="#60a5fa" size={24} />
-                </div>
-                <div>
-                   <div style={{ color: 'white', fontWeight: 900, fontSize: '1rem', marginBottom: '0.25rem', whiteSpace: 'nowrap' }}>Unsaved Session Recovered</div>
-                   <div style={{ color: '#cbd5e1', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>We found a quote you were working on recently. Would you like to resume it?</div>
-                </div>
+          <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 shadow-lg">
+             <div className="flex items-center gap-3 mb-2">
+                <Clock className="text-blue-400 shrink-0" size={22} />
+                <h4 className="text-white font-bold text-base m-0">Unsaved Session Recovered</h4>
              </div>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
-                <button onClick={() => setShowRestoreBanner(false)} style={{ padding: '0.5rem 1.5rem', backgroundColor: '#1e293b', color: 'white', fontSize: '0.875rem', fontWeight: 'bold', borderRadius: '0.5rem', border: '1px solid #475569', cursor: 'pointer' }}>Discard</button>
-                <button onClick={handleRestoreLocalDraft} style={{ padding: '0.5rem 1.5rem', backgroundColor: '#2563eb', color: 'white', fontSize: '0.875rem', fontWeight: 'bold', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Resume Progress</button>
+             <p className="text-slate-300 text-sm mb-5">We found a quote you were working on recently. Would you like to resume it?</p>
+             <div className="flex flex-wrap gap-3">
+                <button onClick={() => setShowRestoreBanner(false)} className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-lg border border-slate-700 transition-colors w-auto">Discard Draft</button>
+                <button onClick={handleRestoreLocalDraft} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg border border-blue-500 transition-colors shadow-sm w-auto">Resume Progress</button>
              </div>
           </div>
         </motion.div>
