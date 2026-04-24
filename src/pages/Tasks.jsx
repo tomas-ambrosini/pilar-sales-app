@@ -150,16 +150,11 @@ export default function Tasks() {
           <h1 className="text-3xl font-black text-slate-800 tracking-tight">Project Board</h1>
           <p className="text-slate-500 text-sm mt-1">Manage cross-functional tasks and assignments.</p>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Mock Tabs */}
-          <button className="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg shadow-sm">All Tasks</button>
-          <button className="px-4 py-2 bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 text-sm font-bold rounded-lg shadow-sm transition-colors">My Tasks</button>
-        </div>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl shadow-xl flex flex-col">
         {/* Table Header */}
-        <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px] gap-4 items-center px-6 py-4 bg-slate-50/80 border-b border-slate-200 text-xs font-black text-slate-500 uppercase tracking-widest rounded-t-2xl">
+        <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px] gap-4 items-center px-6 py-4 bg-slate-50/80 border-b border-slate-200 text-[11px] font-black text-slate-400 uppercase tracking-widest rounded-t-2xl">
           <div className="w-8 flex justify-center"><CheckSquare size={16} /></div>
           <div>Task Name</div>
           <div>Assigned To</div>
@@ -170,8 +165,8 @@ export default function Tasks() {
         </div>
 
         {/* Input Row */}
-        <form onSubmit={addTask} className="border-b border-slate-100 bg-white hover:bg-slate-50/50 transition-colors">
-          <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px] gap-4 items-center px-6 py-3">
+        <form onSubmit={addTask} className="border-b border-slate-100 bg-white hover:bg-slate-50/80 transition-colors">
+          <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px] gap-4 items-center px-6 py-3.5">
             <div className="w-8 flex justify-center text-slate-300"><Plus size={18} /></div>
             <input 
               type="text" 
@@ -179,7 +174,7 @@ export default function Tasks() {
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
               disabled={isSubmitting}
-              className="w-full bg-transparent border-none text-slate-800 text-sm font-medium focus:ring-0 p-0 outline-none placeholder-slate-400"
+              className="w-full bg-transparent border-none text-slate-800 text-sm font-bold focus:ring-0 p-0 outline-none placeholder-slate-300"
             />
             {/* Empty cells for visual balance */}
             <div className="col-span-5 text-xs text-slate-400 flex items-center justify-end pr-2">
@@ -208,7 +203,7 @@ export default function Tasks() {
                const assignees = teamMembers.filter(m => (task.assigned_to || []).includes(m.id));
 
                return (
-                 <div key={task.id} className={`grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px] gap-4 items-center px-6 py-3 hover:bg-slate-50 transition-colors group ${isDone ? 'opacity-60' : ''}`}>
+                 <div key={task.id} className={`grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px] gap-4 items-center px-6 py-3.5 border-b border-slate-50 last:border-0 hover:bg-slate-50/80 transition-colors group ${isDone ? 'opacity-50 grayscale' : ''}`}>
                    {/* Checkbox */}
                    <div className="w-8 flex justify-center">
                      <button 
@@ -305,17 +300,19 @@ export default function Tasks() {
                    </div>
 
                    {/* Progress */}
-                   <div className="flex items-center gap-2 pr-4">
-                      <input 
-                         type="number" 
-                         min="0" max="100"
-                         value={task.progress || 0}
-                         onChange={(e) => updateTask(task.id, 'progress', parseInt(e.target.value) || 0)}
-                         className="w-12 text-right bg-transparent border-none text-xs font-bold text-slate-700 focus:ring-0 p-0 outline-none"
-                      />
-                      <span className="text-xs font-bold text-slate-400">%</span>
-                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                         <div className="h-full bg-primary-500 rounded-full transition-all duration-500" style={{ width: `${Math.min(100, Math.max(0, task.progress || 0))}%` }}></div>
+                   <div className="flex items-center gap-3 pr-6">
+                      <div className="relative group/progress">
+                         <input 
+                            type="number" 
+                            min="0" max="100"
+                            value={task.progress || 0}
+                            onChange={(e) => updateTask(task.id, 'progress', parseInt(e.target.value) || 0)}
+                            className="w-8 text-right bg-transparent border-none text-[11px] font-black text-slate-400 group-hover/progress:text-primary-500 focus:ring-0 p-0 outline-none transition-colors"
+                         />
+                         <span className="absolute -right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 pointer-events-none">%</span>
+                      </div>
+                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                         <div className="h-full bg-primary-500 rounded-full transition-all duration-700 ease-out" style={{ width: `${Math.min(100, Math.max(0, task.progress || 0))}%` }}></div>
                       </div>
                    </div>
 
