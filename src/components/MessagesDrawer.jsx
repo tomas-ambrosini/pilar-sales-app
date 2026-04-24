@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User, Edit2, Trash2, Reply, Paperclip, FileText, Loader2, Image as ImageIcon, SmilePlus, Minus, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { Send, Hash, MessageSquare, X, ArrowLeft, Plus, Lock, User, Edit2, Trash2, Reply, Paperclip, FileText, Loader2, Image as ImageIcon, SmilePlus, Minus, PanelRightClose, PanelRightOpen, UserPlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNotifications } from '../context/NotificationsContext';
 import { formatQuoteId } from '../utils/formatters';
@@ -26,6 +26,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
   const activeChannelRef = useRef(activeChannelId);
   const [allUsers, setAllUsers] = useState([]);
   const [newChannelName, setNewChannelName] = useState('');
+  const [newChannelIsPrivate, setNewChannelIsPrivate] = useState(false);
   
   // Phase 5 Attachment States
   const [attachmentFile, setAttachmentFile] = useState(null);
@@ -414,25 +415,63 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
     if (!newChannelName.trim()) return;
     
     const newId = crypto.randomUUID();
+    const isPrivate = newChannelIsPrivate;
     const channelNameSafe = newChannelName.toLowerCase().replace(/\s+/g, '-');
     const channelPayload = {
       id: newId,
       name: channelNameSafe,
-      channel_type: 'group',
+      channel_type: isPrivate ? 'private' : 'group',
       created_by: user.id
     };
 
     const { error } = await supabase.from('chat_channels').insert([channelPayload]);
 
     if (!error) {
+      if (isPrivate) {
+        await supabase.from('channel_members').insert([
+          { channel_id: newId, user_id: user.id }
+        ]);
+      }
       setChannels(prev => [...prev, channelPayload]);
       setActiveChannelId(newId);
       setViewState('chat');
       setNewChannelName('');
+      setNewChannelIsPrivate(false);
     } else if (error.code === '23505') {
       alert("A public channel with this name already exists.");
     } else {
       console.error("Error creating channel", error);
+    }
+  };
+
+  const handleDeleteChannel = async () => {
+    if (!activeChannelId) return;
+    if (!window.confirm("Are you sure you want to permanently delete this channel and all its messages?")) return;
+    
+    const { error } = await supabase.from('chat_channels').delete().eq('id', activeChannelId);
+    if (!error) {
+       setChannels(prev => prev.filter(c => c.id !== activeChannelId));
+       setActiveChannelId(null);
+       setViewState('channels');
+    } else {
+       console.error("Failed to delete channel", error);
+       alert("Failed to delete channel: " + error.message);
+    }
+  };
+
+  const handleAddMemberToPrivate = async (targetUser) => {
+    if (!activeChannelId) return;
+    const { error } = await supabase.from('channel_members').insert([
+       { channel_id: activeChannelId, user_id: targetUser.id }
+    ]);
+    if (!error) {
+       alert(`${targetUser.full_name} added to the channel!`);
+       setViewState('chat');
+    } else if (error.code === '23505') {
+       alert("User is already in the channel.");
+    } else {
+       console.error("Error adding member", error);
+       alert("Failed to add member: " + error.message);
     }
   };
 
@@ -981,10 +1020,39 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                         </motion.button>
                         <div className="drawer-channel-title">New Direct Message</div>
                      </div>
+                  ) : viewState === 'add-members' ? (
+                     <div className="flex items-center gap-3">
+                        <motion.button className="icon-btn-minimal" onClick={() => setViewState('chat')}>
+                           <ArrowLeft size={18} strokeWidth={2.5} />
+                        </motion.button>
+                        <div className="drawer-channel-title">Add Members</div>
+                     </div>
                   ) : (
                      <div className="drawer-title">Pilar <span className="text-primary-600">Comms</span></div>
                   )}
                   <div className="flex items-center gap-1.5 ml-auto">
+                     {viewState === 'chat' && activeChannel?.channel_type === 'private' && (
+                        <motion.button 
+                           className="icon-btn-minimal hover:text-blue-600 hover:bg-blue-50" 
+                           onClick={() => setViewState('add-members')}
+                           title="Add Members"
+                           whileHover={{ scale: 1.05 }}
+                           whileTap={{ scale: 0.95 }}
+                         >
+                           <UserPlus size={18} strokeWidth={2.5} />
+                         </motion.button>
+                     )}
+                     {viewState === 'chat' && activeChannel?.created_by === user?.id && (
+                        <motion.button 
+                           className="icon-btn-minimal hover:text-red-600 hover:bg-red-50" 
+                           onClick={handleDeleteChannel}
+                           title="Delete Channel"
+                           whileHover={{ scale: 1.05 }}
+                           whileTap={{ scale: 0.95 }}
+                         >
+                           <Trash2 size={18} strokeWidth={2.5} />
+                         </motion.button>
+                     )}
                      <motion.button 
                        className="icon-btn-minimal hover:text-slate-700 hover:bg-slate-100" 
                        onClick={onMinimize}
@@ -1112,6 +1180,16 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                             onChange={(e) => setNewChannelName(e.target.value)}
                           />
                         </div>
+                        <div className="mb-6 flex items-center gap-3">
+                          <input 
+                            type="checkbox" 
+                            id="private-check"
+                            className="w-4 h-4 text-primary-600 rounded"
+                            checked={newChannelIsPrivate}
+                            onChange={(e) => setNewChannelIsPrivate(e.target.checked)}
+                          />
+                          <label htmlFor="private-check" className="text-sm font-semibold text-slate-700 select-none">Make Private Group</label>
+                        </div>
                         <button 
                           className="w-full bg-primary-600 text-white font-bold py-2 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
                           onClick={handleCreateChannel}
@@ -1154,6 +1232,46 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                                   <div className="flex flex-col">
                                     <span className="font-bold text-slate-800">{u.full_name}</span>
                                     <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-bold uppercase w-fit">{u.role}</span>
+                                  </div>
+                                </motion.div>
+                             ))
+                           )}
+                         </div>
+                      </motion.div>
+                    ) : viewState === 'add-members' ? (
+                      <motion.div 
+                        key="add-members"
+                        className="channels-view"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                      >
+                         <div className="drawer-section-title px-6 flex items-center justify-between">
+                            <span>Select Team Member to Invite</span>
+                         </div>
+                         <div className="px-4">
+                           {allUsers.length === 0 ? (
+                             <div className="p-4 text-center text-sm text-slate-500 font-semibold">No other team members found.</div>
+                           ) : (
+                             allUsers.map((u, i) => (
+                                <motion.div 
+                                  key={u.id} 
+                                  className="drawer-list-item flex items-center gap-3 p-3 rounded-lg hover:bg-slate-100 cursor-pointer"
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: i * 0.05 }}
+                                  onClick={() => handleAddMemberToPrivate(u)}
+                                >
+                                  {u.avatar_url ? (
+                                    <img src={u.avatar_url} alt={u.full_name} className="w-8 h-8 rounded-full object-cover shadow-sm" />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold shadow-sm" style={{ background: getAvatarGradient(u.full_name) }}>
+                                        {(u.full_name || 'U').charAt(0).toUpperCase()}
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-bold text-sm text-slate-800 truncate">{u.full_name}</h4>
+                                    <p className="text-xs text-slate-500 truncate capitalize">{u.role?.replace('_', ' ')}</p>
                                   </div>
                                 </motion.div>
                              ))
