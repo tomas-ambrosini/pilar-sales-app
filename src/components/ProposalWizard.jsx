@@ -670,19 +670,19 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
           exit={{ opacity: 0, scale: 0.95 }}
           className="max-w-[1000px] mx-auto w-full mb-6 px-4 md:px-8"
         >
-          <div className="bg-slate-900 p-4 md:p-5 rounded-xl border border-slate-700 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 shadow-xl">
-             <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shrink-0">
-                   <Clock className="text-blue-400" size={20} />
+          <div className="bg-slate-900 p-5 md:p-6 rounded-2xl border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
+             <div className="flex items-center gap-5 flex-1 min-w-0 w-full">
+                <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 shadow-inner">
+                   <Clock className="text-blue-400" size={24} />
                 </div>
-                <div>
-                   <h4 className="text-white font-bold text-sm m-0">Unsaved Session Recovered</h4>
-                   <p className="text-slate-400 text-xs m-0 mt-1 max-w-lg">We found a quote you were working on recently. Would you like to resume it?</p>
+                <div className="flex-1 min-w-0">
+                   <h4 className="text-white font-black text-base m-0 tracking-tight">Unsaved Session Recovered</h4>
+                   <p className="!text-slate-300 text-sm m-0 mt-1 max-w-lg leading-relaxed">We found a quote you were working on recently. Would you like to resume it?</p>
                 </div>
              </div>
-             <div className="flex gap-3 w-full md:w-auto shrink-0">
-                <button onClick={() => setShowRestoreBanner(false)} className="flex-1 md:flex-none px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg border border-slate-600 transition-colors">Discard</button>
-                <button onClick={handleRestoreLocalDraft} className="flex-1 md:flex-none px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors border border-blue-500 whitespace-nowrap shadow-sm">Resume Progress</button>
+             <div className="flex items-center gap-3 shrink-0 w-full md:w-auto">
+                <button onClick={() => setShowRestoreBanner(false)} className="flex-1 md:flex-none px-6 py-2.5 bg-slate-800 hover:bg-slate-700 !text-slate-200 hover:!text-white text-sm font-bold rounded-xl border border-slate-600 transition-colors whitespace-nowrap shadow-sm">Discard</button>
+                <button onClick={handleRestoreLocalDraft} className="flex-1 md:flex-none px-6 py-2.5 bg-blue-600 hover:bg-blue-500 !text-white text-sm font-bold rounded-xl transition-colors border border-blue-500 whitespace-nowrap shadow-lg">Resume Progress</button>
              </div>
           </div>
         </motion.div>
