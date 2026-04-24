@@ -157,9 +157,9 @@ export default function Tasks() {
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden flex flex-col">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-xl flex flex-col">
         {/* Table Header */}
-        <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px] gap-4 items-center px-6 py-4 bg-slate-50/80 border-b border-slate-200 text-xs font-black text-slate-500 uppercase tracking-widest">
+        <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px] gap-4 items-center px-6 py-4 bg-slate-50/80 border-b border-slate-200 text-xs font-black text-slate-500 uppercase tracking-widest rounded-t-2xl">
           <div className="w-8 flex justify-center"><CheckSquare size={16} /></div>
           <div>Task Name</div>
           <div>Assigned To</div>
@@ -200,7 +200,7 @@ export default function Tasks() {
              <p className="text-sm text-slate-500">Add a task above to get started.</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100 bg-white">
+          <div className="divide-y divide-slate-100 bg-white rounded-b-2xl pb-2">
             {tasks.map(task => {
                const isDone = task.status?.toLowerCase() === 'done';
                const prioConfig = getPriorityConfig(task.priority);
