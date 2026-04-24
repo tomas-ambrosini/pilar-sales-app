@@ -1,6 +1,8 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, CheckCircle, Shield, Wind, Droplets, ArrowRight, FileText, AlertTriangle, ArrowLeft, Printer } from 'lucide-react';
+import { X, CheckCircle, Shield, Wind, Droplets, ArrowRight, FileText, AlertTriangle, ArrowLeft, Printer, Loader2 } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import Modal from './Modal';
 import { formatQuoteId } from '../utils/formatters';
 
@@ -175,6 +177,8 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
 
 export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal, onAccept, onViewContract, onDeclineFull }) {
   const [localSelections, setLocalSelections] = React.useState({});
+  const [isGeneratingPDF, setIsGeneratingPDF] = React.useState(false);
+  const pdfRef = React.useRef(null);
 
   React.useEffect(() => {
      if (!isOpen) {
@@ -182,8 +186,39 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
      }
   }, [isOpen, proposal?.id]);
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    if (!pdfRef.current) return;
+    setIsGeneratingPDF(true);
+    
+    try {
+      // Allow React state update to apply overflow changes and hide buttons
+      await new Promise(resolve => setTimeout(resolve, 150));
+      
+      const canvas = await html2canvas(pdfRef.current, {
+        scale: 2, 
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      
+      const pdf = new jsPDF({
+         orientation: 'portrait',
+         unit: 'pt',
+         format: 'letter'
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`${proposal?.customer || 'Quote'}_${formatQuoteId(proposal)}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   if (!proposal) return null;
@@ -194,10 +229,10 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
   return typeof document !== 'undefined' ? createPortal(
     <div className={`fixed inset-0 z-[2000] flex items-center justify-center modal-layout-wrapper transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
        {/* Backdrop */}
-       <div className="absolute -inset-10 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
+       <div className={`absolute -inset-10 bg-slate-900/40 backdrop-blur-sm ${isGeneratingPDF ? 'hidden' : ''}`} onClick={onClose}></div>
        
        {/* Massive Modal Container */}
-       <div className="relative bg-white rounded-2xl shadow-2xl w-[98vw] sm:w-[95vw] lg:w-[90vw] xl:w-[1100px] max-w-[100%] max-h-[95vh] flex flex-col overflow-hidden transform transition-transform duration-300">
+       <div ref={pdfRef} className={`relative bg-white transform transition-transform duration-300 ${isGeneratingPDF ? 'w-[1100px] h-auto rounded-none overflow-visible' : 'rounded-2xl shadow-2xl w-[98vw] sm:w-[95vw] lg:w-[90vw] xl:w-[1100px] max-w-[100%] max-h-[95vh] flex flex-col overflow-hidden'}`}>
           
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
@@ -212,23 +247,25 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                 </div>
              </div>
              <div className="flex items-center gap-2">
-                <button onClick={handlePrint} className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 transition-colors shadow-sm print-hidden" title="Download PDF">
-                   <Printer size={16} />
-                   <span>Export PDF</span>
+                <button disabled={isGeneratingPDF} onClick={handlePrint} className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 transition-colors shadow-sm" title="Download PDF">
+                   {isGeneratingPDF ? <Loader2 className="animate-spin text-slate-400" size={16} /> : <Printer size={16} />}
+                   <span>{isGeneratingPDF ? 'Generating...' : 'Export PDF'}</span>
                 </button>
-                {onBack && (
-                   <button onClick={onBack} className="p-2 text-slate-400 hover:text-slate-800 bg-white rounded-full border border-slate-200 transition-colors print-hidden" title="Back to Details">
+                {!isGeneratingPDF && onBack && (
+                   <button onClick={onBack} className="p-2 text-slate-400 hover:text-slate-800 bg-white rounded-full border border-slate-200 transition-colors" title="Back to Details">
                       <ArrowLeft size={20} />
                    </button>
                 )}
-                <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-800 bg-white rounded-full border border-slate-200 transition-colors print-hidden" title="Close Viewer">
-                   <X size={20} />
-                </button>
+                {!isGeneratingPDF && (
+                   <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-800 bg-white rounded-full border border-slate-200 transition-colors" title="Close Viewer">
+                      <X size={20} />
+                   </button>
+                )}
              </div>
           </div>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto p-8 bg-white">
+          <div className={`flex-1 p-8 bg-white ${isGeneratingPDF ? 'overflow-visible h-auto' : 'overflow-y-auto'}`}>
              {!proposal_data ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
@@ -274,8 +311,8 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                                 );
                             })()}
                          </div>
-                         {!proposal?.isReadOnly && (
-                            <div className="mt-8 flex justify-center print-hidden">
+                         {!proposal?.isReadOnly && !isGeneratingPDF && (
+                            <div className="mt-8 flex justify-center">
                                <button 
                                   onClick={() => setLocalSelections(p => ({...p, [sys.systemId]: 'None'}))} 
                                   className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all border shadow-sm ${localSelections[sys.systemId] === 'None' ? 'bg-rose-500 text-white border-rose-500 ring-4 ring-rose-500/20' : 'bg-white text-rose-500 border-rose-200 hover:bg-rose-50 hover:border-rose-300'}`}
@@ -294,7 +331,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                       <TierCard tierName="Premium (Best)" tierKey="Best" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.best || proposal_data.tiers?.Best }]} isBest={true} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
                       <TierCard tierName="Core (Better)" tierKey="Better" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.better || proposal_data.tiers?.Better }]} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
                    </div>
-                   {!proposal?.isReadOnly && proposal?.status !== 'Approved' && (
+                   {!proposal?.isReadOnly && proposal?.status !== 'Approved' && !isGeneratingPDF && (
                       <div className="mt-12 flex justify-center">
                          <button 
                             onClick={() => onDeclineFull && onDeclineFull(proposal)} 
@@ -378,8 +415,8 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
              };
 
              if (proposal?.isReadOnly) {
-                 return (
-                     <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 items-center print-hidden">
+                 return !isGeneratingPDF ? (
+                     <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 items-center">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded mr-auto">
                             <AlertTriangle size={14}/> Preview Only Mode
                         </div>
@@ -388,11 +425,11 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                            <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors" onClick={onClose}>Close Viewer</button>
                         </div>
                      </div>
-                 );
+                 ) : null;
              }
 
-             return (
-                 <div className="border-t border-slate-200/80 bg-slate-50/95 backdrop-blur-xl sticky bottom-0 z-50 px-8 py-5 flex items-center w-full rounded-b-2xl print-hidden">
+             return !isGeneratingPDF ? (
+                 <div className="border-t border-slate-200/80 bg-slate-50/95 backdrop-blur-xl sticky bottom-0 z-50 px-8 py-5 flex items-center w-full rounded-b-2xl">
                      <div className="flex-1 flex items-center gap-4">
                          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-slate-200 font-black text-slate-800 shadow-sm">
                              {Object.keys(localSelections).length}
@@ -416,9 +453,9 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                          </button>
                      </div>
                  </div>
-             );
-          })() : (
-             <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 items-center print-hidden">
+             ) : null;
+          })() : !isGeneratingPDF ? (
+             <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 items-center">
                 {proposal?.isReadOnly && (
                     <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded mr-auto">
                         <AlertTriangle size={14}/> Preview Only Mode
@@ -429,7 +466,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                    <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors" onClick={onClose}>Close Viewer</button>
                 </div>
              </div>
-          )}
+          ) : null}
        </div>
     </div>
   , document.body) : null;
