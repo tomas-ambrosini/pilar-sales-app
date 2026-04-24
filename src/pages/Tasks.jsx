@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { 
   CheckSquare, Square, Plus, Loader2, 
   SignalHigh, SignalMedium, SignalLow, CircleDashed, 
-  Calendar, Users, ChevronDown, Flame, AlertCircle, Clock, Check
+  Calendar, Users, ChevronDown, Flame, AlertCircle, Clock, Check, CheckCircle2
 } from 'lucide-react';
 
 export default function Tasks() {
