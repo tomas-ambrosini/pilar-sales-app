@@ -9,6 +9,7 @@ export default function Tasks() {
   const [isLoading, setIsLoading] = useState(true);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeMenuId, setActiveMenuId] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -73,6 +74,17 @@ export default function Tasks() {
     }
   };
 
+  const deleteTask = async (taskId) => {
+    setTasks(tasks.filter(t => t.id !== taskId));
+    await supabase.from('tasks').delete().eq('id', taskId);
+  };
+
+  const updatePriority = async (taskId, priority) => {
+    setTasks(tasks.map(t => t.id === taskId ? { ...t, priority } : t));
+    await supabase.from('tasks').update({ priority }).eq('id', taskId);
+    setActiveMenuId(null);
+  };
+
   const getPriorityIcon = (priority) => {
     switch(priority) {
       case 'high': return <SignalHigh size={14} className="text-rose-500" />;
@@ -133,11 +145,36 @@ export default function Tasks() {
                         </button>
                         <span className="text-sm font-medium text-slate-800">{task.title}</span>
                       </div>
-                      <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className={`flex items-center gap-3 transition-opacity relative ${activeMenuId === task.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                         {getPriorityIcon(task.priority)}
-                        <button className="text-slate-400 hover:text-slate-700 p-1 rounded hover:bg-slate-200 transition-colors">
+                        <button 
+                          className={`text-slate-400 hover:text-slate-700 p-1 rounded hover:bg-slate-200 transition-colors ${activeMenuId === task.id ? 'bg-slate-200 text-slate-700' : ''}`}
+                          onClick={() => setActiveMenuId(activeMenuId === task.id ? null : task.id)}
+                        >
                           <MoreHorizontal size={16} />
                         </button>
+                        
+                        {activeMenuId === task.id && (
+                          <div className="absolute right-0 top-full mt-1 w-36 bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-50 overflow-hidden">
+                            <div className="px-3 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider">Priority</div>
+                            <button onClick={() => updatePriority(task.id, 'high')} className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                              <SignalHigh size={14} className="text-rose-500" /> High
+                            </button>
+                            <button onClick={() => updatePriority(task.id, 'medium')} className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                              <SignalMedium size={14} className="text-amber-500" /> Medium
+                            </button>
+                            <button onClick={() => updatePriority(task.id, 'low')} className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                              <SignalLow size={14} className="text-emerald-500" /> Low
+                            </button>
+                            <button onClick={() => updatePriority(task.id, 'none')} className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                              <CircleDashed size={14} className="text-slate-400" /> None
+                            </button>
+                            <div className="border-t border-slate-100 my-1"></div>
+                            <button onClick={() => deleteTask(task.id)} className="w-full text-left px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 font-medium">
+                              Delete Issue
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                  ))}
