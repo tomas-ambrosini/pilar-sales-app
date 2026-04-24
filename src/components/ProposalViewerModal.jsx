@@ -57,13 +57,13 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
        buttonHoverBg = 'hover:bg-primary-700';
     }
 
-    let scaleClass = 'scale-100 hover:-translate-y-1 hover:scale-[1.02] z-10';
+    let scaleClass = 'scale-100 hover:-translate-y-1 hover:scale-[1.02]';
     if (isPremiumNode) {
-        scaleClass = 'scale-[1.05] hover:-translate-y-1 hover:scale-[1.07] z-20';
+        scaleClass = 'scale-[1.05] hover:-translate-y-1 hover:scale-[1.07]';
     }
     
     if (isSelected) {
-        scaleClass = isPremiumNode ? 'scale-[1.06] z-30' : 'scale-[1.03] z-30';
+        scaleClass = isPremiumNode ? 'scale-[1.06]' : 'scale-[1.03]';
     }
 
     const borderClass = isMultiSys 
@@ -73,7 +73,10 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
          : `border-slate-200 bg-white border-t-4 ${topBorderColor} shadow-md hover:shadow-xl ${scaleClass}`;
 
     return (
-       <div className={`relative flex flex-col p-8 rounded-[20px] transition-all duration-300 border ${borderClass}`}>
+       <div 
+          className={`relative flex flex-col p-8 rounded-[20px] transition-all duration-300 border ${borderClass}`}
+          style={{ zIndex: isSelected ? 30 : (isPremiumNode ? 20 : 10) }}
+       >
           {isPremiumNode && (
              <div className={`absolute -top-3.5 left-1/2 -translate-x-1/2 ${badgeBg} text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-md z-30 ring-2 ring-white`}>
                  Suggested
