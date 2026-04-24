@@ -74,7 +74,7 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
 
     return (
        <div 
-          className={`relative flex flex-col p-8 rounded-[20px] transition-all duration-300 border ${borderClass}`}
+          className={`relative flex flex-col p-8 rounded-[20px] transition-all duration-300 border print-break-inside-avoid ${borderClass}`}
           style={{ zIndex: isSelected ? 30 : (isPremiumNode ? 20 : 10) }}
        >
           {isPremiumNode && (
