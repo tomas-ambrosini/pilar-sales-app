@@ -23,20 +23,34 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
     
     const isPremiumNode = isBest || tierKey === 'Best';
 
+    let topBorderColor = 'border-t-slate-900';
+    let priceColor = 'text-slate-900';
+    let badgeBg = 'bg-slate-900';
+    
+    if (tierKey === 'Good') {
+       topBorderColor = 'border-t-slate-400';
+       priceColor = 'text-slate-600';
+       badgeBg = 'bg-slate-500';
+    } else if (tierKey === 'Better') {
+       topBorderColor = 'border-t-blue-500';
+       priceColor = 'text-blue-600';
+       badgeBg = 'bg-blue-500';
+    } else if (tierKey === 'Best') {
+       topBorderColor = 'border-t-emerald-500';
+       priceColor = 'text-emerald-600';
+       badgeBg = 'bg-emerald-500';
+    }
+
     const borderClass = isMultiSys 
          ? (isSelected 
-            ? 'border-primary-600 ring-2 ring-primary-600 bg-white shadow-2xl z-20 scale-[1.02]' 
-            : (isPremiumNode 
-               ? 'border-slate-200 border-t-4 border-t-slate-900 bg-white shadow-2xl z-10 scale-[1.04]' 
-               : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-lg'))
-         : (isPremiumNode 
-            ? 'border-slate-200 border-t-4 border-t-slate-900 shadow-2xl bg-white z-20 scale-[1.04]' 
-            : 'border-slate-200 bg-white shadow-sm hover:shadow-md');
+            ? `border-primary-600 ring-2 ring-primary-600 bg-white shadow-2xl z-20 scale-[1.02] border-t-4 ${topBorderColor}` 
+            : `border-slate-200 bg-white hover:border-slate-300 hover:shadow-lg border-t-4 ${topBorderColor}`)
+         : `border-slate-200 bg-white border-t-4 ${topBorderColor} ${isPremiumNode ? 'shadow-2xl z-20 scale-[1.04]' : 'shadow-sm hover:shadow-md'}`;
 
     return (
        <div className={`relative flex flex-col p-8 rounded-[20px] transition-all duration-300 border ${borderClass}`}>
           {isPremiumNode && (
-             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-md z-30 ring-2 ring-white">
+             <div className={`absolute -top-3.5 left-1/2 -translate-x-1/2 ${badgeBg} text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-md z-30 ring-2 ring-white`}>
                  Suggested
              </div>
           )}
@@ -61,7 +75,7 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
           
           <div className="my-2 pb-6 border-b border-slate-100 flex items-baseline">
              <span className="text-xl font-bold text-slate-400 mr-1 translate-y-[-0.25rem]">$</span>
-             <span className={`text-[2.75rem] font-black tracking-tighter leading-none ${isBest ? 'text-primary-900' : 'text-slate-900'}`}>{(activeData?.salesPrice || 0).toLocaleString()}</span>
+             <span className={`text-[2.75rem] font-black tracking-tighter leading-none ${priceColor}`}>{(activeData?.salesPrice || 0).toLocaleString()}</span>
           </div>
           
           <div className="flex-grow space-y-7 mb-8 mt-2">
