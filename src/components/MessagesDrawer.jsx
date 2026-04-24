@@ -1632,7 +1632,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
       
       {expandedImage && (
         <motion.div 
-          className="fixed -inset-10 z-[2000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm cursor-zoom-out"
+          className="fixed -inset-10 z-[4000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm cursor-zoom-out"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -1650,7 +1650,7 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
               onClick={(e) => e.stopPropagation()}
            />
            <button 
-             className="absolute top-6 right-6 text-white hover:text-red-400 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors z-[2001]"
+             className="absolute top-6 right-6 text-white hover:text-red-400 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors z-[4001]"
              onClick={() => setExpandedImage(null)}
            >
              <X size={24} />
