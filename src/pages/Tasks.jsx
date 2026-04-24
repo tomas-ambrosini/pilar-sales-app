@@ -24,16 +24,37 @@ export default function Tasks() {
   useEffect(() => {
     if (user) {
       fetchData();
+      
+      // Live Real-time Subscription
+      const channel = supabase.channel('realtime_tasks')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setTasks(prev => {
+              // Prevent duplicates from optimistic updates
+              if (prev.find(t => t.id === payload.new.id)) return prev;
+              return [payload.new, ...prev];
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            setTasks(prev => prev.map(t => t.id === payload.new.id ? payload.new : t));
+          } else if (payload.eventType === 'DELETE') {
+            setTasks(prev => prev.filter(t => t.id !== payload.old.id));
+          }
+        })
+        .subscribe();
+
+      const handleClickOutside = (e) => {
+        if (menuRef.current && !menuRef.current.contains(e.target)) {
+          setActiveMenuId(null);
+          setActiveMenuType(null);
+        }
+      };
+      document.addEventListener('mousedown', handleClickOutside);
+      
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        supabase.removeChannel(channel);
+      };
     }
-    
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setActiveMenuId(null);
-        setActiveMenuType(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [user]);
 
   const fetchData = async () => {
