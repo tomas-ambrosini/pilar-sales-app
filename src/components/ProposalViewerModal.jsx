@@ -26,26 +26,51 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
     let topBorderColor = 'border-t-slate-900';
     let priceColor = 'text-slate-900';
     let badgeBg = 'bg-slate-900';
+    let activeRingColor = 'ring-slate-500';
+    let activeBorderColor = 'border-slate-500';
+    let buttonBg = 'bg-slate-600';
+    let buttonHoverBg = 'hover:bg-slate-700';
     
     if (tierKey === 'Good') {
        topBorderColor = 'border-t-slate-400';
        priceColor = 'text-slate-600';
        badgeBg = 'bg-slate-500';
+       activeRingColor = 'ring-slate-400';
+       activeBorderColor = 'border-slate-400';
+       buttonBg = 'bg-slate-500';
+       buttonHoverBg = 'hover:bg-slate-600';
     } else if (tierKey === 'Better') {
        topBorderColor = 'border-t-blue-500';
        priceColor = 'text-blue-600';
        badgeBg = 'bg-blue-500';
+       activeRingColor = 'ring-blue-500';
+       activeBorderColor = 'border-blue-500';
+       buttonBg = 'bg-blue-600';
+       buttonHoverBg = 'hover:bg-blue-700';
     } else if (tierKey === 'Best') {
-       topBorderColor = 'border-t-emerald-500';
-       priceColor = 'text-emerald-600';
-       badgeBg = 'bg-emerald-500';
+       topBorderColor = 'border-t-primary-500';
+       priceColor = 'text-primary-600';
+       badgeBg = 'bg-primary-500';
+       activeRingColor = 'ring-primary-500';
+       activeBorderColor = 'border-primary-500';
+       buttonBg = 'bg-primary-600';
+       buttonHoverBg = 'hover:bg-primary-700';
+    }
+
+    let scaleClass = 'scale-100 hover:-translate-y-1 hover:scale-[1.02] z-10';
+    if (isPremiumNode) {
+        scaleClass = 'scale-[1.05] hover:-translate-y-1 hover:scale-[1.07] z-20';
+    }
+    
+    if (isSelected) {
+        scaleClass = isPremiumNode ? 'scale-[1.06] z-30' : 'scale-[1.03] z-30';
     }
 
     const borderClass = isMultiSys 
          ? (isSelected 
-            ? `border-primary-600 ring-2 ring-primary-600 bg-white shadow-2xl z-20 scale-[1.02] border-t-4 ${topBorderColor}` 
-            : `border-slate-200 bg-white hover:border-slate-300 hover:shadow-lg border-t-4 ${topBorderColor}`)
-         : `border-slate-200 bg-white border-t-4 ${topBorderColor} ${isPremiumNode ? 'shadow-2xl z-20 scale-[1.04]' : 'shadow-sm hover:shadow-md'}`;
+            ? `${activeBorderColor} ring-2 ${activeRingColor} bg-white shadow-2xl border-t-4 ${topBorderColor} ${scaleClass}` 
+            : `border-slate-200 bg-white shadow-md hover:shadow-xl border-t-4 ${topBorderColor} ${scaleClass}`)
+         : `border-slate-200 bg-white border-t-4 ${topBorderColor} shadow-md hover:shadow-xl ${scaleClass}`;
 
     return (
        <div className={`relative flex flex-col p-8 rounded-[20px] transition-all duration-300 border ${borderClass}`}>
@@ -122,7 +147,7 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                  {isMultiSys ? (
                       <button 
                          onClick={(e) => { e.stopPropagation(); setLocalSelections(p => ({...p, [systemId]: `${focusedTrackId}_${tierKey}`})); }}
-                         className={`w-full py-3.5 flex items-center justify-center gap-2 rounded-xl text-sm font-bold border-2 transition-all duration-200 focus:outline-none ${isSelected ? 'bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-600/30 ring-1 ring-primary-600 translate-y-[-1px]' : 'bg-white border-primary-100 text-primary-600 hover:bg-primary-50 hover:border-primary-200 hover:text-primary-700 shadow-sm'}`}
+                         className={`w-full py-3.5 flex items-center justify-center gap-2 rounded-xl text-sm font-bold border-2 transition-all duration-200 focus:outline-none ${isSelected ? `${buttonBg} ${activeBorderColor} text-white shadow-lg translate-y-[-1px]` : `bg-white border-slate-200 ${priceColor} hover:bg-slate-50 hover:${activeBorderColor} shadow-sm`}`}
                       >
                          {isSelected ? <><CheckCircle size={16} strokeWidth={2.5}/> Option Selected</> : `Select ${tierName.split('(')[0].trim()}`}
                       </button>
@@ -130,7 +155,7 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                      <button 
                         disabled={proposal.isReadOnly}
                         onClick={(e) => { e.stopPropagation(); !proposal.isReadOnly && onAccept && onAccept(tierKey, activeData, proposal); }}
-                        className={`w-full py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-sm shadow-sm border-2 focus:ring-2 focus:ring-offset-2 outline-none ${proposal.isReadOnly ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : isBest ? 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-600 border-primary-600' : 'bg-white border-primary-100 text-primary-600 hover:bg-primary-50 hover:border-primary-200'}`}
+                        className={`w-full py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-sm shadow-sm border-2 focus:ring-2 focus:ring-offset-2 outline-none ${proposal.isReadOnly ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : `${buttonBg} text-white ${buttonHoverBg} ${activeBorderColor}`}`}
                      >
                         {proposal.isReadOnly ? 'Preview Only' : `Select ${tierName.split('(')[0].trim()}`}
                      </button>
