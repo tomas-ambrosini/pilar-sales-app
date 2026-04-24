@@ -138,6 +138,15 @@ export default function Tasks() {
     }
   };
 
+  const getProgressConfig = (progress) => {
+    const val = parseInt(progress) || 0;
+    if (val >= 100) return { text: 'Completed', bg: 'bg-emerald-100 text-emerald-800' };
+    if (val >= 75) return { text: 'Almost Done', bg: 'bg-blue-100 text-blue-800' };
+    if (val >= 50) return { text: 'Halfway', bg: 'bg-indigo-100 text-indigo-800' };
+    if (val >= 25) return { text: 'Just Started', bg: 'bg-amber-100 text-amber-800' };
+    return { text: 'Not Started', bg: 'bg-slate-100 text-slate-600' };
+  };
+
   const getUserInitials = (name) => {
     if (!name) return '?';
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -200,6 +209,7 @@ export default function Tasks() {
                const isDone = task.status?.toLowerCase() === 'done';
                const prioConfig = getPriorityConfig(task.priority);
                const statusConfig = getStatusConfig(task.status);
+               const progConfig = getProgressConfig(task.progress);
                const assignees = teamMembers.filter(m => (task.assigned_to || []).includes(m.id));
 
                return (
@@ -300,20 +310,30 @@ export default function Tasks() {
                    </div>
 
                    {/* Progress */}
-                   <div className="flex items-center gap-3 pr-6">
-                      <div className="relative group/progress">
-                         <input 
-                            type="number" 
-                            min="0" max="100"
-                            value={task.progress || 0}
-                            onChange={(e) => updateTask(task.id, 'progress', parseInt(e.target.value) || 0)}
-                            className="w-8 text-right bg-transparent border-none text-[11px] font-black text-slate-400 group-hover/progress:text-primary-500 focus:ring-0 p-0 outline-none transition-colors"
-                         />
-                         <span className="absolute -right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 pointer-events-none">%</span>
-                      </div>
-                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                         <div className="h-full bg-primary-500 rounded-full transition-all duration-700 ease-out" style={{ width: `${Math.min(100, Math.max(0, task.progress || 0))}%` }}></div>
-                      </div>
+                   <div className="relative">
+                      <button 
+                         onClick={() => { setActiveMenuId(task.id); setActiveMenuType('progress'); }}
+                         className={`flex items-center gap-2 px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors w-full justify-between ${progConfig.bg}`}
+                      >
+                         <span>{progConfig.text}</span>
+                         <ChevronDown size={12} className="opacity-50" />
+                      </button>
+                      
+                      {activeMenuId === task.id && activeMenuType === 'progress' && (
+                        <div ref={menuRef} className="absolute left-0 top-full mt-1 w-40 bg-white rounded-xl shadow-2xl border border-slate-200 py-1 z-50">
+                           {[
+                             { val: 0, text: 'Not Started' },
+                             { val: 25, text: 'Just Started' },
+                             { val: 50, text: 'Halfway' },
+                             { val: 75, text: 'Almost Done' },
+                             { val: 100, text: 'Completed' }
+                           ].map(p => (
+                             <button key={p.val} onClick={() => updateTask(task.id, 'progress', p.val)} className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 font-medium">
+                               {p.text}
+                             </button>
+                           ))}
+                        </div>
+                      )}
                    </div>
 
                    {/* Priority */}
