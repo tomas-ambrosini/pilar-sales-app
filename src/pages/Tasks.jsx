@@ -9,7 +9,7 @@ import {
   Paperclip, Send, FileText, Download, X, MessageSquare, Image as ImageIcon
 } from 'lucide-react';
 
-const AttachmentViewer = ({ update }) => {
+const AttachmentViewer = ({ update, onImageClick }) => {
   const [imgError, setImgError] = useState(false);
 
   if (!update.attachment_url) return null;
@@ -19,14 +19,17 @@ const AttachmentViewer = ({ update }) => {
   if (isImage) {
     return (
       <div className="mt-3">
-        <a href={update.attachment_url} target="_blank" rel="noreferrer" className="block w-48 rounded-lg overflow-hidden border border-slate-200 hover:opacity-90 transition-opacity bg-slate-50 relative min-h-[60px]">
+        <button 
+          onClick={() => onImageClick({ url: update.attachment_url, name: update.attachment_name })} 
+          className="block w-48 rounded-lg overflow-hidden border border-slate-200 hover:opacity-90 transition-opacity bg-slate-50 relative min-h-[60px] cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-primary-500"
+        >
           <img 
             src={update.attachment_url} 
             alt={update.attachment_name || "Attachment"} 
             className="w-full h-auto" 
             onError={() => setImgError(true)}
           />
-        </a>
+        </button>
       </div>
     );
   }
@@ -61,6 +64,7 @@ export default function Tasks() {
   const [newUpdateContent, setNewUpdateContent] = useState("");
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [activeImage, setActiveImage] = useState(null);
   
   const menuRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -598,7 +602,7 @@ export default function Tasks() {
                                     </div>
                                     <p className="text-sm text-slate-600 whitespace-pre-wrap">{update.content}</p>
                                     
-                                    <AttachmentViewer update={update} />
+                                    <AttachmentViewer update={update} onImageClick={setActiveImage} />
                                   </div>
                                 </div>
                               ))
@@ -665,6 +669,41 @@ export default function Tasks() {
           </div>
         )}
       </div>
+
+      {/* Image Lightbox */}
+      {activeImage && (
+        <div 
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-md" 
+            onClick={() => setActiveImage(null)}
+        >
+            <div className="absolute top-6 right-6 flex items-center gap-3 z-[10000]">
+                <a 
+                    href={activeImage.url} 
+                    download={activeImage.name || "attachment"} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="text-white/50 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-colors flex items-center justify-center"
+                    onClick={(e) => e.stopPropagation()}
+                    title="Download Image"
+                >
+                    <Download size={20} />
+                </a>
+                <button 
+                    className="text-white/50 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-colors flex items-center justify-center" 
+                    onClick={() => setActiveImage(null)}
+                    title="Close"
+                >
+                    <X size={20} />
+                </button>
+            </div>
+            <img 
+                src={activeImage.url} 
+                alt="Enlarged view" 
+                className="max-w-full max-h-[90vh] rounded-lg shadow-2xl ring-1 ring-white/10 object-contain"
+                onClick={(e) => e.stopPropagation()}
+            />
+        </div>
+      )}
     </div>
   );
 }
