@@ -364,11 +364,11 @@ export default function Tasks() {
         <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px_32px] gap-4 items-center px-6 py-4 bg-slate-50/80 border-b border-slate-200 text-[11px] font-black text-slate-400 uppercase tracking-widest rounded-t-2xl">
           <div className="w-8 flex justify-center"><CheckSquare size={16} /></div>
           <div>Task Name</div>
-          <div>Assigned To</div>
-          <div>Status</div>
-          <div>Progress</div>
-          <div>Priority</div>
-          <div>Due Date</div>
+          <div className="text-center">Assigned To</div>
+          <div className="px-3">Status</div>
+          <div className="px-3">Progress</div>
+          <div className="px-3">Priority</div>
+          <div className="px-3">Due Date</div>
           <div></div>
         </div>
 
