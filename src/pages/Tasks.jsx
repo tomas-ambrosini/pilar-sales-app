@@ -398,10 +398,10 @@ export default function Tasks() {
                      {/* Checkbox */}
                      <div className="w-8 flex justify-center">
                        <button 
-                          onClick={() => updateTask(task.id, 'status', isDone ? 'To Do' : 'Done')} 
-                          className={`w-5 h-5 rounded flex items-center justify-center transition-all ${isDone ? 'bg-emerald-500 text-white' : 'border-2 border-slate-300 text-transparent hover:border-emerald-500'}`}
+                          onClick={(e) => { e.stopPropagation(); updateTask(task.id, 'status', isDone ? 'To Do' : 'Done'); }} 
+                          className={`w-[18px] h-[18px] rounded flex items-center justify-center transition-all shadow-sm ${isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-2 border-slate-300 hover:border-emerald-400 text-transparent'}`}
                        >
-                         {isDone && <Check size={14} strokeWidth={3} />}
+                         {isDone && <Check size={12} strokeWidth={4} />}
                        </button>
                      </div>
                      
