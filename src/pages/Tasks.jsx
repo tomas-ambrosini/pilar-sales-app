@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { 
   CheckSquare, Square, Plus, Loader2, 
   SignalHigh, SignalMedium, SignalLow, CircleDashed, 
-  Calendar, Users, ChevronDown, Flame, AlertCircle, Clock, Check, CheckCircle2, ChevronRight
+  Calendar, Users, ChevronDown, Flame, AlertCircle, Clock, Check, CheckCircle2, ChevronRight,
+  Paperclip, Send, FileText, Download, X, MessageSquare, Image as ImageIcon
 } from 'lucide-react';
 
 export default function Tasks() {
@@ -18,8 +19,14 @@ export default function Tasks() {
   const [activeMenuType, setActiveMenuType] = useState(null); // 'status', 'priority', 'assignee', 'progress'
   const [expandedTaskId, setExpandedTaskId] = useState(null);
   const [activeDescription, setActiveDescription] = useState("");
+  const [taskUpdates, setTaskUpdates] = useState({});
+  const [newUpdateContent, setNewUpdateContent] = useState("");
+  const [attachmentFile, setAttachmentFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   
   const menuRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const updatesEndRef = useRef(null);
 
   useEffect(() => {
     if (user) {
@@ -39,6 +46,11 @@ export default function Tasks() {
           } else if (payload.eventType === 'DELETE') {
             setTasks(prev => prev.filter(t => t.id !== payload.old.id));
           }
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'task_updates' }, (payload) => {
+           if (payload.eventType === 'INSERT') {
+              fetchUpdates(payload.new.task_id);
+           }
         })
         .subscribe();
 
@@ -129,12 +141,81 @@ export default function Tasks() {
     }
   };
 
+  const fetchUpdates = async (taskId) => {
+    const { data, error } = await supabase
+      .from('task_updates')
+      .select('*, user_profiles(full_name, avatar_url)')
+      .eq('task_id', taskId)
+      .order('created_at', { ascending: true });
+    
+    if (!error && data) {
+      setTaskUpdates(prev => ({ ...prev, [taskId]: data }));
+      // Scroll to bottom
+      setTimeout(() => {
+        if (updatesEndRef.current) updatesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  };
+
+  const submitUpdate = async (taskId) => {
+    if (!newUpdateContent.trim() && !attachmentFile) return;
+    setIsUploading(true);
+
+    let uploadedUrl = null;
+    let uploadedName = null;
+    let uploadedType = null;
+
+    if (attachmentFile) {
+      const fileExt = attachmentFile.name.split('.').pop();
+      const fileName = `${taskId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      
+      const { error: uploadError, data: uploadData } = await supabase.storage
+        .from('task-attachments')
+        .upload(fileName, attachmentFile);
+
+      if (uploadError) {
+        console.error("Upload error", uploadError);
+        alert("Failed to upload attachment: " + uploadError.message);
+        setIsUploading(false);
+        return;
+      }
+
+      const { data: publicData } = supabase.storage
+        .from('task-attachments')
+        .getPublicUrl(fileName);
+
+      uploadedUrl = publicData.publicUrl;
+      uploadedName = attachmentFile.name;
+      uploadedType = attachmentFile.type;
+    }
+
+    const { error } = await supabase.from('task_updates').insert([{
+      task_id: taskId,
+      user_id: user.id,
+      content: newUpdateContent.trim(),
+      attachment_url: uploadedUrl,
+      attachment_name: uploadedName,
+      attachment_type: uploadedType
+    }]);
+
+    if (!error) {
+      setNewUpdateContent('');
+      setAttachmentFile(null);
+      fetchUpdates(taskId);
+    } else {
+      console.error(error);
+      alert("Failed to post update. Ensure task_updates table exists.");
+    }
+    setIsUploading(false);
+  };
+
   const toggleExpand = (task) => {
     if (expandedTaskId === task.id) {
       setExpandedTaskId(null);
     } else {
       setExpandedTaskId(task.id);
       setActiveDescription(task.description || "");
+      fetchUpdates(task.id);
     }
   };
 
@@ -414,19 +495,129 @@ export default function Tasks() {
 
                  {/* Expandable Area */}
                  {expandedTaskId === task.id && (
-                   <div className="px-6 pb-4 pt-1 ml-[52px]">
-                     <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-4 shadow-inner">
-                        <div className="flex justify-between items-center mb-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Description & Notes</label>
-                          <button onClick={() => saveDescription(task.id)} className="text-[10px] font-bold text-primary-600 bg-primary-50 border border-primary-100 px-3 py-1 rounded shadow-sm hover:bg-primary-100 transition-colors">Save Details</button>
+                   <div className="px-6 pb-6 pt-2 ml-[52px]">
+                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 bg-slate-50/50 border border-slate-200 rounded-2xl p-6 shadow-inner">
+                        
+                        {/* Description Section */}
+                        <div className="flex flex-col h-full">
+                          <div className="flex justify-between items-center mb-3">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><FileText size={12}/> Description & Notes</label>
+                            <button onClick={() => saveDescription(task.id)} className="text-[10px] font-bold text-primary-600 bg-primary-50 border border-primary-100 px-3 py-1.5 rounded-md shadow-sm hover:bg-primary-100 transition-colors">Save Details</button>
+                          </div>
+                          <textarea
+                            value={activeDescription}
+                            onChange={(e) => setActiveDescription(e.target.value)}
+                            onBlur={() => saveDescription(task.id)}
+                            placeholder="Add extensive details, links, or a paragraph form of the task..."
+                            className="w-full h-full min-h-[200px] bg-white border border-slate-200 rounded-xl p-4 text-sm text-slate-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none leading-relaxed"
+                          />
                         </div>
-                        <textarea
-                          value={activeDescription}
-                          onChange={(e) => setActiveDescription(e.target.value)}
-                          onBlur={() => saveDescription(task.id)}
-                          placeholder="Add extensive details, links, or a paragraph form of the task..."
-                          className="w-full min-h-[120px] bg-white border border-slate-200 rounded-lg p-3 text-sm text-slate-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-y"
-                        />
+
+                        {/* Updates Feed Section */}
+                        <div className="flex flex-col bg-white border border-slate-200 rounded-xl overflow-hidden h-[400px]">
+                          <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><MessageSquare size={12}/> Updates</label>
+                          </div>
+                          
+                          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/30">
+                            {(!taskUpdates[task.id] || taskUpdates[task.id].length === 0) ? (
+                              <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                                <MessageSquare size={32} className="mb-2 opacity-20" />
+                                <p className="text-sm">No updates yet.</p>
+                              </div>
+                            ) : (
+                              taskUpdates[task.id].map(update => (
+                                <div key={update.id} className="flex gap-3">
+                                  {update.user_profiles?.avatar_url ? (
+                                    <img src={update.user_profiles.avatar_url} className="w-8 h-8 rounded-full border border-slate-200 shrink-0 object-cover" />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
+                                      {getUserInitials(update.user_profiles?.full_name)}
+                                    </div>
+                                  )}
+                                  <div className="flex-1 bg-white border border-slate-100 shadow-sm rounded-2xl rounded-tl-none p-3 relative group">
+                                    <div className="flex justify-between items-start mb-1">
+                                      <span className="text-xs font-bold text-slate-800">{update.user_profiles?.full_name || 'Unknown User'}</span>
+                                      <span className="text-[10px] text-slate-400">{new Date(update.created_at).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
+                                    </div>
+                                    <p className="text-sm text-slate-600 whitespace-pre-wrap">{update.content}</p>
+                                    
+                                    {update.attachment_url && (
+                                      <div className="mt-3">
+                                        {update.attachment_type?.startsWith('image/') ? (
+                                          <a href={update.attachment_url} target="_blank" rel="noreferrer" className="block w-48 rounded-lg overflow-hidden border border-slate-200 hover:opacity-90 transition-opacity">
+                                            <img src={update.attachment_url} alt="Attachment" className="w-full h-auto" />
+                                          </a>
+                                        ) : (
+                                          <a href={update.attachment_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors max-w-full">
+                                            <div className="w-8 h-8 bg-white border border-slate-200 rounded flex items-center justify-center text-primary-500 shrink-0">
+                                              <FileText size={16} />
+                                            </div>
+                                            <div className="flex flex-col min-w-0">
+                                              <span className="text-xs font-bold text-slate-700 truncate block w-full">{update.attachment_name}</span>
+                                              <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1"><Download size={10}/> Download</span>
+                                            </div>
+                                          </a>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                            <div ref={updatesEndRef} />
+                          </div>
+
+                          {/* Update Input */}
+                          <div className="p-3 bg-white border-t border-slate-200">
+                            {attachmentFile && (
+                              <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 mb-2">
+                                {attachmentFile.type.startsWith('image/') ? <ImageIcon size={14} className="text-primary-500"/> : <FileText size={14} className="text-primary-500"/>}
+                                <span className="text-xs text-slate-600 font-medium truncate flex-1">{attachmentFile.name}</span>
+                                <button onClick={() => setAttachmentFile(null)} className="text-slate-400 hover:text-rose-500 transition-colors"><X size={14}/></button>
+                              </div>
+                            )}
+                            <div className="flex items-end gap-2">
+                              <div className="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-1 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 transition-all">
+                                <textarea
+                                  value={newUpdateContent}
+                                  onChange={(e) => setNewUpdateContent(e.target.value)}
+                                  placeholder="Write an update..."
+                                  className="w-full bg-transparent border-none text-sm p-2 outline-none resize-none min-h-[40px] max-h-[120px]"
+                                  rows={1}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      submitUpdate(task.id);
+                                    }
+                                  }}
+                                />
+                                <div className="flex justify-between items-center px-2 pb-1">
+                                  <input 
+                                    type="file" 
+                                    ref={fileInputRef} 
+                                    onChange={(e) => {
+                                      if (e.target.files && e.target.files[0]) {
+                                        setAttachmentFile(e.target.files[0]);
+                                      }
+                                    }}
+                                    className="hidden" 
+                                  />
+                                  <button onClick={() => fileInputRef.current?.click()} className="text-slate-400 hover:text-primary-500 transition-colors p-1 rounded-md hover:bg-slate-200/50">
+                                    <Paperclip size={16} />
+                                  </button>
+                                </div>
+                              </div>
+                              <button 
+                                onClick={() => submitUpdate(task.id)}
+                                disabled={isUploading || (!newUpdateContent.trim() && !attachmentFile)}
+                                className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white p-3 rounded-xl shadow-md transition-colors h-[54px] w-[54px] flex items-center justify-center shrink-0"
+                              >
+                                {isUploading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} className="ml-1" />}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
                      </div>
                    </div>
                  )}
