@@ -6,7 +6,7 @@ import {
   CheckSquare, Square, Plus, Loader2, 
   SignalHigh, SignalMedium, SignalLow, CircleDashed, 
   Calendar, Users, ChevronDown, Flame, AlertCircle, Clock, Check, CheckCircle2, ChevronRight,
-  Paperclip, Send, FileText, Download, X, MessageSquare, Image as ImageIcon
+  Paperclip, Send, FileText, Download, X, MessageSquare, Image as ImageIcon, Trash2
 } from 'lucide-react';
 
 const AttachmentViewer = ({ update, onImageClick }) => {
@@ -51,6 +51,7 @@ const AttachmentViewer = ({ update, onImageClick }) => {
 
 export default function Tasks() {
   const { user } = useAuth();
+  const isAdmin = ['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase());
   const [tasks, setTasks] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -180,6 +181,23 @@ export default function Tasks() {
     if (error) {
       console.error(error);
       setTasks(previousTasks); // Revert
+    }
+  };
+
+  const deleteTask = async (taskId) => {
+    if (!window.confirm("Are you sure you want to delete this task? This action cannot be undone.")) return;
+
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) throw error;
+      setTasks(tasks.filter(t => t.id !== taskId));
+    } catch (err) {
+      console.error('Error deleting task:', err);
+      alert('Failed to delete task. Please try again.');
     }
   };
 
@@ -336,14 +354,14 @@ export default function Tasks() {
     <div className="max-w-[1400px] mx-auto py-8 px-4 lg:px-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight">Project Board</h1>
-          <p className="text-slate-500 text-sm mt-1">Manage cross-functional tasks and assignments.</p>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight">Task Board</h1>
+          <p className="text-slate-500 text-sm mt-1">Manage cross-functional tasks and assignments.</p>>
         </div>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl shadow-xl flex flex-col">
         {/* Table Header */}
-        <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px] gap-4 items-center px-6 py-4 bg-slate-50/80 border-b border-slate-200 text-[11px] font-black text-slate-400 uppercase tracking-widest rounded-t-2xl">
+        <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px_32px] gap-4 items-center px-6 py-4 bg-slate-50/80 border-b border-slate-200 text-[11px] font-black text-slate-400 uppercase tracking-widest rounded-t-2xl">
           <div className="w-8 flex justify-center"><CheckSquare size={16} /></div>
           <div>Task Name</div>
           <div>Assigned To</div>
@@ -351,11 +369,12 @@ export default function Tasks() {
           <div>Progress</div>
           <div>Priority</div>
           <div>Due Date</div>
+          <div></div>
         </div>
 
         {/* Input Row */}
         <form onSubmit={addTask} className="border-b border-slate-100 bg-white hover:bg-slate-50/80 transition-colors">
-          <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px] gap-4 items-center px-6 py-3.5">
+          <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px_32px] gap-4 items-center px-6 py-3.5">
             <div className="w-8 flex justify-center text-slate-300"><Plus size={18} /></div>
             <input 
               type="text" 
@@ -369,6 +388,7 @@ export default function Tasks() {
             <div className="col-span-5 text-xs text-slate-400 flex items-center justify-end pr-2">
                {isSubmitting && <Loader2 size={14} className="animate-spin text-primary-500" />}
             </div>
+            <div></div>
           </div>
         </form>
 
@@ -394,7 +414,7 @@ export default function Tasks() {
 
                return (
                  <div key={task.id} className="flex flex-col border-b border-slate-50 last:border-0 hover:bg-slate-50/80 transition-colors group">
-                   <div className={`grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px] gap-4 items-center px-6 py-3.5 ${isDone ? 'opacity-50 grayscale' : ''}`}>
+                   <div className={`grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px_32px] gap-4 items-center px-6 py-3.5 ${isDone ? 'opacity-50 grayscale' : ''}`}>
                      {/* Checkbox */}
                      <div className="w-8 flex justify-center">
                        <button 
@@ -552,6 +572,19 @@ export default function Tasks() {
                            className="bg-transparent border-none text-[11px] font-extrabold tracking-wide text-slate-600 focus:ring-0 p-0 outline-none w-full cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full"
                          />
                       </div>
+                   </div>
+
+                   {/* Delete Action (Admins Only) */}
+                   <div className="flex justify-end">
+                     {isAdmin ? (
+                       <button 
+                         onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }} 
+                         className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors"
+                         title="Delete Task"
+                       >
+                         <Trash2 size={16} />
+                       </button>
+                     ) : <div className="w-8"></div>}
                    </div>
 
                  </div>
