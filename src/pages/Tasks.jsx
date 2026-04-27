@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import heic2any from 'heic2any';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -203,12 +204,30 @@ export default function Tasks() {
     let uploadedType = null;
 
     if (attachmentFile) {
-      const fileExt = attachmentFile.name.split('.').pop();
+      let fileToUpload = attachmentFile;
+      const isHeic = attachmentFile.name.toLowerCase().endsWith('.heic') || attachmentFile.type === 'image/heic';
+
+      if (isHeic) {
+        try {
+          const blob = await heic2any({
+            blob: attachmentFile,
+            toType: "image/jpeg",
+            quality: 0.8
+          });
+          const jpegBlob = Array.isArray(blob) ? blob[0] : blob;
+          const newName = attachmentFile.name.replace(/\.heic$/i, '.jpeg');
+          fileToUpload = new File([jpegBlob], newName, { type: "image/jpeg" });
+        } catch (err) {
+          console.error("HEIC conversion failed:", err);
+        }
+      }
+
+      const fileExt = fileToUpload.name.split('.').pop();
       const fileName = `${taskId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       
       const { error: uploadError, data: uploadData } = await supabase.storage
         .from('task-attachments')
-        .upload(fileName, attachmentFile);
+        .upload(fileName, fileToUpload);
 
       if (uploadError) {
         console.error("Upload error", uploadError);
@@ -222,8 +241,8 @@ export default function Tasks() {
         .getPublicUrl(fileName);
 
       uploadedUrl = publicData.publicUrl;
-      uploadedName = attachmentFile.name;
-      uploadedType = attachmentFile.type;
+      uploadedName = fileToUpload.name;
+      uploadedType = fileToUpload.type;
     }
 
     const { error } = await supabase.from('task_updates').insert([{
