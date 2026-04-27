@@ -21,12 +21,12 @@ const AttachmentViewer = ({ update, onImageClick }) => {
       <div className="mt-3">
         <button 
           onClick={() => onImageClick({ url: update.attachment_url, name: update.attachment_name })} 
-          className="block w-48 rounded-lg overflow-hidden border border-slate-200 hover:opacity-90 transition-opacity bg-slate-50 relative min-h-[60px] cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="block w-full max-w-[280px] rounded-xl overflow-hidden border border-slate-200/60 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all bg-slate-50 relative min-h-[60px] cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-primary-500/50"
         >
           <img 
             src={update.attachment_url} 
             alt={update.attachment_name || "Attachment"} 
-            className="w-full h-auto" 
+            className="w-full h-auto object-cover" 
             onError={() => setImgError(true)}
           />
         </button>
@@ -36,13 +36,13 @@ const AttachmentViewer = ({ update, onImageClick }) => {
 
   return (
     <div className="mt-3">
-      <a href={update.attachment_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors max-w-full">
-        <div className="w-8 h-8 bg-white border border-slate-200 rounded flex items-center justify-center text-primary-500 shrink-0">
-          <FileText size={16} />
+      <a href={update.attachment_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-3 bg-slate-50 border border-slate-200/60 px-4 py-2.5 rounded-xl hover:bg-slate-100 hover:shadow-sm hover:-translate-y-0.5 transition-all max-w-full">
+        <div className="w-10 h-10 bg-white border border-slate-200/60 shadow-sm rounded-lg flex items-center justify-center text-primary-500 shrink-0">
+          <FileText size={18} />
         </div>
-        <div className="flex flex-col min-w-0">
-          <span className="text-xs font-bold text-slate-700 truncate block w-full">{update.attachment_name || "Download Attachment"}</span>
-          <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1"><Download size={10}/> Download</span>
+        <div className="flex flex-col min-w-0 pr-2">
+          <span className="text-[13px] font-bold text-slate-700 truncate block w-full">{update.attachment_name || "Download Attachment"}</span>
+          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 flex items-center gap-1"><Download size={10}/> Download</span>
         </div>
       </a>
     </div>
@@ -553,56 +553,72 @@ export default function Tasks() {
 
                  </div>
 
-                 {/* Expandable Area */}
+                 {/* Expandable Area - Legendary Workspace */}
                  {expandedTaskId === task.id && (
-                   <div className="px-6 pb-6 pt-2 ml-[52px]">
-                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 bg-slate-50/50 border border-slate-200 rounded-2xl p-6 shadow-inner">
+                   <div className="px-4 pb-4 pt-0 md:px-6 md:pb-6 md:pt-2 ml-[52px] animate-in fade-in slide-in-from-top-4 duration-300">
+                     <div className="flex flex-col lg:flex-row gap-6 bg-gradient-to-br from-white to-slate-50/80 border border-slate-200/60 rounded-[24px] p-6 shadow-2xl shadow-slate-200/50 ring-1 ring-white/50 relative overflow-hidden">
                         
-                        {/* Description Section */}
-                        <div className="flex flex-col h-full">
-                          <div className="flex justify-between items-center mb-3">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><FileText size={12}/> Description & Notes</label>
-                            <button onClick={() => saveDescription(task.id)} className="text-[10px] font-bold text-primary-600 bg-primary-50 border border-primary-100 px-3 py-1.5 rounded-md shadow-sm hover:bg-primary-100 transition-colors">Save Details</button>
+                        {/* Subtle background glow */}
+                        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-primary-100/30 rounded-full blur-3xl pointer-events-none"></div>
+
+                        {/* Description Section (Left 60%) */}
+                        <div className="flex flex-col w-full lg:w-3/5 h-[500px]">
+                          <div className="flex justify-between items-center mb-4 pl-1">
+                            <label className="text-[11px] font-black text-slate-800 uppercase tracking-[0.2em] flex items-center gap-2"><FileText size={14} className="text-primary-500" /> Description & Notes</label>
+                            <button onClick={() => saveDescription(task.id)} className="text-[11px] font-bold text-white bg-slate-800 hover:bg-slate-900 px-4 py-2 rounded-full shadow-md shadow-slate-900/10 transition-all hover:scale-[1.02] active:scale-95">Save Details</button>
                           </div>
-                          <textarea
-                            value={activeDescription}
-                            onChange={(e) => setActiveDescription(e.target.value)}
-                            onBlur={() => saveDescription(task.id)}
-                            placeholder="Add extensive details, links, or a paragraph form of the task..."
-                            className="w-full h-full min-h-[200px] bg-white border border-slate-200 rounded-xl p-4 text-sm text-slate-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none leading-relaxed"
-                          />
+                          <div className="flex-1 bg-white border border-slate-200/60 rounded-2xl p-1 shadow-inner relative group focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-300 transition-all">
+                            <textarea
+                              value={activeDescription}
+                              onChange={(e) => setActiveDescription(e.target.value)}
+                              onBlur={() => saveDescription(task.id)}
+                              placeholder="Add extensive details, links, or a paragraph form of the task..."
+                              className="w-full h-full bg-transparent border-none p-4 text-[15px] text-slate-700 outline-none resize-none leading-relaxed placeholder-slate-300"
+                            />
+                          </div>
                         </div>
 
-                        {/* Updates Feed Section */}
-                        <div className="flex flex-col bg-white border border-slate-200 rounded-xl overflow-hidden h-[400px]">
-                          <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><MessageSquare size={12}/> Updates</label>
+                        {/* Updates Feed Section (Right 40%) */}
+                        <div className="flex flex-col w-full lg:w-2/5 h-[500px] relative">
+                          <div className="flex justify-between items-center mb-4 pl-1">
+                            <label className="text-[11px] font-black text-slate-800 uppercase tracking-[0.2em] flex items-center gap-2"><MessageSquare size={14} className="text-primary-500" /> Activity Stream</label>
                           </div>
                           
-                          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/30">
+                          {/* Timeline Feed */}
+                          <div className="flex-1 overflow-y-auto px-1 pb-4 space-y-6 relative">
+                            {/* Vertical Line */}
+                            {taskUpdates[task.id]?.length > 0 && (
+                              <div className="absolute left-[23px] top-4 bottom-4 w-px bg-gradient-to-b from-slate-200 via-slate-200 to-transparent z-0" />
+                            )}
+                            
                             {(!taskUpdates[task.id] || taskUpdates[task.id].length === 0) ? (
                               <div className="flex flex-col items-center justify-center h-full text-slate-400">
-                                <MessageSquare size={32} className="mb-2 opacity-20" />
-                                <p className="text-sm">No updates yet.</p>
+                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 border border-slate-100 shadow-inner">
+                                  <MessageSquare size={24} className="opacity-40" />
+                                </div>
+                                <p className="text-sm font-medium">No activity yet.</p>
+                                <p className="text-xs text-slate-400 text-center max-w-[200px] mt-1">Be the first to post an update or attach a file.</p>
                               </div>
                             ) : (
                               taskUpdates[task.id].map(update => (
-                                <div key={update.id} className="flex gap-3">
+                                <div key={update.id} className="relative z-10 flex gap-4 group">
                                   {update.user_profiles?.avatar_url ? (
-                                    <img src={update.user_profiles.avatar_url} className="w-8 h-8 rounded-full border border-slate-200 shrink-0 object-cover" />
+                                    <img src={update.user_profiles.avatar_url} className="w-10 h-10 rounded-full border-[3px] border-white shadow-sm shrink-0 object-cover ring-1 ring-slate-100" />
                                   ) : (
-                                    <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
+                                    <div className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs font-bold shrink-0 border-[3px] border-white shadow-sm ring-1 ring-slate-100">
                                       {getUserInitials(update.user_profiles?.full_name)}
                                     </div>
                                   )}
-                                  <div className="flex-1 bg-white border border-slate-100 shadow-sm rounded-2xl rounded-tl-none p-3 relative group">
-                                    <div className="flex justify-between items-start mb-1">
-                                      <span className="text-xs font-bold text-slate-800">{update.user_profiles?.full_name || 'Unknown User'}</span>
-                                      <span className="text-[10px] text-slate-400">{new Date(update.created_at).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
+                                  <div className="flex-1 pt-1 min-w-0">
+                                    <div className="flex justify-between items-baseline mb-1">
+                                      <span className="text-sm font-bold text-slate-800 truncate pr-2">{update.user_profiles?.full_name || 'Unknown User'}</span>
+                                      <span className="text-[10px] font-bold tracking-wide text-slate-400 shrink-0">{new Date(update.created_at).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
                                     </div>
-                                    <p className="text-sm text-slate-600 whitespace-pre-wrap">{update.content}</p>
-                                    
-                                    <AttachmentViewer update={update} onImageClick={setActiveImage} />
+                                    <div className="bg-white border border-slate-100 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] rounded-[16px] rounded-tl-sm p-3.5 group-hover:shadow-[0_4px_12px_-4px_rgba(0,0,0,0.08)] transition-all">
+                                      <p className="text-[13px] text-slate-600 whitespace-pre-wrap leading-relaxed">{update.content}</p>
+                                      
+                                      <AttachmentViewer update={update} onImageClick={setActiveImage} />
+                                    </div>
                                   </div>
                                 </div>
                               ))
@@ -610,55 +626,64 @@ export default function Tasks() {
                             <div ref={updatesEndRef} />
                           </div>
 
-                          {/* Update Input */}
-                          <div className="p-3 bg-white border-t border-slate-200">
+                          {/* Integrated Command Console */}
+                          <div className="mt-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm shadow-slate-200/50 p-1 focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-300 transition-all flex flex-col relative">
                             {attachmentFile && (
-                              <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 mb-2">
+                              <div className="flex items-center gap-2 bg-slate-50/80 px-3 py-2 rounded-xl border border-slate-100 m-2 mb-1">
                                 {attachmentFile.type.startsWith('image/') ? <ImageIcon size={14} className="text-primary-500"/> : <FileText size={14} className="text-primary-500"/>}
-                                <span className="text-xs text-slate-600 font-medium truncate flex-1">{attachmentFile.name}</span>
-                                <button onClick={() => setAttachmentFile(null)} className="text-slate-400 hover:text-rose-500 transition-colors"><X size={14}/></button>
+                                <span className="text-xs text-slate-700 font-bold truncate flex-1">{attachmentFile.name}</span>
+                                <button onClick={() => setAttachmentFile(null)} className="text-slate-400 hover:text-rose-500 bg-white border border-slate-200 rounded-full p-1 transition-colors hover:shadow-sm"><X size={12}/></button>
                               </div>
                             )}
-                            <div className="flex items-end gap-2">
-                              <div className="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-1 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 transition-all">
-                                <textarea
-                                  value={newUpdateContent}
-                                  onChange={(e) => setNewUpdateContent(e.target.value)}
-                                  placeholder="Write an update..."
-                                  className="w-full bg-transparent border-none text-sm p-2 outline-none resize-none min-h-[40px] max-h-[120px]"
-                                  rows={1}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                      e.preventDefault();
-                                      submitUpdate(task.id);
+                            
+                            <textarea
+                              value={newUpdateContent}
+                              onChange={(e) => setNewUpdateContent(e.target.value)}
+                              placeholder="Write a status update..."
+                              className="w-full bg-transparent border-none text-[14px] p-3 outline-none resize-none min-h-[44px] max-h-[120px] placeholder-slate-300"
+                              rows={1}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  submitUpdate(task.id);
+                                }
+                              }}
+                            />
+                            
+                            <div className="flex justify-between items-center px-2 pb-2 pt-1">
+                              <div className="flex items-center">
+                                <input 
+                                  type="file" 
+                                  ref={fileInputRef} 
+                                  onChange={(e) => {
+                                    if (e.target.files && e.target.files[0]) {
+                                      setAttachmentFile(e.target.files[0]);
                                     }
                                   }}
+                                  className="hidden" 
                                 />
-                                <div className="flex justify-between items-center px-2 pb-1">
-                                  <input 
-                                    type="file" 
-                                    ref={fileInputRef} 
-                                    onChange={(e) => {
-                                      if (e.target.files && e.target.files[0]) {
-                                        setAttachmentFile(e.target.files[0]);
-                                      }
-                                    }}
-                                    className="hidden" 
-                                  />
-                                  <button onClick={() => fileInputRef.current?.click()} className="text-slate-400 hover:text-primary-500 transition-colors p-1 rounded-md hover:bg-slate-200/50">
-                                    <Paperclip size={16} />
-                                  </button>
-                                </div>
+                                <button 
+                                  onClick={() => fileInputRef.current?.click()} 
+                                  className="text-slate-400 hover:text-primary-500 hover:bg-primary-50 p-2 rounded-full transition-all group"
+                                  title="Attach File"
+                                >
+                                  <Paperclip size={18} className="group-hover:-rotate-12 transition-transform" />
+                                </button>
                               </div>
                               <button 
                                 onClick={() => submitUpdate(task.id)}
                                 disabled={isUploading || (!newUpdateContent.trim() && !attachmentFile)}
-                                className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white p-3 rounded-xl shadow-md transition-colors h-[54px] w-[54px] flex items-center justify-center shrink-0"
+                                className="bg-slate-800 hover:bg-slate-900 disabled:opacity-30 text-white px-5 py-2 rounded-full shadow-md transition-all flex items-center justify-center font-bold text-xs gap-2 hover:scale-[1.02] active:scale-95"
                               >
-                                {isUploading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} className="ml-1" />}
+                                {isUploading ? (
+                                  <><Loader2 size={16} className="animate-spin" /> Sending...</>
+                                ) : (
+                                  <>Post <Send size={14} className="-mt-0.5" /></>
+                                )}
                               </button>
                             </div>
                           </div>
+
                         </div>
                      </div>
                    </div>
