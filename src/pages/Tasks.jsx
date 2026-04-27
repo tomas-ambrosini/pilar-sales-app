@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import heic2any from 'heic2any';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -6,7 +6,7 @@ import {
   CheckSquare, Square, Plus, Loader2, 
   SignalHigh, SignalMedium, SignalLow, CircleDashed, 
   Calendar, Users, ChevronDown, Flame, AlertCircle, Clock, Check, CheckCircle2, ChevronRight,
-  Paperclip, Send, FileText, Download, X, MessageSquare, Image as ImageIcon, Trash2
+  Paperclip, Send, FileText, Download, X, MessageSquare, Image as ImageIcon, Trash2, Search, Filter
 } from 'lucide-react';
 
 const AttachmentViewer = ({ update, onImageClick }) => {
@@ -66,6 +66,46 @@ export default function Tasks() {
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [activeImage, setActiveImage] = useState(null);
+  
+  const [filterSearch, setFilterSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("All");
+  const [filterAssignee, setFilterAssignee] = useState("All");
+
+  const filteredAndSortedTasks = useMemo(() => {
+    let result = [...tasks];
+
+    // Filter by Search
+    if (filterSearch.trim()) {
+      const lowerQuery = filterSearch.toLowerCase();
+      result = result.filter(t => t.title?.toLowerCase().includes(lowerQuery));
+    }
+
+    // Filter by Status
+    if (filterStatus === 'Open') {
+      result = result.filter(t => t.status?.toLowerCase() !== 'done');
+    } else if (filterStatus === 'Completed') {
+      result = result.filter(t => t.status?.toLowerCase() === 'done');
+    }
+
+    // Filter by Assignee
+    if (filterAssignee !== 'All') {
+      result = result.filter(t => (t.assigned_to || []).includes(filterAssignee));
+    }
+
+    // Sort: Done at the bottom
+    result.sort((a, b) => {
+      const aDone = a.status?.toLowerCase() === 'done';
+      const bDone = b.status?.toLowerCase() === 'done';
+      if (aDone && !bDone) return 1;
+      if (!aDone && bDone) return -1;
+      
+      const aTime = new Date(a.created_at || 0).getTime();
+      const bTime = new Date(b.created_at || 0).getTime();
+      return bTime - aTime;
+    });
+
+    return result;
+  }, [tasks, filterSearch, filterStatus, filterAssignee]);
   
   const menuRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -352,10 +392,57 @@ export default function Tasks() {
 
   return (
     <div className="max-w-[1400px] mx-auto py-8 px-4 lg:px-8">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-800 tracking-tight">Task Board</h1>
-          <p className="text-slate-500 text-sm mt-1">Manage cross-functional tasks and assignments.</p>>
+          <p className="text-slate-500 text-sm mt-1">Manage cross-functional tasks and assignments.</p>
+        </div>
+
+        {/* Filter Bar */}
+        <div className="flex items-center gap-3 bg-white border border-slate-200/80 p-1.5 rounded-2xl shadow-sm flex-wrap">
+           <div className="relative flex items-center">
+              <Search size={14} className="absolute left-3 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Search tasks..." 
+                value={filterSearch}
+                onChange={(e) => setFilterSearch(e.target.value)}
+                className="pl-8 pr-4 py-2 bg-slate-50 border-transparent rounded-xl text-xs font-bold focus:ring-2 focus:ring-primary-500 focus:bg-white outline-none w-48 transition-all"
+              />
+           </div>
+
+           <div className="hidden sm:block w-px h-6 bg-slate-200"></div>
+
+           <select 
+             value={filterStatus}
+             onChange={(e) => setFilterStatus(e.target.value)}
+             className="appearance-none bg-slate-50 border-transparent rounded-xl px-4 py-2 pr-8 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer"
+           >
+              <option value="All">All Status</option>
+              <option value="Open">Open Only</option>
+              <option value="Completed">Completed Only</option>
+           </select>
+
+           <select 
+             value={filterAssignee}
+             onChange={(e) => setFilterAssignee(e.target.value)}
+             className="appearance-none bg-slate-50 border-transparent rounded-xl px-4 py-2 pr-8 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer max-w-[150px] truncate"
+           >
+              <option value="All">All Team</option>
+              {teamMembers.map(member => (
+                <option key={member.id} value={member.id}>{member.full_name}</option>
+              ))}
+           </select>
+
+           {(filterSearch || filterStatus !== 'All' || filterAssignee !== 'All') && (
+             <button 
+               onClick={() => { setFilterSearch(''); setFilterStatus('All'); setFilterAssignee('All'); }}
+               className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors ml-1"
+               title="Clear Filters"
+             >
+                <X size={16} />
+             </button>
+           )}
         </div>
       </div>
 
@@ -403,9 +490,16 @@ export default function Tasks() {
              <h3 className="text-lg font-bold text-slate-700">No tasks found</h3>
              <p className="text-sm text-slate-500">Add a task above to get started.</p>
           </div>
+        ) : filteredAndSortedTasks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 bg-white text-center">
+             <Filter size={48} className="text-slate-200 mb-4" />
+             <h3 className="text-lg font-bold text-slate-700">No matching tasks</h3>
+             <p className="text-sm text-slate-500">Try adjusting your filters to find what you're looking for.</p>
+             <button onClick={() => { setFilterSearch(''); setFilterStatus('All'); setFilterAssignee('All'); }} className="mt-4 text-primary-500 font-bold hover:underline">Clear Filters</button>
+          </div>
         ) : (
           <div className="divide-y divide-slate-100 bg-white rounded-b-2xl pb-2">
-            {tasks.map(task => {
+            {filteredAndSortedTasks.map(task => {
                const isDone = task.status?.toLowerCase() === 'done';
                const prioConfig = getPriorityConfig(task.priority);
                const statusConfig = getStatusConfig(task.status);
