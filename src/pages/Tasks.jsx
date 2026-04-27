@@ -520,7 +520,7 @@ export default function Tasks() {
                      </div>
                      
                      {/* Title */}
-                     <div className="flex items-center gap-2 w-full pr-4">
+                     <div className="flex items-center gap-2 w-full pr-4 min-w-0">
                        <button onClick={() => toggleExpand(task)} className={`transition-colors flex-shrink-0 ${expandedTaskId === task.id ? 'text-primary-500' : 'text-slate-300 hover:text-primary-500'}`}>
                           {expandedTaskId === task.id ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                        </button>
@@ -534,12 +534,12 @@ export default function Tasks() {
                             setTasks(newTasks);
                          }}
                          onBlur={(e) => updateTask(task.id, 'title', e.target.value)}
-                         className={`w-full bg-transparent border-none text-sm font-bold focus:ring-0 p-0 outline-none ${isDone ? 'line-through text-slate-400' : 'text-slate-800'}`}
+                         className={`w-full bg-transparent border-none text-sm font-bold focus:ring-0 p-0 outline-none truncate ${isDone ? 'line-through text-slate-400' : 'text-slate-800'}`}
                        />
                      </div>
 
                    {/* Assignees */}
-                   <div className="relative">
+                   <div className="relative flex justify-center">
                       <button 
                          onClick={() => { setActiveMenuId(task.id); setActiveMenuType('assignee'); }}
                          className="flex -space-x-2 overflow-hidden hover:opacity-80 transition-opacity p-1 rounded hover:bg-slate-100"
