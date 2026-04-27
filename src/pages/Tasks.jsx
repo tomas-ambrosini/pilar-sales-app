@@ -192,9 +192,12 @@ export default function Tasks() {
     
     if (!error && data) {
       setTaskUpdates(prev => ({ ...prev, [taskId]: data }));
-      // Scroll to bottom
+      // Scroll to bottom without jumping the page
       setTimeout(() => {
-        if (updatesEndRef.current) updatesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        const container = document.getElementById(`updates-container-${taskId}`);
+        if (container) {
+          container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        }
       }, 100);
     }
   };
@@ -585,7 +588,7 @@ export default function Tasks() {
                           </div>
                           
                           {/* Timeline Feed */}
-                          <div className="flex-1 overflow-y-auto px-1 pb-4 space-y-6 relative">
+                          <div id={`updates-container-${task.id}`} className="flex-1 overflow-y-auto px-1 pb-4 space-y-6 relative">
                             {/* Vertical Line */}
                             {taskUpdates[task.id]?.length > 0 && (
                               <div className="absolute left-[23px] top-4 bottom-4 w-px bg-gradient-to-b from-slate-200 via-slate-200 to-transparent z-0" />
