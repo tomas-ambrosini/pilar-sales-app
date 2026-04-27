@@ -301,30 +301,30 @@ export default function Tasks() {
 
   const getPriorityConfig = (priority) => {
     switch(priority?.toLowerCase()) {
-      case 'critical': return { icon: <Flame size={14} className="text-rose-500" />, text: 'Critical', bg: 'bg-rose-50 text-rose-700 border-rose-200' };
-      case 'high': return { icon: <SignalHigh size={14} className="text-orange-500" />, text: 'High', bg: 'bg-orange-50 text-orange-700 border-orange-200' };
-      case 'medium': return { icon: <SignalMedium size={14} className="text-blue-500" />, text: 'Medium', bg: 'bg-blue-50 text-blue-700 border-blue-200' };
-      case 'low': return { icon: <SignalLow size={14} className="text-slate-400" />, text: 'Low', bg: 'bg-slate-50 text-slate-600 border-slate-200' };
-      default: return { icon: <CircleDashed size={14} className="text-slate-400" />, text: 'None', bg: 'bg-slate-50 text-slate-500 border-slate-200' };
+      case 'critical': return { icon: <Flame size={14} className="text-rose-500" />, text: 'Critical', bg: 'bg-rose-50 text-rose-700 border-rose-200/60' };
+      case 'high': return { icon: <SignalHigh size={14} className="text-orange-500" />, text: 'High', bg: 'bg-orange-50 text-orange-700 border-orange-200/60' };
+      case 'medium': return { icon: <SignalMedium size={14} className="text-blue-500" />, text: 'Medium', bg: 'bg-blue-50 text-blue-700 border-blue-200/60' };
+      case 'low': return { icon: <SignalLow size={14} className="text-slate-400" />, text: 'Low', bg: 'bg-slate-50 text-slate-600 border-slate-200/60' };
+      default: return { icon: <CircleDashed size={14} className="text-slate-400" />, text: 'None', bg: 'bg-slate-50 text-slate-500 border-slate-200/60' };
     }
   };
 
   const getStatusConfig = (status) => {
     switch(status?.toLowerCase()) {
-      case 'done': return { icon: <CheckCircle2 size={14} className="text-emerald-500" />, text: 'Done', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
-      case 'in progress': return { icon: <Clock size={14} className="text-amber-500" />, text: 'In Progress', bg: 'bg-amber-50 text-amber-700 border-amber-200' };
-      case 'review': return { icon: <AlertCircle size={14} className="text-purple-500" />, text: 'Review', bg: 'bg-purple-50 text-purple-700 border-purple-200' };
-      default: return { icon: <CircleDashed size={14} className="text-slate-400" />, text: 'To Do', bg: 'bg-slate-50 text-slate-600 border-slate-200' };
+      case 'done': return { icon: <CheckCircle2 size={14} className="text-emerald-500" />, text: 'Done', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200/60' };
+      case 'in progress': return { icon: <Clock size={14} className="text-amber-500" />, text: 'In Progress', bg: 'bg-amber-50 text-amber-700 border-amber-200/60' };
+      case 'review': return { icon: <AlertCircle size={14} className="text-purple-500" />, text: 'Review', bg: 'bg-purple-50 text-purple-700 border-purple-200/60' };
+      default: return { icon: <CircleDashed size={14} className="text-slate-400" />, text: 'To Do', bg: 'bg-slate-50 text-slate-600 border-slate-200/60' };
     }
   };
 
   const getProgressConfig = (progress) => {
     const val = parseInt(progress) || 0;
-    if (val >= 100) return { text: 'Completed', bg: 'bg-emerald-100 text-emerald-800' };
-    if (val >= 75) return { text: 'Almost Done', bg: 'bg-blue-100 text-blue-800' };
-    if (val >= 50) return { text: 'Halfway', bg: 'bg-indigo-100 text-indigo-800' };
-    if (val >= 25) return { text: 'Just Started', bg: 'bg-amber-100 text-amber-800' };
-    return { text: 'Not Started', bg: 'bg-slate-100 text-slate-600' };
+    if (val >= 100) return { text: 'Completed', bg: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' };
+    if (val >= 75) return { text: 'Almost Done', bg: 'bg-blue-50 text-blue-700 border border-blue-200/60' };
+    if (val >= 50) return { text: 'Halfway', bg: 'bg-indigo-50 text-indigo-700 border border-indigo-200/60' };
+    if (val >= 25) return { text: 'Just Started', bg: 'bg-amber-50 text-amber-700 border border-amber-200/60' };
+    return { text: 'Not Started', bg: 'bg-slate-50 text-slate-600 border border-slate-200/60' };
   };
 
   const getUserInitials = (name) => {
@@ -476,16 +476,16 @@ export default function Tasks() {
                    <div className="relative">
                       <button 
                          onClick={() => { setActiveMenuId(task.id); setActiveMenuType('status'); }}
-                         className={`flex items-center gap-2 px-2.5 py-1 rounded-md border text-xs font-bold transition-colors w-full justify-between ${statusConfig.bg}`}
+                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[11px] font-extrabold tracking-wide transition-all w-full justify-between hover:shadow-sm hover:scale-[1.02] active:scale-95 ${statusConfig.bg}`}
                       >
                          <div className="flex items-center gap-1.5">{statusConfig.icon} {statusConfig.text}</div>
-                         <ChevronDown size={12} className="opacity-50" />
+                         <ChevronDown size={12} className="opacity-40" />
                       </button>
                       
                       {activeMenuId === task.id && activeMenuType === 'status' && (
-                        <div ref={menuRef} className="absolute left-0 top-full mt-1 w-40 bg-white rounded-xl shadow-2xl border border-slate-200 py-1 z-50">
+                        <div ref={menuRef} className="absolute left-0 top-full mt-2 w-44 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/80 p-1.5 z-50 animate-in zoom-in-95 duration-100">
                            {['To Do', 'In Progress', 'Review', 'Done'].map(s => (
-                             <button key={s} onClick={() => updateTask(task.id, 'status', s)} className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 font-medium">
+                             <button key={s} onClick={() => updateTask(task.id, 'status', s)} className="w-full text-left px-3 py-2 text-[13px] text-slate-700 hover:bg-slate-100 rounded-xl font-bold transition-colors">
                                {s}
                              </button>
                            ))}
@@ -497,14 +497,14 @@ export default function Tasks() {
                    <div className="relative">
                       <button 
                          onClick={() => { setActiveMenuId(task.id); setActiveMenuType('progress'); }}
-                         className={`flex items-center gap-2 px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors w-full justify-between ${progConfig.bg}`}
+                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-extrabold tracking-wide transition-all w-full justify-between hover:shadow-sm hover:scale-[1.02] active:scale-95 ${progConfig.bg}`}
                       >
                          <span>{progConfig.text}</span>
-                         <ChevronDown size={12} className="opacity-50" />
+                         <ChevronDown size={12} className="opacity-40" />
                       </button>
                       
                       {activeMenuId === task.id && activeMenuType === 'progress' && (
-                        <div ref={menuRef} className="absolute left-0 top-full mt-1 w-40 bg-white rounded-xl shadow-2xl border border-slate-200 py-1 z-50">
+                        <div ref={menuRef} className="absolute left-0 top-full mt-2 w-44 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/80 p-1.5 z-50 animate-in zoom-in-95 duration-100">
                            {[
                              { val: 0, text: 'Not Started' },
                              { val: 25, text: 'Just Started' },
@@ -512,7 +512,7 @@ export default function Tasks() {
                              { val: 75, text: 'Almost Done' },
                              { val: 100, text: 'Completed' }
                            ].map(p => (
-                             <button key={p.val} onClick={() => updateTask(task.id, 'progress', p.val)} className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 font-medium">
+                             <button key={p.val} onClick={() => updateTask(task.id, 'progress', p.val)} className="w-full text-left px-3 py-2 text-[13px] text-slate-700 hover:bg-slate-100 rounded-xl font-bold transition-colors">
                                {p.text}
                              </button>
                            ))}
@@ -524,16 +524,16 @@ export default function Tasks() {
                    <div className="relative">
                       <button 
                          onClick={() => { setActiveMenuId(task.id); setActiveMenuType('priority'); }}
-                         className={`flex items-center gap-2 px-2.5 py-1 rounded-md border text-xs font-bold transition-colors w-full justify-between ${prioConfig.bg}`}
+                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[11px] font-extrabold tracking-wide transition-all w-full justify-between hover:shadow-sm hover:scale-[1.02] active:scale-95 ${prioConfig.bg}`}
                       >
                          <div className="flex items-center gap-1.5">{prioConfig.icon} {prioConfig.text}</div>
-                         <ChevronDown size={12} className="opacity-50" />
+                         <ChevronDown size={12} className="opacity-40" />
                       </button>
                       
                       {activeMenuId === task.id && activeMenuType === 'priority' && (
-                        <div ref={menuRef} className="absolute left-0 top-full mt-1 w-40 bg-white rounded-xl shadow-2xl border border-slate-200 py-1 z-50">
+                        <div ref={menuRef} className="absolute left-0 top-full mt-2 w-44 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/80 p-1.5 z-50 animate-in zoom-in-95 duration-100">
                            {['None', 'Low', 'Medium', 'High', 'Critical'].map(p => (
-                             <button key={p} onClick={() => updateTask(task.id, 'priority', p)} className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 font-medium">
+                             <button key={p} onClick={() => updateTask(task.id, 'priority', p)} className="w-full text-left px-3 py-2 text-[13px] text-slate-700 hover:bg-slate-100 rounded-xl font-bold transition-colors">
                                {p}
                              </button>
                            ))}
@@ -543,13 +543,13 @@ export default function Tasks() {
 
                    {/* Due Date */}
                    <div>
-                      <div className="flex items-center gap-2 px-2 py-1 hover:bg-slate-100 rounded-md transition-colors cursor-text group/date">
-                         <Calendar size={14} className="text-slate-400 group-hover/date:text-primary-500 transition-colors" />
+                      <div className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-100 rounded-full border border-transparent hover:border-slate-200 hover:shadow-sm transition-all cursor-text group/date">
+                         <Calendar size={14} className="text-slate-400 group-hover/date:text-primary-500 transition-colors shrink-0" />
                          <input 
                            type="date" 
                            value={task.due_date ? task.due_date.split('T')[0] : ''}
                            onChange={(e) => updateTask(task.id, 'due_date', e.target.value ? new Date(e.target.value).toISOString() : null)}
-                           className="bg-transparent border-none text-xs font-bold text-slate-600 focus:ring-0 p-0 outline-none w-full cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full"
+                           className="bg-transparent border-none text-[11px] font-extrabold tracking-wide text-slate-600 focus:ring-0 p-0 outline-none w-full cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full"
                          />
                       </div>
                    </div>
