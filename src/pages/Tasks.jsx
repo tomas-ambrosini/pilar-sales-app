@@ -8,6 +8,43 @@ import {
   Paperclip, Send, FileText, Download, X, MessageSquare, Image as ImageIcon
 } from 'lucide-react';
 
+const AttachmentViewer = ({ update }) => {
+  const [imgError, setImgError] = useState(false);
+
+  if (!update.attachment_url) return null;
+
+  const isImage = update.attachment_type?.startsWith('image/') && !imgError;
+
+  if (isImage) {
+    return (
+      <div className="mt-3">
+        <a href={update.attachment_url} target="_blank" rel="noreferrer" className="block w-48 rounded-lg overflow-hidden border border-slate-200 hover:opacity-90 transition-opacity bg-slate-50 relative min-h-[60px]">
+          <img 
+            src={update.attachment_url} 
+            alt={update.attachment_name || "Attachment"} 
+            className="w-full h-auto" 
+            onError={() => setImgError(true)}
+          />
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3">
+      <a href={update.attachment_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors max-w-full">
+        <div className="w-8 h-8 bg-white border border-slate-200 rounded flex items-center justify-center text-primary-500 shrink-0">
+          <FileText size={16} />
+        </div>
+        <div className="flex flex-col min-w-0">
+          <span className="text-xs font-bold text-slate-700 truncate block w-full">{update.attachment_name || "Download Attachment"}</span>
+          <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1"><Download size={10}/> Download</span>
+        </div>
+      </a>
+    </div>
+  );
+};
+
 export default function Tasks() {
   const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
@@ -542,25 +579,7 @@ export default function Tasks() {
                                     </div>
                                     <p className="text-sm text-slate-600 whitespace-pre-wrap">{update.content}</p>
                                     
-                                    {update.attachment_url && (
-                                      <div className="mt-3">
-                                        {update.attachment_type?.startsWith('image/') ? (
-                                          <a href={update.attachment_url} target="_blank" rel="noreferrer" className="block w-48 rounded-lg overflow-hidden border border-slate-200 hover:opacity-90 transition-opacity">
-                                            <img src={update.attachment_url} alt="Attachment" className="w-full h-auto" />
-                                          </a>
-                                        ) : (
-                                          <a href={update.attachment_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors max-w-full">
-                                            <div className="w-8 h-8 bg-white border border-slate-200 rounded flex items-center justify-center text-primary-500 shrink-0">
-                                              <FileText size={16} />
-                                            </div>
-                                            <div className="flex flex-col min-w-0">
-                                              <span className="text-xs font-bold text-slate-700 truncate block w-full">{update.attachment_name}</span>
-                                              <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1"><Download size={10}/> Download</span>
-                                            </div>
-                                          </a>
-                                        )}
-                                      </div>
-                                    )}
+                                    <AttachmentViewer update={update} />
                                   </div>
                                 </div>
                               ))
