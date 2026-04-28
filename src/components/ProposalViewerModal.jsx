@@ -1,10 +1,11 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, CheckCircle, Shield, Wind, Droplets, ArrowRight, FileText, AlertTriangle, ArrowLeft, Printer, ThumbsDown } from 'lucide-react';
+import { X, CheckCircle, Shield, Wind, Droplets, ArrowRight, FileText, AlertTriangle, ArrowLeft, Printer, ThumbsDown, Tag, RefreshCcw } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 import Modal from './Modal';
 import { formatQuoteId } from '../utils/formatters';
 
-const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, localSelections, setLocalSelections, onAccept, onViewContract }) => {
+const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, localSelections, setLocalSelections, onAccept, onViewContract, appliedPromo }) => {
     const validTracks = tracks ? tracks.filter(t => t.data) : [];
     if (validTracks.length === 0) return null;
     
@@ -101,9 +102,19 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
               )}
           </div>
           
-          <div className="my-2 pb-6 border-b border-slate-100 flex items-baseline">
-             <span className="text-xl font-bold text-slate-400 mr-1 translate-y-[-0.25rem]">$</span>
-             <span className={`text-[2.75rem] font-black tracking-tighter leading-none ${priceColor}`}>{(activeData?.salesPrice || 0).toLocaleString()}</span>
+          <div className="my-2 pb-6 border-b border-slate-100 flex flex-col justify-end">
+             {appliedPromo && (
+                 <div className="flex items-center gap-2 mb-1 opacity-60">
+                    <span className="text-sm font-bold text-slate-400 line-through">${(activeData?.salesPrice || 0).toLocaleString()}</span>
+                    <span className="text-[10px] uppercase font-black tracking-widest text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">-{appliedPromo.discount_percent}%</span>
+                 </div>
+             )}
+             <div className="flex items-baseline">
+                <span className="text-xl font-bold text-slate-400 mr-1 translate-y-[-0.25rem]">$</span>
+                <span className={`text-[2.75rem] font-black tracking-tighter leading-none ${priceColor}`}>
+                   {((activeData?.salesPrice || 0) * (appliedPromo ? (1 - (appliedPromo.discount_percent / 100)) : 1)).toLocaleString()}
+                </span>
+             </div>
           </div>
           
           <div className="flex-grow space-y-7 mb-8 mt-2">
@@ -157,7 +168,7 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
                  ) : proposal.status !== 'Approved' ? (
                      <button 
                         disabled={proposal.isReadOnly}
-                        onClick={(e) => { e.stopPropagation(); !proposal.isReadOnly && onAccept && onAccept(tierKey, activeData, proposal); }}
+                        onClick={(e) => { e.stopPropagation(); !proposal.isReadOnly && onAccept && onAccept(tierKey, activeData, proposal, [], appliedPromo); }}
                         className={`w-full py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-sm shadow-sm border-2 focus:ring-2 focus:ring-offset-2 outline-none ${proposal.isReadOnly ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : `${buttonBg} text-white ${buttonHoverBg} ${activeBorderColor}`}`}
                      >
                         {proposal.isReadOnly ? 'Preview Only' : `Select ${tierName.split('(')[0].trim()}`}
@@ -178,12 +189,77 @@ const TierCard = ({ tierName, tierKey, tracks, isBest, systemId, proposal, local
 
 export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal, onAccept, onViewContract, onDeclineFull }) {
   const [localSelections, setLocalSelections] = React.useState({});
+  const [promoInput, setPromoInput] = React.useState('');
+  const [appliedPromo, setAppliedPromo] = React.useState(null);
+  const [promoError, setPromoError] = React.useState('');
+  const [validatingPromo, setValidatingPromo] = React.useState(false);
 
   React.useEffect(() => {
      if (!isOpen) {
          setLocalSelections({});
+         setPromoInput('');
+         setAppliedPromo(null);
+         setPromoError('');
+     } else if (proposal?.applied_promo_code) {
+         // If a proposal ALREADY has a promo applied (from the DB), pre-fill it here
+         setAppliedPromo({
+             code: proposal.applied_promo_code,
+             discount_percent: proposal.applied_discount_percent,
+             id: proposal.applied_promo_code_id
+         });
      }
   }, [isOpen, proposal?.id]);
+
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return;
+    setValidatingPromo(true);
+    setPromoError('');
+    
+    try {
+      const { data, error } = await supabase
+        .from('promo_codes')
+        .select('*')
+        .eq('code', promoInput.trim().toUpperCase())
+        .single();
+        
+      if (error || !data) {
+        setPromoError('Invalid promo code');
+        setValidatingPromo(false);
+        return;
+      }
+      
+      if (!data.is_active) {
+        setPromoError('This promo code is no longer active');
+        setValidatingPromo(false);
+        return;
+      }
+      
+      const now = new Date();
+      if (data.starts_at && new Date(data.starts_at) > now) {
+         setPromoError('This promo code is not active yet');
+         setValidatingPromo(false);
+         return;
+      }
+      if (data.expires_at && new Date(data.expires_at) < now) {
+         setPromoError('This promo code has expired');
+         setValidatingPromo(false);
+         return;
+      }
+      if (data.usage_limit && data.times_used >= data.usage_limit) {
+         setPromoError('This promo code has reached its usage limit');
+         setValidatingPromo(false);
+         return;
+      }
+      
+      setAppliedPromo(data);
+      setPromoInput('');
+      setPromoError('');
+    } catch (err) {
+      setPromoError('Error validating promo code');
+    } finally {
+      setValidatingPromo(false);
+    }
+  };
 
   const handlePrint = () => {
     window.print();
@@ -231,7 +307,57 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
           </div>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto p-8 bg-white">
+          <div className="flex-1 overflow-y-auto p-8 bg-white relative">
+             {proposal?.status !== 'Approved' && !proposal?.isReadOnly && (
+                <div className="max-w-xl mx-auto mb-10 pt-2">
+                   {!appliedPromo ? (
+                      <div className="flex flex-col gap-1 w-full relative">
+                         <div className="flex shadow-sm rounded-xl overflow-hidden focus-within:ring-[3px] focus-within:ring-primary-500/20 transition-all border border-slate-300 focus-within:border-primary-500 bg-white group/input">
+                           <div className="pl-4 flex items-center justify-center bg-white text-slate-400 group-focus-within/input:text-primary-500 transition-colors">
+                             <Tag size={18} />
+                           </div>
+                           <input 
+                             type="text" 
+                             className="w-full bg-white px-3 py-3 font-mono uppercase text-slate-800 font-bold placeholder:text-slate-300 placeholder:font-medium focus:outline-none text-sm" 
+                             value={promoInput} 
+                             onChange={e => setPromoInput(e.target.value.toUpperCase())} 
+                             placeholder="HAVE A PROMO CODE?" 
+                             onKeyDown={e => e.key === 'Enter' && handleApplyPromo()} 
+                           />
+                           <button 
+                             onClick={handleApplyPromo} 
+                             disabled={validatingPromo || !promoInput.trim()} 
+                             className="bg-slate-900 hover:bg-black disabled:opacity-50 text-white font-bold px-6 flex items-center justify-center transition-colors whitespace-nowrap text-sm"
+                           >
+                             {validatingPromo ? 'WAIT...' : 'APPLY'}
+                           </button>
+                         </div>
+                         {promoError && <p className="text-[10px] text-red-500 font-bold ml-1 flex items-center gap-1 mt-1 pb-1 absolute -bottom-5"><AlertTriangle size={10}/> {promoError}</p>}
+                      </div>
+                   ) : (
+                      <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-0.5 shadow-sm transform transition-all hover:scale-[1.01]">
+                         <div className="bg-emerald-50 rounded-[10px] p-3 flex justify-between items-center w-full relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
+                              <Check size={60}/>
+                            </div>
+                            <div className="relative z-10">
+                               <div className="flex items-center gap-1.5 mb-0.5">
+                                  <Check className="text-emerald-500" size={14}/>
+                                  <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Discount Applied</p>
+                               </div>
+                               <p className="font-mono font-black text-emerald-600 text-lg flex items-center gap-2">
+                                   {appliedPromo.code} 
+                                   <span className="bg-emerald-200 text-emerald-900 font-bold tracking-tight text-xs px-2 py-0.5 rounded-full ml-1">-{appliedPromo.discount_percent}% off</span>
+                               </p>
+                            </div>
+                            <button onClick={() => setAppliedPromo(null)} className="text-emerald-700 hover:text-white bg-emerald-100 hover:bg-emerald-500 p-2 rounded-lg transition-colors shadow-sm ml-4 border border-transparent relative z-10" title="Remove Promo Code">
+                               <RefreshCcw size={16} />
+                            </button>
+                         </div>
+                      </div>
+                   )}
+                </div>
+             )}
              {!proposal_data ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
@@ -270,9 +396,9 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                                  };
                                 return (
                                    <>
-                                      <TierCard tierName="Baseline (Good)" tierKey="Good" tracks={buildTracks('good')} isBest={false} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
-                                      <TierCard tierName="Premium (Best)" tierKey="Best" tracks={buildTracks('best')} isBest={true} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
-                                      <TierCard tierName="Core (Better)" tierKey="Better" tracks={buildTracks('better')} isBest={false} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                                      <TierCard tierName="Baseline (Good)" tierKey="Good" tracks={buildTracks('good')} isBest={false} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} appliedPromo={appliedPromo} />
+                                      <TierCard tierName="Premium (Best)" tierKey="Best" tracks={buildTracks('best')} isBest={true} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} appliedPromo={appliedPromo} />
+                                      <TierCard tierName="Core (Better)" tierKey="Better" tracks={buildTracks('better')} isBest={false} systemId={sys.systemId} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} appliedPromo={appliedPromo} />
                                    </>
                                 );
                             })()}
@@ -301,9 +427,9 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
              ) : (
                 <div className="max-w-5xl mx-auto pt-4 pb-8">
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end pt-6">
-                      <TierCard tierName="Baseline (Good)" tierKey="Good" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.good || proposal_data.tiers?.Good }]} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
-                      <TierCard tierName="Premium (Best)" tierKey="Best" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.best || proposal_data.tiers?.Best }]} isBest={true} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
-                      <TierCard tierName="Core (Better)" tierKey="Better" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.better || proposal_data.tiers?.Better }]} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} />
+                      <TierCard tierName="Baseline (Good)" tierKey="Good" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.good || proposal_data.tiers?.Good }]} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} appliedPromo={appliedPromo} />
+                      <TierCard tierName="Premium (Best)" tierKey="Best" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.best || proposal_data.tiers?.Best }]} isBest={true} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} appliedPromo={appliedPromo} />
+                      <TierCard tierName="Core (Better)" tierKey="Better" tracks={[{ id: 'Primary', title: 'Option 1', data: proposal_data.tiers?.better || proposal_data.tiers?.Better }]} isBest={false} systemId={null} proposal={proposal} localSelections={localSelections} setLocalSelections={setLocalSelections} onAccept={onAccept} onViewContract={onViewContract} appliedPromo={appliedPromo} />
                    </div>
                    {!proposal?.isReadOnly && proposal?.status !== 'Approved' && (
                       <div className="mt-12 flex justify-center">
@@ -385,7 +511,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                      systemsList: systemsList
                  };
                  
-                 onAccept && onAccept('Custom Network', combinedData, proposal, extractedSystems);
+                 onAccept && onAccept('Custom Network', combinedData, proposal, extractedSystems, appliedPromo);
              };
 
              if (proposal?.isReadOnly) {

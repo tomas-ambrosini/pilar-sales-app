@@ -77,11 +77,6 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const handleSystemNameChange = (id, newName) => {
      setSystems(prev => prev.map(sys => sys.id === id ? { ...sys, name: newName } : sys));
   };
-  const [appliedPromo, setAppliedPromo] = useState(null);
-  const [promoInput, setPromoInput] = useState('');
-  const [promoError, setPromoError] = useState('');
-  const [validatingPromo, setValidatingPromo] = useState(false);
-  const [showPromoInput, setShowPromoInput] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(null);
 
   const activeSystem = systems.find(s => s.id === activeSystemId) || systems[0];
@@ -237,57 +232,6 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     }
   }, [hasPreloadedData, editModeData]);
 
-  const handleApplyPromo = async () => {
-    if (!promoInput.trim()) return;
-    setValidatingPromo(true);
-    setPromoError('');
-    
-    try {
-      const { data, error } = await supabase
-        .from('promo_codes')
-        .select('*')
-        .eq('code', promoInput.trim().toUpperCase())
-        .single();
-        
-      if (error || !data) {
-        setPromoError('Invalid promo code');
-        setValidatingPromo(false);
-        return;
-      }
-      
-      if (!data.is_active) {
-        setPromoError('This promo code is no longer active');
-        setValidatingPromo(false);
-        return;
-      }
-      
-      const now = new Date();
-      if (data.starts_at && new Date(data.starts_at) > now) {
-         setPromoError('This promo code is not active yet');
-         setValidatingPromo(false);
-         return;
-      }
-      if (data.expires_at && new Date(data.expires_at) < now) {
-         setPromoError('This promo code has expired');
-         setValidatingPromo(false);
-         return;
-      }
-      if (data.usage_limit && data.times_used >= data.usage_limit) {
-         setPromoError('This promo code has reached its usage limit');
-         setValidatingPromo(false);
-         return;
-      }
-      
-      setAppliedPromo(data);
-      setPromoInput('');
-      setPromoError('');
-    } catch (err) {
-      setPromoError('Error validating code');
-    } finally {
-      setValidatingPromo(false);
-    }
-  };
-
   const handleRestoreLocalDraft = () => {
      if (localDraftPayload) {
          if (localDraftPayload.step) setStep(localDraftPayload.step);
@@ -297,7 +241,6 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
              setSystems(localDraftPayload.systems);
              setActiveSystemId(localDraftPayload.systems[0].id);
          }
-         if (localDraftPayload.appliedPromo !== undefined) setAppliedPromo(localDraftPayload.appliedPromo);
          if (localDraftPayload.draftServerId) setDraftServerId(localDraftPayload.draftServerId);
      }
      setShowRestoreBanner(false);
@@ -490,9 +433,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
           }
        });
 
-       const percent = appliedPromo ? appliedPromo.discount_percent : 0;
-       const discountAmount = totalBaseline * (percent / 100);
-       const finalPrice = totalBaseline - discountAmount;
+       const finalPrice = totalBaseline;
        const commission = computeCommission(totalBaseline, approximateRetailForComm);
 
        let features = [];
@@ -529,9 +470,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
            if (!sys.selectedTiers[tierKey]) return;
            
            const baselinePrice = calculateSystemBaselineRetail(sys, sys.selectedTiers[tierKey], tierKey.charAt(0).toUpperCase() + tierKey.slice(1));
-           const percent = appliedPromo ? appliedPromo.discount_percent : 0;
-           const discountAmount = baselinePrice * (percent / 100);
-           const finalPrice = baselinePrice - discountAmount;
+           const finalPrice = baselinePrice;
            
            let features = [];
            
@@ -563,9 +502,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                if (!track.tiers?.[tierKey]) return;
                
                const baselinePrice = calculateSystemBaselineRetail(sys, track.tiers[tierKey], tierKey.charAt(0).toUpperCase() + tierKey.slice(1));
-               const percent = appliedPromo ? appliedPromo.discount_percent : 0;
-               const discountAmount = baselinePrice * (percent / 100);
-               const finalPrice = baselinePrice - discountAmount;
+               const finalPrice = baselinePrice;
                
                let features = [];
                
@@ -608,7 +545,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
       systemTiers: systemTiers
     };
 
-    const wizardState = { step: 6, selectedCustomerId, selectedLocationId, systems, appliedPromo };
+    const wizardState = { step: 6, selectedCustomerId, selectedLocationId, systems };
 
     if (isEditing) {
        const oppId = editModeData.proposal_data?.associated_opportunity_id;
@@ -1222,9 +1159,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                            const baselineCommBase = calculateSystemBaselineRetail(sys, track.tiers.best?.system_cost || raw, 'Best');
                                            const baseComm = computeCommission(baselineRetail, getRetailFromBest(baselineCommBase));
                                            
-                                           const percent = appliedPromo ? appliedPromo.discount_percent : 0;
-                                           const discountAmount = baselineRetail * (percent / 100);
-                                           const finalPrice = baselineRetail - discountAmount;
+                                           const finalPrice = baselineRetail;
                                            const isBelowFloor = finalPrice < absoluteTotalFloor;
                                            
                                            const equip = track.tiers[tier.k];
@@ -1297,84 +1232,12 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                 </div>
             )}
 
-            {showPromoInput || appliedPromo ? (
-              <div className="mt-8 mb-4 bg-white border border-slate-200 rounded-xl p-5 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] hover:shadow-md transition-all relative overflow-hidden group">
-                 <div className="absolute -top-10 -right-10 opacity-5 pointer-events-none group-hover:scale-110 group-hover:opacity-10 transition-all duration-700">
-                    <Tag size={180} />
-                 </div>
-  
-                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="max-w-md">
-                       <h4 className="font-black text-slate-800 text-lg flex items-center gap-2 mb-1">Global Customer Discount</h4>
-                       <p className="text-sm text-slate-500 font-medium">Apply a pre-authorized organization promo code to seamlessly distribute a global margin discount evenly across all pricing tiers.</p>
-                       {!appliedPromo && (
-                           <button onClick={() => setShowPromoInput(false)} className="text-[10px] uppercase font-bold text-slate-400 hover:text-slate-600 mt-2 block w-max underline">Cancel / Hide</button>
-                       )}
-                    </div>
-  
-                    <div className="flex-1 w-full max-w-[420px]">
-                       {!appliedPromo ? (
-                          <div className="flex flex-col gap-1 w-full relative">
-                             <div className="flex shadow-sm rounded-xl overflow-hidden focus-within:ring-[3px] focus-within:ring-primary-500/20 transition-all border border-slate-300 focus-within:border-primary-500 bg-white group/input">
-                               <div className="pl-4 flex items-center justify-center bg-white text-slate-400 group-focus-within/input:text-primary-500 transition-colors">
-                                 <Tag size={18} />
-                               </div>
-                               <input 
-                                 type="text" 
-                                 className="w-full bg-white px-3 py-3 font-mono uppercase text-slate-800 font-bold placeholder:text-slate-300 placeholder:font-medium focus:outline-none" 
-                                 value={promoInput} 
-                                 onChange={e => setPromoInput(e.target.value.toUpperCase())} 
-                                 placeholder="ENTER PROMO CODE..." 
-                                 onKeyDown={e => e.key === 'Enter' && handleApplyPromo()} 
-                                 style={{ minHeight: '52px' }}
-                               />
-                               <button 
-                                 onClick={handleApplyPromo} 
-                                 disabled={validatingPromo} 
-                                 className="bg-slate-900 hover:bg-black disabled:opacity-50 text-white font-bold px-7 flex items-center justify-center transition-colors whitespace-nowrap"
-                                 style={{ minHeight: '52px' }}
-                               >
-                                 {validatingPromo ? 'WAIT...' : 'APPLY CODE'}
-                               </button>
-                             </div>
-                             {promoError && <p className="text-[10px] text-red-500 font-bold ml-1 flex items-center gap-1 mt-1 pb-1 absolute -bottom-5"><AlertTriangle size={10}/> {promoError}</p>}
-                          </div>
-                       ) : (
-                          <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-0.5 shadow-sm transform transition-all hover:scale-[1.01]">
-                             <div className="bg-emerald-50 rounded-[10px] p-4 flex justify-between items-center w-full relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
-                                  <Check size={80}/>
-                                </div>
-                                <div className="relative z-10">
-                                   <div className="flex items-center gap-1.5 mb-0.5">
-                                      <Check className="text-emerald-500" size={16}/>
-                                      <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Active Application</p>
-                                   </div>
-                                   <p className="font-mono font-black text-emerald-600 text-xl flex items-center gap-2">
-                                       {appliedPromo.code} 
-                                       <span className="bg-emerald-200 text-emerald-900 font-bold tracking-tight text-xs px-2 py-0.5 rounded-full ml-1">-{appliedPromo.discount_percent}% global</span>
-                                   </p>
-                                </div>
-                                <button onClick={() => setAppliedPromo(null)} className="text-emerald-700 hover:text-white bg-emerald-100 hover:bg-emerald-500 p-2.5 rounded-lg transition-colors shadow-sm ml-4 border border-transparent relative z-10" title="Remove Promo Code">
-                                   <RefreshCcw size={18} />
-                                </button>
-                             </div>
-                          </div>
-                       )}
-                    </div>
-                 </div>
-              </div>
-            ) : null}
+
 
             <div className="flex justify-between mt-10 pt-4 border-t border-slate-100 relative">
                <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(4)}><ArrowLeft size={16}/> Back</button>
                
-               {/* Hidden toggle button that doesn't say "promo" */}
-               {!showPromoInput && !appliedPromo && (
-                  <button onClick={() => setShowPromoInput(true)} className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center p-2 mt-1 text-primary-800 hover:text-primary-900 opacity-50 hover:opacity-100 transition-opacity" title="Settings">
-                     <Tag size={12} />
-                  </button>
-               )}
+
 
                <button className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded font-bold flex items-center gap-2 shadow-lg" onClick={() => setStep(6)}>Finalize Transaction <ArrowRight size={16}/></button>
             </div>

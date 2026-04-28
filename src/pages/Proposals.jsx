@@ -297,27 +297,27 @@ export default function Proposals() {
       }
   };
 
-  const handleInitiateAcceptance = (tierName, tierData, proposal, extractedSystems = []) => {
+  const handleInitiateAcceptance = (tierName, tierData, proposal, extractedSystems = [], appliedPromo = null) => {
      // Suspend execution to verify extraction logic before signatures
      setViewingProposal(null);
      
      if (extractedSystems && extractedSystems.length > 0) {
-         setPendingExtraction({ tierName, tierData, proposal, extractedSystems });
+         setPendingExtraction({ tierName, tierData, proposal, extractedSystems, appliedPromo });
      } else {
-         setSigningContract({ proposal, tierName, tierData, date: new Date().toLocaleDateString(), extractedSystems });
+         setSigningContract({ proposal, tierName, tierData, date: new Date().toLocaleDateString(), extractedSystems, appliedPromo });
      }
   };
 
   const handleConfirmExtraction = () => {
       if (!pendingExtraction) return;
-      const { proposal, tierName, tierData, extractedSystems } = pendingExtraction;
+      const { proposal, tierName, tierData, extractedSystems, appliedPromo } = pendingExtraction;
       setPendingExtraction(null);
-      setSigningContract({ proposal, tierName, tierData, date: new Date().toLocaleDateString(), extractedSystems });
+      setSigningContract({ proposal, tierName, tierData, date: new Date().toLocaleDateString(), extractedSystems, appliedPromo });
   };
 
   const executeSignedContract = async (signatureData) => {
      if (!signingContract) return;
-     const { tierName, tierData, proposal, extractedSystems } = signingContract;
+     const { tierName, tierData, proposal, extractedSystems, appliedPromo } = signingContract;
 
      // 1. Array check to handle multi-system configuration payloads vs legacy single-tier selections
      const isMulti = Array.isArray(tierData) || (tierData && Array.isArray(tierData.systemsList));
@@ -460,15 +460,23 @@ ${equipmentNotes}
          finalizedSystemTiers = finalizedSystemTiers.filter(sys => !extractedIds.includes(sys.systemId));
      }
 
+     const discountMultiplier = appliedPromo ? (1 - (appliedPromo.discount_percent / 100)) : 1;
+     const finalAmount = tierData.salesPrice * discountMultiplier;
+
      const finalDbObj = { 
          status: 'Approved',
-         amount: tierData.salesPrice,
+         amount: finalAmount,
+         applied_promo_code_id: appliedPromo?.id || null,
+         applied_promo_code: appliedPromo?.code || null,
+         applied_discount_percent: appliedPromo?.discount_percent || null,
          proposal_data: {
              ...(proposal.proposal_data || {}),
              systemTiers: finalizedSystemTiers,
              signature_data: signatureData,
              accepted_tier_data: tierData,
-             accepted_tier_name: tierName
+             accepted_tier_name: tierName,
+             applied_promo_code: appliedPromo?.code || null,
+             applied_discount_percent: appliedPromo?.discount_percent || null
          }
      };
      
