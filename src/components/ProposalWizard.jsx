@@ -24,7 +24,6 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
           let isEmpty = true;
           if (parsed.step > 1) isEmpty = false;
           else if (parsed.selectedCustomerId) isEmpty = false;
-          else if (parsed.appliedPromo) isEmpty = false;
           else if (parsed.systems && parsed.systems[0]) {
              const survey = parsed.systems[0].survey;
              if (survey && (survey.systemType || survey.currentTonnage || survey.existingBrand)) isEmpty = false;
@@ -117,7 +116,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     setManualSaveStatus('saving');
     
     const draftPayload = {
-        wizard_state: { step, selectedCustomerId, selectedLocationId, systems, appliedPromo },
+        wizard_state: { step, selectedCustomerId, selectedLocationId, systems },
         associated_opportunity_id: editModeData?.associated_opportunity_id || null
     };
     
@@ -158,7 +157,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
       syncTimer.current = setTimeout(async () => {
          const draftPayload = {
-            wizard_state: { step, selectedCustomerId, selectedLocationId, systems, appliedPromo },
+            wizard_state: { step, selectedCustomerId, selectedLocationId, systems },
             associated_opportunity_id: editModeData?.associated_opportunity_id || null
          };
          
@@ -197,14 +196,14 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     }
     
     return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
-  }, [step, selectedCustomerId, selectedLocationId, systems, appliedPromo, dbReady, isEditing, draftServerId]);
+  }, [step, selectedCustomerId, selectedLocationId, systems, dbReady, isEditing, draftServerId]);
 
   // Aggressive Local Storage Auto-Save
   useEffect(() => {
       if (showRestoreBanner) return; // Don't overwrite if they haven't decided yet
-      const payload = { step, selectedCustomerId, selectedLocationId, systems, appliedPromo, draftServerId };
+      const payload = { step, selectedCustomerId, selectedLocationId, systems, draftServerId };
       localStorage.setItem('pilar_wizard_draft', JSON.stringify(payload));
-  }, [step, selectedCustomerId, selectedLocationId, systems, appliedPromo, draftServerId, showRestoreBanner]);
+  }, [step, selectedCustomerId, selectedLocationId, systems, draftServerId, showRestoreBanner]);
 
   // Handle Edit/Clone Mode Rehydration
   useEffect(() => {
@@ -223,7 +222,6 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                        selectedTiers: draft.selectedTiers || { best: null, better: null, good: null }, addons: draft.addons || {}
                    }]);
                }
-               if (draft.appliedPromo !== undefined) setAppliedPromo(draft.appliedPromo);
             } catch(e) {}
         } else {
             // Failsafe
@@ -447,7 +445,6 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
            tons: totalTons,
            seer: systems.find(s => s.selectedTiers[tierKey])?.selectedTiers[tierKey]?.seer,
            baselinePrice: totalBaseline, 
-           saleDiscount: discountAmount, 
            salesPrice: finalPrice,
            commission: commission,
            features: features,
@@ -488,7 +485,6 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                tons: sys.selectedTiers[tierKey].tons,
                seer: sys.selectedTiers[tierKey].seer,
                baselinePrice: baselinePrice,
-               saleDiscount: discountAmount,
                salesPrice: finalPrice,
                features: features
            };
@@ -520,7 +516,6 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                    tons: track.tiers[tierKey].tons,
                    seer: track.tiers[tierKey].seer,
                    baselinePrice: baselinePrice,
-                   saleDiscount: discountAmount,
                    salesPrice: finalPrice,
                    features: features
                };
@@ -1204,15 +1199,6 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                                  </div>
                          
                                                  <div className="text-center pt-2">
-                                                    {discountAmount > 0 && (
-                                                        <div className="mb-4">
-                                                           <div className="text-lg font-black text-slate-300 line-through mb-1">${baselineRetail.toLocaleString()}</div>
-                                                           <div className="inline-block bg-emerald-50 text-emerald-600 font-black px-4 py-1.5 rounded-xl border border-emerald-100">
-                                                              - ${discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} Savings
-                                                           </div>
-                                                        </div>
-                                                    )}
-                         
                                                     <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-1">Total System Investment</label>
                                                     <div className={`text-[42px] leading-none tracking-tight font-black ${isBelowFloor ? 'text-red-500' : 'text-primary-800'}`}>${finalPrice.toLocaleString()}</div>
                                                     {isBelowFloor && <p className="text-[10px] font-bold text-red-500 mt-3 bg-red-50 p-2 rounded">Error: Pricing below acceptable floor rules.</p>}
