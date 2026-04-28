@@ -39,6 +39,8 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
     if (!proposal) return null;
 
     const data = proposal?.proposal_data || {};
+    const discountPercent = data?.applied_discount_percent || proposal?.applied_discount_percent || 0;
+    const discountMultiplier = 1 - (discountPercent / 100);
     
     // Attempt local resolution of the DB entity using the generator's state
     const customerId = data?.wizard_state?.selectedCustomerId;
@@ -99,7 +101,14 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
                         </div>
                         <div className="text-left md:text-right flex flex-col md:items-end gap-2">
                             <div>
-                                <span className="text-xs font-bold text-slate-400 block uppercase tracking-widest mb-0.5">Gross Value</span>
+                                <span className="text-xs font-bold text-slate-400 block uppercase tracking-widest mb-0.5 flex items-center justify-end gap-1.5">
+                                    Gross Value
+                                    {discountPercent > 0 && (
+                                        <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-black tracking-widest">
+                                            -{discountPercent}% PROMO
+                                        </span>
+                                    )}
+                                </span>
                                 <span className="font-black text-emerald-600 text-2xl tracking-tight">${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
                             {(proposal.status === 'Approved' || proposal.status === 'Sent') && (
@@ -268,7 +277,7 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
                                                             </div>
                                                             <div className="flex flex-col">
                                                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">System Price</span>
-                                                                <span className="text-sm font-bold text-emerald-600">${((sData.salesPrice || 0)).toLocaleString()}</span>
+                                                                <span className="text-sm font-bold text-emerald-600">${((sData.salesPrice || 0) * discountMultiplier).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                                             </div>
                                                         </div>
                                                         
