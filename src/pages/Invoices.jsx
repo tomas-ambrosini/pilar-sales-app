@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Banknote, FileText, Search, Clock, CheckCircle2, AlertCircle, Eye } from 'lucide-react';
+import { Banknote, FileText, Search, Clock, CheckCircle2, AlertCircle, Eye, Trash2 } from 'lucide-react';
 import { formatQuoteId } from '../utils/formatters';
 import InvoiceDocument from '../components/InvoiceDocument';
+import { useAuth } from '../context/AuthContext';
 
 export default function Invoices({ isSubView = false }) {
     const [invoices, setInvoices] = useState([]);
@@ -10,6 +11,20 @@ export default function Invoices({ isSubView = false }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [viewTab, setViewTab] = useState('all'); // 'all', 'unpaid', 'paid'
     const [selectedInvoice, setSelectedInvoice] = useState(null);
+    const { user } = useAuth();
+
+    const handleDeleteInvoice = async (invoiceId) => {
+        if (!window.confirm("Are you sure you want to delete this invoice? This action cannot be undone.")) return;
+        
+        try {
+            const { error } = await supabase.from('invoices').delete().eq('id', invoiceId);
+            if (error) throw error;
+            setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+        } catch (err) {
+            console.error("Failed to delete invoice:", err);
+            alert("Failed to delete invoice.");
+        }
+    };
 
     useEffect(() => {
         fetchInvoices();
@@ -121,9 +136,16 @@ export default function Invoices({ isSubView = false }) {
                                                 ${(parseFloat(inv.balance_due ?? 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                             </td>
                                             <td className="p-4 text-center">
-                                                <button onClick={() => setSelectedInvoice(inv)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 rounded-lg text-slate-500 font-bold text-[10px] uppercase tracking-wider transition-all shadow-sm">
-                                                    <Eye size={14} /> View
-                                                </button>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button onClick={() => setSelectedInvoice(inv)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 rounded-lg text-slate-500 font-bold text-[10px] uppercase tracking-wider transition-all shadow-sm">
+                                                        <Eye size={14} /> View
+                                                    </button>
+                                                    {['super_admin', 'admin'].includes((user?.role || '').toLowerCase()) && (
+                                                        <button onClick={() => handleDeleteInvoice(inv.id)} className="inline-flex items-center justify-center w-8 h-8 bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 rounded-lg text-slate-400 transition-all shadow-sm" title="Delete Invoice">
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
