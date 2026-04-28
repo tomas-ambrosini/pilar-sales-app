@@ -100,16 +100,24 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
                             </div>
                         </div>
                         <div className="text-left md:text-right flex flex-col md:items-end gap-2">
-                            <div>
-                                <span className="text-xs font-bold text-slate-400 block uppercase tracking-widest mb-0.5 flex items-center justify-end gap-1.5">
-                                    Gross Value
-                                    {discountPercent > 0 && (
-                                        <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-black tracking-widest">
-                                            -{discountPercent}% PROMO
-                                        </span>
-                                    )}
-                                </span>
-                                <span className="font-black text-emerald-600 text-2xl tracking-tight">${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            <div className="flex items-end gap-6">
+                                {discountPercent > 0 && (
+                                    <div className="flex flex-col items-end">
+                                        <span className="text-xs font-bold text-slate-400 block uppercase tracking-widest mb-0.5">Original Value</span>
+                                        <span className="font-bold text-slate-400 text-lg line-through tracking-tight">${((proposal.amount || 0) / discountMultiplier).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                )}
+                                <div className="flex flex-col items-end">
+                                    <span className="text-xs font-bold text-slate-400 block uppercase tracking-widest mb-0.5 flex items-center justify-end gap-1.5">
+                                        {discountPercent > 0 ? 'Net Value' : 'Gross Value'}
+                                        {discountPercent > 0 && (
+                                            <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-black tracking-widest">
+                                                -{discountPercent}% PROMO
+                                            </span>
+                                        )}
+                                    </span>
+                                    <span className="font-black text-emerald-600 text-2xl tracking-tight">${(proposal.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                </div>
                             </div>
                             {(proposal.status === 'Approved' || proposal.status === 'Sent') && (
                                 <button 
@@ -277,7 +285,7 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
                                                             </div>
                                                             <div className="flex flex-col">
                                                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">System Price</span>
-                                                                <span className="text-sm font-bold text-emerald-600">${((sData.salesPrice || 0) * discountMultiplier).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                                                <span className="text-sm font-bold text-emerald-600">${((sData.salesPrice || 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                                             </div>
                                                         </div>
                                                         
