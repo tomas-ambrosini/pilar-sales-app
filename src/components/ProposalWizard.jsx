@@ -323,8 +323,11 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   };
 
   const handleAutofillStep2 = () => {
+     const locked = {};
+     laborRates.filter(l => ['5001'].includes(l.sku)).forEach(l => locked[l.id] = true);
      setSystems(prev => prev.map(sys => ({
         ...sys,
+        addons: locked,
         survey: {
            ...sys.survey,
            systemType: "Split AC & Furnace",
@@ -336,7 +339,6 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
            disconnectCondition: "Pass"
         }
      })));
-     setAddons({});
   };
 
   const calculateSystemBaselineRetail = (sys, rawEquipCost, tierType = 'Good') => {
@@ -695,7 +697,11 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                     <button 
                       onClick={() => {
                          const nextId = Math.max(...systems.map(s => s.id)) + 1;
-                         setSystems([...systems, generateEmptySystem(nextId)]);
+                         const emptySys = generateEmptySystem(nextId);
+                         const locked = {};
+                         laborRates.filter(l => ['5001'].includes(l.sku)).forEach(l => locked[l.id] = true);
+                         emptySys.addons = locked;
+                         setSystems([...systems, emptySys]);
                          setActiveSystemId(nextId);
                       }}
                       className="px-3 py-1.5 ml-2 text-xs font-bold text-primary-600 border border-primary-200 rounded hover:bg-primary-50 transition-colors whitespace-nowrap"
