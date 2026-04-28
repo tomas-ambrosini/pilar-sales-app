@@ -332,9 +332,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                                  
                              const allMaterials = [...(templateConfig.materials || []), ...extractedAddons].filter(Boolean);
                              
-                             const totalPrice = resolvedSystemsList && resolvedSystemsList.length > 0 
-                                 ? resolvedSystemsList.reduce((sum, sys) => sum + (sys.tierData?.salesPrice || 0), 0)
-                                 : (tierData?.salesPrice || 0);
+                             const totalPrice = tierData?.salesPrice || 0;
                              const discountPercent = proposal?.proposal_data?.applied_discount_percent || proposal?.applied_discount_percent || appliedPromo?.discount_percent || 0;
                              const promoCode = proposal?.proposal_data?.applied_promo_code || proposal?.applied_promo_code || appliedPromo?.code || null;
                              const discountAmount = discountPercent ? totalPrice * (discountPercent / 100) : 0;
