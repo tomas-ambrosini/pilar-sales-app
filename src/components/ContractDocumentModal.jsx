@@ -336,6 +336,9 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                              const totalPrice = resolvedSystemsList && resolvedSystemsList.length > 0 
                                  ? resolvedSystemsList.reduce((sum, sys) => sum + (sys.tierData?.salesPrice || 0), 0)
                                  : (tierData?.salesPrice || 0);
+                             const discountPercent = proposal?.applied_discount_percent || 0;
+                             const discountAmount = discountPercent ? totalPrice * (discountPercent / 100) : 0;
+                             const finalPrice = totalPrice - discountAmount;
 
                              return (
                                  <>
@@ -355,11 +358,31 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                                          </div>
                                      )}
                                      
-                                     {/* Total Row */}
-                                     <div className="flex font-bold text-slate-800 bg-[#e2e8f0]/40">
-                                          <div className="flex-1 px-3 py-3 border-r border-slate-300 text-right uppercase text-xs tracking-wider text-slate-800">Total Contract Price:</div>
-                                          <div className="w-32 px-3 py-3 flex items-center justify-end gap-1 text-primary-700 font-black text-lg border-t-2 border-slate-300">
-                                              $ <span>{totalPrice.toLocaleString()}</span>
+                                     {/* Subtotal Row (if discount exists) */}
+                                     {discountAmount > 0 && (
+                                         <div className="flex font-bold text-slate-800 bg-white">
+                                              <div className="flex-1 px-3 py-2 border-r border-slate-300 text-right uppercase text-xs tracking-wider text-slate-500">System Subtotal:</div>
+                                              <div className="w-32 px-3 py-2 flex items-center justify-end gap-1 text-slate-700 font-bold border-t-2 border-slate-300">
+                                                  $ <span>{totalPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                              </div>
+                                         </div>
+                                     )}
+                                     
+                                     {/* Discount Row (if discount exists) */}
+                                     {discountAmount > 0 && (
+                                         <div className="flex font-bold text-emerald-700 bg-emerald-50/50">
+                                              <div className="flex-1 px-3 py-2 border-r border-slate-300 text-right uppercase text-xs tracking-wider">Discount Applied (Promo: {proposal.applied_promo_code}):</div>
+                                              <div className="w-32 px-3 py-2 flex items-center justify-end gap-1 font-bold">
+                                                  -$ <span>{discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                              </div>
+                                         </div>
+                                     )}
+
+                                     {/* Final Total Row */}
+                                     <div className={`flex font-bold text-slate-800 bg-[#e2e8f0]/40 ${discountAmount > 0 ? 'border-t-2 border-slate-300' : ''}`}>
+                                          <div className="flex-1 px-3 py-3 border-r border-slate-300 text-right uppercase text-xs tracking-wider text-slate-800 flex items-center justify-end">Total Contract Price:</div>
+                                          <div className={`w-32 px-3 py-3 flex items-center justify-end gap-1 text-primary-700 font-black text-lg ${discountAmount === 0 ? 'border-t-2 border-slate-300' : ''}`}>
+                                              $ <span>{finalPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                           </div>
                                      </div>
                                  </>
@@ -373,25 +396,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                     <div className="font-bold text-slate-800 mb-2 px-1">{templateConfig.sectionTitles?.legal || 'Exclusions / Legal:'}</div>
                     {templateConfig.terms.map((term, i) => (
                         <div key={i} className="flex border-b border-slate-200 pb-1 mb-1 text-[9px] text-slate-500">
-                            {i === templateConfig.terms.length - 1 ? (
-                                <>
-                                   <div className="flex flex-1">
-                                      <span className="w-2 text-center mr-1">•</span> <span className="flex-1">{term}</span>
-                                   </div>
-                                   <div className="w-48 text-right font-bold text-[12px] text-slate-800 shrink-0 ml-4 pb-1 flex flex-col justify-end">
-                                       {proposal?.applied_promo_code && (
-                                           <div className="text-[10px] text-emerald-600 mb-0.5">
-                                               Promo: {proposal.applied_promo_code} (-{proposal.applied_discount_percent}%)
-                                           </div>
-                                       )}
-                                       <div>Total Price: ${(tierData.salesPrice || 0).toLocaleString()}</div>
-                                   </div>
-                                </>
-                            ) : (
-                                <>
-                                    <span className="w-2 text-center mr-1">•</span> <span className="flex-1">{term}</span>
-                                </>
-                            )}
+                            <span className="w-2 text-center mr-1">•</span> <span className="flex-1">{term}</span>
                         </div>
                     ))}
                 </div>

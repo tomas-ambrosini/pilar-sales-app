@@ -195,7 +195,14 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                                         <div className="text-[10px] text-slate-500 mt-1 italic">{invoice.notes || 'Contract execution per signed proposal.'}</div>
                                     </div>
                                     <div className="w-32 px-3 py-3 flex items-center justify-end gap-1 text-slate-800 font-bold text-sm">
-                                        $ <span>{(parseFloat(invoice.total_contract_amount || invoice.amount) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                        $ <span>
+                                            {(() => {
+                                                const discountPercent = invoice.proposals?.applied_discount_percent || 0;
+                                                const finalPrice = parseFloat(invoice.total_contract_amount || invoice.amount) || 0;
+                                                const originalPrice = discountPercent > 0 ? finalPrice / (1 - (discountPercent / 100)) : finalPrice;
+                                                return originalPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                            })()}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -203,42 +210,76 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
 
                         {/* Totals Section */}
                         <div className="flex justify-between items-start mb-6 print-safe-block">
-                            <div className="w-1/2 pr-8 mt-2">
-                                <div className="font-bold text-slate-800 mb-1 px-1">Customer Message:</div>
-                                <p className="text-[11px] text-slate-500 italic px-1 whitespace-pre-wrap mb-4">
-                                    {isLoadingTemplate ? 'Loading message...' : templateConfig?.invoiceMessage}
-                                </p>
+                            {(() => {
+                                const discountPercent = invoice.proposals?.applied_discount_percent || 0;
+                                const promoCode = invoice.proposals?.applied_promo_code;
+                                const finalPrice = parseFloat(invoice.total_contract_amount || invoice.amount) || 0;
                                 
-                                {templateConfig?.invoicePaymentTerms && (
+                                // originalPrice = finalPrice / (1 - discountPercent / 100)
+                                const originalPrice = discountPercent > 0 ? finalPrice / (1 - (discountPercent / 100)) : finalPrice;
+                                const discountAmount = originalPrice - finalPrice;
+
+                                return (
                                     <>
-                                        <div className="font-bold text-slate-800 mb-1 px-1">Payment Terms:</div>
-                                        <p className="text-[11px] text-slate-600 font-medium px-1">
-                                            {templateConfig.invoicePaymentTerms}
-                                        </p>
+                                        <div className="w-1/2 pr-8 mt-2">
+                                            <div className="font-bold text-slate-800 mb-1 px-1">Customer Message:</div>
+                                            <p className="text-[11px] text-slate-500 italic px-1 whitespace-pre-wrap mb-4">
+                                                {isLoadingTemplate ? 'Loading message...' : templateConfig?.invoiceMessage}
+                                            </p>
+                                            
+                                            {templateConfig?.invoicePaymentTerms && (
+                                                <>
+                                                    <div className="font-bold text-slate-800 mb-1 px-1">Payment Terms:</div>
+                                                    <p className="text-[11px] text-slate-600 font-medium px-1">
+                                                        {templateConfig.invoicePaymentTerms}
+                                                    </p>
+                                                </>
+                                            )}
+                                        </div>
+                                        
+                                        <div className="w-[300px] border border-slate-300 rounded overflow-hidden bg-[#f8fafc]">
+                                            {/* Subtotal Row (if discount exists) */}
+                                            {discountPercent > 0 && (
+                                                <div className="flex border-b border-slate-200">
+                                                    <div className="flex-1 px-3 py-2 text-right uppercase text-[10px] tracking-wider text-slate-500 font-bold">System Subtotal:</div>
+                                                    <div className="w-32 px-3 py-2 text-right font-bold text-slate-600">
+                                                        ${originalPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Discount Row (if discount exists) */}
+                                            {discountPercent > 0 && (
+                                                <div className="flex border-b border-slate-200 bg-emerald-50/50">
+                                                    <div className="flex-1 px-3 py-2 text-right uppercase text-[10px] tracking-wider text-emerald-700 font-bold">Discount (Promo: {promoCode}):</div>
+                                                    <div className="w-32 px-3 py-2 text-right font-bold text-emerald-700">
+                                                        -${discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="flex border-b border-slate-200">
+                                                <div className="flex-1 px-3 py-2 text-right uppercase text-[10px] tracking-wider text-slate-600 font-bold">Invoice Total:</div>
+                                                <div className="w-32 px-3 py-2 text-right font-bold text-slate-800">
+                                                    ${finalPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                </div>
+                                            </div>
+                                            <div className="flex border-b border-slate-300 text-emerald-600">
+                                                <div className="flex-1 px-3 py-2 text-right uppercase text-[10px] tracking-wider font-bold">Deposits/Payments (-):</div>
+                                                <div className="w-32 px-3 py-2 text-right font-bold">
+                                                    ${(parseFloat(invoice.deposit_collected || invoice.amount) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                </div>
+                                            </div>
+                                            <div className="flex font-bold bg-[#e2e8f0]/40">
+                                                <div className="flex-1 px-3 py-3 text-right uppercase text-xs tracking-wider text-slate-800 flex items-center justify-end">Total Due:</div>
+                                                <div className="w-32 px-3 py-3 text-right font-black text-lg text-primary-700">
+                                                    ${(parseFloat(invoice.balance_due ?? 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </>
-                                )}
-                            </div>
-                            
-                            <div className="w-[300px] border border-slate-300 rounded overflow-hidden bg-[#f8fafc]">
-                                <div className="flex border-b border-slate-200">
-                                    <div className="flex-1 px-3 py-2 text-right uppercase text-[10px] tracking-wider text-slate-600 font-bold">Invoice Total:</div>
-                                    <div className="w-32 px-3 py-2 text-right font-bold text-slate-800">
-                                        ${(parseFloat(invoice.total_contract_amount || invoice.amount) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                                    </div>
-                                </div>
-                                <div className="flex border-b border-slate-300 text-emerald-600">
-                                    <div className="flex-1 px-3 py-2 text-right uppercase text-[10px] tracking-wider font-bold">Deposits/Payments (-):</div>
-                                    <div className="w-32 px-3 py-2 text-right font-bold">
-                                        ${(parseFloat(invoice.deposit_collected || invoice.amount) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                                    </div>
-                                </div>
-                                <div className="flex font-bold bg-[#e2e8f0]/40">
-                                    <div className="flex-1 px-3 py-3 text-right uppercase text-xs tracking-wider text-slate-800 flex items-center justify-end">Total Due:</div>
-                                    <div className="w-32 px-3 py-3 text-right font-black text-lg text-primary-700">
-                                        ${(parseFloat(invoice.balance_due ?? 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                                    </div>
-                                </div>
-                            </div>
+                                );
+                            })()}
                         </div>
                         
                         {/* Footer */}
