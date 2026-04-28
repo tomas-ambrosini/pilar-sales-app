@@ -1184,9 +1184,22 @@ ${equipmentNotes}
             setCollectingDeposit(null);
         }}
         contractData={collectingDeposit}
-        onSuccess={(amount) => {
+        onSuccess={(amount, updatedProposalData) => {
             toast.success(`Recorded $${amount.toLocaleString()} deposit payment successfully!`);
-            setViewingContract(collectingDeposit);
+            
+            if (updatedProposalData) {
+                updateProposal(collectingDeposit.proposal.id, { proposal_data: updatedProposalData });
+                setViewingContract({
+                    ...collectingDeposit,
+                    proposal: {
+                        ...collectingDeposit.proposal,
+                        proposal_data: updatedProposalData
+                    }
+                });
+            } else {
+                setViewingContract(collectingDeposit);
+            }
+            
             setCollectingDeposit(null);
         }}
       />

@@ -99,7 +99,7 @@ export default function DepositCollectionModal({ isOpen, onClose, contractData, 
             await supabase.from('work_orders').insert([workOrderData]);
 
             if (onSuccess) {
-                onSuccess(depositAmount);
+                onSuccess(depositAmount, updatedProposalData);
             }
             onClose();
         } catch (err) {
