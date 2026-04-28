@@ -290,6 +290,14 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                       </div>
                    ))}
                 </div>
+             ) : (!proposal_data.tiers?.good && !proposal_data.tiers?.Good && !proposal_data.tiers?.best && !proposal_data.tiers?.Best && !proposal_data.tiers?.better && !proposal_data.tiers?.Better) ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                   <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
+                      <AlertTriangle size={32} />
+                   </div>
+                   <h3 className="text-xl font-bold text-slate-800 mb-2">Draft Not Ready</h3>
+                   <p className="text-slate-500 max-w-md">This proposal is currently an empty draft and no equipment tiers have been configured yet. Please complete the quote configuration to view the presentation.</p>
+                </div>
              ) : (
                 <div className="max-w-5xl mx-auto pt-4 pb-8">
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-end pt-6">
