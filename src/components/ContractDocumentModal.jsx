@@ -321,8 +321,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                 {/* Materials & Labor */}
                 <div className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
                      <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
-                        <div className="flex-1 px-3 py-1.5 border-r border-slate-300">Materials & Labor / Subs needed</div>
-                        <div className="w-32 px-3 py-1.5 text-center">Price</div>
+                        <div className="flex-1 px-3 py-1.5">Materials & Labor / Subs needed</div>
                     </div>
                     <div className="flex flex-col bg-[#f8fafc]">
                          {(() => {
