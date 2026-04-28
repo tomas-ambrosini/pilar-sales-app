@@ -924,7 +924,12 @@ ${equipmentNotes}
                                        if (proposal.status === 'Approved') {
                                           const matchedTierName = proposal.proposal_data?.accepted_tier_name || ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers?.[t]?.salesPrice === proposal.amount) || 'good';
                                           const matchedTierData = proposal.proposal_data?.accepted_tier_data || proposal.proposal_data?.tiers?.[matchedTierName];
-                                          setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
+                                          
+                                          if (!proposal.proposal_data?.deposit_collected) {
+                                              setCollectingDeposit({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
+                                          } else {
+                                              setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
+                                          }
                                        } else if (proposal.status === 'Draft' || proposal.status === 'Lead') {
                                           if (proposal.created_by && proposal.created_by !== user?.id) {
                                               toast.error('Access Denied: This draft is locked by its creator.');
@@ -1168,7 +1173,6 @@ ${equipmentNotes}
       <DepositCollectionModal 
         isOpen={!!collectingDeposit}
         onClose={() => {
-            setViewingContract(collectingDeposit);
             setCollectingDeposit(null);
         }}
         contractData={collectingDeposit}

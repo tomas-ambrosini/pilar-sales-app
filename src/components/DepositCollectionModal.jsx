@@ -223,7 +223,7 @@ export default function DepositCollectionModal({ isOpen, onClose, contractData, 
                                     onClick={onClose}
                                     className="flex-1 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-3 rounded-xl font-bold transition-colors"
                                 >
-                                    Skip & View Contract
+                                    Cancel Setup
                                 </button>
                                 <button
                                     type="submit"
