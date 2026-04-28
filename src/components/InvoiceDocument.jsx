@@ -7,13 +7,20 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { getActiveContractTemplate } from '../utils/contracts/getActiveContractTemplate';
 import { normalizeContractTemplate } from '../utils/contracts/normalizeContractTemplate';
+import { useCustomers } from '../context/CustomerContext';
 import '../components/ContractDocumentModal.css';
 
 export default function InvoiceDocument({ isOpen, onClose, invoice }) {
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const [templateConfig, setTemplateConfig] = useState(null);
     const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
+    const { customers } = useCustomers();
     const pdfRef = useRef(null);
+
+    // Find the customer from the global context using the invoice's customer_id
+    const customer = customers?.find(c => c.id === invoice?.customer_id) || null;
+    const primaryContact = customer?.raw?.contacts?.[0] || {};
+    const primaryAddress = customer?.raw?.addresses?.find(a => a.is_primary_residence) || customer?.raw?.addresses?.[0] || {};
 
     React.useEffect(() => {
         let isMounted = true;
@@ -154,26 +161,26 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                                 <div className="p-3 bg-[#f8fafc] flex flex-col gap-2">
                                     <div className="flex border-b border-slate-200 pb-1">
                                         <span className="w-16 text-slate-500">Name:</span> <span className="font-semibold text-slate-800">{
-                                            invoice.households ? 
-                                                `${invoice.households.contacts?.[0]?.first_name || ''} ${invoice.households.contacts?.[0]?.last_name || ''}`.trim() || invoice.households.household_name 
+                                            customer ? 
+                                                `${primaryContact.first_name || ''} ${primaryContact.last_name || ''}`.trim() || customer.household_name 
                                             : invoice.proposals?.customer || 'Unknown Customer'
                                         }</span>
                                     </div>
                                     <div className="flex border-b border-slate-200 pb-1">
                                         <span className="w-16 text-slate-500">Address:</span> <span className="text-slate-600">{
-                                            invoice.households?.addresses?.[0] ? 
-                                                `${invoice.households.addresses[0].street_address || ''} ${invoice.households.addresses[0].city ? ', ' + invoice.households.addresses[0].city : ''}`.trim() 
+                                            customer ? 
+                                                `${primaryAddress.street_address || ''} ${primaryAddress.city ? ', ' + primaryAddress.city : ''}`.trim() 
                                             : invoice.proposals?.proposal_data?.address || '(Digital Record)'
                                         }</span>
                                     </div>
                                     <div className="flex border-b border-slate-200 pb-1">
                                         <span className="w-16 text-slate-500">Phone:</span> <span className="text-slate-600">{
-                                            invoice.households?.contacts?.[0]?.primary_phone || invoice.proposals?.proposal_data?.contactPhone || ''
+                                            primaryContact.primary_phone || invoice.proposals?.proposal_data?.contactPhone || ''
                                         }</span>
                                     </div>
                                     <div className="flex pb-1">
                                         <span className="w-16 text-slate-500">Email:</span> <span className="text-slate-600">{
-                                            invoice.households?.contacts?.[0]?.email || invoice.proposals?.proposal_data?.contactEmail || ''
+                                            primaryContact.email || invoice.proposals?.proposal_data?.contactEmail || ''
                                         }</span>
                                     </div>
                                 </div>
@@ -185,8 +192,7 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                                 <div className="p-3 bg-[#f8fafc] flex flex-col gap-2 h-full">
                                     <div className="flex pb-1">
                                         <span className="text-slate-600">{
-                                            invoice.households?.addresses?.find(a => a.is_primary_residence)?.street_address 
-                                            || invoice.households?.addresses?.[0]?.street_address 
+                                            primaryAddress.street_address 
                                             || invoice.proposals?.proposal_data?.address || 'Address Not Specified'
                                         }</span>
                                     </div>
