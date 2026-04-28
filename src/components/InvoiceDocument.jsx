@@ -153,16 +153,28 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                                 <div className="bg-[#e2e8f0] text-slate-700 font-bold px-3 py-1.5 border-b border-slate-300">Bill To</div>
                                 <div className="p-3 bg-[#f8fafc] flex flex-col gap-2">
                                     <div className="flex border-b border-slate-200 pb-1">
-                                        <span className="w-16 text-slate-500">Name:</span> <span className="font-semibold text-slate-800">{invoice.proposals?.customer || 'Unknown Customer'}</span>
+                                        <span className="w-16 text-slate-500">Name:</span> <span className="font-semibold text-slate-800">{
+                                            invoice.households ? 
+                                                `${invoice.households.contacts?.[0]?.first_name || ''} ${invoice.households.contacts?.[0]?.last_name || ''}`.trim() || invoice.households.household_name 
+                                            : invoice.proposals?.customer || 'Unknown Customer'
+                                        }</span>
                                     </div>
                                     <div className="flex border-b border-slate-200 pb-1">
-                                        <span className="w-16 text-slate-500">Address:</span> <span className="text-slate-600">{invoice.proposals?.proposal_data?.address || '(Digital Record)'}</span>
+                                        <span className="w-16 text-slate-500">Address:</span> <span className="text-slate-600">{
+                                            invoice.households?.addresses?.[0] ? 
+                                                `${invoice.households.addresses[0].street_address || ''} ${invoice.households.addresses[0].city ? ', ' + invoice.households.addresses[0].city : ''}`.trim() 
+                                            : invoice.proposals?.proposal_data?.address || '(Digital Record)'
+                                        }</span>
                                     </div>
                                     <div className="flex border-b border-slate-200 pb-1">
-                                        <span className="w-16 text-slate-500">Phone:</span> <span className="text-slate-600">{invoice.proposals?.proposal_data?.contactPhone || ''}</span>
+                                        <span className="w-16 text-slate-500">Phone:</span> <span className="text-slate-600">{
+                                            invoice.households?.contacts?.[0]?.primary_phone || invoice.proposals?.proposal_data?.contactPhone || ''
+                                        }</span>
                                     </div>
                                     <div className="flex pb-1">
-                                        <span className="w-16 text-slate-500">Email:</span> <span className="text-slate-600">{invoice.proposals?.proposal_data?.contactEmail || ''}</span>
+                                        <span className="w-16 text-slate-500">Email:</span> <span className="text-slate-600">{
+                                            invoice.households?.contacts?.[0]?.email || invoice.proposals?.proposal_data?.contactEmail || ''
+                                        }</span>
                                     </div>
                                 </div>
                             </div>
@@ -172,7 +184,11 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                                 <div className="bg-[#e2e8f0] text-slate-700 font-bold px-3 py-1.5 border-b border-slate-300">Primary Service Location</div>
                                 <div className="p-3 bg-[#f8fafc] flex flex-col gap-2 h-full">
                                     <div className="flex pb-1">
-                                        <span className="text-slate-600">{invoice.proposals?.proposal_data?.address || 'Address Not Specified'}</span>
+                                        <span className="text-slate-600">{
+                                            invoice.households?.addresses?.find(a => a.is_primary_residence)?.street_address 
+                                            || invoice.households?.addresses?.[0]?.street_address 
+                                            || invoice.proposals?.proposal_data?.address || 'Address Not Specified'
+                                        }</span>
                                     </div>
                                 </div>
                             </div>

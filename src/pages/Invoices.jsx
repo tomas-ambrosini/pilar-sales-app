@@ -37,7 +37,13 @@ export default function Invoices({ isSubView = false }) {
                 .from('invoices')
                 .select(`
                     *,
-                    proposals ( id, customer, amount, status, proposal_data, proposal_number, created_at, updated_at )
+                    proposals ( id, customer, amount, status, proposal_data, proposal_number, created_at, updated_at ),
+                    households:customer_id (
+                        id, 
+                        household_name,
+                        contacts ( first_name, last_name, email, primary_phone ),
+                        addresses ( street_address, city, state, zip, is_primary_residence )
+                    )
                 `)
                 .order('created_at', { ascending: false });
             
