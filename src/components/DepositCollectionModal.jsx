@@ -57,7 +57,7 @@ export default function DepositCollectionModal({ isOpen, onClose, contractData, 
             
             const invoiceData = {
                 proposal_id: proposal.id,
-                customer_id: proposal.customer_id || null,
+                customer_id: proposal.customer_id || proposal.proposal_data?.customer_id || null,
                 invoice_type: 'Deposit',
                 total_contract_amount: totalAmount,
                 deposit_collected: depositAmount,

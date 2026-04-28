@@ -17,8 +17,9 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
     const { customers } = useCustomers();
     const pdfRef = useRef(null);
 
-    // Find the customer from the global context using the invoice's customer_id
-    const customer = customers?.find(c => c.id === invoice?.customer_id) || null;
+    // Find the customer from the global context using the invoice's customer_id or the nested proposal data
+    const effectiveCustomerId = invoice?.customer_id || invoice?.proposals?.proposal_data?.customer_id;
+    const customer = customers?.find(c => c.id === effectiveCustomerId) || null;
     const primaryContact = customer?.raw?.contacts?.[0] || {};
     const primaryAddress = customer?.raw?.addresses?.find(a => a.is_primary_residence) || customer?.raw?.addresses?.[0] || {};
 
