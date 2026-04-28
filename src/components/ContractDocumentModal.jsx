@@ -150,13 +150,13 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
          </div>
 
          {/* The 8.5x11 Paper Container */}
-         <div className="w-full h-full overflow-auto flex justify-center mt-[100px] sm:mt-24 mb-12 print:m-0 pb-20 px-4 sm:px-8">
+         <div className="w-full h-full overflow-auto mt-[100px] sm:mt-24 mb-12 print:m-0 pb-20 px-4 sm:px-8">
              <motion.div 
                 initial={{ scale: 0.95, y: 10, opacity: 0 }}
                 animate={{ scale: 1, y: 0, opacity: 1 }}
                 exit={{ scale: 0.95, y: 10, opacity: 0 }}
                 transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                className="printable-contract relative bg-white shadow-2xl flex flex-col print:block shrink-0 w-[850px] min-h-[1100px] h-max print:max-h-none print:m-0 text-slate-800 text-[11px] leading-relaxed"
+                className="printable-contract mx-auto relative bg-white shadow-2xl flex flex-col print:block shrink-0 w-[850px] min-h-[1100px] h-max print:max-h-none print:m-0 text-slate-800 text-[11px] leading-relaxed"
              >
                 {isLoadingTemplate ? (
                     <div className="flex flex-col items-center justify-center h-96 w-full text-slate-400">

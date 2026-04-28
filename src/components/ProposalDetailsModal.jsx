@@ -180,7 +180,7 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
                                                 <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
                                                     <h4 className="font-black text-slate-800 text-sm tracking-wide uppercase">Existing System Specs</h4>
                                                 </div>
-                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6">
                                                     
                                                     <div className="flex flex-col">
                                                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">System Type</span>
@@ -270,7 +270,7 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
                                                             <h4 className="font-black text-primary-700 text-sm tracking-wide uppercase">Approved New Equipment</h4>
                                                             <span className="text-[10px] font-bold bg-primary-100 text-primary-800 px-2 py-0.5 rounded ml-2">{(sData.specificTierName || matchedTierNameUpperCase).toUpperCase()}</span>
                                                         </div>
-                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-6">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-6">
                                                             <div className="flex flex-col">
                                                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Contracted Brand</span>
                                                                 <span className="text-sm font-bold text-slate-800">{sData.brand || 'N/A'} {sData.series || ''}</span>
@@ -350,7 +350,7 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
                                                         <AlertCircle size={16}/> No site photos uploaded.
                                                     </div>
                                                 ) : (
-                                                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                                         {populatedPhotos.map(([tag, url]) => (
                                                             <div 
                                                                 key={tag} 

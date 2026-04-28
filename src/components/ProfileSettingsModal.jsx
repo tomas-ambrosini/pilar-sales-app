@@ -243,7 +243,7 @@ export default function ProfileSettingsModal({ onClose }) {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="flex items-center gap-2 text-xs font-black tracking-widest text-slate-500 uppercase mb-1.5 ml-1">
                            <Mail size={12} className="text-slate-400"/>
@@ -270,7 +270,7 @@ export default function ProfileSettingsModal({ onClose }) {
                       </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="flex items-center gap-2 text-xs font-black tracking-widest text-slate-500 uppercase mb-1.5 ml-1">
                            <AtSign size={12} className="text-slate-400"/>

@@ -193,7 +193,7 @@ export default function DepositCollectionModal({ isOpen, onClose, contractData, 
 
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 tracking-widest uppercase mb-2">Payment Method</label>
-                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                     {paymentMethods.map((method) => {
                                         const Icon = method.icon;
                                         const isSelected = paymentMethod === method.id;

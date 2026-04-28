@@ -116,7 +116,7 @@ export default function GlobalBranding() {
                         <h2 className="text-xl font-bold text-slate-800">1. Company Contact Info</h2>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Company Name (Header)</label>
                             <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 font-medium focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" value={name} onChange={e => setName(e.target.value)} />
@@ -141,7 +141,7 @@ export default function GlobalBranding() {
                         <h2 className="text-xl font-bold text-slate-800">2. Visual Branding</h2>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-8 items-start">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                         <div>
                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Company Brand Text (Fallback)</label>
                             <input type="text" className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 font-medium focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none mb-2" value={brandName} onChange={e => setBrandName(e.target.value)} placeholder="e.g. PILAR HOME" />

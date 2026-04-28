@@ -92,7 +92,7 @@ export default function ContractSettings() {
                         <h2 className="text-xl font-bold text-slate-800">1. Layout Headers</h2>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Equipment Section Title</label>
                             <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 font-bold tracking-tight focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" value={titleUnitSection} onChange={e => setTitleUnitSection(e.target.value)} placeholder="e.g. Unit Info" />
