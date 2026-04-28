@@ -369,7 +369,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                                      {/* Discount Row (if discount exists) */}
                                      {discountAmount > 0 && (
                                          <div className="flex font-bold text-emerald-700 bg-emerald-50/50">
-                                              <div className="flex-1 px-3 py-2 border-r border-slate-300 text-right uppercase text-xs tracking-wider">Discount Applied (Promo: {promoCode}):</div>
+                                              <div className="flex-1 px-3 py-2 border-r border-slate-300 text-right uppercase text-xs tracking-wider">Discount Applied {promoCode ? `(${discountPercent}% Promo: ${promoCode})` : `(${discountPercent}%)`}:</div>
                                               <div className="w-32 px-3 py-2 flex items-center justify-end gap-1 font-bold">
                                                   -$ <span>{discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                               </div>
