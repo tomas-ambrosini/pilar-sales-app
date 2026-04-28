@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, CheckCircle, Shield, Wind, Droplets, ArrowRight, FileText, AlertTriangle, ArrowLeft, Printer, ThumbsDown, Tag, RefreshCcw } from 'lucide-react';
+import { X, CheckCircle, Check, Shield, Wind, Droplets, ArrowRight, FileText, AlertTriangle, ArrowLeft, Printer, ThumbsDown, Tag, RefreshCcw } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import Modal from './Modal';
 import { formatQuoteId } from '../utils/formatters';
