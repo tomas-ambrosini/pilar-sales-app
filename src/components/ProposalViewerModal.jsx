@@ -193,6 +193,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
   const [appliedPromo, setAppliedPromo] = React.useState(null);
   const [promoError, setPromoError] = React.useState('');
   const [validatingPromo, setValidatingPromo] = React.useState(false);
+  const [showPromoInput, setShowPromoInput] = React.useState(false);
 
   React.useEffect(() => {
      if (!isOpen) {
@@ -200,6 +201,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
          setPromoInput('');
          setAppliedPromo(null);
          setPromoError('');
+         setShowPromoInput(false);
      } else if (proposal?.applied_promo_code) {
          // If a proposal ALREADY has a promo applied (from the DB), pre-fill it here
          setAppliedPromo({
@@ -295,6 +297,9 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                    <Printer size={16} />
                    <span>Export PDF</span>
                 </button>
+                <button onClick={() => setShowPromoInput(!showPromoInput)} className={`p-2 rounded-full border transition-colors print-hidden ${showPromoInput || appliedPromo ? 'bg-primary-50 text-primary-600 border-primary-200' : 'text-slate-400 hover:text-slate-800 bg-white border-slate-200'}`} title="Apply Promo Code">
+                   <Tag size={20} />
+                </button>
                 {onBack && (
                    <button onClick={onBack} className="p-2 text-slate-400 hover:text-slate-800 bg-white rounded-full border border-slate-200 transition-colors print-hidden" title="Back to Details">
                       <ArrowLeft size={20} />
@@ -308,7 +313,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
 
           {/* Body */}
           <div className="flex-1 overflow-y-auto p-8 bg-white relative">
-             {proposal?.status !== 'Approved' && !proposal?.isReadOnly && (
+             {proposal?.status !== 'Approved' && !proposal?.isReadOnly && (showPromoInput || appliedPromo) && (
                 <div className="max-w-xl mx-auto mb-10 pt-2">
                    {!appliedPromo ? (
                       <div className="flex flex-col gap-1 w-full relative">
@@ -350,7 +355,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                                    <span className="bg-emerald-200 text-emerald-900 font-bold tracking-tight text-xs px-2 py-0.5 rounded-full ml-1">-{appliedPromo.discount_percent}% off</span>
                                </p>
                             </div>
-                            <button onClick={() => setAppliedPromo(null)} className="text-emerald-700 hover:text-white bg-emerald-100 hover:bg-emerald-500 p-2 rounded-lg transition-colors shadow-sm ml-4 border border-transparent relative z-10" title="Remove Promo Code">
+                            <button onClick={() => { setAppliedPromo(null); setShowPromoInput(false); }} className="text-emerald-700 hover:text-white bg-emerald-100 hover:bg-emerald-500 p-2 rounded-lg transition-colors shadow-sm ml-4 border border-transparent relative z-10" title="Remove Promo Code">
                                <RefreshCcw size={16} />
                             </button>
                          </div>
