@@ -52,7 +52,6 @@ export default function DepositCollectionModal({ isOpen, onClose, contractData, 
                 total_contract_amount: totalAmount,
                 deposit_collected: depositAmount,
                 balance_due: Math.max(0, totalAmount - depositAmount),
-                amount: depositAmount, // the actual payment mapped to this record
                 payment_method: paymentMethod,
                 payment_reference: reference || null,
                 status: isPaidInFull ? 'Paid in Full' : 'Partial Payment',
