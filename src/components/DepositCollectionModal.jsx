@@ -12,8 +12,18 @@ export default function DepositCollectionModal({ isOpen, onClose, contractData, 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
-    const { proposal, tierName, tierData } = contractData || {};
-    const totalAmount = tierData?.salesPrice || proposal?.amount || 0;
+    const { proposal, tierName, tierData, appliedPromo } = contractData || {};
+    
+    const discountMultiplier = appliedPromo ? (1 - (appliedPromo.discount_percent / 100)) : 
+                               (proposal?.proposal_data?.applied_discount_percent ? (1 - (proposal.proposal_data.applied_discount_percent / 100)) : 
+                               (proposal?.applied_discount_percent ? (1 - (proposal.applied_discount_percent / 100)) : 1));
+
+    let totalAmount = 0;
+    if (tierData?.salesPrice) {
+        totalAmount = tierData.salesPrice * discountMultiplier;
+    } else {
+        totalAmount = proposal?.amount || 0;
+    }
 
     const paymentMethods = [
         { id: 'Credit Card', icon: CreditCard },

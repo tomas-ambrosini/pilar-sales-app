@@ -53,7 +53,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
        };
    }, [isOpen]);
 
-   let { proposal, tierName, tierData, date } = contractData || {};
+   let { proposal, tierName, tierData, date, appliedPromo } = contractData || {};
    
    if (!date) {
        date = proposal?.updated_at || proposal?.created_at 
@@ -336,7 +336,8 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                              const totalPrice = resolvedSystemsList && resolvedSystemsList.length > 0 
                                  ? resolvedSystemsList.reduce((sum, sys) => sum + (sys.tierData?.salesPrice || 0), 0)
                                  : (tierData?.salesPrice || 0);
-                             const discountPercent = proposal?.applied_discount_percent || 0;
+                             const discountPercent = proposal?.proposal_data?.applied_discount_percent || proposal?.applied_discount_percent || appliedPromo?.discount_percent || 0;
+                             const promoCode = proposal?.proposal_data?.applied_promo_code || proposal?.applied_promo_code || appliedPromo?.code || null;
                              const discountAmount = discountPercent ? totalPrice * (discountPercent / 100) : 0;
                              const finalPrice = totalPrice - discountAmount;
 
@@ -371,7 +372,7 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                                      {/* Discount Row (if discount exists) */}
                                      {discountAmount > 0 && (
                                          <div className="flex font-bold text-emerald-700 bg-emerald-50/50">
-                                              <div className="flex-1 px-3 py-2 border-r border-slate-300 text-right uppercase text-xs tracking-wider">Discount Applied (Promo: {proposal.applied_promo_code}):</div>
+                                              <div className="flex-1 px-3 py-2 border-r border-slate-300 text-right uppercase text-xs tracking-wider">Discount Applied (Promo: {promoCode}):</div>
                                               <div className="w-32 px-3 py-2 flex items-center justify-end gap-1 font-bold">
                                                   -$ <span>{discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                               </div>
