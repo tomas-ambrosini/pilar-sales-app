@@ -37,7 +37,7 @@ export default function Invoices({ isSubView = false }) {
                 .from('invoices')
                 .select(`
                     *,
-                    proposals ( id, customer, amount, status, proposal_data )
+                    proposals ( id, customer, amount, status, proposal_data, proposal_number, created_at, updated_at )
                 `)
                 .order('created_at', { ascending: false });
             
@@ -117,7 +117,7 @@ export default function Invoices({ isSubView = false }) {
                                             <td className="p-4 pl-6 text-slate-500 font-bold">{new Date(inv.created_at).toLocaleDateString()}</td>
                                             <td className="p-4 font-black text-slate-800 truncate max-w-[150px] group-hover:text-primary-600 transition-colors">{inv.proposals?.customer || 'Unknown Customer'}</td>
                                             <td className="p-4"><span className="font-mono font-bold text-slate-500 bg-slate-100/80 px-2 py-1 rounded-md text-[10px] tracking-wide">{inv.id.substring(0,6).toUpperCase()}</span></td>
-                                            <td className="p-4"><span className="font-mono font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-md text-[10px] tracking-wide border border-slate-100">{formatQuoteId({id: inv.proposal_id})}</span></td>
+                                            <td className="p-4"><span className="font-mono font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-md text-[10px] tracking-wide border border-slate-100">{formatQuoteId(inv.proposals || {id: inv.proposal_id})}</span></td>
                                             <td className="p-4">
                                                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${
                                                     inv.status === 'Paid in Full' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/50 shadow-sm shadow-emerald-500/10' : 
