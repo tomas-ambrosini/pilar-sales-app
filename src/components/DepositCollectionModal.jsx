@@ -55,7 +55,6 @@ export default function DepositCollectionModal({ isOpen, onClose, contractData, 
                 payment_method: paymentMethod,
                 payment_reference: reference || null,
                 status: isPaidInFull ? 'Paid in Full' : 'Partial Payment',
-                notes: `Initial Contract Deposit. Reference: ${reference || 'None'}.`,
                 due_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString() // Net 30 default
             };
 
