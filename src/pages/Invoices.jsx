@@ -4,6 +4,7 @@ import { Banknote, FileText, Search, Clock, CheckCircle2, AlertCircle, Eye, Tras
 import { formatQuoteId } from '../utils/formatters';
 import InvoiceDocument from '../components/InvoiceDocument';
 import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 export default function Invoices({ isSubView = false }) {
     const [invoices, setInvoices] = useState([]);
@@ -30,6 +31,20 @@ export default function Invoices({ isSubView = false }) {
         fetchInvoices();
     }, []);
 
+    useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        if (searchParams.get('action') === 'view_invoice' && searchParams.get('opp_id')) {
+            const oppId = searchParams.get('opp_id');
+            const targetInvoice = invoices.find(inv => inv.proposals?.associated_opportunity_id === oppId);
+            if (targetInvoice) {
+                setSelectedInvoice(targetInvoice);
+            } else {
+                toast.error('Invoice not found or not yet generated.');
+            }
+            window.history.replaceState(null, "", "/invoices");
+        }
+    }, [invoices]);
+
     const fetchInvoices = async () => {
         try {
             setLoading(true);
@@ -37,7 +52,7 @@ export default function Invoices({ isSubView = false }) {
                 .from('invoices')
                 .select(`
                     *,
-                    proposals ( id, customer, amount, status, proposal_data, proposal_number, created_at, updated_at )
+                    proposals ( id, customer, amount, status, proposal_data, proposal_number, created_at, updated_at, associated_opportunity_id )
                 `)
                 .order('created_at', { ascending: false });
             

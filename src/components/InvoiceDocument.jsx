@@ -17,9 +17,14 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
     const { customers } = useCustomers();
     const pdfRef = useRef(null);
 
-    // Find the customer from the global context using the invoice's customer_id or the nested proposal data
+    // Find the customer from the global context using the invoice's customer_id, or by tracing the proposal's opportunity back to the household
+    const oppId = invoice?.proposals?.associated_opportunity_id || invoice?.proposals?.proposal_data?.associated_opportunity_id;
     const effectiveCustomerId = invoice?.customer_id || invoice?.proposals?.proposal_data?.customer_id;
-    const customer = customers?.find(c => c.id === effectiveCustomerId) || null;
+    
+    const customer = customers?.find(c => 
+        c.id === effectiveCustomerId || 
+        (oppId && c.opportunities?.some(opp => opp.id === oppId))
+    ) || null;
     const primaryContact = customer?.raw?.contacts?.[0] || {};
     const primaryAddress = customer?.raw?.addresses?.find(a => a.is_primary_residence) || customer?.raw?.addresses?.[0] || {};
 
@@ -40,6 +45,30 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
 
     const isPaid = invoice.status === 'Paid in Full';
     const isPartial = invoice.status === 'Partial Payment';
+
+    const proposal = invoice.proposals || {};
+    const pData = proposal.proposal_data || {};
+    const tierName = pData.tierName || pData.selectedTier || 'good';
+    const tierData = pData.tierData || pData.tiers?.[tierName.toLowerCase()] || {};
+    
+    const finalPrice = parseFloat(invoice.total_contract_amount || invoice.amount) || 0;
+    const discountPercent = invoice.proposals?.applied_discount_percent || pData.applied_discount_percent || pData.applied_promo?.discount_percent || 0;
+    const originalPrice = discountPercent > 0 ? finalPrice / (1 - (discountPercent / 100)) : finalPrice;
+
+    let resolvedSystemsList = tierData?.systemsList;
+    if ((!resolvedSystemsList || resolvedSystemsList.length === 0) && pData.systemTiers && pData.systemTiers.length > 1) {
+        resolvedSystemsList = pData.systemTiers.map(sys => {
+            const matchedTierName = tierName.toLowerCase();
+            const td = sys.tiers?.[matchedTierName];
+            if (!td) return null;
+            return {
+                systemId: sys.systemId,
+                systemName: sys.systemName || sys.name || 'System',
+                tierName: tierName,
+                tierData: td
+            };
+        }).filter(Boolean);
+    }
 
     const handlePrint = () => {
         window.print();
@@ -176,12 +205,12 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                                     </div>
                                     <div className="flex border-b border-slate-200 pb-1">
                                         <span className="w-16 text-slate-500">Phone:</span> <span className="text-slate-600">{
-                                            primaryContact.primary_phone || invoice.proposals?.proposal_data?.contactPhone || ''
+                                            primaryContact.primary_phone || customer?.phone || invoice.proposals?.proposal_data?.contactPhone || ''
                                         }</span>
                                     </div>
                                     <div className="flex pb-1">
                                         <span className="w-16 text-slate-500">Email:</span> <span className="text-slate-600">{
-                                            primaryContact.email || invoice.proposals?.proposal_data?.contactEmail || ''
+                                            primaryContact.email || customer?.email || invoice.proposals?.proposal_data?.contactEmail || ''
                                         }</span>
                                     </div>
                                 </div>
@@ -201,46 +230,146 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                             </div>
                         </div>
 
-                        {/* Line Items */}
-                        <div className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
-                            <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
-                                <div className="w-32 px-3 py-1.5 border-r border-slate-300">Quote / PO#</div>
-                                <div className="flex-1 px-3 py-1.5 border-r border-slate-300">Description</div>
-                                <div className="w-32 px-3 py-1.5 text-center">Job Total</div>
-                            </div>
-                            <div className="flex flex-col bg-[#f8fafc]">
-                                <div className="flex border-b border-slate-200 group transition-colors hover:bg-slate-50/50">
-                                    <div className="w-32 px-3 py-3 border-r border-slate-300 text-slate-700 font-bold font-mono">
-                                        {formatQuoteId({id: invoice.proposal_id})}
+                        {/* Unit Info Box */}
+                        {(resolvedSystemsList && resolvedSystemsList.length > 0) ? (
+                            resolvedSystemsList.map((sys, idx) => (
+                                <div key={idx} className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
+                                    <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
+                                        <div className="w-32 px-3 py-1.5 border-r border-slate-300">Quote / PO#</div>
+                                        <div className="flex-1 px-3 py-1.5 border-r border-slate-300">{sys.systemName} - {templateConfig?.sectionTitles?.unitInfo || 'Unit Info'}</div>
+                                        <div className="w-32 px-3 py-1.5 text-center">Price</div>
                                     </div>
-                                    <div className="flex-1 px-3 py-3 border-r border-slate-300 text-slate-700 font-medium">
-                                        HVAC Equipment Installation / Service
-                                        <div className="text-[10px] text-slate-500 mt-1 italic">{invoice.notes || 'Contract execution per signed proposal.'}</div>
-                                    </div>
-                                    <div className="w-32 px-3 py-3 flex items-center justify-end gap-1 text-slate-800 font-bold text-sm">
-                                        $ <span>
-                                            {(() => {
-                                                const discountPercent = invoice.proposals?.applied_discount_percent || 0;
-                                                const finalPrice = parseFloat(invoice.total_contract_amount || invoice.amount) || 0;
-                                                const originalPrice = discountPercent > 0 ? finalPrice / (1 - (discountPercent / 100)) : finalPrice;
-                                                return originalPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                                            })()}
-                                        </span>
+                                    <div className="flex bg-[#f8fafc]">
+                                        <div className="w-32 px-3 py-3 border-r border-slate-300 text-slate-700 font-bold font-mono">
+                                        {formatQuoteId(proposal)}
+                                        </div>
+                                        <div className="flex-1 p-3 flex border-r border-slate-300">
+                                            <div className="flex-1 flex flex-col justify-between pr-4">
+                                                <div className="flex border-b border-slate-200 pb-1">
+                                                    <span className="w-20 text-slate-500">Model:</span> <span className="font-bold text-slate-800">{sys.tierName} Package</span>
+                                                </div>
+                                                <div className="flex border-b border-slate-200 pb-1">
+                                                    <span className="w-20 text-slate-500">Serial:</span> <span></span>
+                                                </div>
+                                                <div className="flex border-b border-slate-200 pb-1">
+                                                    <span className="w-20 text-slate-500">Efficiency:</span> <span className="text-slate-600">{sys.tierData?.seer ? `${sys.tierData.seer} SEER` : 'Standard Ratings'}</span>
+                                                </div>
+                                                <div className="flex border-b border-slate-200 pb-1">
+                                                    <span className="w-20 text-slate-500">Brand:</span> <span className="text-slate-600">{sys.tierData?.brand || 'Premium'} {sys.tierData?.series || ''}</span>
+                                                </div>
+                                                <div className="flex border-b border-slate-200 pb-1">
+                                                    <span className="w-20 text-slate-500">Dimensions:</span> <span className="text-slate-600">{sys.tierData?.tons ? `${sys.tierData.tons} Ton System` : 'Per Layout'}</span>
+                                                </div>
+                                                <div className="flex pb-1">
+                                                    <span className="w-20 text-slate-500">Type of Unit:</span> <span className="text-slate-600">{sys.tierData?.category || sys.tierData?.type || 'System Replacement'}</span>
+                                                </div>
+                                            </div>
+                                            <div className="w-40 border border-slate-300 bg-[#e2e8f0]/40 flex items-center justify-center text-slate-400 font-bold tracking-widest rounded mx-2 my-1 overflow-hidden p-1">
+                                                {sys.tierData?.image_url || sys.tierData?.image ? (
+                                                    <img src={sys.tierData.image_url || sys.tierData.image} alt={sys.systemName} className="object-contain w-full h-full" />
+                                                ) : (
+                                                    "PHOTO"
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="w-32 flex flex-col justify-end pb-3 text-center bg-[#f8fafc]">
+                                            <div className="px-3 flex items-center justify-end text-slate-800 gap-1 font-black text-lg">
+                                                $ <span>{(sys.tierData?.salesPrice || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
+                            ))
+                        ) : (
+                            <div className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
+                                <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
+                                    <div className="w-32 px-3 py-1.5 border-r border-slate-300">Quote / PO#</div>
+                                    <div className="flex-1 px-3 py-1.5 border-r border-slate-300">{templateConfig?.sectionTitles?.unitInfo || 'Unit Info'}</div>
+                                    <div className="w-32 px-3 py-1.5 text-center">Price</div>
+                                </div>
+                                <div className="flex bg-[#f8fafc]">
+                                    <div className="w-32 px-3 py-3 border-r border-slate-300 text-slate-700 font-bold font-mono">
+                                        {formatQuoteId(proposal)}
+                                    </div>
+                                    <div className="flex-1 p-3 flex border-r border-slate-300">
+                                        <div className="flex-1 flex flex-col justify-between pr-4">
+                                            <div className="flex border-b border-slate-200 pb-1">
+                                                <span className="w-20 text-slate-500">Model:</span> <span className="font-bold text-slate-800">{tierName} Package</span>
+                                            </div>
+                                            <div className="flex border-b border-slate-200 pb-1">
+                                                <span className="w-20 text-slate-500">Serial:</span> <span></span>
+                                            </div>
+                                            <div className="flex border-b border-slate-200 pb-1">
+                                                <span className="w-20 text-slate-500">Efficiency:</span> <span className="text-slate-600">{tierData?.seer ? `${tierData.seer} SEER` : 'Standard Ratings'}</span>
+                                            </div>
+                                            <div className="flex border-b border-slate-200 pb-1">
+                                                <span className="w-20 text-slate-500">Brand:</span> <span className="text-slate-600">{tierData?.brand || 'Premium'} {tierData?.series || ''}</span>
+                                            </div>
+                                            <div className="flex border-b border-slate-200 pb-1">
+                                                <span className="w-20 text-slate-500">Dimensions:</span> <span className="text-slate-600">{tierData?.tons ? `${tierData.tons} Ton System` : 'Per Layout'}</span>
+                                            </div>
+                                            <div className="flex pb-1">
+                                                <span className="w-20 text-slate-500">Type of Unit:</span> <span className="text-slate-600">{tierData?.category || tierData?.type || 'System Replacement'}</span>
+                                            </div>
+                                        </div>
+                                        <div className="w-40 border border-slate-300 bg-[#e2e8f0]/40 flex items-center justify-center text-slate-400 font-bold tracking-widest rounded mx-2 my-1 overflow-hidden p-1">
+                                            {tierData?.image_url || tierData?.image ? (
+                                                <img src={tierData.image_url || tierData.image} alt="Unit photo" className="object-contain w-full h-full" />
+                                            ) : (
+                                                "PHOTO"
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="w-32 flex flex-col justify-end pb-3 text-center bg-[#f8fafc]">
+                                        <div className="px-3 flex items-center justify-end text-slate-800 gap-1 font-black text-lg">
+                                            $ <span>{originalPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Materials & Labor */}
+                        <div className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
+                             <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
+                                <div className="flex-1 px-3 py-1.5">Materials & Labor / Subs needed</div>
+                            </div>
+                            <div className="flex flex-col bg-[#f8fafc]">
+                                 {(() => {
+                                     const extractedAddons = resolvedSystemsList && resolvedSystemsList.length > 0
+                                         ? resolvedSystemsList.flatMap(sys => (sys.tierData?.features || []).filter(f => f.includes('Includes:')).map(f => `[${sys.systemName}] ${f.replace('Includes:', '').trim()}`))
+                                         : (tierData?.features || []).filter(f => f.includes('Includes:')).map(f => f.replace('Includes:', '').trim());
+                                         
+                                     const allMaterials = [...(templateConfig?.materials || []), ...extractedAddons].filter(Boolean);
+                                     
+                                     return (
+                                         <>
+                                             {allMaterials.length > 0 ? (
+                                                 allMaterials.map((f, i) => {
+                                                     return (
+                                                     <div key={i} className="flex border-b border-slate-200 group transition-colors hover:bg-slate-50/50">
+                                                          <div className="flex-1 px-3 py-2 flex items-center gap-2 text-slate-700 font-medium">
+                                                              <div className="w-1.5 h-1.5 bg-slate-400 rounded-full shrink-0"></div>
+                                                              <span className="w-full">{f}</span>
+                                                          </div>
+                                                     </div>
+                                                 )})
+                                             ) : (
+                                                 <div className="p-4 text-center text-slate-500 italic text-sm">
+                                                     Standard Installation Package (No Additional Materials Specified)
+                                                 </div>
+                                             )}
+                                         </>
+                                     );
+                                 })()}
                             </div>
                         </div>
 
                         {/* Totals Section */}
                         <div className="flex justify-between items-start mb-6 print-safe-block">
-                            {(() => {
-                                const discountPercent = invoice.proposals?.applied_discount_percent || 0;
-                                const promoCode = invoice.proposals?.applied_promo_code;
-                                const finalPrice = parseFloat(invoice.total_contract_amount || invoice.amount) || 0;
-                                
-                                // originalPrice = finalPrice / (1 - discountPercent / 100)
-                                const originalPrice = discountPercent > 0 ? finalPrice / (1 - (discountPercent / 100)) : finalPrice;
-                                const discountAmount = originalPrice - finalPrice;
+                                {(() => {
+                                    const promoCode = invoice.proposals?.applied_promo_code || pData.applied_promo_code || pData.applied_promo?.code || '';
+                                    const discountAmount = originalPrice - finalPrice;
 
                                 return (
                                     <>
@@ -274,7 +403,9 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                                             {/* Discount Row (if discount exists) */}
                                             {discountPercent > 0 && (
                                                 <div className="flex border-b border-slate-200 bg-emerald-50/50">
-                                                    <div className="flex-1 px-3 py-2 text-right uppercase text-[10px] tracking-wider text-emerald-700 font-bold">Discount (Promo: {promoCode}):</div>
+                                                    <div className="flex-1 px-3 py-2 text-right uppercase text-[10px] tracking-wider text-emerald-700 font-bold">
+                                                        Discount {promoCode ? `(${promoCode} - ${discountPercent}%)` : `(${discountPercent}%)`}:
+                                                    </div>
                                                     <div className="w-32 px-3 py-2 text-right font-bold text-emerald-700">
                                                         -${discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                                     </div>

@@ -98,6 +98,12 @@ export default function DepositCollectionModal({ isOpen, onClose, contractData, 
             };
             await supabase.from('work_orders').insert([workOrderData]);
 
+            // Formally advance the Sales Opportunity to the Dispatch Calendar queue
+            const oppId = proposal.associated_opportunity_id || proposal.proposal_data?.associated_opportunity_id;
+            if (oppId) {
+                await supabase.from('opportunities').update({ status: 'NEEDS_SCHEDULING' }).eq('id', oppId);
+            }
+
             if (onSuccess) {
                 onSuccess(depositAmount, updatedProposalData);
             }

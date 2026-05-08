@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, ShieldAlert, LogOut, LayoutDashboard, Users, BookOpen, FileCheck, FileText, ClipboardList, Megaphone, DollarSign, Settings, Bell, Search, Truck, MessageCircle, CheckSquare } from 'lucide-react';
+import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, ShieldAlert, LogOut, LayoutDashboard, Users, BookOpen, FileCheck, FileText, ClipboardList, Megaphone, DollarSign, Settings, Bell, Search, Truck, CalendarClock, MessageCircle, CheckSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
@@ -30,11 +30,12 @@ const navGroups = [
     ]
   },
   {
-    title: 'Operations ERP (Legacy)',
+    title: 'Operations ERP',
     allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
     items: [
       { path: '/pipeline', label: 'Pipeline Ops', icon: ClipboardList, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
-      { path: '/dispatch', label: 'Dispatch', icon: Truck, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] }
+      { path: '/dispatch', label: 'Dispatch Hub', icon: Truck, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+      { path: '/dispatch/calendar', label: 'Dispatch Calendar', icon: CalendarClock, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] }
     ]
   }
 ];
@@ -191,6 +192,7 @@ export default function Layout() {
                     <NavLink
                       key={item.path}
                       to={item.path}
+                      end={item.path === '/' || item.path === '/dispatch'}
                       className={({ isActive }) => `nav-link group ${isActive ? 'active' : ''}`}
                     >
                       <item.icon className="nav-icon shrink-0" size={24} />

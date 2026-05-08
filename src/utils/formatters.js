@@ -9,8 +9,17 @@ export const formatQuoteId = (proposal) => {
          return String(proposal.proposal_number);
     } else if (proposal.proposal_number) {
          rawId = String(proposal.proposal_number);
-    } else if (proposal.id) {
-         rawId = String(proposal.id);
+    } else {
+        // Only format Lead status as LEAD-xxx if there is no official proposal_number
+        if (proposal.status === 'Lead') {
+            const oppId = proposal.associated_opportunity_id || proposal.id;
+            if (oppId && String(oppId).length > 10) {
+                return `LEAD-${String(oppId).substring(0, 6).toUpperCase()}`;
+            }
+        }
+        if (proposal.id) {
+            rawId = String(proposal.id);
+        }
     }
     
     if (!rawId) return 'UNKNOWN';
@@ -24,6 +33,6 @@ export const formatQuoteId = (proposal) => {
         return `P${year}-${rawId.padStart(6, '0')}-TEST`;
     }
     
-    // If it's a long UUID
-    return `P${year}-${rawId.substring(0, 8).toUpperCase()}-TEST`;
+    // If it's a long UUID (which means it is an Opportunity that has not yet been assigned a Proposal Number)
+    return `LEAD-${rawId.substring(0, 6).toUpperCase()}`;
 };

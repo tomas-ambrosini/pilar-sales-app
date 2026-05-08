@@ -297,9 +297,11 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                    <Printer size={16} />
                    <span>Export PDF</span>
                 </button>
-                <button onClick={() => setShowPromoInput(!showPromoInput)} className={`p-2 rounded-full border transition-colors print-hidden ${showPromoInput || appliedPromo ? 'bg-primary-50 text-primary-600 border-primary-200' : 'text-slate-400 hover:text-slate-800 bg-white border-slate-200'}`} title="Apply Promo Code">
-                   <Tag size={20} />
-                </button>
+                {!proposal?.isReadOnly && (
+                    <button onClick={() => setShowPromoInput(!showPromoInput)} className={`p-2 rounded-full border transition-colors print-hidden ${showPromoInput || appliedPromo ? 'bg-primary-50 text-primary-600 border-primary-200' : 'text-slate-400 hover:text-slate-800 bg-white border-slate-200'}`} title="Apply Promo Code">
+                       <Tag size={20} />
+                    </button>
+                )}
                 {onBack && (
                    <button onClick={onBack} className="p-2 text-slate-400 hover:text-slate-800 bg-white rounded-full border border-slate-200 transition-colors print-hidden" title="Back to Details">
                       <ArrowLeft size={20} />

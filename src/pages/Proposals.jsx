@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { computeCommission, getRetailFromBest, getFloorPrice } from '../utils/pricing';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
@@ -64,14 +64,19 @@ export default function Proposals() {
   const { user } = useAuth();
   const { proposals, addProposal, updateProposal, deleteProposal, loading } = useProposals();
   const { customers } = useCustomers();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showWizard, setShowWizard] = useState(false);
   const [wizardConfig, setWizardConfig] = useState(null);
   const [inspectingProposal, setInspectingProposal] = useState(null);
+  const deepLinkHandled = useRef('');
 
   useEffect(() => {
+     if (loading) return;
+     const searchString = searchParams.toString();
+     if (searchString && deepLinkHandled.current === searchString) return;
+
      const draftCustStr = localStorage.getItem('pilar_draft_customer');
-     if (draftCustStr) {
+     if (draftCustStr && searchParams.get('action') !== 'resume_opp') {
          try {
             const draftCust = JSON.parse(draftCustStr);
             setWizardConfig({
@@ -83,27 +88,113 @@ export default function Proposals() {
                 proposal_data: { associated_opportunity_id: draftCust.id || draftCust.dbId }
             });
             setShowWizard(true);
+            deepLinkHandled.current = searchString;
          } catch(e){}
          localStorage.removeItem('pilar_draft_customer');
      } else if (searchParams.get('action') === 'new') {
          setShowWizard(true);
          setWizardConfig(true);
+         deepLinkHandled.current = searchString;
          window.history.replaceState({}, document.title, window.location.pathname);
      } else if (searchParams.get('action') === 'resume' && searchParams.get('id')) {
-         const id = searchParams.get('id');
-         const targetProposal = proposals.find(p => p.id === id);
-         if (targetProposal && targetProposal.status === 'Draft') {
-             if (targetProposal.created_by && targetProposal.created_by !== user?.id) {
-                 toast.error('Access Denied: This draft is locked by its creator.');
-                 window.history.replaceState({}, document.title, window.location.pathname);
-                 return;
+         const checkResume = async () => {
+             const id = searchParams.get('id');
+             let targetProposal = proposals.find(p => p.id === id);
+             
+             if (!targetProposal) {
+                 const { data } = await supabase.from('proposals').select('*').eq('id', id).single();
+                 if (data) targetProposal = data;
              }
-             setWizardConfig({ id: targetProposal.id, ...targetProposal });
-             setShowWizard(true);
+
+             if (targetProposal && ['Lead', 'Draft', 'Sent', 'Opened'].includes(targetProposal.status)) {
+                 if (['Lead', 'Draft'].includes(targetProposal.status) && targetProposal.created_by && targetProposal.created_by !== user?.id) {
+                     toast.error('Access Denied: This draft is locked by its creator.');
+                     window.history.replaceState(null, "", "/proposals");
+                     return;
+                 }
+                 setWizardConfig({ id: targetProposal.id, ...targetProposal });
+                 setShowWizard(true);
+                 deepLinkHandled.current = searchString;
+             }
+             window.history.replaceState(null, "", "/proposals");
+         };
+         checkResume();
+     } else if (searchParams.get('action') === 'resume_opp' && searchParams.get('opp_id')) {
+         const checkOpp = async () => {
+             const oppId = searchParams.get('opp_id');
+             let targetProposal = proposals.find(p => p.proposal_data?.associated_opportunity_id === oppId);
+             
+             if (!targetProposal) {
+                 const { data } = await supabase.from('proposals').select('*').eq('associated_opportunity_id', oppId).order('created_at', { ascending: false }).limit(1).single();
+                 if (data) targetProposal = data;
+             }
+
+             if (targetProposal && ['Lead', 'Draft', 'Sent', 'Opened'].includes(targetProposal.status)) {
+                 if (['Lead', 'Draft'].includes(targetProposal.status) && targetProposal.created_by && targetProposal.created_by !== user?.id) {
+                     toast.error('Access Denied: This draft is locked by its creator.');
+                     window.history.replaceState(null, "", "/proposals");
+                     return;
+                 }
+                 setWizardConfig({ id: targetProposal.id, step: targetProposal.proposal_data?.wizard_state?.step || 2, isDraft: true, ...targetProposal });
+                 setShowWizard(true);
+                 deepLinkHandled.current = searchString;
+             } else {
+                 const draftCustStr = localStorage.getItem('pilar_draft_customer');
+                 if (draftCustStr) {
+                     try {
+                         const draftCust = JSON.parse(draftCustStr);
+                         setWizardConfig({
+                             isDraft: true,
+                             step: 2,
+                             selectedCustomerId: draftCust.household_id || draftCust.customer_id || '',
+                             selectedLocationId: draftCust.site_survey_data?.property_id || '',
+                             survey: draftCust.site_survey_data || null,
+                             proposal_data: { associated_opportunity_id: draftCust.id || oppId }
+                         });
+                         setShowWizard(true);
+                         deepLinkHandled.current = searchString;
+                     } catch(e){}
+                 }
+             }
+
+             // Use native history API to strip URL params without triggering a React Router re-render cycle
+             // This guarantees the modal state batch is NOT aborted.
+             setTimeout(() => {
+                 localStorage.removeItem('pilar_draft_customer');
+                 window.history.replaceState(null, '', '/proposals');
+             }, 50);
+         };
+         checkOpp();
+     } else if (searchParams.get('action') === 'view_proposal' && searchParams.get('opp_id')) {
+         const oppId = searchParams.get('opp_id');
+         const targetProposal = proposals.find(p => p.proposal_data?.associated_opportunity_id === oppId);
+         if (targetProposal) {
+             setViewingProposal(['Approved', 'Lost', 'Voided'].includes(targetProposal.status) ? { ...targetProposal, isReadOnly: true } : targetProposal);
+             deepLinkHandled.current = searchString;
+         } else {
+             toast.error('Proposal not found or still generating.');
          }
-         window.history.replaceState({}, document.title, window.location.pathname);
+         window.history.replaceState(null, "", "/proposals");
+     } else if (searchParams.get('action') === 'view_contract' && searchParams.get('opp_id')) {
+         const oppId = searchParams.get('opp_id');
+         const targetProposal = proposals.find(p => p.proposal_data?.associated_opportunity_id === oppId);
+         if (targetProposal && (targetProposal.status === 'Approved' || targetProposal.proposal_data?.accepted_tier_name || targetProposal.proposal_data?.accepted_tier_data)) {
+             const matchedTierName = targetProposal.proposal_data?.accepted_tier_name || ['good', 'better', 'best'].find(t => targetProposal.proposal_data?.tiers?.[t]?.salesPrice === targetProposal.amount) || 'good';
+             const matchedTierData = targetProposal.proposal_data?.accepted_tier_data || targetProposal.proposal_data?.tiers?.[matchedTierName];
+             
+             setViewingContract({
+                 proposal: targetProposal,
+                 tierName: matchedTierName?.toUpperCase() || 'SYSTEM',
+                 tierData: matchedTierData || {},
+                 date: new Date(targetProposal.updated_at || targetProposal.created_at).toLocaleDateString()
+             });
+             deepLinkHandled.current = searchString;
+         } else {
+             toast.error('Contract not found. Deal might not be signed yet.');
+         }
+         window.history.replaceState(null, "", "/proposals");
      }
-  }, [searchParams, proposals, user]);
+  }, [searchParams, proposals, user, loading]);
 
   const [viewingProposal, setViewingProposal] = useState(null);
   const [viewingContract, setViewingContract] = useState(null);
@@ -262,6 +353,7 @@ export default function Proposals() {
              if (opp.data?.household_id) {
                  await supabase.from('activity_logs').insert({
                      household_id: opp.data.household_id,
+                     opportunity_id: proposal.proposal_data.associated_opportunity_id,
                      activity_type: 'Quote Sent',
                      description: `Proposal link copied to clipboard. Status advanced to Sent.`
                  });
@@ -289,6 +381,7 @@ export default function Proposals() {
              if (opp.data?.household_id) {
                  await supabase.from('activity_logs').insert({
                      household_id: opp.data.household_id,
+                     opportunity_id: proposal.proposal_data.associated_opportunity_id,
                      activity_type: 'Quote Sent',
                      description: `Proposal triggered via Mailto protocol. Status advanced to Sent.`
                  });
@@ -383,6 +476,7 @@ ${equipmentNotes}
                  // 4. Inject Verified Paper Trail to Customer CRM File
                  await supabase.from('activity_logs').insert({
                      household_id: oppRow.household_id,
+                     opportunity_id: oppRow.id,
                      activity_type: 'Contract Executed (Pending Approval)',
                      description: `Client signed Digital Contract for ${tierName} System. Awaiting Manager Approval in Operations.`,
                      is_pinned_alert: true
@@ -655,7 +749,7 @@ ${equipmentNotes}
 
                                               <div className="mt-auto flex flex-col justify-end gap-1 border-t border-slate-100 pt-2 h-[68px]" onClick={e => e.stopPropagation()}>
                                                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity h-7">
-                                                    {['super_admin', 'admin'].includes((user?.role || '').toLowerCase()) && (
+                                                    {['super_admin', 'admin'].includes((user?.role || '').toLowerCase()) && ['Draft', 'Lead'].includes(proposal.status) && (
                                                        <button className="p-1.5 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" onClick={() => handleDeleteOpen(proposal)} title="Force Delete"><Trash2 size={14} /></button>
                                                     )}
                                                     {['Sent', 'Opened'].includes(proposal.status) && (
@@ -675,9 +769,20 @@ ${equipmentNotes}
                                                     )}
                                                     <button onClick={() => handleCopyMessage(proposal)} className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-50 rounded transition-colors" title="Copy Message"><Copy size={14} /></button>
                                                  </div>
-                                                 <div className="flex justify-end h-7 w-full">
+                                                 <div className={`flex justify-end h-7 w-full ${proposal.status === 'Approved' ? 'gap-2' : ''}`}>
+                                                    {proposal.status === 'Approved' && (
+                                                        <button 
+                                                            className="flex items-center justify-center text-[10px] font-black px-4 py-1.5 rounded-md shadow-sm transition-all focus:ring-2 outline-none bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-300"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setViewingProposal({ ...proposal, isReadOnly: true });
+                                                            }}
+                                                        >
+                                                            Proposal
+                                                        </button>
+                                                    )}
                                                     <button 
-                                                    className={`ml-auto flex items-center justify-center text-[10px] font-black px-4 py-1.5 rounded-md shadow-sm transition-all focus:ring-2 outline-none ${
+                                                    className={`${proposal.status !== 'Approved' ? 'ml-auto' : ''} flex items-center justify-center text-[10px] font-black px-4 py-1.5 rounded-md shadow-sm transition-all focus:ring-2 outline-none ${
                                                         proposal.status === 'Approved' ? 'bg-emerald-500 text-white hover:bg-emerald-600' :
                                                         proposal.status === 'Sent' ? 'bg-blue-600 text-white hover:bg-blue-700' :
                                                         proposal.status === 'Lost' ? 'bg-red-50 text-red-600 hover:bg-red-100 shadow-none border border-red-200' :
@@ -705,6 +810,19 @@ ${equipmentNotes}
                                                             } else {
                                                                 handleReopen(proposal);
                                                             }
+                                                        } else if (proposal.status === 'Lead') {
+                                                            if (proposal.is_lead) {
+                                                                setWizardConfig({
+                                                                    isDraft: true,
+                                                                    step: 2,
+                                                                    selectedCustomerId: proposal.proposal_data?.household_id || '',
+                                                                    selectedLocationId: proposal.proposal_data?.service_address_id || '',
+                                                                    proposal_data: { associated_opportunity_id: proposal.associated_opportunity_id }
+                                                                });
+                                                            } else {
+                                                                setWizardConfig({ id: proposal.id, ...proposal, isDraft: true, step: proposal.proposal_data?.wizard_state?.step || 2 });
+                                                            }
+                                                            setShowWizard(true);
                                                         } else {
                                                            setViewingProposal(['Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
                                                         }
@@ -912,6 +1030,14 @@ ${equipmentNotes}
                                  </div>
 
                                  {/* Main Action Button */}
+                                 {proposal.status === 'Approved' && (
+                                    <button 
+                                      className="flex items-center justify-center gap-1.5 text-xs font-black py-2.5 rounded-lg shrink-0 w-[110px] shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-300 ml-2 mr-2"
+                                      onClick={() => setViewingProposal({ ...proposal, isReadOnly: true })}
+                                    >
+                                       Proposal
+                                    </button>
+                                 )}
                                  <button 
                                    className={`flex items-center justify-center gap-1.5 text-xs font-black py-2.5 rounded-lg shrink-0 w-[110px] shadow-sm transition-all focus:ring-2 focus:ring-offset-1 outline-none ${
                                        proposal.status === 'Lead'
@@ -1186,6 +1312,20 @@ ${equipmentNotes}
         contractData={collectingDeposit}
         onSuccess={(amount, updatedProposalData) => {
             toast.success(`Recorded $${amount.toLocaleString()} deposit payment successfully!`);
+            
+            const oppId = collectingDeposit?.proposal?.proposal_data?.associated_opportunity_id;
+            if (oppId) {
+                supabase.from('opportunities').select('household_id').eq('id', oppId).single().then(({ data: oppRow }) => {
+                    if (oppRow?.household_id) {
+                        supabase.from('activity_logs').insert({
+                            household_id: oppRow.household_id,
+                            opportunity_id: oppId,
+                            activity_type: 'Deposit Collected',
+                            description: `Recorded $${amount.toLocaleString()} deposit payment. Pending contract execution.`
+                        }).then();
+                    }
+                });
+            }
             
             if (updatedProposalData) {
                 updateProposal(collectingDeposit.proposal.id, { proposal_data: updatedProposalData });

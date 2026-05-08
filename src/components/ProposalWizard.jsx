@@ -9,7 +9,7 @@ import { Check, Image as ImageIcon, Layers, Tag, DollarSign, Calculator, AlertTr
 
 export default function ProposalWizard({ onComplete, addProposal, updateProposal, editModeData }) {
   const hasPreloadedData = typeof editModeData === 'object' && editModeData !== null;
-  const isDraftLaunch = hasPreloadedData && (editModeData.isDraft === true || editModeData.status === 'Draft');
+  const isDraftLaunch = hasPreloadedData && (editModeData.isDraft === true || editModeData.status === 'Draft' || editModeData.status === 'Lead');
   const isEditing = hasPreloadedData && editModeData.id != null && !isDraftLaunch;
   const editingId = isEditing ? editModeData.id : null;
 
@@ -39,10 +39,11 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const [step, setStep] = useState(() => {
      if (isEditing) return 6;
      if (isDraftLaunch) {
+         if (editModeData.step) return editModeData.step;
          const savedStep = editModeData.proposal_data?.wizard_state?.step;
          return typeof savedStep === 'number' && savedStep > 0 ? savedStep : 1;
      }
-     return 1;
+     return editModeData?.step || 1;
   });
   const { customers } = useCustomers();
   const { user } = useAuth();
@@ -136,8 +137,11 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                 setDraftServerId(newDraft.id);
             }
         } else {
+            const currentStatus = editModeData?.status || 'Lead';
+            const updatedStatus = ['Lead', 'Draft'].includes(currentStatus) ? 'Draft' : currentStatus;
             await updateProposal(draftServerId, {
                 customer: customerName,
+                status: updatedStatus,
                 proposal_data: draftPayload,
                 associated_opportunity_id: draftPayload.associated_opportunity_id,
                 updated_at: new Date().toISOString()
@@ -158,7 +162,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
       syncTimer.current = setTimeout(async () => {
          const draftPayload = {
             wizard_state: { step, selectedCustomerId, selectedLocationId, systems },
-            associated_opportunity_id: editModeData?.associated_opportunity_id || null
+            associated_opportunity_id: editModeData?.associated_opportunity_id || editModeData?.proposal_data?.associated_opportunity_id || null
          };
          
          const customerName = selectedCustomerId 
@@ -185,8 +189,11 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                 }
              }
          } else {
+             const currentStatus = editModeData?.status || 'Lead';
+             const updatedStatus = ['Lead', 'Draft'].includes(currentStatus) ? 'Draft' : currentStatus;
              await updateProposal(draftServerId, {
                  customer: customerName,
+                 status: updatedStatus,
                  proposal_data: draftPayload,
                  associated_opportunity_id: draftPayload.associated_opportunity_id,
                  updated_at: new Date().toISOString()
@@ -224,8 +231,11 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                }
             } catch(e) {}
         } else {
-            // Failsafe
-            setStep(1);
+            // Failsafe / New Lead Initialization
+            if (editModeData.selectedCustomerId) setSelectedCustomerId(editModeData.selectedCustomerId);
+            if (editModeData.selectedLocationId) setSelectedLocationId(editModeData.selectedLocationId);
+            if (editModeData.step) setStep(editModeData.step);
+            else setStep(1);
         }
     }
   }, [hasPreloadedData, editModeData]);
@@ -544,6 +554,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
     const wizardState = { step: 6, selectedCustomerId, selectedLocationId, systems };
 
+    const existingOppId = editModeData?.proposal_data?.associated_opportunity_id || editModeData?.associated_opportunity_id;
+
     if (isEditing) {
        const oppId = editModeData.proposal_data?.associated_opportunity_id;
        const linkedProposalData = { ...finalProposalData, associated_opportunity_id: oppId, wizard_state: wizardState };
@@ -554,10 +566,24 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        if (oppId) {
           supabase.from('opportunities').update({ proposal_data: linkedProposalData }).eq('id', oppId).then();
        }
+    } else if (existingOppId && targetHouseholdId) {
+       const linkedProposalData = { ...finalProposalData, associated_opportunity_id: existingOppId, wizard_state: wizardState };
+       
+       await supabase.from('opportunities').update({
+           status: 'SENT',
+           site_survey_data: { ...survey, photos: photos, property_id: selectedProp?.id, property_address: propAddressString },
+           proposal_data: linkedProposalData
+       }).eq('id', existingOppId);
+
+       if (draftServerId) {
+          updateProposal(draftServerId, { customer: customerName, amount: finalAmount, status: 'Sent', associated_opportunity_id: existingOppId, proposal_data: linkedProposalData, updated_at: new Date().toISOString() });
+       } else {
+          addProposal({ customer: customerName, amount: finalAmount, associated_opportunity_id: existingOppId, proposal_data: linkedProposalData });
+       }
     } else if (targetHouseholdId) {
        const { data: oppData, error: oppError } = await supabase.from('opportunities').insert({
            household_id: targetHouseholdId,
-           status: 'Proposal Sent', urgency_level: 'Medium',
+           status: 'SENT', urgency_level: 'Medium',
            issue_description: `Auto-generated Digital Proposal with 3 Tiers for ${propAddressString}.`,
            site_survey_data: { ...survey, photos: photos, property_id: selectedProp?.id, property_address: propAddressString },
            proposal_data: { ...finalProposalData, wizard_state: wizardState }
@@ -579,6 +605,18 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        } else {
           addProposal({ customer: customerName, amount: finalAmount, proposal_data: { ...finalProposalData, wizard_state: wizardState } });
        }
+    }
+    
+    // Auto-Log: Deal Proposed / Draft Updated
+    const finalOppIdToLog = isEditing ? (editModeData?.proposal_data?.associated_opportunity_id || editModeData?.associated_opportunity_id) : (existingOppId || (typeof oppData !== 'undefined' ? oppData?.id : null));
+    const hIdToLog = targetHouseholdId || editModeData?.household_id;
+    if (finalOppIdToLog && hIdToLog) {
+        supabase.from('activity_logs').insert({
+            household_id: hIdToLog,
+            opportunity_id: finalOppIdToLog,
+            activity_type: isEditing ? 'Proposal Updated' : 'Deal Proposed',
+            description: isEditing ? 'Sales representative modified the active proposal draft.' : 'Digital proposal finalized and marked as Sent.'
+        }).then();
     }
     
     localStorage.removeItem('pilar_wizard_draft');
@@ -1228,10 +1266,11 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
             <div className="flex justify-between mt-10 pt-4 border-t border-slate-100 relative">
                <button className="btn-secondary flex items-center justify-center gap-2 w-max" onClick={() => setStep(4)}><ArrowLeft size={16}/> Back</button>
-               
-
-
-               <button className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded font-bold flex items-center gap-2 shadow-lg" onClick={() => setStep(6)}>Finalize Transaction <ArrowRight size={16}/></button>
+               <button 
+                  disabled={!systems.some(s => s.selectedTiers.best || s.selectedTiers.better || s.selectedTiers.good)}
+                  className={`px-6 py-2 rounded font-bold flex items-center gap-2 shadow-lg ${!systems.some(s => s.selectedTiers.best || s.selectedTiers.better || s.selectedTiers.good) ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-primary-500 hover:bg-primary-600 text-white'}`} 
+                  onClick={() => setStep(6)}
+               >Finalize Transaction <ArrowRight size={16}/></button>
             </div>
           </div>
         )}

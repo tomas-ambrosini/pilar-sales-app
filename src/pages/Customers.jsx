@@ -11,6 +11,7 @@ import ContractDocumentModal from '../components/ContractDocumentModal';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import { PIPELINE_STATES } from '../utils/pipelineControls';
+import { formatQuoteId } from '../utils/formatters';
 
 function CustomerList() {
   const navigate = useNavigate();
@@ -633,7 +634,7 @@ function CustomerDetail() {
                          <div className="absolute left-1 top-4 bottom-[-16px] w-[2px] bg-slate-100 last:hidden"></div>
                          <div className="flex justify-between items-center mb-1">
                             <span className="font-bold text-sm text-slate-700">{opp.status}</span>
-                            <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 font-mono leading-none flex items-center justify-center">#{opp.id.substring(0,8).toUpperCase()}</span>
+                            <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 font-mono leading-none flex items-center justify-center">{formatQuoteId(opp)}</span>
                          </div>
                          <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{opp.issue_description || 'No issue description recorded'}</p>
                       </div>
@@ -682,7 +683,7 @@ function CustomerDetail() {
                         }
                  }}>
                     <div className="flex justify-between items-start mb-2">
-                       <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">{prop.id}</span>
+                       <span className="font-mono text-xs font-bold text-slate-500 uppercase tracking-wide">{formatQuoteId(prop)}</span>
                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${prop.status === 'Approved' ? 'bg-success-100 text-success-800' : prop.status === 'Sent' ? 'bg-secondary-100 text-secondary-800' : 'bg-slate-100 text-slate-600'}`}>{prop.status}</span>
                     </div>
                     <div className="text-lg font-bold text-slate-800 mb-1">${(prop.amount || 0).toLocaleString()}</div>
@@ -714,7 +715,12 @@ function CustomerDetail() {
             <button className="btn-secondary" onClick={() => setIsCreateProposalOpen(false)}>
               Cancel
             </button>
-            <button className="btn-primary" onClick={() => navigate('/proposals')}>
+            <button className="btn-primary" onClick={() => {
+                localStorage.setItem('pilar_draft_customer', JSON.stringify({
+                    household_id: customer.id
+                }));
+                navigate('/proposals');
+            }}>
               Go to Wizard
             </button>
           </div>

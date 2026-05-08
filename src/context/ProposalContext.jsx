@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
-import { PipelineController } from '../utils/pipelineControls';
+import { PipelineController, PIPELINE_STATES } from '../utils/pipelineControls';
 import toast from 'react-hot-toast';
 import { useAuth } from './AuthContext';
 
@@ -30,9 +30,42 @@ export function ProposalProvider({ children }) {
             }
 
             const { data, error } = await query;
-
             if (error) throw error;
-            if (data) setProposals(data);
+
+            // Fetch Opportunities that are NEW_LEAD and SALES type
+            const { data: leadData, error: leadErr } = await supabase
+                .from('opportunities')
+                .select(`id, urgency_level, issue_description, created_at, proposal_data, household_id, households(id, household_name)`)
+                .in('status', [PIPELINE_STATES.NEW_LEAD, PIPELINE_STATES.QUOTING])
+                .eq('is_active', true);
+
+            if (leadErr) console.warn("Failed to fetch leads for proposals: ", leadErr.message);
+
+            let allData = data || [];
+            
+            if (leadData) {
+                const mappedLeads = leadData
+                    .filter(opp => opp.proposal_data?.type !== 'SERVICE')
+                    .filter(opp => !allData.some(p => p.associated_opportunity_id === opp.id || p.proposal_data?.associated_opportunity_id === opp.id))
+                    .map(opp => ({
+                    id: opp.id, // Using opportunity ID as proposal ID for lead cards
+                    is_lead: true,
+                    status: 'Lead',
+                    customer: opp.households?.household_name || 'Unknown',
+                    amount: 0,
+                    date: new Date(opp.created_at).toISOString(),
+                    created_at: opp.created_at,
+                    associated_opportunity_id: opp.id,
+                    proposal_data: {
+                        urgency: opp.urgency_level,
+                        notes: opp.issue_description,
+                        household_id: opp.household_id || opp.households?.id
+                    }
+                }));
+                allData = [...mappedLeads, ...allData];
+            }
+
+            setProposals(allData);
         } catch (error) {
             console.error('Error fetching proposals:', error.message);
             toast.error('Failed to sync pipeline visibility.');
@@ -63,7 +96,7 @@ export function ProposalProvider({ children }) {
         const newId = crypto.randomUUID();
         const newDraft = {
             id: newId,
-            status: 'Draft',
+            status: draftData.status || 'Draft',
             customer: draftData.customer || 'Unknown Customer',
             amount: draftData.amount || 0,
             associated_opportunity_id: draftData.associated_opportunity_id || null,
@@ -84,14 +117,18 @@ export function ProposalProvider({ children }) {
         
         if (draftData.associated_opportunity_id) {
             try {
-               await PipelineController.startProposal(draftData.associated_opportunity_id, draftData.associated_opportunity_status);
+               const { data: oppData } = await supabase.from('opportunities').select('status').eq('id', draftData.associated_opportunity_id).single();
+               if (oppData) await PipelineController.startProposal(draftData.associated_opportunity_id, oppData.status);
             } catch (e) {
                console.warn("Pipeline transition caught: ", e.message);
             }
         }
 
         // Push secretly into local memory without triggering major UI snapping
-        setProposals(prev => [data, ...prev]);
+        setProposals(prev => {
+            const filtered = prev.filter(p => !(p.is_lead && p.associated_opportunity_id === draftData.associated_opportunity_id));
+            return [data, ...filtered];
+        });
         return data; 
     };
 
@@ -124,11 +161,15 @@ export function ProposalProvider({ children }) {
             return null;
         } else {
             // Update local UI state with the exact database response (so user_profiles is included)
-            setProposals(prev => [data, ...prev]);
+            setProposals(prev => {
+                const filtered = prev.filter(p => !(p.is_lead && p.associated_opportunity_id === proposalData.associated_opportunity_id));
+                return [data, ...filtered];
+            });
 
             if (proposalData.associated_opportunity_id) {
                 try {
-                    await PipelineController.sendProposal(proposalData.associated_opportunity_id, proposalData.associated_opportunity_status);
+                    const { data: oppData } = await supabase.from('opportunities').select('status').eq('id', proposalData.associated_opportunity_id).single();
+                    if (oppData) await PipelineController.sendProposal(proposalData.associated_opportunity_id, oppData.status);
                 } catch (e) {
                     console.warn("Skipped transition: ", e.message);
                 }
@@ -153,9 +194,14 @@ export function ProposalProvider({ children }) {
         // Auto-sync status to Pipeline Opportunity strictly through Execution controls
         if (updatedData.status && oppId) {
             try {
-                if (updatedData.status === 'Approved') await PipelineController.approveDeal(oppId, 'PROPOSAL_SENT');
-                else if (updatedData.status === 'Lost') await PipelineController.markLost(oppId, 'PROPOSAL_SENT', null, updatedData.proposal_data?.lost_reason || 'Proposal Lost');
-                else if (['Sent', 'Opened'].includes(updatedData.status)) await PipelineController.sendProposal(oppId, 'PROPOSAL_BUILDING');
+                const { data: oppData } = await supabase.from('opportunities').select('status').eq('id', oppId).single();
+                if (oppData) {
+                    if (updatedData.status === 'Approved') await PipelineController.approveDeal(oppId, oppData.status);
+                    else if (updatedData.status === 'Lost') await PipelineController.markLost(oppId, oppData.status, null, updatedData.proposal_data?.lost_reason || 'Proposal Lost');
+                    else if (['Sent', 'Opened'].includes(updatedData.status)) await PipelineController.sendProposal(oppId, oppData.status);
+                    else if (updatedData.status === 'Pending Void') await PipelineController.requestVoid(oppId, oppData.status, null, updatedData.proposal_data?.void_reason || 'Void Requested');
+                    else if (updatedData.status === 'Voided') await PipelineController.approveVoid(oppId, oppData.status, null);
+                }
             } catch (syncError) {
                 console.warn('Pipeline Sync Warning:', syncError.message);
             }
@@ -165,12 +211,22 @@ export function ProposalProvider({ children }) {
     const deleteProposal = async (id) => {
         const oldProposal = proposals.find(p => p.id === id);
         if (!oldProposal) return;
-        const oppId = oldProposal?.proposal_data?.associated_opportunity_id;
+        const oppId = oldProposal?.associated_opportunity_id || oldProposal?.proposal_data?.associated_opportunity_id;
 
         // Optimistic UI update
         setProposals(prev => prev.filter(p => p.id !== id));
         
         try {
+            if (oldProposal.is_lead) {
+                // Lead cards don't exist in the proposals table yet, so skip straight to opportunity cleanup
+                if (oppId) {
+                    await supabase.from('work_orders').delete().eq('opportunity_id', oppId);
+                    await supabase.from('opportunities').delete().eq('id', oppId);
+                }
+                fetchProposals();
+                return;
+            }
+
             // Explicitly scrape any nested comments before deleting
             await supabase.from('proposal_comments').delete().eq('proposal_id', id);
 

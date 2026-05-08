@@ -15,6 +15,7 @@ import FinancialSettings from './pages/FinancialSettings';
 import FinanceDashboard from './pages/FinanceDashboard';
 import SalesPipeline from './pages/SalesPipeline';
 import DispatchHub from './pages/DispatchHub';
+import DispatchCalendar from './pages/DispatchCalendar';
 import Tasks from './pages/Tasks';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CustomerProvider } from './context/CustomerContext';
@@ -70,7 +71,8 @@ function MainRouter() {
           {/* MANAGER DOMAINS */}
           <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><Catalog /></RoleRoute>} />
           <Route path="pipeline/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><SalesPipeline /></RoleRoute>} />
-          <Route path="dispatch/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><DispatchHub /></RoleRoute>} />
+          <Route path="dispatch" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><DispatchHub /></RoleRoute>} />
+          <Route path="dispatch/calendar" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><DispatchCalendar /></RoleRoute>} />
 
           {/* SUPER ADMIN EXCLUSIVE DOMAINS */}
           <Route path="account-management/*" element={<RoleRoute allowedRoles={['ADMIN']}><AccountManagement /></RoleRoute>} />

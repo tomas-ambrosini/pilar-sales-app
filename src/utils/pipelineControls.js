@@ -2,25 +2,25 @@ import { supabase } from '../supabaseClient';
 
 export const PIPELINE_STATES = {
   NEW_LEAD: 'NEW_LEAD',
-  CONTACTED: 'CONTACTED',
-  SURVEY_SCHEDULED: 'SURVEY_SCHEDULED',
-  PROPOSAL_BUILDING: 'PROPOSAL_BUILDING',
-  PROPOSAL_SENT: 'PROPOSAL_SENT',
-  APPROVED: 'APPROVED',
+  QUOTING: 'QUOTING',
+  SENT: 'SENT',
+  NEEDS_SCHEDULING: 'NEEDS_SCHEDULING',
+  SCHEDULED: 'SCHEDULED',
+  COMPLETED: 'COMPLETED',
   LOST: 'LOST',
   PENDING_VOID: 'PENDING_VOID',
   VOIDED: 'VOIDED'
 };
 
 const TRANSITIONS = {
-  [PIPELINE_STATES.NEW_LEAD]: [PIPELINE_STATES.CONTACTED, PIPELINE_STATES.LOST, PIPELINE_STATES.PENDING_VOID],
-  [PIPELINE_STATES.CONTACTED]: [PIPELINE_STATES.SURVEY_SCHEDULED, PIPELINE_STATES.PROPOSAL_BUILDING, PIPELINE_STATES.LOST, PIPELINE_STATES.PENDING_VOID],
-  [PIPELINE_STATES.SURVEY_SCHEDULED]: [PIPELINE_STATES.PROPOSAL_BUILDING, PIPELINE_STATES.LOST, PIPELINE_STATES.PENDING_VOID],
-  [PIPELINE_STATES.PROPOSAL_BUILDING]: [PIPELINE_STATES.PROPOSAL_SENT, PIPELINE_STATES.LOST, PIPELINE_STATES.PENDING_VOID],
-  [PIPELINE_STATES.PROPOSAL_SENT]: [PIPELINE_STATES.APPROVED, PIPELINE_STATES.LOST, PIPELINE_STATES.PENDING_VOID],
-  [PIPELINE_STATES.APPROVED]: [PIPELINE_STATES.PROPOSAL_SENT],
+  [PIPELINE_STATES.NEW_LEAD]: [PIPELINE_STATES.QUOTING, PIPELINE_STATES.LOST, PIPELINE_STATES.PENDING_VOID],
+  [PIPELINE_STATES.QUOTING]: [PIPELINE_STATES.SENT, PIPELINE_STATES.LOST, PIPELINE_STATES.PENDING_VOID],
+  [PIPELINE_STATES.SENT]: [PIPELINE_STATES.NEEDS_SCHEDULING, PIPELINE_STATES.LOST, PIPELINE_STATES.PENDING_VOID],
+  [PIPELINE_STATES.NEEDS_SCHEDULING]: [PIPELINE_STATES.SCHEDULED, PIPELINE_STATES.SENT, PIPELINE_STATES.LOST, PIPELINE_STATES.PENDING_VOID],
+  [PIPELINE_STATES.SCHEDULED]: [PIPELINE_STATES.COMPLETED, PIPELINE_STATES.NEEDS_SCHEDULING, PIPELINE_STATES.LOST, PIPELINE_STATES.PENDING_VOID],
+  [PIPELINE_STATES.COMPLETED]: [],
   [PIPELINE_STATES.LOST]: [],
-  [PIPELINE_STATES.PENDING_VOID]: [PIPELINE_STATES.VOIDED, PIPELINE_STATES.PROPOSAL_SENT, PIPELINE_STATES.PROPOSAL_BUILDING, PIPELINE_STATES.NEW_LEAD, PIPELINE_STATES.CONTACTED, PIPELINE_STATES.SURVEY_SCHEDULED],
+  [PIPELINE_STATES.PENDING_VOID]: [PIPELINE_STATES.VOIDED, PIPELINE_STATES.SENT, PIPELINE_STATES.QUOTING, PIPELINE_STATES.NEW_LEAD, PIPELINE_STATES.NEEDS_SCHEDULING, PIPELINE_STATES.SCHEDULED],
   [PIPELINE_STATES.VOIDED]: []
 };
 
@@ -40,6 +40,7 @@ async function executeTransition(jobId, currentState, targetState, additionalPay
       console.warn(msg);
       throw new Error(msg);
   }
+  const { data: opp } = await supabase.from('opportunities').select('household_id').eq('id', jobId).single();
   
   const { error } = await supabase.from('opportunities').update({ 
       status: targetState, 
@@ -47,21 +48,51 @@ async function executeTransition(jobId, currentState, targetState, additionalPay
   }).eq('id', jobId);
   
   if (error) throw error;
+  
+  if (opp && opp.household_id && currentState !== targetState) {
+      let activityType = null;
+      let description = null;
+      
+      if (targetState === PIPELINE_STATES.NEEDS_SCHEDULING) {
+          activityType = 'Contract Signed';
+          description = 'Customer approved the proposal. Deal converted to active job.';
+      } else if (targetState === PIPELINE_STATES.SCHEDULED) {
+          activityType = 'Job Scheduled';
+          description = 'Operations team successfully dispatched and scheduled this job.';
+      } else if (targetState === PIPELINE_STATES.COMPLETED) {
+          activityType = 'Job Completed';
+          description = 'The installation/service team has marked this job as successfully completed.';
+      } else if (targetState === PIPELINE_STATES.SENT && currentState === PIPELINE_STATES.PENDING_VOID) {
+          activityType = 'Pipeline Reverted';
+          description = 'Deal was moved back to the Active Proposals board.';
+      }
+      
+      if (activityType) {
+          await supabase.from('activity_logs').insert({
+              household_id: opp.household_id,
+              opportunity_id: jobId,
+              activity_type: activityType,
+              description: description
+          });
+      }
+  }
+  
   return true;
 }
 
 export const PipelineController = {
-  markContacted: (id, current) => executeTransition(id, current, PIPELINE_STATES.CONTACTED),
-  scheduleSurvey: (id, current) => executeTransition(id, current, PIPELINE_STATES.SURVEY_SCHEDULED),
-  startProposal: (id, current) => executeTransition(id, current, PIPELINE_STATES.PROPOSAL_BUILDING),
-  sendProposal: (id, current) => executeTransition(id, current, PIPELINE_STATES.PROPOSAL_SENT),
-  approveDeal: (id, current, payload = {}) => executeTransition(id, current, PIPELINE_STATES.APPROVED, payload),
-  revertToSales: (id, current) => executeTransition(id, current, PIPELINE_STATES.PROPOSAL_SENT),
+  startProposal: (id, current) => executeTransition(id, current, PIPELINE_STATES.QUOTING),
+  sendProposal: (id, current) => executeTransition(id, current, PIPELINE_STATES.SENT),
+  approveDeal: (id, current, payload = {}) => executeTransition(id, current, PIPELINE_STATES.NEEDS_SCHEDULING, payload),
+  scheduleDeal: (id, current, payload = {}) => executeTransition(id, current, PIPELINE_STATES.SCHEDULED, payload),
+  completeDeal: (id, current, payload = {}) => executeTransition(id, current, PIPELINE_STATES.COMPLETED, payload),
+  revertToSales: (id, current) => executeTransition(id, current, PIPELINE_STATES.SENT),
   markLost: async (id, current, householdId, reason) => {
       // Special logic: Log Activity
       if (householdId) {
           await supabase.from('activity_logs').insert({
              household_id: householdId,
+             opportunity_id: id,
              activity_type: 'Deal Lost',
              description: `Deal marked as lost. Reason: ${reason}`
           });
@@ -72,6 +103,7 @@ export const PipelineController = {
       if (householdId) {
           await supabase.from('activity_logs').insert({
              household_id: householdId,
+             opportunity_id: id,
              activity_type: 'Void Requested',
              description: `Deal void requested. Reason: ${reason}`
           });
@@ -82,20 +114,34 @@ export const PipelineController = {
       if (householdId) {
           await supabase.from('activity_logs').insert({
              household_id: householdId,
+             opportunity_id: id,
              activity_type: 'Void Approved',
              description: `Admin approved the void request.`
           });
       }
       return executeTransition(id, current, PIPELINE_STATES.VOIDED);
   },
-  denyVoid: async (id, current, householdId, returnState = PIPELINE_STATES.PROPOSAL_SENT) => {
+  denyVoid: async (id, current, householdId, returnState = PIPELINE_STATES.SENT) => {
       if (householdId) {
           await supabase.from('activity_logs').insert({
              household_id: householdId,
+             opportunity_id: id,
              activity_type: 'Void Denied',
              description: `Admin denied the void request. Returning to active pipeline.`
           });
       }
       return executeTransition(id, current, returnState);
+  },
+  assignDeal: async (id, salespersonId, householdId, salespersonName) => {
+      const { error } = await supabase.from('opportunities').update({ assigned_salesperson_id: salespersonId }).eq('id', id);
+      if (!error && householdId) {
+          await supabase.from('activity_logs').insert({
+             household_id: householdId,
+             opportunity_id: id,
+             activity_type: 'Deal Assigned',
+             description: `Deal #${id.split('-')[0]} was assigned to ${salespersonName || 'a sales representative'}.`
+          });
+      }
+      if (error) throw error;
   }
 };
