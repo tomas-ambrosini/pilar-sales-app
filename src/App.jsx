@@ -15,8 +15,9 @@ import FinancialSettings from './pages/FinancialSettings';
 import FinanceDashboard from './pages/FinanceDashboard';
 import SalesPipeline from './pages/SalesPipeline';
 import DispatchHub from './pages/DispatchHub';
-import DispatchCalendar from './pages/DispatchCalendar';
 import Tasks from './pages/Tasks';
+import CompanyCalendar from './pages/CompanyCalendar';
+import ServiceHub from './pages/ServiceHub';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CustomerProvider } from './context/CustomerContext';
 import { CatalogProvider } from './context/CatalogContext';
@@ -67,12 +68,13 @@ function MainRouter() {
           <Route path="customers/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Customers /></RoleRoute>} />
           <Route path="proposals/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Proposals /></RoleRoute>} />
           <Route path="tasks/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Tasks /></RoleRoute>} />
+          <Route path="calendar/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><CompanyCalendar /></RoleRoute>} />
+          <Route path="service/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><ServiceHub /></RoleRoute>} />
           
           {/* MANAGER DOMAINS */}
           <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><Catalog /></RoleRoute>} />
           <Route path="pipeline/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><SalesPipeline /></RoleRoute>} />
           <Route path="dispatch" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><DispatchHub /></RoleRoute>} />
-          <Route path="dispatch/calendar" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><DispatchCalendar /></RoleRoute>} />
 
           {/* SUPER ADMIN EXCLUSIVE DOMAINS */}
           <Route path="account-management/*" element={<RoleRoute allowedRoles={['ADMIN']}><AccountManagement /></RoleRoute>} />

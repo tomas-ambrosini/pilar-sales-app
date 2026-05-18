@@ -1,0 +1,293 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
+import { Wrench, Search, LayoutGrid, List, Clock, Calendar, CheckCircle2, MoreVertical, ShieldAlert, AlertCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
+import ServiceCallModal from '../components/ServiceCallModal';
+
+const STATUS_COLUMNS = [
+    { id: 'Pending', title: 'Pending', color: 'border-slate-300', bg: 'bg-slate-100', text: 'text-slate-700', icon: 'text-slate-500' },
+    { id: 'Scheduled', title: 'Scheduled', color: 'border-amber-300', bg: 'bg-amber-100', text: 'text-amber-700', icon: 'text-amber-500' },
+    { id: 'Dispatched', title: 'Dispatched', color: 'border-blue-300', bg: 'bg-blue-100', text: 'text-blue-700', icon: 'text-blue-500' },
+    { id: 'En Route', title: 'En Route', color: 'border-indigo-300', bg: 'bg-indigo-100', text: 'text-indigo-700', icon: 'text-indigo-500' },
+    { id: 'Working', title: 'Working', color: 'border-emerald-300', bg: 'bg-emerald-100', text: 'text-emerald-700', icon: 'text-emerald-500' },
+    { id: 'Completed', title: 'Completed', color: 'border-cyan-300', bg: 'bg-cyan-100', text: 'text-cyan-700', icon: 'text-cyan-500' }
+];
+
+export default function ServiceHub() {
+    const [viewMode, setViewMode] = useState('kanban'); // 'kanban' or 'table'
+    const [calls, setCalls] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [inspectingCallId, setInspectingCallId] = useState(null);
+
+    useEffect(() => {
+        fetchCalls();
+    }, []);
+
+    const fetchCalls = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('service_calls')
+            .select(`
+                *,
+                households ( 
+                    household_name,
+                    contacts ( primary_phone ),
+                    addresses!addresses_household_id_fkey ( street_address, city )
+                )
+            `)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error("Supabase Error fetching service calls:", error);
+            toast.error("Failed to load service calls: " + error.message);
+        } else {
+            setCalls(data || []);
+        }
+        setLoading(false);
+    };
+
+    const updateCallStatus = async (callId, newStatus) => {
+        const { error } = await supabase
+            .from('service_calls')
+            .update({ status: newStatus })
+            .eq('id', callId);
+
+        if (error) {
+            toast.error("Failed to update status");
+        } else {
+            toast.success(`Moved to ${newStatus}`);
+            fetchCalls();
+        }
+    };
+
+    const filteredCalls = calls.filter(c => {
+        const query = searchQuery.toLowerCase();
+        return (
+            c.households?.household_name?.toLowerCase().includes(query) ||
+            c.issue_description?.toLowerCase().includes(query) ||
+            c.call_type?.toLowerCase().includes(query)
+        );
+    });
+
+    const renderUrgencyBadge = (urgency) => {
+        switch (urgency) {
+            case 'EMERGENCY': return <span className="bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded-full font-black flex items-center gap-1 shadow-sm"><ShieldAlert size={10} /> EMERGENCY</span>;
+            case 'HIGH': return <span className="bg-orange-100 text-orange-700 text-[10px] px-2 py-0.5 rounded-full font-black shadow-sm">HIGH</span>;
+            case 'NORMAL': return <span className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full font-black shadow-sm">NORMAL</span>;
+            case 'LOW': return <span className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-black shadow-sm">LOW</span>;
+            default: return null;
+        }
+    };
+
+    const renderCallCard = (call) => {
+        const displayId = `SVC-${call.id.substring(0, 4).toUpperCase()}`;
+        return (
+            <div key={call.id} onClick={() => setInspectingCallId(call.id)} className="group relative cursor-pointer bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-slate-300">
+                <div className="flex justify-between items-start mb-3">
+                    <div className="flex flex-col pr-4">
+                        <h4 className="font-black text-slate-800 text-base leading-tight truncate">{(call.households?.household_name || 'Unknown Client').replace(/ Account$/i, '').trim()}</h4>
+                        <span className="text-[10px] font-semibold text-slate-500 mt-1 flex items-center gap-1.5 flex-wrap">
+                            <span className="whitespace-nowrap">{new Date(call.created_at).toLocaleDateString()}</span> 
+                            <span className="text-slate-300 whitespace-nowrap">&bull;</span> 
+                            <span className="font-mono uppercase tracking-widest text-slate-400 whitespace-nowrap">{displayId}</span>
+                        </span>
+                    </div>
+                    <div className="shrink-0 pt-0.5">
+                        {renderUrgencyBadge(call.urgency)}
+                    </div>
+                </div>
+
+                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 flex flex-col gap-2 mb-3">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-purple-700 bg-purple-100/50 border border-purple-200/50 px-2 py-1 rounded w-fit">
+                        {call.call_type || 'REPAIR'}
+                    </span>
+                    <p className="text-xs text-slate-600 font-medium line-clamp-2">
+                        {call.issue_description}
+                    </p>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div className="p-4 md:p-8 flex flex-col gap-8 h-[calc(100vh-64px)] overflow-hidden bg-slate-50/50 relative">
+            {/* Subtle background decoration */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
+                <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-purple-100/40 blur-3xl"></div>
+                <div className="absolute top-[60%] -right-[10%] w-[40%] h-[40%] rounded-full bg-blue-100/40 blur-3xl"></div>
+            </div>
+
+            {/* Header Block */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0 z-10">
+                <div>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3 mb-1">
+                        <div className="bg-purple-100 text-purple-600 p-2.5 rounded-2xl shadow-inner border border-purple-200">
+                            <Wrench size={24} strokeWidth={2.5}/>
+                        </div>
+                        Service Operations
+                    </h1>
+                    <p className="text-slate-500 font-medium ml-1">Dispatch board, technician routing, and service call tracking.</p>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                    <div className="relative w-full sm:w-64 bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/60 transition-all focus-within:ring-2 focus-within:ring-purple-500">
+                        <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
+                        <input 
+                            type="text" 
+                            placeholder="Search calls..." 
+                            className="w-full bg-transparent pl-9 pr-4 py-2 text-sm font-medium outline-none text-slate-700 placeholder-slate-400"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-2xl p-1 shadow-sm">
+                        <button 
+                            onClick={() => setViewMode('kanban')}
+                            className={`p-2 rounded-xl flex items-center gap-1.5 text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'kanban' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}
+                        >
+                            <LayoutGrid size={14} strokeWidth={2.5} />
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('table')}
+                            className={`p-2 rounded-xl flex items-center gap-1.5 text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'table' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}
+                        >
+                            <List size={14} strokeWidth={2.5} />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex-1 flex flex-col min-h-0 z-10">
+                {loading ? (
+                    <div className="flex items-center justify-center h-64 text-slate-400 font-bold animate-pulse">Loading Service Board...</div>
+                ) : (
+                    <>
+                        {viewMode === 'kanban' ? (
+                            <div className="flex gap-6 overflow-x-auto pb-4 hide-scrollbar h-full px-1">
+                                {STATUS_COLUMNS.map(col => {
+                                    const laneCalls = filteredCalls.filter(c => c.status === col.id);
+                                    
+                                    // Custom header theme mapping similar to SalesPipeline
+                                    let headerTheme = { bg: 'bg-slate-50/80', border: 'border-slate-200', text: 'text-slate-700', icon: 'text-slate-400' };
+                                    if (col.id === 'Pending') headerTheme = { bg: 'bg-slate-100/80', border: 'border-slate-300', text: 'text-slate-800', icon: 'text-slate-500' };
+                                    if (col.id === 'Scheduled') headerTheme = { bg: 'bg-amber-50/80', border: 'border-amber-200', text: 'text-amber-800', icon: 'text-amber-500' };
+                                    if (col.id === 'Dispatched') headerTheme = { bg: 'bg-blue-50/80', border: 'border-blue-200', text: 'text-blue-800', icon: 'text-blue-500' };
+                                    if (col.id === 'En Route') headerTheme = { bg: 'bg-indigo-50/80', border: 'border-indigo-200', text: 'text-indigo-800', icon: 'text-indigo-500' };
+                                    if (col.id === 'Working') headerTheme = { bg: 'bg-emerald-50/80', border: 'border-emerald-200', text: 'text-emerald-800', icon: 'text-emerald-500' };
+                                    if (col.id === 'Completed') headerTheme = { bg: 'bg-cyan-50/80', border: 'border-cyan-200', text: 'text-cyan-800', icon: 'text-cyan-500' };
+
+                                    return (
+                                        <div key={col.id} className="flex flex-col flex-1 min-w-[300px] max-w-[340px] shrink-0 bg-white/60 backdrop-blur-xl rounded-[24px] border border-white/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
+                                            <div className={`p-4 border-b ${headerTheme.border} ${headerTheme.bg} flex justify-between items-center backdrop-blur-md`}>
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-2 h-2 rounded-full ${headerTheme.text.replace('text', 'bg')}`}></div>
+                                                    <h2 className={`font-black uppercase tracking-widest text-[11px] ${headerTheme.text}`}>{col.title}</h2>
+                                                </div>
+                                                <span className={`bg-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm border ${headerTheme.border} ${headerTheme.text}`}>{laneCalls.length}</span>
+                                            </div>
+                                            
+                                            <div className="flex-1 overflow-y-auto flex flex-col gap-4 p-4 hide-scrollbar">
+                                                {laneCalls.length === 0 && (
+                                                    <div className="flex flex-col items-center justify-center h-full text-center p-6 border-2 border-dashed border-slate-200/60 rounded-2xl bg-slate-50/30">
+                                                        <div className={`p-3 rounded-full ${headerTheme.bg} mb-3`}>
+                                                            <AlertCircle className={headerTheme.icon} size={20} />
+                                                        </div>
+                                                        <span className="text-slate-400 font-bold text-sm">Empty Queue</span>
+                                                    </div>
+                                                )}
+                                                {laneCalls.map(renderCallCard)}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                            <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                                <th className="p-4 px-6 font-medium text-left">Customer / ID</th>
+                                                <th className="p-4 px-6 font-medium text-center">Status</th>
+                                                <th className="p-4 px-6 font-medium text-center">Urgency</th>
+                                                <th className="p-4 px-6 font-medium text-center">Type</th>
+                                                <th className="p-4 px-6 font-medium text-left">Issue</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {filteredCalls.map(call => {
+                                                let badgeColors = 'bg-slate-100 text-slate-600 border-slate-200';
+                                                if (call.status === 'Pending') badgeColors = 'bg-slate-100 text-slate-800 border-slate-300';
+                                                else if (call.status === 'Scheduled') badgeColors = 'bg-amber-50 text-amber-800 border-amber-200';
+                                                else if (call.status === 'Dispatched') badgeColors = 'bg-blue-50 text-blue-800 border-blue-200';
+                                                else if (call.status === 'En Route') badgeColors = 'bg-indigo-50 text-indigo-800 border-indigo-200';
+                                                else if (call.status === 'Working') badgeColors = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+                                                else if (call.status === 'Completed') badgeColors = 'bg-cyan-50 text-cyan-800 border-cyan-200';
+
+                                                return (
+                                                    <tr key={call.id} onClick={() => setInspectingCallId(call.id)} className="group bg-white hover:bg-slate-50 transition-colors cursor-pointer">
+                                                        <td className="p-4 px-6">
+                                                            <div className="flex items-center gap-4 min-w-[250px]">
+                                                                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-slate-600 bg-slate-100 shrink-0">
+                                                                    {(call.households?.household_name || 'U').split(' ').filter(Boolean).map(n=>n[0]).join('').substring(0,2).toUpperCase()}
+                                                                </div>
+                                                                <div className="flex flex-col min-w-0 pr-4">
+                                                                    <h3 className="text-[15px] font-black text-slate-900 truncate leading-tight mb-0.5">{(call.households?.household_name || 'Unknown').replace(/ Account$/i, '').trim()}</h3>
+                                                                    <p className="text-xs font-semibold text-slate-500 flex items-center flex-wrap">
+                                                                        <span className="whitespace-nowrap">{new Date(call.created_at).toLocaleDateString()}</span> 
+                                                                        <span className="text-slate-300 mx-1.5 whitespace-nowrap">•</span> 
+                                                                        <span className="font-mono text-[10px] uppercase tracking-widest text-slate-400 whitespace-nowrap">SVC-{call.id.substring(0, 4).toUpperCase()}</span>
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-4 px-6 text-center">
+                                                            <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md text-xs font-bold border ${badgeColors}`}>
+                                                                {call.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="p-4 px-6 text-center">
+                                                            {renderUrgencyBadge(call.urgency)}
+                                                        </td>
+                                                        <td className="p-4 px-6 text-center">
+                                                            <span className="text-[9px] font-black uppercase tracking-widest text-purple-700 bg-purple-100/50 border border-purple-200/50 px-2 py-1 rounded">
+                                                                {call.call_type || 'REPAIR'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="p-4 px-6 text-xs font-medium text-slate-600 max-w-[250px] truncate">
+                                                            {call.issue_description}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                            {filteredCalls.length === 0 && (
+                                                <tr>
+                                                    <td colSpan="5" className="p-12 text-center text-sm font-bold text-slate-400 bg-slate-50/30">
+                                                        <div className="flex flex-col items-center gap-3">
+                                                            <AlertCircle size={32} className="text-slate-300" />
+                                                            No service calls found matching your search.
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                        )}
+                    </>
+                )}
+            </div>
+            
+            {inspectingCallId && (
+                <ServiceCallModal 
+                    callId={inspectingCallId} 
+                    onClose={() => setInspectingCallId(null)} 
+                    onUpdate={() => {
+                        fetchCalls();
+                    }}
+                />
+            )}
+        </div>
+    );
+}

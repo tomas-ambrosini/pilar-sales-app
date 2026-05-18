@@ -15,6 +15,7 @@ const PIPELINE_COLUMNS = [
   { id: PIPELINE_STATES.SENT, title: 'Proposal Sent', color: 'border-blue-300', bg: 'bg-blue-100', text: 'text-blue-700' },
   { id: PIPELINE_STATES.NEEDS_SCHEDULING, title: 'Needs Scheduling', color: 'border-amber-300', bg: 'bg-amber-100', text: 'text-amber-700' },
   { id: PIPELINE_STATES.SCHEDULED, title: 'Scheduled', color: 'border-emerald-300', bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  { id: PIPELINE_STATES.COMPLETED, title: 'Completed', color: 'border-cyan-300', bg: 'bg-cyan-100', text: 'text-cyan-700' },
   { id: PIPELINE_STATES.LOST, title: 'Lost Deal', color: 'border-red-300', bg: 'bg-red-100', text: 'text-red-700' }
 ];
 
@@ -65,7 +66,7 @@ export default function SalesPipeline() {
 
         if (grouped[opp.status]) {
           grouped[opp.status].push(opp);
-        } else if (opp.status !== PIPELINE_STATES.VOIDED && opp.status !== PIPELINE_STATES.PENDING_VOID && opp.status !== PIPELINE_STATES.COMPLETED) {
+        } else if (opp.status !== PIPELINE_STATES.VOIDED && opp.status !== PIPELINE_STATES.PENDING_VOID) {
             // Failsafe for orphaned states
             grouped[PIPELINE_STATES.NEW_LEAD].push(opp);
         }
@@ -146,6 +147,7 @@ export default function SalesPipeline() {
                     if (col.id === PIPELINE_STATES.SENT) headerTheme = { bg: 'bg-blue-50/80', border: 'border-blue-200', text: 'text-blue-800', icon: 'text-blue-500' };
                     if (col.id === PIPELINE_STATES.NEEDS_SCHEDULING) headerTheme = { bg: 'bg-amber-50/80', border: 'border-amber-200', text: 'text-amber-800', icon: 'text-amber-500' };
                     if (col.id === PIPELINE_STATES.SCHEDULED) headerTheme = { bg: 'bg-emerald-50/80', border: 'border-emerald-200', text: 'text-emerald-800', icon: 'text-emerald-500' };
+                    if (col.id === PIPELINE_STATES.COMPLETED) headerTheme = { bg: 'bg-cyan-50/80', border: 'border-cyan-200', text: 'text-cyan-800', icon: 'text-cyan-500' };
                     if (col.id === PIPELINE_STATES.LOST) headerTheme = { bg: 'bg-red-50/80', border: 'border-red-200', text: 'text-red-800', icon: 'text-red-500' };
 
                     return (
@@ -302,6 +304,11 @@ export default function SalesPipeline() {
                                                 {col.id === PIPELINE_STATES.SENT && (
                                                     <button onClick={(e) => { e.stopPropagation(); setInspectingJob(job); }} className="text-[10px] font-black text-blue-700 bg-blue-100 hover:bg-blue-200 px-3 py-1.5 rounded-lg transition-all border border-blue-200/50 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
                                                         View Proposal <ArrowRight size={12} strokeWidth={3} />
+                                                    </button>
+                                                )}
+                                                {col.id === PIPELINE_STATES.COMPLETED && (
+                                                    <button onClick={(e) => { e.stopPropagation(); setInspectingJob(job); }} className="text-[10px] font-black text-cyan-700 bg-cyan-100 hover:bg-cyan-200 px-3 py-1.5 rounded-lg transition-all border border-cyan-200/50 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
+                                                        View Deal <ArrowRight size={12} strokeWidth={3} />
                                                     </button>
                                                 )}
                                             </div>

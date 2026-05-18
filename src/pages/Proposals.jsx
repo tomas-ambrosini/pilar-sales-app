@@ -718,7 +718,7 @@ ${equipmentNotes}
                                            <div key={proposal.id} onClick={() => handleRowClick(proposal)} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-slate-400 transition-all cursor-pointer group flex flex-col relative h-[220px] shrink-0">
                                               <div className="flex justify-between items-start mb-3">
                                                  <div>
-                                                    <h3 className="font-black text-slate-800 text-sm truncate max-w-[180px]">{proposal.customer}</h3>
+                                                    <h3 className="font-black text-slate-800 text-sm truncate max-w-[180px]">{proposal.customer?.replace(/ Account$/i, '').trim()}</h3>
                                                     <span className="font-mono text-[9px] uppercase tracking-widest text-slate-400">{formatQuoteId(proposal)}</span>
                                                  </div>
                                                  <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center shrink-0 border border-slate-200">
@@ -932,7 +932,7 @@ ${equipmentNotes}
                                     {proposal.customer?.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'C'}
                                  </div>
                                  <div className="flex flex-col min-w-0 pr-4">
-                                    <h3 className="text-[15px] font-black text-slate-900 truncate leading-tight mb-0.5">{proposal.customer}</h3>
+                                    <h3 className="text-[15px] font-black text-slate-900 truncate leading-tight mb-0.5">{proposal.customer?.replace(/ Account$/i, '').trim()}</h3>
                                     <p className="text-xs font-semibold text-slate-500 flex items-center flex-wrap">
                                        <span className="whitespace-nowrap">{new Date(proposal.updated_at || proposal.created_at).toLocaleDateString()}</span> 
                                        <span className="text-slate-300 mx-1.5 whitespace-nowrap">•</span> 

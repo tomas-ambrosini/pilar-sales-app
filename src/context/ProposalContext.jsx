@@ -35,11 +35,16 @@ export function ProposalProvider({ children }) {
             // Fetch Opportunities that are NEW_LEAD and SALES type
             const { data: leadData, error: leadErr } = await supabase
                 .from('opportunities')
-                .select(`id, urgency_level, issue_description, created_at, proposal_data, household_id, households(id, household_name)`)
+                .select(`id, urgency_level, issue_description, created_at, proposal_data, household_id, assigned_salesperson_id, households(id, household_name)`)
                 .in('status', [PIPELINE_STATES.NEW_LEAD, PIPELINE_STATES.QUOTING])
                 .eq('is_active', true);
 
             if (leadErr) console.warn("Failed to fetch leads for proposals: ", leadErr.message);
+
+            // Fetch user profiles for manual join since foreign key might not exist
+            const { data: usersData } = await supabase.from('user_profiles').select('id, full_name');
+            const userMap = {};
+            if (usersData) usersData.forEach(u => userMap[u.id] = u);
 
             let allData = data || [];
             
@@ -51,11 +56,12 @@ export function ProposalProvider({ children }) {
                     id: opp.id, // Using opportunity ID as proposal ID for lead cards
                     is_lead: true,
                     status: 'Lead',
-                    customer: opp.households?.household_name || 'Unknown',
+                    customer: (opp.households?.household_name || 'Unknown').replace(/ Account$/i, '').trim(),
                     amount: 0,
                     date: new Date(opp.created_at).toISOString(),
                     created_at: opp.created_at,
                     associated_opportunity_id: opp.id,
+                    user_profiles: userMap[opp.assigned_salesperson_id] || null,
                     proposal_data: {
                         urgency: opp.urgency_level,
                         notes: opp.issue_description,

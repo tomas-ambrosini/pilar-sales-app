@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, ShieldAlert, LogOut, LayoutDashboard, Users, BookOpen, FileCheck, FileText, ClipboardList, Megaphone, DollarSign, Settings, Bell, Search, Truck, CalendarClock, MessageCircle, CheckSquare } from 'lucide-react';
+import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, ShieldAlert, LogOut, LayoutDashboard, Users, BookOpen, FileCheck, FileText, ClipboardList, Megaphone, DollarSign, Settings, Bell, Search, Truck, CalendarClock, MessageCircle, CheckSquare, Wrench } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
@@ -20,6 +20,7 @@ const navGroups = [
     allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES],
     items: [
       { path: '/', label: 'Home', icon: LayoutDashboard, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
+      { path: '/calendar', label: 'Company Calendar', icon: CalendarClock, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
       { path: '/customers', label: 'Customers', icon: Users, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
       { path: '/proposals', label: 'Proposals', icon: FileCheck, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
       { path: '/tasks', label: 'Tasks', icon: CheckSquare, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
@@ -35,7 +36,7 @@ const navGroups = [
     items: [
       { path: '/pipeline', label: 'Pipeline Ops', icon: ClipboardList, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
       { path: '/dispatch', label: 'Dispatch Hub', icon: Truck, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
-      { path: '/dispatch/calendar', label: 'Dispatch Calendar', icon: CalendarClock, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] }
+      { path: '/service', label: 'Service Board', icon: Wrench, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] }
     ]
   }
 ];

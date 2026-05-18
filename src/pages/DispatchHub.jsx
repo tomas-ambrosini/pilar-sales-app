@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Phone, User, MapPin, Search, Plus, AlertCircle, CalendarClock, Zap, CheckCircle2, UserCheck } from 'lucide-react';
 import { PIPELINE_STATES } from '../utils/pipelineControls';
 import toast from 'react-hot-toast';
+import DispatchCalendar from './DispatchCalendar';
 
 export default function DispatchHub() {
    const { user } = useAuth();
@@ -14,6 +15,7 @@ export default function DispatchHub() {
    const [matchedCustomer, setMatchedCustomer] = useState(null);
    const [isNewCustomer, setIsNewCustomer] = useState(false);
    const [loading, setLoading] = useState(false);
+   const [activeTab, setActiveTab] = useState('intake');
 
    // Customer Form
    const [customerForm, setCustomerForm] = useState({
@@ -25,10 +27,12 @@ export default function DispatchHub() {
       city: ''
    });
 
-   // Opportunity Form
+   // Opportunity / Service Form
    const [oppForm, setOppForm] = useState({
       type: 'SALES', // 'SALES' or 'SERVICE'
       urgency: 'Medium',
+      callType: 'REPAIR', // 'REPAIR', 'MAINTENANCE', 'WARRANTY'
+      tags: [],
       issueDescription: '',
       dispatchNotes: '',
       assignedSalespersonId: ''
@@ -112,24 +116,39 @@ export default function DispatchHub() {
        
        setLoading(true);
        try {
-           const { error } = await supabase.from('opportunities').insert({
-               household_id: matchedCustomer.id,
-               urgency_level: oppForm.urgency,
-               issue_description: oppForm.issueDescription,
-               dispatch_notes: oppForm.dispatchNotes,
-               assigned_salesperson_id: oppForm.assignedSalespersonId || null,
-               proposal_data: { type: oppForm.type },
-               status: PIPELINE_STATES.NEW_LEAD
-           });
+           if (oppForm.type === 'SALES') {
+               const { error } = await supabase.from('opportunities').insert({
+                   household_id: matchedCustomer.id,
+                   urgency_level: oppForm.urgency,
+                   issue_description: oppForm.issueDescription,
+                   dispatch_notes: oppForm.dispatchNotes,
+                   assigned_salesperson_id: oppForm.assignedSalespersonId || null,
+                   proposal_data: { type: oppForm.type },
+                   status: PIPELINE_STATES.NEW_LEAD
+               });
 
-           if (error) throw error;
-           
-           toast.success(`${oppForm.type} lead successfully injected!`);
+               if (error) throw error;
+               
+               toast.success(`Sales lead successfully injected!`);
+           } else {
+               // Service Routing
+               const { error } = await supabase.from('service_calls').insert({
+                   customer_id: matchedCustomer.id,
+                   urgency: oppForm.urgency.toUpperCase(), // 'LOW', 'MEDIUM' -> 'NORMAL', 'HIGH' -> 'EMERGENCY'
+                   issue_description: `${oppForm.issueDescription}\n\nDispatch Notes: ${oppForm.dispatchNotes}`,
+                   status: 'Pending',
+                   call_type: oppForm.callType,
+                   tags: oppForm.tags
+               });
+
+               if (error) throw error;
+               toast.success(`Service call successfully routed to Service Hub!`);
+           }
            
            // Reset forms
            setSearchQuery('');
            setMatchedCustomer(null);
-           setOppForm({ type: 'SALES', urgency: 'Medium', issueDescription: '', dispatchNotes: '', assignedSalespersonId: '' });
+           setOppForm({ type: 'SALES', urgency: 'Medium', callType: 'REPAIR', tags: [], issueDescription: '', dispatchNotes: '', assignedSalespersonId: '' });
        } catch (err) {
            toast.error(err.message);
        }
@@ -140,13 +159,29 @@ export default function DispatchHub() {
        <div className="page-container fade-in flex flex-col h-full bg-slate-50/50">
            <header className="page-header pb-6 border-b border-slate-200">
                <div>
-                   <h1 className="page-title text-3xl flex items-center gap-2"><Phone className="text-primary-600" /> Dispatch Intake Hub</h1>
-                   <p className="page-subtitle text-slate-500">Inbound call center. Search callers, log issues, and inject leads directly into the routing system.</p>
+                   <h1 className="page-title text-3xl flex items-center gap-2"><Phone className="text-primary-600" /> Dispatch Hub</h1>
+                   <p className="page-subtitle text-slate-500">Intake calls, log leads, and manage crew routing schedules.</p>
+               </div>
+               
+               <div className="mt-6 flex gap-2 p-1.5 bg-slate-100/80 backdrop-blur-sm rounded-xl w-fit">
+                    <button 
+                        onClick={() => setActiveTab('intake')} 
+                        className={`px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'intake' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
+                    >
+                        <Plus size={16}/> Intake & Logging
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('calendar')} 
+                        className={`px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'calendar' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
+                    >
+                        <CalendarClock size={16}/> Crew Routing
+                    </button>
                </div>
            </header>
 
-           <div className="flex-1 overflow-y-auto p-6">
-               <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+           {activeTab === 'intake' ? (
+               <div className="flex-1 overflow-y-auto p-6">
+                   <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
                    
                    {/* LEFT PANEL: Customer Lookup & Creation */}
                    <div className="col-span-1 lg:col-span-5 flex flex-col gap-6">
@@ -273,12 +308,29 @@ export default function DispatchHub() {
                                            </button>
                                        </div>
                                        <p className="text-[10px] text-slate-400 mt-2 font-medium">
-                                           {oppForm.type === 'SALES' ? 'Will be routed directly to the Sales Proposals queue.' : 'Will be stored silently as a Service opportunity.'}
-                                       </p>
-                                   </div>
-                                   
-                                   <div className="form-group">
-                                       <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider">Response Urgency</label>
+                                           {oppForm.type === 'SALES' ? 'Will be routed directly to the Sales Proposals queue.' : 'Will be routed strictly to the Service Board.'}
+                                        </p>
+                                    </div>
+
+                                    {oppForm.type === 'SERVICE' && (
+                                        <div className="form-group mb-6 col-span-2">
+                                            <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider">Service Call Type</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {['REPAIR', 'MAINTENANCE', 'WARRANTY', 'PROPOSAL_FOLLOWUP'].map(ctype => (
+                                                    <button
+                                                        key={ctype}
+                                                        onClick={() => setOppForm({...oppForm, callType: ctype})}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${oppForm.callType === ctype ? 'bg-purple-50 border-purple-200 text-purple-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                                                    >
+                                                        {ctype.replace('_', ' ')}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="form-group">
+                                        <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider">Response Urgency</label>
                                        <select 
                                           value={oppForm.urgency}
                                           onChange={(e) => setOppForm({...oppForm, urgency: e.target.value})}
@@ -376,9 +428,13 @@ export default function DispatchHub() {
                            </div>
                        </div>
                    </div>
-                   
-               </div>
-           </div>
-       </div>
+                                  </div>
+            </div>
+            ) : (
+                <div className="flex-1 overflow-hidden relative">
+                    <DispatchCalendar isSubView={true} />
+                </div>
+            )}
+        </div>
    );
 }

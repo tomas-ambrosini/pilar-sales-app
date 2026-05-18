@@ -7,6 +7,7 @@ import { PIPELINE_STATES, PipelineController } from '../utils/pipelineControls';
 import { useProposals } from '../context/ProposalContext';
 import toast from 'react-hot-toast';
 import OpportunityOverviewModal from '../components/OpportunityOverviewModal';
+import ServiceCallModal from '../components/ServiceCallModal';
 import { useNavigate } from 'react-router-dom';
 
 const getStartOfWeek = () => {
@@ -19,7 +20,7 @@ const getStartOfWeek = () => {
 
 const TIME_BLOCKS = ['MORNING', 'AFTERNOON', 'ALL_DAY'];
 
-export default function DispatchCalendar() {
+export default function DispatchCalendar({ isSubView = false }) {
    const { proposals } = useProposals();
    const [crews, setCrews] = useState([]);
    const [loading, setLoading] = useState(true);
@@ -44,16 +45,53 @@ export default function DispatchCalendar() {
          const { data: crewsData } = await supabase.from('crews').select('*').eq('is_active', true).order('crew_name');
          if (crewsData) setCrews(crewsData);
 
-         // Fetch all relevant opportunities (NEEDS_SCHEDULING and SCHEDULED)
+         // Fetch Opportunities (Sales)
          const { data: opps } = await supabase.from('opportunities').select(`
              id, created_at, status, urgency_level, scheduled_date, scheduled_time_block, assigned_crew_id, issue_description, household_id, proposal_data,
              households ( household_name, contacts ( primary_phone, email ), addresses!households_service_address_id_fkey ( id, street_address, city ) )
          `).in('status', [PIPELINE_STATES.NEEDS_SCHEDULING, PIPELINE_STATES.SCHEDULED]).eq('is_active', true);
 
-         if (opps) {
-            setUnassignedQueue(opps.filter(o => o.status === PIPELINE_STATES.NEEDS_SCHEDULING));
-            setScheduledJobs(opps.filter(o => o.status === PIPELINE_STATES.SCHEDULED));
-         }
+         // Fetch Service Calls (Service)
+         const { data: svc } = await supabase.from('service_calls').select(`
+             id, created_at, status, urgency, call_type, tags, issue_description, customer_id, assigned_techs, scheduled_start, scheduled_end,
+             households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( street_address, city ) )
+         `).in('status', ['Pending', 'Scheduled']);
+
+         const normalizedOpps = (opps || []).map(o => ({ ...o, __type: 'SALES' }));
+         const normalizedSvc = (svc || []).map(s => {
+             let timeBlock = null;
+             if (s.scheduled_start) {
+                 const startHour = new Date(s.scheduled_start).getHours();
+                 const endHour = s.scheduled_end ? new Date(s.scheduled_end).getHours() : startHour + 4;
+                 if (startHour === 8 && endHour === 12) timeBlock = 'MORNING';
+                 else if (startHour === 12 && endHour === 16) timeBlock = 'AFTERNOON';
+                 else if (startHour === 8 && endHour === 16) timeBlock = 'ALL_DAY';
+                 else timeBlock = 'MORNING'; // Fallback
+             }
+             return {
+                 __type: 'SERVICE',
+                 id: s.id,
+                 created_at: s.created_at,
+                 status: s.status,
+                 urgency_level: s.urgency,
+                 call_type: s.call_type,
+                 tags: s.tags,
+                 issue_description: s.issue_description,
+                 household_id: s.customer_id,
+                 households: s.households,
+                 assigned_crew_id: s.assigned_techs && s.assigned_techs.length > 0 ? s.assigned_techs[0] : null,
+                 scheduled_date: s.scheduled_start ? s.scheduled_start.split('T')[0] : null,
+                 scheduled_time_block: timeBlock,
+                 scheduled_start: s.scheduled_start,
+                 scheduled_end: s.scheduled_end
+             };
+         });
+
+         const allJobs = [...normalizedOpps, ...normalizedSvc];
+
+         setUnassignedQueue(allJobs.filter(j => j.status === PIPELINE_STATES.NEEDS_SCHEDULING || j.status === 'Pending'));
+         setScheduledJobs(allJobs.filter(j => j.status === PIPELINE_STATES.SCHEDULED || j.status === 'Scheduled'));
+
       } catch (e) {
          toast.error("Failed to load calendar data.");
       } finally {
@@ -66,14 +104,22 @@ export default function DispatchCalendar() {
       const { source, destination, draggableId } = result;
       if (source.droppableId === destination.droppableId) return; // No reordering supported yet inside same cell
 
-      let newStatus = PIPELINE_STATES.SCHEDULED;
+      const targetJob = [...unassignedQueue, ...scheduledJobs].find(j => j.id === draggableId);
+      if (!targetJob) return;
+
+      const isService = targetJob.__type === 'SERVICE';
+
+      let newStatus = isService ? 'Scheduled' : PIPELINE_STATES.SCHEDULED;
       let newCrewId = null;
       let newDateStr = null;
       let newTimeBlock = null;
+      
+      let svcStartTime = null;
+      let svcEndTime = null;
 
       if (destination.droppableId === 'unassigned') {
          // Moved back to queue
-         newStatus = PIPELINE_STATES.NEEDS_SCHEDULING;
+         newStatus = isService ? 'Pending' : PIPELINE_STATES.NEEDS_SCHEDULING;
       } else {
          // Moved to Calendar Cell
          const parts = destination.droppableId.split('::');
@@ -81,22 +127,33 @@ export default function DispatchCalendar() {
              newCrewId = parts[0];
              newDateStr = parts[1];
              newTimeBlock = parts[2] !== 'ANY' ? parts[2] : 'ALL_DAY';
+             
+             if (isService) {
+                 if (newTimeBlock === 'MORNING') {
+                     svcStartTime = `${newDateStr}T08:00:00`;
+                     svcEndTime = `${newDateStr}T12:00:00`;
+                 } else if (newTimeBlock === 'AFTERNOON') {
+                     svcStartTime = `${newDateStr}T12:00:00`;
+                     svcEndTime = `${newDateStr}T16:00:00`;
+                 } else {
+                     svcStartTime = `${newDateStr}T08:00:00`;
+                     svcEndTime = `${newDateStr}T16:00:00`;
+                 }
+             }
          }
       }
 
       // Optimistic UI
-      const targetJob = [...unassignedQueue, ...scheduledJobs].find(j => j.id === draggableId);
-      if (!targetJob) return;
-
       const optimisticJob = {
           ...targetJob,
           status: newStatus,
           assigned_crew_id: newCrewId,
           scheduled_date: newDateStr,
-          scheduled_time_block: newTimeBlock
+          scheduled_time_block: newTimeBlock,
+          ...(isService && { scheduled_start: svcStartTime, scheduled_end: svcEndTime })
       };
 
-      if (newStatus === PIPELINE_STATES.NEEDS_SCHEDULING) {
+      if (destination.droppableId === 'unassigned') {
          setUnassignedQueue(prev => {
             const filtered = prev.filter(j => j.id !== draggableId);
             return [...filtered, optimisticJob];
@@ -112,24 +169,45 @@ export default function DispatchCalendar() {
 
       // DB Push
       try {
-          if (newStatus === PIPELINE_STATES.SCHEDULED) {
-              await supabase.from('opportunities').update({
-                  assigned_crew_id: newCrewId,
-                  scheduled_date: newDateStr,
-                  scheduled_time_block: newTimeBlock
-              }).eq('id', draggableId);
-              if (targetJob.status !== PIPELINE_STATES.SCHEDULED) {
-                  await PipelineController.scheduleDeal(draggableId, targetJob.status);
+          if (!isService) {
+              // SALES LOGIC
+              if (newStatus === PIPELINE_STATES.SCHEDULED) {
+                  await supabase.from('opportunities').update({
+                      assigned_crew_id: newCrewId,
+                      scheduled_date: newDateStr,
+                      scheduled_time_block: newTimeBlock
+                  }).eq('id', draggableId);
+                  if (targetJob.status !== PIPELINE_STATES.SCHEDULED) {
+                      await PipelineController.scheduleDeal(draggableId, targetJob.status);
+                  }
+              } else {
+                  await supabase.from('opportunities').update({
+                      assigned_crew_id: null,
+                      scheduled_date: null,
+                      scheduled_time_block: null
+                  }).eq('id', draggableId);
+                  if (targetJob.status !== PIPELINE_STATES.NEEDS_SCHEDULING) {
+                      await PipelineController.approveDeal(draggableId, targetJob.status); // Approving deal moves it to Needs Scheduling
+                  }
               }
           } else {
-              await supabase.from('opportunities').update({
-                  assigned_crew_id: null,
-                  scheduled_date: null,
-                  scheduled_time_block: null
-              }).eq('id', draggableId);
-              // Revert pipeline to needs_scheduling if it was scheduled
-              if (targetJob.status !== PIPELINE_STATES.NEEDS_SCHEDULING) {
-                  await PipelineController.approveDeal(draggableId, targetJob.status); // Approving deal moves it to Needs Scheduling
+              // SERVICE LOGIC
+              if (newStatus === 'Scheduled') {
+                  await supabase.from('service_calls').update({
+                      status: 'Scheduled',
+                      assigned_techs: [newCrewId],
+                      scheduled_start: svcStartTime,
+                      scheduled_end: svcEndTime
+                  }).eq('id', draggableId);
+              } else {
+                  await supabase.from('service_calls').update({
+                      status: 'Pending',
+                      assigned_techs: [],
+                      scheduled_start: null,
+                      scheduled_end: null,
+                      arrival_window_start: null,
+                      arrival_window_end: null
+                  }).eq('id', draggableId);
               }
           }
       } catch (err) {
@@ -153,13 +231,19 @@ export default function DispatchCalendar() {
    };
 
    const JobCard = ({ job, index }) => {
+      const isService = job.__type === 'SERVICE';
       const associatedProposal = proposals?.find(p => p.proposal_data?.associated_opportunity_id === job.id || p.associated_opportunity_id === job.id);
+      
       let displayId = formatQuoteId(job);
-      if (associatedProposal) {
-          const propId = formatQuoteId(associatedProposal);
-          displayId = propId.startsWith('P') ? `WO-${propId.substring(1)}` : `WO-${propId}`;
-      } else if (displayId.startsWith('LEAD-')) {
-          displayId = displayId.replace('LEAD-', 'WO-');
+      if (isService) {
+          displayId = `SVC-${job.id.substring(0, 4).toUpperCase()}`;
+      } else {
+          if (associatedProposal) {
+              const propId = formatQuoteId(associatedProposal);
+              displayId = propId.startsWith('P') ? `WO-${propId.substring(1)}` : `WO-${propId}`;
+          } else if (displayId.startsWith('LEAD-')) {
+              displayId = displayId.replace('LEAD-', 'WO-');
+          }
       }
 
       const clientName = (job.households?.household_name || 'Unknown Client').replace(/ Account$/i, '').trim();
@@ -168,14 +252,19 @@ export default function DispatchCalendar() {
       let systemSummary = job.opportunity_type || 'General Service';
       let tagColor = 'bg-slate-100 text-slate-600 border-slate-200';
       
-      if (associatedProposal?.proposal_data?.systemTiers && associatedProposal.proposal_data.systemTiers.length > 0) {
-          const numSystems = associatedProposal.proposal_data.systemTiers.length;
-          systemSummary = `${numSystems} System Install`;
-          tagColor = 'bg-blue-50 text-blue-700 border-blue-200';
-      } else if (associatedProposal?.proposal_data?.accepted_tier_data) {
-          const tData = associatedProposal.proposal_data.accepted_tier_data;
-          systemSummary = `${tData.brand || 'Equipment'} Install ${tData.tons ? `(${tData.tons}T)` : ''}`.trim();
-          tagColor = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+      if (isService) {
+          systemSummary = job.call_type || 'Service Call';
+          tagColor = 'bg-purple-50 text-purple-700 border-purple-200';
+      } else {
+          if (associatedProposal?.proposal_data?.systemTiers && associatedProposal.proposal_data.systemTiers.length > 0) {
+              const numSystems = associatedProposal.proposal_data.systemTiers.length;
+              systemSummary = `${numSystems} System Install`;
+              tagColor = 'bg-blue-50 text-blue-700 border-blue-200';
+          } else if (associatedProposal?.proposal_data?.accepted_tier_data) {
+              const tData = associatedProposal.proposal_data.accepted_tier_data;
+              systemSummary = `${tData.brand || 'Equipment'} Install ${tData.tons ? `(${tData.tons}T)` : ''}`.trim();
+              tagColor = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+          }
       }
 
       return (
@@ -233,16 +322,18 @@ export default function DispatchCalendar() {
    };
 
    return (
-       <div className="p-4 md:p-8 flex flex-col gap-6 h-[calc(100vh-64px)] overflow-hidden bg-white/50">
+       <div className={isSubView ? "flex flex-col gap-6 h-full overflow-hidden" : "p-4 md:p-8 flex flex-col gap-6 h-[calc(100vh-64px)] overflow-hidden bg-white/50"}>
            {/* Header block mirroring Proposals.jsx */}
-           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
-               <div>
-                   <h1 className="text-[28px] font-bold text-slate-900 tracking-tight flex items-center gap-3 mb-1">
-                       <Calendar className="text-primary-600" size={28} />
-                       Dispatch & Routing
-                   </h1>
-                   <p className="text-slate-500 font-medium">Assign crews and time-blocks to approved jobs.</p>
-               </div>
+           <div className={`flex flex-col md:flex-row items-start md:items-center gap-4 shrink-0 ${isSubView ? 'justify-end' : 'justify-between'}`}>
+               {!isSubView && (
+                   <div>
+                       <h1 className="text-[28px] font-bold text-slate-900 tracking-tight flex items-center gap-3 mb-1">
+                           <Calendar className="text-primary-600" size={28} />
+                           Dispatch & Routing
+                       </h1>
+                       <p className="text-slate-500 font-medium">Assign crews and time-blocks to approved jobs.</p>
+                   </div>
+               )}
                <div className="flex items-center gap-3 overflow-x-auto pb-2 md:pb-0 hide-scrollbar w-full md:w-auto">
                    <div className="flex shrink-0 items-center bg-white border border-slate-200 rounded-xl shadow-sm p-1 gap-1.5">
                        <button onClick={() => shiftDate(viewMode === 'day' ? -1 : -7)} className="p-1.5 hover:bg-slate-50 hover:text-slate-700 rounded-lg transition-colors text-slate-400"><ChevronLeft size={18}/></button>
@@ -284,41 +375,41 @@ export default function DispatchCalendar() {
                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full relative">
                            <div className="flex-1 overflow-auto bg-slate-50/30">
                                {viewMode === 'day' ? (
-                                   // DAY VIEW (Crews on X, Time Blocks on Y)
-                                   <div className="min-w-max grid min-h-full" style={{ gridTemplateColumns: `80px repeat(${crews.length}, minmax(240px, 1fr))` }}>
-                                       <div className="sticky top-0 left-0 z-30 bg-white border-b border-r border-slate-200 h-14"></div>
-                                       
-                                       {crews.map(crew => (
-                                           <div key={crew.id} className="sticky top-0 z-20 bg-white border-b border-r border-slate-200 h-14 flex items-center justify-center font-black text-slate-700 gap-2 shadow-sm">
-                                               <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 border border-slate-200">
-                                                   <span className="text-[10px] font-black uppercase">{crew.crew_name.charAt(0)}</span>
-                                               </div>
-                                               {crew.crew_name}
-                                           </div>
-                                       ))}
+                                    // DAY VIEW (Time Blocks on X, Crews on Y)
+                                    <div className="min-w-max grid min-h-full" style={{ gridTemplateColumns: `200px repeat(${TIME_BLOCKS.length}, minmax(240px, 1fr))` }}>
+                                        <div className="sticky top-0 left-0 z-30 bg-white border-b border-r border-slate-200 h-14"></div>
+                                        
+                                        {TIME_BLOCKS.map(block => (
+                                            <div key={block} className="sticky top-0 z-20 bg-white border-b border-r border-slate-200 h-14 flex items-center justify-center font-black text-slate-700 shadow-sm">
+                                                <span className="text-xs uppercase tracking-wider">{block.replace('_', ' ')}</span>
+                                            </div>
+                                        ))}
 
-                                       {TIME_BLOCKS.map(block => (
-                                           <React.Fragment key={block}>
-                                               <div className="sticky left-0 z-10 bg-white border-b border-r border-slate-200 flex items-center justify-center p-2 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
-                                                   <span className="font-black text-slate-400 text-[10px] uppercase tracking-widest text-center" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{block.replace('_', ' ')}</span>
-                                               </div>
-                                               {crews.map(crew => {
-                                                   const dropId = `${crew.id}::${days[0].isoStr}::${block}`;
-                                                   const cellJobs = scheduledJobs.filter(j => j.scheduled_date === days[0].isoStr && j.assigned_crew_id === crew.id && j.scheduled_time_block === block);
-                                                   return (
-                                                       <Droppable key={dropId} droppableId={dropId}>
-                                                           {(provided, snapshot) => (
-                                                               <div ref={provided.innerRef} {...provided.droppableProps} className={`min-h-[160px] border-b border-r border-slate-200 p-3 flex flex-col gap-3 transition-colors ${snapshot.isDraggingOver ? 'bg-primary-50 ring-inset ring-2 ring-primary-200' : 'bg-transparent hover:bg-slate-50/50'}`}>
-                                                                   {cellJobs.map((j, i) => <JobCard key={j.id} job={j} index={i} />)}
-                                                                   {provided.placeholder}
-                                                               </div>
-                                                           )}
-                                                       </Droppable>
-                                                   );
-                                               })}
-                                           </React.Fragment>
-                                       ))}
-                                   </div>
+                                        {crews.map(crew => (
+                                            <React.Fragment key={crew.id}>
+                                                <div className="sticky left-0 z-10 bg-white border-b border-r border-slate-200 flex items-center p-4 font-black text-slate-700 gap-3 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
+                                                    <div className="w-1.5 h-10 rounded-full bg-slate-300"></div> 
+                                                    <div className="flex flex-col">
+                                                        <span>{crew.crew_name}</span>
+                                                    </div>
+                                                </div>
+                                                {TIME_BLOCKS.map(block => {
+                                                    const dropId = `${crew.id}::${days[0].isoStr}::${block}`;
+                                                    const cellJobs = scheduledJobs.filter(j => j.scheduled_date === days[0].isoStr && j.assigned_crew_id === crew.id && j.scheduled_time_block === block);
+                                                    return (
+                                                        <Droppable key={dropId} droppableId={dropId}>
+                                                            {(provided, snapshot) => (
+                                                                <div ref={provided.innerRef} {...provided.droppableProps} className={`min-h-[160px] border-b border-r border-slate-200 p-3 flex flex-col gap-3 transition-colors ${snapshot.isDraggingOver ? 'bg-primary-50 ring-inset ring-2 ring-primary-200' : 'bg-transparent hover:bg-slate-50/50'}`}>
+                                                                    {cellJobs.map((j, i) => <JobCard key={j.id} job={j} index={i} />)}
+                                                                    {provided.placeholder}
+                                                                </div>
+                                                            )}
+                                                        </Droppable>
+                                                    );
+                                                })}
+                                            </React.Fragment>
+                                        ))}
+                                    </div>
                                ) : (
                                    // WEEK VIEW (Days on X, Crews on Y)
                                    <div className="min-w-max grid min-h-full" style={{ gridTemplateColumns: `200px repeat(7, minmax(240px, 1fr))` }}>
@@ -385,24 +476,36 @@ export default function DispatchCalendar() {
                </div>
            </DragDropContext>
 
-           <OpportunityOverviewModal 
-               isOpen={!!inspectingJob} 
-               onClose={() => setInspectingJob(null)} 
-               job={inspectingJob} 
-               onAction={async (job) => {
-                  if (job.status === 'SCHEDULED') {
-                      try {
-                          await PipelineController.completeDeal(job.id, job.status);
-                          toast.success('Job successfully marked as Completed!');
-                          fetchOpportunities();
-                      } catch (e) {
-                          toast.error(e.message);
+           {inspectingJob && inspectingJob.__type === 'SERVICE' && (
+               <ServiceCallModal 
+                   callId={inspectingJob.id} 
+                   onClose={() => setInspectingJob(null)} 
+                   onUpdate={() => {
+                       setInspectingJob(null);
+                       fetchData();
+                   }}
+               />
+           )}
+           {inspectingJob && inspectingJob.__type !== 'SERVICE' && (
+               <OpportunityOverviewModal 
+                   isOpen={!!inspectingJob} 
+                   onClose={() => setInspectingJob(null)} 
+                   job={inspectingJob} 
+                   onAction={async (job) => {
+                      if (job.status === 'SCHEDULED') {
+                          try {
+                              await PipelineController.completeDeal(job.id, job.status);
+                              toast.success('Job successfully marked as Completed!');
+                              fetchData();
+                          } catch (e) {
+                              toast.error(e.message);
+                          }
+                      } else if (job.status === 'COMPLETED') {
+                          navigate(`/invoices?action=view_invoice&opp_id=${job.id}`);
                       }
-                  } else if (job.status === 'COMPLETED') {
-                      navigate(`/invoices?action=view_invoice&opp_id=${job.id}`);
-                  }
-               }}
-           />
+                   }}
+               />
+           )}
        </div>
    );
 }
