@@ -6,6 +6,7 @@ import { mutateCalendarEvent } from '../lib/calendar/mutationSources';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import OpportunityOverviewModal from '../components/OpportunityOverviewModal';
+import ServiceCallModal from '../components/ServiceCallModal';
 // Import other modals here when needed (e.g. Task Modal, etc.)
 
 export default function CompanyCalendar() {
@@ -19,6 +20,7 @@ export default function CompanyCalendar() {
 
   // Target routing state
   const [inspectingOpportunityId, setInspectingOpportunityId] = useState(null);
+  const [inspectingServiceCallId, setInspectingServiceCallId] = useState(null);
 
   const { events, loading, refetch } = useCompanyCalendarEvents(dateRange.start, dateRange.end, filters);
 
@@ -53,6 +55,9 @@ export default function CompanyCalendar() {
     switch (eventData.route_target) {
       case 'opportunity_overview':
         setInspectingOpportunityId(eventData.opportunity_id);
+        break;
+      case 'service_call_modal':
+        setInspectingServiceCallId(eventData.source_id);
         break;
       case 'proposal_viewer':
         console.log("Routing to Proposal Viewer for Proposal ID:", eventData.source_id);
@@ -108,6 +113,14 @@ export default function CompanyCalendar() {
           isOpen={!!inspectingOpportunityId}
           onClose={() => setInspectingOpportunityId(null)}
           onUpdate={() => {}}
+        />
+      )}
+      
+      {inspectingServiceCallId && (
+        <ServiceCallModal
+          callId={inspectingServiceCallId}
+          onClose={() => setInspectingServiceCallId(null)}
+          onUpdate={refetch}
         />
       )}
 

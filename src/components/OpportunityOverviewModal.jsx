@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
 import { supabase } from '../supabaseClient';
-import { History, MessageSquare, Send, MapPin, AlertTriangle, User, Calendar, Clock, Activity, ArrowRight, FileText, ShieldCheck, Banknote, Check, Mail, Phone, Package, DollarSign, Wallet } from 'lucide-react';
+import { History, MessageSquare, Send, MapPin, AlertTriangle, User, Calendar, Clock, Activity, ArrowRight, FileText, ShieldCheck, Banknote, Check, Mail, Phone, Package, DollarSign, Wallet, Navigation } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatQuoteId } from '../utils/formatters';
 import { useProposals } from '../context/ProposalContext';
@@ -500,7 +500,15 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
             {/* Action Footer */}
             <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center shrink-0">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-2">Ready to progress?</span>
-                <div className="flex gap-3">
+                <div className="flex gap-3 items-center">
+                    {['Dispatched', 'En Route', 'Working'].includes(job.status) && (
+                        <button 
+                            onClick={() => window.open(`/tracker/${job.id}`, '_blank')}
+                            className="px-4 py-2 text-xs font-black uppercase tracking-widest text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 rounded-xl transition-all flex items-center gap-2 mr-2"
+                        >
+                            <Navigation size={16} /> Track Tech
+                        </button>
+                    )}
                     <button 
                         onClick={onClose} 
                         className="px-5 py-2.5 rounded-xl font-black text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-all shadow-sm text-sm"

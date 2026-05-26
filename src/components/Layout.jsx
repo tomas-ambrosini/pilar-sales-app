@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, ShieldAlert, LogOut, LayoutDashboard, Users, BookOpen, FileCheck, FileText, ClipboardList, Megaphone, DollarSign, Settings, Bell, Search, Truck, CalendarClock, MessageCircle, CheckSquare, Wrench } from 'lucide-react';
+import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, ShieldAlert, LogOut, LayoutDashboard, Users, BookOpen, FileCheck, FileText, ClipboardList, Megaphone, DollarSign, Settings, Bell, Search, Truck, CalendarClock, MessageCircle, CheckSquare, Wrench, Navigation, TrendingUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
@@ -16,27 +16,35 @@ import './Layout.css';
 
 const navGroups = [
   {
-    title: 'CRM MVP',
+    title: 'Operations',
     allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES],
     items: [
-      { path: '/', label: 'Home', icon: LayoutDashboard, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
-      { path: '/calendar', label: 'Company Calendar', icon: CalendarClock, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
+      { path: '/', label: 'Dashboard', icon: LayoutDashboard, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
       { path: '/customers', label: 'Customers', icon: Users, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
-      { path: '/proposals', label: 'Proposals', icon: FileCheck, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
-      { path: '/tasks', label: 'Tasks', icon: CheckSquare, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
-      { path: '/catalog', label: 'Catalog', icon: BookOpen, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
-      { path: '/finance', label: 'Finance', icon: DollarSign, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
-      { path: '/template-settings', label: 'Templates', icon: FileText, allowedRoles: [ROLES.ADMIN] },
-      { path: '/account-management', label: 'Account Mgmt', icon: Settings, allowedRoles: [ROLES.ADMIN] }
+      { path: '/pipeline', label: 'Deal Pipeline', icon: ClipboardList, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+      { path: '/dispatch', label: 'Dispatch Board', icon: Truck, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+      { path: '/service', label: 'Service Hub', icon: Wrench, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+      { path: '/my-day', label: 'My Route', icon: Navigation, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] }
     ]
   },
   {
-    title: 'Operations ERP',
+    title: 'Workspace',
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES],
+    items: [
+      { path: '/calendar', label: 'Calendar', icon: CalendarClock, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
+      { path: '/tasks', label: 'Tasks', icon: CheckSquare, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
+      { path: '/proposals', label: 'Proposals List', icon: FileCheck, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] }
+    ]
+  },
+  {
+    title: 'Admin',
     allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
     items: [
-      { path: '/pipeline', label: 'Pipeline Ops', icon: ClipboardList, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
-      { path: '/dispatch', label: 'Dispatch Hub', icon: Truck, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
-      { path: '/service', label: 'Service Board', icon: Wrench, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] }
+      { path: '/analytics', label: 'Analytics', icon: TrendingUp, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+      { path: '/catalog', label: 'Catalog', icon: BookOpen, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+      { path: '/finance', label: 'Finance', icon: DollarSign, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+      { path: '/template-settings', label: 'Templates', icon: FileText, allowedRoles: [ROLES.ADMIN] },
+      { path: '/account-management', label: 'Settings', icon: Settings, allowedRoles: [ROLES.ADMIN] }
     ]
   }
 ];

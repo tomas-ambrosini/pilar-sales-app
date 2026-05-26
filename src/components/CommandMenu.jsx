@@ -2,25 +2,29 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Command } from 'cmdk';
-import { Search, LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Settings, LogOut, ArrowRight, UserCheck, DollarSign } from 'lucide-react';
+import { Search, LayoutDashboard, Users, BookOpen, FileCheck, ClipboardList, Settings, LogOut, ArrowRight, UserCheck, DollarSign, CalendarClock, CheckSquare, Truck, Wrench, Zap } from 'lucide-react';
 import { useCustomers } from '../context/CustomerContext';
 import { useProposals } from '../context/ProposalContext';
 import { useRole, ROLES } from '../context/RoleContext';
+import { supabase } from '../supabaseClient';
 
 const STATIC_COMMANDS = [
   { id: 'dash', name: 'Go to Home', icon: LayoutDashboard, route: '/', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
+  { id: 'calendar', name: 'Company Calendar', icon: CalendarClock, route: '/calendar', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
   { id: 'cust', name: 'View Customers', icon: Users, route: '/customers', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
   { id: 'addcust', name: 'Add New Customer', icon: Users, route: '/customers?action=new', section: 'Actions', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
   { id: 'prop_list', name: 'View Proposals', icon: FileCheck, route: '/proposals', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
   { id: 'prop', name: 'Create New Proposal', icon: FileCheck, route: '/proposals?action=new', section: 'Actions', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
+  { id: 'tasks', name: 'Tasks', icon: CheckSquare, route: '/tasks', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
   { id: 'cat', name: 'Equipment Catalog', icon: BookOpen, route: '/catalog', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
   { id: 'finance_promos', name: 'Promo Campaigns', icon: DollarSign, route: '/finance?tab=promos', section: 'Finance', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
   { id: 'finance_margins', name: 'Global Margins & Taxes', icon: DollarSign, route: '/finance?tab=margins', section: 'Finance', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
   { id: 'finance_invoices', name: 'Deposits & Invoices', icon: DollarSign, route: '/finance?tab=invoices', section: 'Finance', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
   { id: 'template_settings', name: 'Template Settings', icon: Settings, route: '/template-settings', section: 'System', allowedRoles: [ROLES.ADMIN] },
   { id: 'settings', name: 'Account Management', icon: Settings, route: '/account-management', section: 'System', allowedRoles: [ROLES.ADMIN] },
-  { id: 'pipe', name: 'Pipeline Ops', icon: ClipboardList, route: '/pipeline', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
-  { id: 'dispatch', name: 'Dispatch', icon: ClipboardList, route: '/dispatch', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+  { id: 'pipe', name: 'Pipeline Ops', icon: ClipboardList, route: '/pipeline', section: 'Operations', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+  { id: 'dispatch', name: 'Dispatch Hub', icon: Truck, route: '/dispatch', section: 'Operations', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+  { id: 'service', name: 'Service Board', icon: Wrench, route: '/service', section: 'Operations', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
 ];
 
 export default function CommandMenu({ isOpen, setIsOpen }) {
@@ -29,25 +33,55 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
   const { activeRole } = useRole();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [globalResults, setGlobalResults] = useState({ services: [], opps: [] });
 
   // Clear search on open/close
   useEffect(() => {
-     if (!isOpen) setSearchQuery('');
+     if (!isOpen) {
+         setSearchQuery('');
+         setGlobalResults({ services: [], opps: [] });
+     }
   }, [isOpen]);
 
   const isSearching = searchQuery.trim().length > 0;
   const q = searchQuery.toLowerCase();
+
+  useEffect(() => {
+    if (!isSearching) {
+      setGlobalResults({ services: [], opps: [] });
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+       const { data: svcData } = await supabase.from('service_calls')
+          .select('id, issue_description, status, households(household_name)')
+          .ilike('issue_description', `%${q}%`)
+          .limit(4);
+       
+       const { data: oppData } = await supabase.from('opportunities')
+          .select('id, issue_description, status, households(household_name)')
+          .ilike('issue_description', `%${q}%`)
+          .limit(4);
+
+       setGlobalResults({
+          services: svcData || [],
+          opps: oppData || []
+       });
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [q, isSearching]);
 
   const filteredStatic = STATIC_COMMANDS
      .filter(cmd => cmd.allowedRoles.includes(activeRole))
      .filter(cmd => !isSearching || cmd.name.toLowerCase().includes(q) || cmd.section.toLowerCase().includes(q));
 
   const filteredCustomers = isSearching 
-    ? customers.filter(c => c.name?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q)).slice(0, 5)
+    ? customers.filter(c => c.name?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q)).slice(0, 4)
     : [];
 
   const filteredProposals = isSearching
-    ? proposals.filter(p => p.customer?.toLowerCase().includes(q) || p.id?.toLowerCase().includes(q)).slice(0, 5)
+    ? proposals.filter(p => p.customer?.toLowerCase().includes(q) || p.id?.toLowerCase().includes(q)).slice(0, 4)
     : [];
 
   // Global Keyboard Event Listener for Cmd+K and Navigation
@@ -191,6 +225,54 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
                     </Command.Group>
                   </>
                 )}
+
+                {globalResults.services.length > 0 && (
+                   <>
+                     <Command.Separator className="h-px bg-slate-100 mx-[-8px] my-2" />
+                     <Command.Group heading="Active Service Calls" className="px-2 py-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-slate-400 [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest">
+                        {globalResults.services.map(svc => (
+                           <Command.Item
+                              key={`svc_${svc.id}`}
+                              value={`svc_${svc.id}`}
+                              onSelect={() => handleSelect({ route: `/service` })}
+                              className="flex items-center gap-3 px-3 py-3 text-sm rounded-lg cursor-pointer data-[selected=true]:bg-blue-50 data-[selected=true]:text-blue-900 text-slate-700 hover:bg-slate-50 transition-colors my-0.5 font-semibold group"
+                           >
+                              <div className="p-1.5 rounded-md bg-slate-100/80 text-slate-500 group-data-[selected=true]:bg-blue-100 group-data-[selected=true]:text-blue-600 transition-colors">
+                                 <Wrench size={16} />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                 <span>{svc.households?.household_name || 'Unknown Customer'}</span>
+                                 <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider line-clamp-1">{svc.issue_description || 'No description'} • {svc.status}</span>
+                              </div>
+                           </Command.Item>
+                        ))}
+                     </Command.Group>
+                   </>
+                 )}
+
+                 {globalResults.opps.length > 0 && (
+                   <>
+                     <Command.Separator className="h-px bg-slate-100 mx-[-8px] my-2" />
+                     <Command.Group heading="Open Deals" className="px-2 py-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-slate-400 [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest">
+                        {globalResults.opps.map(opp => (
+                           <Command.Item
+                              key={`opp_${opp.id}`}
+                              value={`opp_${opp.id}`}
+                              onSelect={() => handleSelect({ route: `/pipeline` })}
+                              className="flex items-center gap-3 px-3 py-3 text-sm rounded-lg cursor-pointer data-[selected=true]:bg-amber-50 data-[selected=true]:text-amber-900 text-slate-700 hover:bg-slate-50 transition-colors my-0.5 font-semibold group"
+                           >
+                              <div className="p-1.5 rounded-md bg-slate-100/80 text-slate-500 group-data-[selected=true]:bg-amber-100 group-data-[selected=true]:text-amber-600 transition-colors">
+                                 <Zap size={16} />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                 <span>{opp.households?.household_name || 'Unknown Customer'}</span>
+                                 <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider line-clamp-1">{opp.issue_description || 'No description'} • {opp.status}</span>
+                              </div>
+                           </Command.Item>
+                        ))}
+                     </Command.Group>
+                   </>
+                 )}
               </Command.List>
 
               {/* Footer Toolbar */}

@@ -36,3 +36,8 @@ export const formatQuoteId = (proposal) => {
     // If it's a long UUID (which means it is an Opportunity that has not yet been assigned a Proposal Number)
     return `LEAD-${rawId.substring(0, 6).toUpperCase()}`;
 };
+
+export const formatCustomerName = (name, fallback = 'Unknown Customer') => {
+    if (!name) return fallback;
+    return name.replace(/ Account$/i, '').trim();
+};

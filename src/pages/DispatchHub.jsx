@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
 import { useAuth } from '../context/AuthContext';
-import { Phone, User, MapPin, Search, Plus, AlertCircle, CalendarClock, Zap, CheckCircle2, UserCheck } from 'lucide-react';
+import { Phone, User, MapPin, Search, Plus, AlertCircle, CalendarClock, Zap, CheckCircle2, UserCheck, Map } from 'lucide-react';
 import { PIPELINE_STATES } from '../utils/pipelineControls';
 import toast from 'react-hot-toast';
 import DispatchCalendar from './DispatchCalendar';
+import DispatchMap from '../components/DispatchMap';
 
 export default function DispatchHub() {
    const { user } = useAuth();
@@ -15,7 +16,7 @@ export default function DispatchHub() {
    const [matchedCustomer, setMatchedCustomer] = useState(null);
    const [isNewCustomer, setIsNewCustomer] = useState(false);
    const [loading, setLoading] = useState(false);
-   const [activeTab, setActiveTab] = useState('intake');
+   const [activeTab, setActiveTab] = useState('map'); // default to map or intake
 
    // Customer Form
    const [customerForm, setCustomerForm] = useState({
@@ -176,15 +177,20 @@ export default function DispatchHub() {
                     >
                         <CalendarClock size={16}/> Crew Routing
                     </button>
+                    <button 
+                        onClick={() => setActiveTab('map')} 
+                        className={`px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'map' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
+                    >
+                        <Map size={16}/> Live Map
+                    </button>
                </div>
            </header>
 
-           {activeTab === 'intake' ? (
-               <div className="flex-1 overflow-y-auto p-6">
-                   <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-                   
-                   {/* LEFT PANEL: Customer Lookup & Creation */}
-                   <div className="col-span-1 lg:col-span-5 flex flex-col gap-6">
+           <div className="flex-1 overflow-hidden">
+               {activeTab === 'intake' && (
+                   <div className="flex flex-col lg:flex-row gap-6 p-6 h-full overflow-y-auto">
+                       {/* Left Column: Intake Search & Results */}
+                       <div className="w-full lg:w-[400px] xl:w-[450px] shrink-0 flex flex-col gap-4">
                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
                            <div className="bg-slate-800 p-4 flex items-center justify-between rounded-t-xl">
                                <h2 className="font-bold flex items-center gap-2 text-white"><Search size={18} className="text-slate-400" /> 1. Identify Caller</h2>
@@ -425,16 +431,24 @@ export default function DispatchHub() {
                                    <Zap size={20} /> 
                                    Inject {oppForm.type === 'SALES' ? 'Sales Lead' : 'Service Lead'}
                                </button>
-                           </div>
-                       </div>
-                   </div>
-                                  </div>
-            </div>
-            ) : (
-                <div className="flex-1 overflow-hidden relative">
-                    <DispatchCalendar isSubView={true} />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
-        </div>
+
+               {activeTab === 'calendar' && (
+                   <div className="flex-1 overflow-hidden relative h-full">
+                       <DispatchCalendar isSubView={true} />
+                   </div>
+               )}
+
+               {activeTab === 'map' && (
+                   <div className="flex-1 overflow-hidden relative h-full p-4 bg-slate-100">
+                       <DispatchMap />
+                   </div>
+               )}
+           </div>
+       </div>
    );
 }

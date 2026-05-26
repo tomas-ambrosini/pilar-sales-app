@@ -207,7 +207,7 @@ export default function ServiceHub() {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
-                                            <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                            <tr className="bg-slate-50/50 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                                 <th className="p-4 px-6 font-medium text-left">Customer / ID</th>
                                                 <th className="p-4 px-6 font-medium text-center">Status</th>
                                                 <th className="p-4 px-6 font-medium text-center">Urgency</th>
@@ -218,7 +218,7 @@ export default function ServiceHub() {
                                         <tbody className="divide-y divide-slate-100">
                                             {filteredCalls.map(call => {
                                                 let badgeColors = 'bg-slate-100 text-slate-600 border-slate-200';
-                                                if (call.status === 'Pending') badgeColors = 'bg-slate-100 text-slate-800 border-slate-300';
+                                                if (call.status === 'Pending') badgeColors = 'bg-slate-50 text-slate-800 border-slate-300';
                                                 else if (call.status === 'Scheduled') badgeColors = 'bg-amber-50 text-amber-800 border-amber-200';
                                                 else if (call.status === 'Dispatched') badgeColors = 'bg-blue-50 text-blue-800 border-blue-200';
                                                 else if (call.status === 'En Route') badgeColors = 'bg-indigo-50 text-indigo-800 border-indigo-200';
@@ -243,7 +243,7 @@ export default function ServiceHub() {
                                                             </div>
                                                         </td>
                                                         <td className="p-4 px-6 text-center">
-                                                            <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md text-xs font-bold border ${badgeColors}`}>
+                                                            <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${badgeColors}`}>
                                                                 {call.status}
                                                             </span>
                                                         </td>

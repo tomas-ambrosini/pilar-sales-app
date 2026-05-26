@@ -5,7 +5,7 @@ import { AlertTriangle, Clock, ArrowRight, DollarSign, Calendar, Zap, AlertCircl
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import OpportunityOverviewModal from '../components/OpportunityOverviewModal';
-import { formatQuoteId } from '../utils/formatters';
+import { formatQuoteId, formatCustomerName } from '../utils/formatters';
 import { useProposals } from '../context/ProposalContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -193,7 +193,7 @@ export default function SalesPipeline() {
 
                                             <div className="flex justify-between items-start mb-3">
                                                 <div className="flex flex-col pr-4">
-                                                    <h4 className="font-black text-slate-800 text-base leading-tight truncate">{(job.households?.household_name || 'Unknown Client').replace(/ Account$/i, '').trim()}</h4>
+                                                    <h4 className="font-black text-slate-800 text-base leading-tight truncate">{formatCustomerName(job.households?.household_name, 'Unknown Client')}</h4>
                                                     <span className="text-[10px] font-semibold text-slate-500 mt-1 flex items-center gap-1.5 flex-wrap">
                                                        <span className="whitespace-nowrap">{new Date(job.created_at).toLocaleDateString()}</span> 
                                                        <span className="text-slate-300 whitespace-nowrap">&bull;</span> 
@@ -250,7 +250,7 @@ export default function SalesPipeline() {
                                                             await PipelineController.startProposal(job.id, job.status);
                                                             
                                                             await createDraft({
-                                                                customer: job.households?.household_name || 'Unknown Client',
+                                                                customer: formatCustomerName(job.households?.household_name, 'Unknown Client'),
                                                                 amount: 0,
                                                                 associated_opportunity_id: job.id,
                                                                 proposal_data: {
@@ -362,8 +362,15 @@ export default function SalesPipeline() {
                       forceStep: 2
                   }));
                   navigate(`/proposals?action=resume_opp&opp_id=${job.id}`);
-              } else if (job.status === 'APPROVED') {
-                  toast.success('Ready to route! Navigate to Dispatch Hub.');
+              } else if (job.status === 'APPROVED' || job.status === 'NEEDS_SCHEDULING') {
+                  toast.success('Navigating to Dispatch Hub to route job...');
+                  navigate('/dispatch');
+              } else if (job.status === 'SCHEDULED') {
+                  try {
+                      await PipelineController.updateOpportunityStatus(job.id, 'COMPLETED');
+                      toast.success('Job marked as completed!');
+                      fetchOpportunities();
+                  } catch (e) { toast.error('Failed to mark job complete.'); }
               }
           }}
       />

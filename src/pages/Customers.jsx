@@ -82,11 +82,11 @@ function CustomerList() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-[28px] font-bold text-slate-900 tracking-tight mb-1 flex items-center gap-3">
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
             <Users className="text-primary-600" size={28} />
             Customer Directory
           </h1>
-          <p className="text-slate-500 font-medium">Centralized database for all customer contacts.</p>
+          <p className="text-slate-500 font-medium mt-1">Centralized database for all customer contacts.</p>
         </div>
         <button 
           onClick={() => setIsAddCustomerOpen(true)}
@@ -114,15 +114,15 @@ function CustomerList() {
                  <div className="flex bg-slate-200/50 p-1 rounded-lg">
                     <button 
                         onClick={() => setViewMode('active')}
-                        className={`text-xs font-bold px-4 py-1.5 rounded-md transition-all ${viewMode === 'active' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`text-[10px] uppercase tracking-widest font-bold px-4 py-1.5 rounded-md transition-all ${viewMode === 'active' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         Active
                     </button>
                     <button 
                         onClick={() => setViewMode('archived')}
-                        className={`text-xs font-bold px-4 py-1.5 rounded-md transition-all ${viewMode === 'archived' ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`text-[10px] uppercase tracking-widest font-bold px-4 py-1.5 rounded-md transition-all ${viewMode === 'archived' ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                        Archived Graveyard
+                        Archived
                     </button>
                  </div>
              )}
@@ -132,7 +132,7 @@ function CustomerList() {
         {loading ? (
            <table className="w-full text-left border-collapse">
              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-black text-slate-400 uppercase tracking-widest">
+                <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                    <th className="p-4 px-6 font-medium">Customer Name</th>
                    <th className="p-4 px-6 font-medium">Contact</th>
                    <th className="p-4 px-6 font-medium">Service Address</th>
@@ -165,7 +165,7 @@ function CustomerList() {
            </table>
          ) : viewMode === 'active' && customers.length === 0 ? (
           <div className="p-12 text-center flex flex-col items-center">
-            <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
+            <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4 border border-slate-100 shadow-sm">
               <UserIcon size={32} />
             </div>
             <h3 className="text-sm font-bold text-slate-900 mb-1">No customers yet</h3>
@@ -176,7 +176,7 @@ function CustomerList() {
           </div>
         ) : viewMode === 'archived' && archivedCustomers.length === 0 ? (
           <div className="p-12 text-center flex flex-col items-center">
-             <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
+             <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4 border border-slate-100 shadow-sm">
                <Trash2 size={32} />
              </div>
              <h3 className="text-sm font-bold text-slate-900 mb-1">Graveyard Empty</h3>
@@ -186,7 +186,7 @@ function CustomerList() {
           <div className="overflow-x-auto">
           <table className="w-full text-left bg-white">
             <thead>
-               <tr className="bg-slate-50 border-b border-slate-200 text-xs font-black text-slate-400 uppercase tracking-widest">
+               <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   <th className="p-4 px-6">Customer Name</th>
                   <th className="p-4 px-6">Contact</th>
                   <th className="p-4 px-6">Service Address</th>

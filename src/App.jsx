@@ -18,6 +18,9 @@ import DispatchHub from './pages/DispatchHub';
 import Tasks from './pages/Tasks';
 import CompanyCalendar from './pages/CompanyCalendar';
 import ServiceHub from './pages/ServiceHub';
+import TechnicianMyDay from './pages/TechnicianMyDay';
+import CustomerTracker from './pages/CustomerTracker';
+import ExecutiveAnalytics from './pages/ExecutiveAnalytics';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CustomerProvider } from './context/CustomerContext';
 import { CatalogProvider } from './context/CatalogContext';
@@ -59,6 +62,7 @@ function MainRouter() {
   return (
     <Routes>
       <Route path="/quote/:id" element={<PublicQuoteView />} />
+      <Route path="/tracker/:id" element={<CustomerTracker />} />
       
       {!user ? (
         <Route path="*" element={<Login />} />
@@ -70,6 +74,7 @@ function MainRouter() {
           <Route path="tasks/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Tasks /></RoleRoute>} />
           <Route path="calendar/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><CompanyCalendar /></RoleRoute>} />
           <Route path="service/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><ServiceHub /></RoleRoute>} />
+          <Route path="my-day" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><TechnicianMyDay /></RoleRoute>} />
           
           {/* MANAGER DOMAINS */}
           <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><Catalog /></RoleRoute>} />
@@ -77,6 +82,7 @@ function MainRouter() {
           <Route path="dispatch" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><DispatchHub /></RoleRoute>} />
 
           {/* SUPER ADMIN EXCLUSIVE DOMAINS */}
+          <Route path="analytics" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><ExecutiveAnalytics /></RoleRoute>} />
           <Route path="account-management/*" element={<RoleRoute allowedRoles={['ADMIN']}><AccountManagement /></RoleRoute>} />
           <Route path="template-settings/*" element={<RoleRoute allowedRoles={['ADMIN']}><TemplateDashboard /></RoleRoute>} />
           <Route path="finance/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><FinanceDashboard /></RoleRoute>} />

@@ -18,7 +18,18 @@ const getStartOfWeek = () => {
    return new Date(d.setDate(diff));
 };
 
-const TIME_BLOCKS = ['MORNING', 'AFTERNOON', 'ALL_DAY'];
+const TIME_BLOCKS = [
+    { label: '8 AM', value: '08:00', hour: 8 },
+    { label: '9 AM', value: '09:00', hour: 9 },
+    { label: '10 AM', value: '10:00', hour: 10 },
+    { label: '11 AM', value: '11:00', hour: 11 },
+    { label: '12 PM', value: '12:00', hour: 12 },
+    { label: '1 PM', value: '13:00', hour: 13 },
+    { label: '2 PM', value: '14:00', hour: 14 },
+    { label: '3 PM', value: '15:00', hour: 15 },
+    { label: '4 PM', value: '16:00', hour: 16 },
+    { label: '5 PM', value: '17:00', hour: 17 }
+];
 
 export default function DispatchCalendar({ isSubView = false }) {
    const { proposals } = useProposals();
@@ -37,7 +48,15 @@ export default function DispatchCalendar({ isSubView = false }) {
       const oppChannel = supabase.channel('realtime_cal_opps')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'opportunities' }, () => fetchData())
         .subscribe();
-      return () => supabase.removeChannel(oppChannel);
+      
+      const svcChannel = supabase.channel('realtime_cal_svc')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'service_calls' }, () => fetchData())
+        .subscribe();
+
+      return () => {
+         supabase.removeChannel(oppChannel);
+         supabase.removeChannel(svcChannel);
+      };
    }, [baseDate]);
 
    const fetchData = async () => {
@@ -62,11 +81,8 @@ export default function DispatchCalendar({ isSubView = false }) {
              let timeBlock = null;
              if (s.scheduled_start) {
                  const startHour = new Date(s.scheduled_start).getHours();
-                 const endHour = s.scheduled_end ? new Date(s.scheduled_end).getHours() : startHour + 4;
-                 if (startHour === 8 && endHour === 12) timeBlock = 'MORNING';
-                 else if (startHour === 12 && endHour === 16) timeBlock = 'AFTERNOON';
-                 else if (startHour === 8 && endHour === 16) timeBlock = 'ALL_DAY';
-                 else timeBlock = 'MORNING'; // Fallback
+                 const block = TIME_BLOCKS.find(b => b.hour === startHour);
+                 timeBlock = block ? block.value : '08:00';
              }
              return {
                  __type: 'SERVICE',
@@ -126,19 +142,15 @@ export default function DispatchCalendar({ isSubView = false }) {
          if (parts.length === 3) {
              newCrewId = parts[0];
              newDateStr = parts[1];
-             newTimeBlock = parts[2] !== 'ANY' ? parts[2] : 'ALL_DAY';
+             newTimeBlock = parts[2] !== 'ANY' ? parts[2] : '08:00';
              
              if (isService) {
-                 if (newTimeBlock === 'MORNING') {
-                     svcStartTime = `${newDateStr}T08:00:00`;
-                     svcEndTime = `${newDateStr}T12:00:00`;
-                 } else if (newTimeBlock === 'AFTERNOON') {
-                     svcStartTime = `${newDateStr}T12:00:00`;
-                     svcEndTime = `${newDateStr}T16:00:00`;
-                 } else {
-                     svcStartTime = `${newDateStr}T08:00:00`;
-                     svcEndTime = `${newDateStr}T16:00:00`;
-                 }
+                 const [hourStr] = newTimeBlock.split(':');
+                 const startH = parseInt(hourStr, 10);
+                 const endH = startH + 2; // Default 2 hr duration
+                 
+                 svcStartTime = `${newDateStr}T${hourStr.padStart(2, '0')}:00:00`;
+                 svcEndTime = `${newDateStr}T${endH.toString().padStart(2, '0')}:00:00`;
              }
          }
       }
@@ -275,8 +287,8 @@ export default function DispatchCalendar({ isSubView = false }) {
                {...provided.draggableProps}
                {...provided.dragHandleProps}
                onClick={() => setInspectingJob(job)}
-               className={`w-full min-w-0 p-3 shrink-0 rounded-[16px] border flex flex-col transition-all duration-200 group select-none cursor-pointer overflow-hidden
-                  ${snapshot.isDragging ? 'shadow-2xl border-primary-400 z-50 bg-white ring-4 ring-primary-50 scale-105' : 'hover:shadow-md hover:border-slate-300 border-slate-200 bg-white shadow-sm'}
+               className={`w-full min-w-0 p-3.5 shrink-0 rounded-[16px] flex flex-col transition-all duration-300 group select-none cursor-pointer overflow-hidden bg-white
+                  ${snapshot.isDragging ? 'shadow-2xl z-50 ring-2 ring-primary-400 scale-[1.02]' : 'hover:shadow-lg hover:-translate-y-0.5 hover:ring-slate-300 shadow-sm ring-1 ring-slate-200/60'}
                `}
                style={
                    snapshot.isDragging || snapshot.isDropAnimating
@@ -310,7 +322,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                       <div className="flex mt-1">
                           <span className="w-full text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-100/50 border border-emerald-200/50 px-2 py-1.5 rounded-lg flex items-center justify-center gap-1.5">
                               <Clock size={12} strokeWidth={2.5}/>
-                              {job.scheduled_time_block.replace('_', ' ')}
+                              {job.scheduled_time_block}
                           </span>
                       </div>
                    )}
@@ -372,34 +384,36 @@ export default function DispatchCalendar({ isSubView = false }) {
 
            <DragDropContext onDragEnd={handleDragEnd}>
                <div className="flex-1 flex flex-col min-h-0">
-                   <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full relative">
-                           <div className="flex-1 overflow-auto bg-slate-50/30">
+                   <div className="flex-1 overflow-auto bg-white">
                                {viewMode === 'day' ? (
                                     // DAY VIEW (Time Blocks on X, Crews on Y)
-                                    <div className="min-w-max grid min-h-full" style={{ gridTemplateColumns: `200px repeat(${TIME_BLOCKS.length}, minmax(240px, 1fr))` }}>
-                                        <div className="sticky top-0 left-0 z-30 bg-white border-b border-r border-slate-200 h-14"></div>
+                                    <div className="min-w-max grid min-h-full" style={{ gridTemplateColumns: `220px repeat(${TIME_BLOCKS.length}, minmax(180px, 1fr))` }}>
+                                        <div className="sticky top-0 left-0 z-30 bg-white border-b border-r border-slate-200 h-12"></div>
                                         
                                         {TIME_BLOCKS.map(block => (
-                                            <div key={block} className="sticky top-0 z-20 bg-white border-b border-r border-slate-200 h-14 flex items-center justify-center font-black text-slate-700 shadow-sm">
-                                                <span className="text-xs uppercase tracking-wider">{block.replace('_', ' ')}</span>
+                                            <div key={block.value} className="sticky top-0 z-20 h-12 flex items-center justify-center bg-white border-b border-r border-slate-200">
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{block.label}</span>
                                             </div>
                                         ))}
 
                                         {crews.map(crew => (
                                             <React.Fragment key={crew.id}>
-                                                <div className="sticky left-0 z-10 bg-white border-b border-r border-slate-200 flex items-center p-4 font-black text-slate-700 gap-3 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
-                                                    <div className="w-1.5 h-10 rounded-full bg-slate-300"></div> 
-                                                    <div className="flex flex-col">
-                                                        <span>{crew.crew_name}</span>
+                                                <div className="sticky left-0 z-10 bg-white border-b border-r border-slate-200 flex items-center p-3 font-bold text-slate-800 gap-3 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
+                                                    <div className="w-1.5 h-8 rounded-full bg-slate-300"></div> 
+                                                    <div className="flex flex-col min-w-0">
+                                                        <span className="text-sm truncate">{crew.crew_name}</span>
                                                     </div>
                                                 </div>
-                                                {TIME_BLOCKS.map(block => {
-                                                    const dropId = `${crew.id}::${days[0].isoStr}::${block}`;
-                                                    const cellJobs = scheduledJobs.filter(j => j.scheduled_date === days[0].isoStr && j.assigned_crew_id === crew.id && j.scheduled_time_block === block);
+                                                {TIME_BLOCKS.map((block, idx) => {
+                                                    const dropId = `${crew.id}::${days[0].isoStr}::${block.value}`;
+                                                    const cellJobs = scheduledJobs.filter(j => j.scheduled_date === days[0].isoStr && j.assigned_crew_id === crew.id && (j.scheduled_time_block === block.value || (!j.scheduled_time_block && block.value === '08:00') || (j.scheduled_time_block === 'MORNING' && block.value === '08:00') || (j.scheduled_time_block === 'AFTERNOON' && block.value === '12:00') || (j.scheduled_time_block === 'ALL_DAY' && block.value === '08:00')));
                                                     return (
                                                         <Droppable key={dropId} droppableId={dropId}>
                                                             {(provided, snapshot) => (
-                                                                <div ref={provided.innerRef} {...provided.droppableProps} className={`min-h-[160px] border-b border-r border-slate-200 p-3 flex flex-col gap-3 transition-colors ${snapshot.isDraggingOver ? 'bg-primary-50 ring-inset ring-2 ring-primary-200' : 'bg-transparent hover:bg-slate-50/50'}`}>
+                                                                <div ref={provided.innerRef} {...provided.droppableProps} 
+                                                                    className={`min-h-[140px] p-2 flex flex-col gap-2 transition-colors border-b border-r border-slate-200
+                                                                    ${snapshot.isDraggingOver ? 'bg-primary-50 ring-inset ring-2 ring-primary-200' : 'bg-transparent hover:bg-slate-50/50'}
+                                                                    `}>
                                                                     {cellJobs.map((j, i) => <JobCard key={j.id} job={j} index={i} />)}
                                                                     {provided.placeholder}
                                                                 </div>
@@ -412,29 +426,32 @@ export default function DispatchCalendar({ isSubView = false }) {
                                     </div>
                                ) : (
                                    // WEEK VIEW (Days on X, Crews on Y)
-                                   <div className="min-w-max grid min-h-full" style={{ gridTemplateColumns: `200px repeat(7, minmax(240px, 1fr))` }}>
-                                       <div className="sticky top-0 left-0 z-30 bg-white border-b border-r border-slate-200 h-14"></div>
+                                   <div className="min-w-max grid min-h-full" style={{ gridTemplateColumns: `220px repeat(7, minmax(260px, 1fr))` }}>
+                                       <div className="sticky top-0 left-0 z-30 bg-white border-b border-r border-slate-200 h-12"></div>
                                        {days.map(d => (
-                                           <div key={d.isoStr} className="sticky top-0 z-20 bg-white border-b border-r border-slate-200 h-14 flex flex-col items-center justify-center font-black text-slate-700 shadow-sm">
-                                               <span className="text-[10px] uppercase text-slate-400 tracking-wider">{d.obj.toLocaleDateString('en-US', {weekday: 'short'})}</span>
-                                               <span className="text-sm">{d.obj.toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}</span>
+                                           <div key={d.isoStr} className="sticky top-0 z-20 h-12 flex flex-col items-center justify-center bg-white border-b border-r border-slate-200">
+                                               <span className="text-[10px] uppercase text-slate-500 tracking-widest font-bold">{d.obj.toLocaleDateString('en-US', {weekday: 'short'})}</span>
+                                               <span className="text-sm font-bold text-slate-800">{d.obj.toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}</span>
                                            </div>
                                        ))}
                                        {crews.map(crew => (
-                                           <React.Fragment key={crew.id}>
-                                               <div className="sticky left-0 z-10 bg-white border-b border-r border-slate-200 flex items-center p-4 font-black text-slate-700 gap-3 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
-                                                   <div className="w-1.5 h-10 rounded-full bg-slate-300"></div> 
-                                                   <div className="flex flex-col">
-                                                       <span>{crew.crew_name}</span>
-                                                   </div>
-                                               </div>
-                                               {days.map(d => {
+                                            <React.Fragment key={crew.id}>
+                                                <div className="sticky left-0 z-10 bg-white border-b border-r border-slate-200 flex items-center p-3 font-bold text-slate-800 gap-3 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
+                                                    <div className="w-1.5 h-8 rounded-full bg-slate-300"></div> 
+                                                    <div className="flex flex-col min-w-0">
+                                                        <span className="text-sm truncate">{crew.crew_name}</span>
+                                                    </div>
+                                                </div>
+                                               {days.map((d, idx) => {
                                                    const dropId = `${crew.id}::${d.isoStr}::ANY`;
                                                    const cellJobs = scheduledJobs.filter(j => j.scheduled_date === d.isoStr && j.assigned_crew_id === crew.id);
                                                    return (
                                                        <Droppable key={dropId} droppableId={dropId}>
                                                            {(provided, snapshot) => (
-                                                               <div ref={provided.innerRef} {...provided.droppableProps} className={`min-h-[140px] border-b border-r border-slate-200 p-3 flex flex-col gap-3 transition-colors ${snapshot.isDraggingOver ? 'bg-primary-50 ring-inset ring-2 ring-primary-200' : 'bg-transparent hover:bg-slate-50/50'}`}>
+                                                               <div ref={provided.innerRef} {...provided.droppableProps} 
+                                                                   className={`min-h-[140px] p-2 flex flex-col gap-2 transition-colors border-b border-r border-slate-200
+                                                                   ${snapshot.isDraggingOver ? 'bg-primary-50 ring-inset ring-2 ring-primary-200' : 'bg-transparent hover:bg-slate-50/50'}
+                                                                   `}>
                                                                    {cellJobs.map((j, i) => <JobCard key={j.id} job={j} index={i} />)}
                                                                    {provided.placeholder}
                                                                </div>
@@ -447,24 +464,23 @@ export default function DispatchCalendar({ isSubView = false }) {
                                    </div>
                                )}
                            </div>
-                       </div>
 
                    {/* BOTTOM DRAWER (Unassigned) */}
-                   <div className="min-h-[140px] shrink-0 bg-white border border-slate-200 shadow-[0_-10px_30px_rgba(0,0,0,0.02)] p-4 flex flex-col z-40 relative rounded-2xl mt-4">
+                   <div className="min-h-[140px] shrink-0 bg-slate-50 border-t border-slate-200 p-4 flex flex-col z-40 relative">
                        <div className="flex justify-between items-center mb-2 px-1">
-                           <h3 className="font-bold text-slate-800 flex items-center gap-2 text-sm"><Zap size={14} className="text-amber-500"/> Needs Scheduling <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] ml-1">{unassignedQueue.length}</span></h3>
+                           <h3 className="font-bold text-slate-800 flex items-center gap-2 text-sm"><Zap size={14} className="text-amber-500"/> Needs Scheduling <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full text-[10px] ml-1">{unassignedQueue.length}</span></h3>
                            <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase hidden md:block">Drag cards onto the calendar</span>
                        </div>
                        <Droppable droppableId="unassigned" direction="horizontal">
                            {(provided, snapshot) => (
-                               <div ref={provided.innerRef} {...provided.droppableProps} className={`flex-1 flex gap-4 overflow-x-auto pb-2 p-3 rounded-xl transition-all border-2 border-dashed ${snapshot.isDraggingOver ? 'border-primary-300 bg-primary-50/50 shadow-inner' : 'border-slate-200 bg-slate-50/30'}`}>
+                               <div ref={provided.innerRef} {...provided.droppableProps} className={`flex-1 flex gap-4 overflow-x-auto pb-2 p-2 transition-all ${snapshot.isDraggingOver ? 'bg-primary-50/50 rounded-xl' : ''}`}>
                                    {unassignedQueue.length === 0 && !snapshot.isDraggingOver && (
                                        <div className="m-auto text-slate-400 font-bold text-sm flex items-center gap-2">
                                            <CheckCircle2 size={16} className="text-emerald-500"/> All approved deals have been scheduled!
                                        </div>
                                    )}
                                    {unassignedQueue.map((j, i) => (
-                                       <div key={j.id} className="w-[240px] shrink-0">
+                                       <div key={j.id} className="w-[260px] shrink-0">
                                           <JobCard job={j} index={i} />
                                        </div>
                                    ))}

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { X, Wrench, Clock, MapPin, Phone, Save, Calendar as CalendarIcon, UserCheck, AlertCircle, Check, Mail } from 'lucide-react';
+import { X, Wrench, Clock, MapPin, Phone, Save, Calendar as CalendarIcon, UserCheck, AlertCircle, Check, Mail, Navigation } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
 
 export default function ServiceCallModal({ callId, onClose, onUpdate }) {
@@ -9,6 +10,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [converting, setConverting] = useState(false);
+    const navigate = useNavigate();
     
     // Selectable lists
     const [teamLoad, setTeamLoad] = useState([]);
@@ -356,8 +358,16 @@ ${callData.issue_description}`,
                         />
                     </div>
 
-                    <div className="p-4 border-t border-slate-200 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0 relative z-10">
-                        <div className="w-full sm:w-auto">
+                    <div className="p-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0 relative z-10">
+                        <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-2">
+                            {['Dispatched', 'En Route', 'Working'].includes(callData.status) && (
+                                <button 
+                                    onClick={() => window.open(`/tracker/${callData.id}`, '_blank')}
+                                    className="w-full sm:w-auto justify-center px-4 py-2.5 text-xs font-black uppercase tracking-widest text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 rounded-xl transition-all flex items-center gap-2"
+                                >
+                                    <Navigation size={16} /> Track Tech
+                                </button>
+                            )}
                             {!callData.tags?.includes('CONVERTED_TO_SALES') && (
                                 <button 
                                     onClick={handleConvertToSales} 
@@ -379,7 +389,15 @@ ${callData.issue_description}`,
                             </button>
                             {primaryActionText && (
                                 <button 
-                                    onClick={() => handleSave(nextStatus)} 
+                                    onClick={async () => {
+                                        if (nextStatus === 'Scheduled') {
+                                            toast.success('Navigating to Dispatch Hub to schedule job...');
+                                            await handleSave(nextStatus);
+                                            navigate('/dispatch');
+                                        } else {
+                                            handleSave(nextStatus);
+                                        }
+                                    }} 
                                     disabled={saving}
                                     className={`w-full sm:w-auto justify-center px-8 py-2.5 text-sm font-black text-white shadow-lg rounded-xl transition-all hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2 ${primaryActionColor}`}
                                 >
