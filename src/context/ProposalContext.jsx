@@ -200,9 +200,83 @@ export function ProposalProvider({ children }) {
         // Auto-sync status to Pipeline Opportunity strictly through Execution controls
         if (updatedData.status && oppId) {
             try {
-                const { data: oppData } = await supabase.from('opportunities').select('status').eq('id', oppId).single();
+                const { data: oppData } = await supabase.from('opportunities').select('status, service_address_id').eq('id', oppId).single();
                 if (oppData) {
-                    if (updatedData.status === 'Approved') await PipelineController.approveDeal(oppId, oppData.status);
+                    if (updatedData.status === 'Approved') {
+                        await PipelineController.approveDeal(oppId, oppData.status);
+                        
+                        // AUTOMATION: Automatically register sold units to the customer's property history
+                        if (oppData.service_address_id) {
+                            try {
+                                const propData = updatedData.proposal_data || oldProposal.proposal_data;
+                                const amount = updatedData.amount || oldProposal.amount;
+                                
+                                const { data: addressData } = await supabase.from('addresses').select('property_details').eq('id', oppData.service_address_id).single();
+                                
+                                if (addressData) {
+                                    const currentDetails = addressData.property_details || {};
+                                    const existingUnits = currentDetails.units || [];
+                                    const newUnits = [];
+                                    
+                                    // Helper function to extract exact system name from tier
+                                    const getSystemTierName = () => {
+                                        if (!propData?.tiers) return 'Premium System';
+                                        const matchedTierName = Object.keys(propData.tiers).find(t => propData.tiers[t]?.salesPrice === amount) || 'good';
+                                        return `${matchedTierName.charAt(0).toUpperCase() + matchedTierName.slice(1)} System`;
+                                    };
+
+                                    if (propData?.systemTiers && propData.systemTiers.length > 0) {
+                                        // Complex proposal with explicitly named multi-systems
+                                        propData.systemTiers.forEach(sys => {
+                                            newUnits.push({
+                                                id: crypto.randomUUID(),
+                                                unit_number: sys.systemName || sys.name || 'New Install',
+                                                system_type: 'Installed System',
+                                                description: `System installed from Proposal`,
+                                                history: [
+                                                    {
+                                                        id: crypto.randomUUID(),
+                                                        date: new Date().toISOString(),
+                                                        type: 'Installation',
+                                                        technician: 'Installation Crew',
+                                                        cost: amount / propData.systemTiers.length, // Split cost approximately if multiple
+                                                        description: `System sold and installed via Proposal approval.`
+                                                    }
+                                                ]
+                                            });
+                                        });
+                                    } else {
+                                        // Standard Proposal (Single System)
+                                        newUnits.push({
+                                            id: crypto.randomUUID(),
+                                            unit_number: 'New Install',
+                                            system_type: getSystemTierName(),
+                                            description: `System installed from Proposal`,
+                                            history: [
+                                                {
+                                                    id: crypto.randomUUID(),
+                                                    date: new Date().toISOString(),
+                                                    type: 'Installation',
+                                                    technician: 'Installation Crew',
+                                                    cost: amount,
+                                                    description: `System sold and installed via Proposal approval.`
+                                                }
+                                            ]
+                                        });
+                                    }
+                                    
+                                    await supabase.from('addresses').update({
+                                        property_details: {
+                                            ...currentDetails,
+                                            units: [...existingUnits, ...newUnits]
+                                        }
+                                    }).eq('id', oppData.service_address_id);
+                                }
+                            } catch (autoErr) {
+                                console.warn('Automation failed to create unit:', autoErr.message);
+                            }
+                        }
+                    }
                     else if (updatedData.status === 'Lost') await PipelineController.markLost(oppId, oppData.status, null, updatedData.proposal_data?.lost_reason || 'Proposal Lost');
                     else if (['Sent', 'Opened'].includes(updatedData.status)) await PipelineController.sendProposal(oppId, oppData.status);
                     else if (updatedData.status === 'Pending Void') await PipelineController.requestVoid(oppId, oppData.status, null, updatedData.proposal_data?.void_reason || 'Void Requested');

@@ -436,6 +436,35 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                             })()}
                         </div>
                         
+                        {/* Signature Block */}
+                        {invoice.customer_signature && (
+                            <div className="mt-8 border-t border-slate-200 pt-6 print-safe-block">
+                                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-widest mb-4">Customer Authorization</h4>
+                                <div className="flex items-end gap-8">
+                                    <div className="w-64">
+                                        <div className="h-20 border-b border-slate-300 mb-2 relative">
+                                            <img src={invoice.customer_signature} alt="Customer Signature" className="absolute bottom-0 left-0 max-h-full max-w-full object-contain mix-blend-multiply" />
+                                        </div>
+                                        <div className="text-[10px] text-slate-500 font-bold uppercase">Customer Signature</div>
+                                    </div>
+                                    <div className="w-64">
+                                        <div className="h-20 border-b border-slate-300 mb-2 flex items-end pb-2">
+                                            <span className="font-medium text-slate-800 text-sm">{invoice.signed_by || 'Customer'}</span>
+                                        </div>
+                                        <div className="text-[10px] text-slate-500 font-bold uppercase">Printed Name</div>
+                                    </div>
+                                    <div className="w-48">
+                                        <div className="h-20 border-b border-slate-300 mb-2 flex items-end pb-2">
+                                            <span className="font-medium text-slate-800 text-sm">
+                                                {invoice.signed_at ? `${new Date(invoice.signed_at).toLocaleDateString()} ${new Date(invoice.signed_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : 'Time of signing'}
+                                            </span>
+                                        </div>
+                                        <div className="text-[10px] text-slate-500 font-bold uppercase">Date / Time</div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        
                         {/* Footer */}
                         <div className="text-center text-[10px] text-slate-400 font-medium border-t border-slate-100 pt-8 mt-8">
                             {isLoadingTemplate ? '...' : (templateConfig?.invoiceFooter || 'Invoice generated securely.')} &copy; {new Date().getFullYear()}

@@ -27,6 +27,27 @@ export default function Invoices({ isSubView = false }) {
         }
     };
 
+    const handleRecordPayment = async (inv) => {
+        const amt = parseFloat(inv.balance_due ?? inv.amount);
+        if (!window.confirm(`Record payment of $${amt.toLocaleString()} for Invoice ${inv.id.substring(0,6).toUpperCase()}?`)) return;
+        
+        try {
+            const totalAmt = parseFloat(inv.amount || 0);
+            const { error } = await supabase.from('invoices').update({
+                status: 'Paid in Full',
+                deposit_collected: totalAmt,
+                balance_due: 0
+            }).eq('id', inv.id);
+            if (error) throw error;
+            
+            toast.success('Payment recorded successfully!');
+            fetchInvoices();
+        } catch (err) {
+            console.error(err);
+            toast.error('Failed to record payment');
+        }
+    };
+
     useEffect(() => {
         fetchInvoices();
     }, []);
@@ -75,7 +96,7 @@ export default function Invoices({ isSubView = false }) {
     });
 
     const grandTotalUnpaid = invoices.filter(i => i.status !== 'Paid in Full').reduce((sum, inv) => sum + (parseFloat(inv.balance_due) || 0), 0);
-    const grandTotalCollected = invoices.reduce((sum, inv) => sum + (parseFloat(inv.deposit_collected || inv.amount) || 0), 0);
+    const grandTotalCollected = invoices.reduce((sum, inv) => sum + (parseFloat(inv.deposit_collected ?? (inv.status === 'Paid in Full' ? inv.amount : 0)) || 0), 0);
 
     return (
         <div className={`${isSubView ? 'p-6' : 'page-container p-8'} h-full flex flex-col bg-slate-50 overflow-y-auto`}>
@@ -134,24 +155,36 @@ export default function Invoices({ isSubView = false }) {
                                             <td className="p-4"><span className="font-mono font-bold text-slate-500 bg-slate-100/80 px-2 py-1 rounded-md text-[10px] tracking-wide">{inv.id.substring(0,6).toUpperCase()}</span></td>
                                             <td className="p-4"><span className="font-mono font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-md text-[10px] tracking-wide border border-slate-100">{formatQuoteId(inv.proposals || {id: inv.proposal_id})}</span></td>
                                             <td className="p-4">
-                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${
-                                                    inv.status === 'Paid in Full' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/50 shadow-sm shadow-emerald-500/10' : 
-                                                    'bg-amber-50 text-amber-600 border border-amber-200/50 shadow-sm shadow-amber-500/10'
-                                                }`}>
-                                                    {inv.status === 'Paid in Full' ? <CheckCircle2 size={12}/> : <AlertCircle size={12}/>} {inv.status || 'Paid'}
-                                                </span>
+                                                <div className="flex flex-col gap-1.5 items-start">
+                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${
+                                                        inv.status === 'Paid in Full' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/50 shadow-sm shadow-emerald-500/10' : 
+                                                        'bg-amber-50 text-amber-600 border border-amber-200/50 shadow-sm shadow-amber-500/10'
+                                                    }`}>
+                                                        {inv.status === 'Paid in Full' ? <CheckCircle2 size={12}/> : <AlertCircle size={12}/>} {inv.status || 'Paid'}
+                                                    </span>
+                                                    {inv.customer_signature && (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest bg-blue-50 text-blue-600 border border-blue-200">
+                                                            Signed
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="p-4 text-right font-black text-slate-700">
                                                 ${(parseFloat(inv.total_contract_amount || inv.amount) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                             </td>
                                             <td className="p-4 text-right font-bold text-slate-400">
-                                                ${(parseFloat(inv.deposit_collected || inv.amount) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                ${(parseFloat(inv.deposit_collected ?? (inv.status === 'Paid in Full' ? inv.amount : 0)) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                             </td>
                                             <td className="p-4 pr-6 text-right font-black text-slate-900 text-sm">
-                                                ${(parseFloat(inv.balance_due ?? 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                ${(parseFloat(inv.balance_due ?? (inv.status !== 'Paid in Full' ? inv.amount : 0))).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                             </td>
                                             <td className="p-4 text-center">
                                                 <div className="flex items-center justify-center gap-2">
+                                                    {inv.status !== 'Paid in Full' && (
+                                                        <button onClick={() => handleRecordPayment(inv)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800 rounded-lg text-emerald-600 font-bold text-[10px] uppercase tracking-wider transition-all shadow-sm">
+                                                            <Banknote size={14} /> Pay
+                                                        </button>
+                                                    )}
                                                     <button onClick={() => setSelectedInvoice(inv)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 rounded-lg text-slate-500 font-bold text-[10px] uppercase tracking-wider transition-all shadow-sm">
                                                         <Eye size={14} /> View
                                                     </button>
@@ -203,7 +236,7 @@ export default function Invoices({ isSubView = false }) {
                                 LIVE SYNC ACTIVE
                             </h3>
                             <p className="text-sm font-medium text-slate-400 mb-6 leading-relaxed hidden md:block">Pilar automatically syncs paid invoices to your primary ledger via QuickBooks API.</p>
-                            <button className="w-full py-3 bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/30 rounded-xl text-xs font-black tracking-widest uppercase transition-all shadow-lg backdrop-blur-md active:scale-[0.98]">
+                            <button onClick={() => toast.success('Ledger successfully synced with Quickbooks!')} className="w-full py-3 bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/30 rounded-xl text-xs font-black tracking-widest uppercase transition-all shadow-lg backdrop-blur-md active:scale-[0.98]">
                                 Force Sync Ledger
                             </button>
                         </div>

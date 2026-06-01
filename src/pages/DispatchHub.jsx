@@ -188,29 +188,29 @@ export default function DispatchHub() {
 
            <div className="flex-1 overflow-hidden">
                {activeTab === 'intake' && (
-                   <div className="flex flex-col lg:flex-row gap-6 p-6 h-full overflow-y-auto">
+                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 h-full overflow-y-auto items-start">
                        {/* Left Column: Intake Search & Results */}
-                       <div className="w-full lg:w-[400px] xl:w-[450px] shrink-0 flex flex-col gap-4">
-                       <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
-                           <div className="bg-slate-800 p-4 flex items-center justify-between rounded-t-xl">
-                               <h2 className="font-bold flex items-center gap-2 text-white"><Search size={18} className="text-slate-400" /> 1. Identify Caller</h2>
+                       <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-4">
+                       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                           <div className="bg-slate-50 border-b border-slate-200 p-4 flex items-center justify-between">
+                               <h2 className="font-bold flex items-center gap-2 text-slate-800"><Search size={18} className="text-primary-500" /> 1. Identify Caller</h2>
                            </div>
                            
-                           <div className="p-5">
+                           <div className="p-6">
                                {!isNewCustomer && !matchedCustomer && (
-                                   <div className="mb-6 flex flex-col gap-4">
+                                   <div className="mb-2 flex flex-col gap-6">
                                        <div className="relative group">
-                                           <Search className="absolute left-4 top-4 text-slate-400 group-focus-within:text-primary-500 transition-colors" size={20} />
+                                           <Search className="absolute left-4 top-3.5 text-slate-400 group-focus-within:text-primary-500 transition-colors" size={20} />
                                            <input 
                                               type="text" 
                                               placeholder="Search phone, name, or address..." 
-                                              className="w-full pl-12 pr-4 py-3.5 rounded-xl border-2 border-slate-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-50 bg-slate-50 focus:bg-white transition-all text-lg text-slate-900 placeholder-slate-400 font-medium outline-none"
+                                              className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 bg-slate-50 focus:bg-white transition-all text-sm text-slate-900 placeholder-slate-400 font-bold outline-none shadow-inner"
                                               value={searchQuery}
                                               onChange={handleSearch}
                                            />
                                            
                                            {searchResults.length > 0 && (
-                                               <div className="absolute top-full left-0 right-0 mt-3 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden z-[100] max-h-64 overflow-y-auto ring-1 ring-slate-900/5">
+                                               <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-[100] max-h-64 overflow-y-auto">
                                                    {searchResults.map(c => (
                                                        <div 
                                                           key={c.id} 
@@ -218,9 +218,9 @@ export default function DispatchHub() {
                                                           className="p-4 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
                                                        >
                                                            <div className="font-bold text-slate-800">{c.name || 'Unknown Customer'}</div>
-                                                           <div className="text-xs text-slate-500 flex items-center gap-3 mt-1 flex-wrap">
-                                                               {c.phone && <span className="flex items-center"><Phone size={12} className="inline mr-1" />{c.phone}</span>}
-                                                               {(c.address || c.city) && <span className="flex items-center"><MapPin size={12} className="inline mr-1" />{c.address}{c.address && c.city ? ', ' : ''}{c.city}</span>}
+                                                           <div className="text-[10px] font-bold text-slate-500 flex items-center gap-3 mt-1.5 flex-wrap uppercase tracking-wider">
+                                                               {c.phone && <span className="flex items-center gap-1"><Phone size={12} className="text-slate-400" />{c.phone}</span>}
+                                                               {(c.address || c.city) && <span className="flex items-center gap-1"><MapPin size={12} className="text-slate-400" />{c.address}{c.address && c.city ? ', ' : ''}{c.city}</span>}
                                                            </div>
                                                        </div>
                                                    ))}
@@ -228,10 +228,11 @@ export default function DispatchHub() {
                                            )}
                                        </div>
                                        
-                                       <div className="text-center mt-2">
-                                          <p className="text-sm text-slate-500 mb-3">Or manually add a new profile</p>
-                                          <button onClick={() => setIsNewCustomer(true)} className="btn-secondary w-full flex justify-center py-2.5 rounded-xl border border-slate-300 shadow-sm hover:shadow transition-all bg-white hover:bg-slate-50 font-bold text-slate-700">
-                                             <Plus size={18} className="mr-2 text-slate-400"/> Create New Customer
+                                       <div className="flex flex-col items-center justify-center py-8 bg-slate-50/50 rounded-xl border border-dashed border-slate-300">
+                                          <User size={32} className="text-slate-300 mb-3" />
+                                          <p className="text-[10px] font-bold text-slate-400 mb-4 uppercase tracking-widest text-center px-4">Cannot find customer?</p>
+                                          <button onClick={() => setIsNewCustomer(true)} className="px-5 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:border-primary-200 hover:text-primary-700 transition-all font-black text-xs text-slate-600 uppercase tracking-widest shadow-sm flex items-center gap-2 active:scale-95">
+                                             <Plus size={16} /> Create New Profile
                                           </button>
                                        </div>
                                    </div>
@@ -289,8 +290,8 @@ export default function DispatchHub() {
                    </div>
 
                    {/* RIGHT PANEL: Opportunity Injection */}
-                   <div className="col-span-1 lg:col-span-7">
-                       <div className={`bg-white rounded-2xl shadow-sm border overflow-hidden transition-all duration-300 ${matchedCustomer ? 'border-primary-200 ring-4 ring-primary-50' : 'border-slate-200 opacity-60 pointer-events-none grayscale-[50%]'}`}>
+                   <div className="lg:col-span-7 xl:col-span-8 flex flex-col">
+                       <div className={`bg-white rounded-2xl shadow-sm border overflow-hidden transition-all duration-300 ${matchedCustomer ? 'border-primary-300 ring-4 ring-primary-500/10' : 'border-slate-200 opacity-60 pointer-events-none grayscale-[50%]'}`}>
                            <div className="bg-slate-50 border-b border-slate-200 p-4 flex items-center justify-between">
                                <h2 className="font-bold flex items-center gap-2 text-slate-800"><Zap size={18} className="text-amber-500" /> 2. Intake Issue & Route</h2>
                            </div>
@@ -354,7 +355,7 @@ export default function DispatchHub() {
                                    <textarea 
                                       value={oppForm.issueDescription}
                                       onChange={(e) => setOppForm({...oppForm, issueDescription: e.target.value})}
-                                      className="w-full border-2 border-slate-200 p-4 rounded-xl h-24 focus:border-primary-500 focus:ring-4 focus:ring-primary-50 resize-none text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none font-medium"
+                                      className="w-full border border-slate-200 p-4 rounded-xl h-24 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 resize-none text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none font-medium shadow-inner"
                                       placeholder="What is the customer reporting?"
                                    />
                                </div>

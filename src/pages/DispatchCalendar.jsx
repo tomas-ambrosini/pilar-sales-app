@@ -18,18 +18,12 @@ const getStartOfWeek = () => {
    return new Date(d.setDate(diff));
 };
 
-const TIME_BLOCKS = [
-    { label: '8 AM', value: '08:00', hour: 8 },
-    { label: '9 AM', value: '09:00', hour: 9 },
-    { label: '10 AM', value: '10:00', hour: 10 },
-    { label: '11 AM', value: '11:00', hour: 11 },
-    { label: '12 PM', value: '12:00', hour: 12 },
-    { label: '1 PM', value: '13:00', hour: 13 },
-    { label: '2 PM', value: '14:00', hour: 14 },
-    { label: '3 PM', value: '15:00', hour: 15 },
-    { label: '4 PM', value: '16:00', hour: 16 },
-    { label: '5 PM', value: '17:00', hour: 17 }
-];
+const TIME_BLOCKS = Array.from({ length: 24 }).map((_, i) => {
+    const hour = i;
+    const label = hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
+    const value = `${hour.toString().padStart(2, '0')}:00`;
+    return { label, value, hour };
+});
 
 export default function DispatchCalendar({ isSubView = false }) {
    const { proposals } = useProposals();

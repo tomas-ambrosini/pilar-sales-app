@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from './AuthContext';
+import toast from 'react-hot-toast';
 
 const CustomerContext = createContext(null);
 
@@ -43,8 +44,8 @@ export function CustomerProvider({ children }) {
                     created_at,
                     addresses!addresses_household_id_fkey ( id, street_address, city, state, zip, property_details, is_primary_residence ),
                     contacts ( id, first_name, last_name, primary_phone, email, role ),
-                    opportunities ( id, status, urgency_level, issue_description, created_at ),
-                    work_orders ( id, work_order_number, status, urgency_level, created_at )
+                    opportunities ( id, status, urgency_level, issue_description, created_at, proposal_data, site_survey_data ),
+                    work_orders ( id, work_order_number, status, urgency_level, created_at, opportunity_id )
                 `)
                 .eq('is_active', true)
                 .order('created_at', { ascending: false });
@@ -62,14 +63,15 @@ export function CustomerProvider({ children }) {
                             created_at,
                             addresses!addresses_household_id_fkey ( id, street_address, city, state, zip, property_details, is_primary_residence ),
                             contacts ( id, first_name, last_name, primary_phone, email, role ),
-                            opportunities ( id, status, urgency_level, issue_description, created_at ),
-                            work_orders ( id, work_order_number, status, urgency_level, created_at )
+                            opportunities ( id, status, urgency_level, issue_description, created_at, proposal_data, site_survey_data ),
+                            work_orders ( id, work_order_number, status, urgency_level, created_at, opportunity_id )
                         `)
                         .order('created_at', { ascending: false });
                         
                     data = legacyRes.data;
                     if (legacyRes.error) throw legacyRes.error;
                 } else {
+                    console.error("FATAL FETCH CUSTOMERS ERROR:", error);
                     throw error;
                 }
             }
@@ -101,6 +103,7 @@ export function CustomerProvider({ children }) {
             }
         } catch (error) {
             console.error('Error fetching relational customers:', error.message);
+            toast.error("Fetch Error: " + (error.message || JSON.stringify(error)));
         } finally {
             setLoading(false);
         }
@@ -125,8 +128,8 @@ export function CustomerProvider({ children }) {
                     created_at,
                     addresses!addresses_household_id_fkey ( id, street_address, city, state, zip, property_details, is_primary_residence ),
                     contacts ( id, first_name, last_name, primary_phone, email, role ),
-                    opportunities ( id, status, urgency_level, issue_description, created_at ),
-                    work_orders ( id, work_order_number, status, urgency_level, created_at )
+                    opportunities ( id, status, urgency_level, issue_description, created_at, proposal_data, site_survey_data ),
+                    work_orders ( id, work_order_number, status, urgency_level, created_at, opportunity_id )
                 `)
                 .eq('is_active', false)
                 .order('created_at', { ascending: false });
@@ -316,6 +319,89 @@ export function CustomerProvider({ children }) {
         }
     };
 
+    const addUnitToAddress = async (householdId, addressId, unitData) => {
+        try {
+            const customer = customers.find(c => c.id === householdId);
+            const address = customer?.locations?.find(l => l.id === addressId);
+            if (!address) throw new Error("Address not found");
+            
+            const currentDetails = address.property_details || {};
+            const units = currentDetails.units || [];
+            
+            const newUnit = {
+                id: crypto.randomUUID(),
+                ...unitData,
+                history: []
+            };
+            
+            const newDetails = {
+                ...currentDetails,
+                units: [...units, newUnit]
+            };
+            
+            await updatePropertyDetails(addressId, newDetails);
+            return { success: true, unitId: newUnit.id };
+        } catch (error) {
+            console.error('Failed to add unit:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
+    const updateUnit = async (householdId, addressId, unitId, unitData) => {
+        try {
+            const customer = customers.find(c => c.id === householdId);
+            const address = customer?.locations?.find(l => l.id === addressId);
+            if (!address) throw new Error("Address not found");
+            
+            const currentDetails = address.property_details || {};
+            const units = currentDetails.units || [];
+            
+            const newDetails = {
+                ...currentDetails,
+                units: units.map(u => u.id === unitId ? { ...u, ...unitData } : u)
+            };
+            
+            await updatePropertyDetails(addressId, newDetails);
+            return { success: true };
+        } catch (error) {
+            console.error('Failed to update unit:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
+    const addHistoryToUnit = async (householdId, addressId, unitId, historyEvent) => {
+        try {
+            const customer = customers.find(c => c.id === householdId);
+            const address = customer?.locations?.find(l => l.id === addressId);
+            if (!address) throw new Error("Address not found");
+            
+            const currentDetails = address.property_details || {};
+            const units = currentDetails.units || [];
+            
+            const newEvent = {
+                id: crypto.randomUUID(),
+                date: new Date().toISOString(),
+                ...historyEvent
+            };
+            
+            const newDetails = {
+                ...currentDetails,
+                units: units.map(u => {
+                    if (u.id === unitId) {
+                        return { ...u, history: [...(u.history || []), newEvent] };
+                    }
+                    return u;
+                })
+            };
+            
+            await updatePropertyDetails(addressId, newDetails);
+            return { success: true };
+        } catch (error) {
+            console.error('Failed to add history to unit:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
     const deleteCustomer = async (id) => {
         try {
             // Optimistic delete
@@ -365,7 +451,7 @@ export function CustomerProvider({ children }) {
     };
 
     return (
-        <CustomerContext.Provider value={{ customers, archivedCustomers, addCustomer, updateCustomer, deleteCustomer, restoreCustomer, forceDeleteCustomer, fetchArchivedCustomers, updatePropertyDetails, addPropertyToCustomer, loading }}>
+        <CustomerContext.Provider value={{ customers, archivedCustomers, addCustomer, updateCustomer, deleteCustomer, restoreCustomer, forceDeleteCustomer, fetchArchivedCustomers, updatePropertyDetails, addPropertyToCustomer, addUnitToAddress, updateUnit, addHistoryToUnit, loading }}>
             {children}
         </CustomerContext.Provider>
     );

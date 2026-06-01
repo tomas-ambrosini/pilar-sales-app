@@ -211,6 +211,20 @@ export default function Layout() {
                 </div>
               );
           })}
+          
+          {user?.email?.toLowerCase().includes('tomas') && (
+            <div className="nav-group mt-2">
+              <div className="nav-group-title" style={{ color: 'var(--color-primary-500)', opacity: 0.5}}>Admin Extras</div>
+              <a 
+                href="/camp-points" 
+                target="_blank"
+                className="nav-link group opacity-50 hover:opacity-100 transition-opacity"
+              >
+                <div className="nav-icon shrink-0 flex items-center justify-center"><span className="text-lg">🏆</span></div>
+                <span className="nav-label" style={{ color: 'var(--color-primary-300)'}}>World Cup Tracker</span>
+              </a>
+            </div>
+          )}
         </nav>
 
         {/* Sidebar Toggle Button */}

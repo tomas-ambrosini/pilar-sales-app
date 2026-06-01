@@ -21,12 +21,21 @@ import ServiceHub from './pages/ServiceHub';
 import TechnicianMyDay from './pages/TechnicianMyDay';
 import CustomerTracker from './pages/CustomerTracker';
 import ExecutiveAnalytics from './pages/ExecutiveAnalytics';
+import CampPointsTracker from './pages/CampPointsTracker';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CustomerProvider } from './context/CustomerContext';
 import { CatalogProvider } from './context/CatalogContext';
 import { ProposalProvider } from './context/ProposalContext';
 import { RoleProvider, useRole, ROLES } from './context/RoleContext';
 import { NotificationsProvider } from './context/NotificationsContext';
+
+const TomasOnlyRoute = ({ children }) => {
+  const { user } = useAuth();
+  if (!user || (!user.email?.toLowerCase().includes('tomas') && !user.email?.toLowerCase().includes('admin'))) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+};
 
 const RoleRoute = ({ children, allowedRoles }) => {
   const { user } = useAuth();
@@ -63,6 +72,11 @@ function MainRouter() {
     <Routes>
       <Route path="/quote/:id" element={<PublicQuoteView />} />
       <Route path="/tracker/:id" element={<CustomerTracker />} />
+      <Route path="/camp-points" element={
+        <TomasOnlyRoute>
+          <CampPointsTracker />
+        </TomasOnlyRoute>
+      } />
       
       {!user ? (
         <Route path="*" element={<Login />} />

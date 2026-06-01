@@ -169,7 +169,7 @@ export default function Proposals() {
          const oppId = searchParams.get('opp_id');
          const targetProposal = proposals.find(p => p.proposal_data?.associated_opportunity_id === oppId);
          if (targetProposal) {
-             setViewingProposal(['Approved', 'Lost', 'Voided'].includes(targetProposal.status) ? { ...targetProposal, isReadOnly: true } : targetProposal);
+             setViewingProposal(['Sent', 'Approved', 'Lost', 'Voided'].includes(targetProposal.status) ? { ...targetProposal, isReadOnly: true } : targetProposal);
              deepLinkHandled.current = searchString;
          } else {
              toast.error('Proposal not found or still generating.');
@@ -764,7 +764,7 @@ ${equipmentNotes}
                                                           <button className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" onClick={() => handleDenyVoid(proposal)} title="Deny Void"><X size={14} /></button>
                                                        </>
                                                     )}
-                                                    {['Lost', 'Voided'].includes(proposal.status) && (
+                                                    {['Sent', 'Lost', 'Voided'].includes(proposal.status) && (
                                                        <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" onClick={() => handleReopen(proposal)} title="Re-open Proposal"><RotateCcw size={14} /></button>
                                                     )}
                                                     <button onClick={() => handleCopyMessage(proposal)} className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-50 rounded transition-colors" title="Copy Message"><Copy size={14} /></button>
@@ -824,7 +824,7 @@ ${equipmentNotes}
                                                             }
                                                             setShowWizard(true);
                                                         } else {
-                                                           setViewingProposal(['Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
+                                                           setViewingProposal(['Sent', 'Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
                                                         }
                                                     }}
                                                  >
@@ -1019,7 +1019,7 @@ ${equipmentNotes}
                                           <button className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" onClick={() => handleDenyVoid(proposal)} title="Deny Void"><X size={16} /></button>
                                        </>
                                     )}
-                                    {['Lost', 'Voided'].includes(proposal.status) && (
+                                    {['Sent', 'Lost', 'Voided'].includes(proposal.status) && (
                                        <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" onClick={() => handleReopen(proposal)} title="Re-open Proposal"><RotateCcw size={16} /></button>
                                     )}
                                  </div>
@@ -1080,11 +1080,11 @@ ${equipmentNotes}
                                                handleReopen(proposal);
                                            }
                                        } else {
-                                          setViewingProposal(['Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
+                                          setViewingProposal(['Sent', 'Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
                                        }
                                    }}
                                  >
-                                    {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : ['Lost', 'Voided'].includes(proposal.status) ? 'Review' : proposal.status === 'Pending Void' ? (['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase()) ? 'View Request' : 'Undo Request') : 'Resume'}
+                                    {proposal.status === 'Approved' ? 'Contract' : proposal.status === 'Sent' ? 'Preview' : ['Sent', 'Lost', 'Voided'].includes(proposal.status) ? 'Review' : proposal.status === 'Pending Void' ? (['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase()) ? 'View Request' : 'Undo Request') : 'Resume'}
                                  </button>
                               </div>
                             </td>
@@ -1258,7 +1258,7 @@ ${equipmentNotes}
                const matchedTierData = proposal.proposal_data?.accepted_tier_data || proposal.proposal_data?.tiers?.[matchedTierName];
                setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
             } else {
-               setViewingProposal(['Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
+               setViewingProposal(['Sent', 'Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
             }
         }}
       />

@@ -85,9 +85,16 @@ function MapResizer() {
     const map = useMap();
     useEffect(() => {
         // Fix Leaflet container resize issue
-        setTimeout(() => {
-            map.invalidateSize();
+        const timer = setTimeout(() => {
+            try {
+                if (map && map._container) {
+                    map.invalidateSize();
+                }
+            } catch (e) {
+                console.warn("Leaflet map resize skipped:", e);
+            }
         }, 300);
+        return () => clearTimeout(timer);
     }, [map]);
     return null;
 }
@@ -146,7 +153,7 @@ export default function DispatchMap() {
             const normalizedOpps = (opps || []).map(o => ({
                 ...o, 
                 __type: 'SALES',
-                address: o.households?.addresses?.[0] || {},
+                address: o.households?.addresses || {},
                 customerName: o.households?.household_name || 'Unknown'
             }));
             
@@ -154,7 +161,7 @@ export default function DispatchMap() {
                 ...s,
                 __type: 'SERVICE',
                 urgency_level: s.urgency,
-                address: s.households?.addresses?.[0] || {},
+                address: (Array.isArray(s.households?.addresses) ? s.households.addresses[0] : s.households?.addresses) || {},
                 customerName: s.households?.household_name || 'Unknown'
             }));
 

@@ -319,6 +319,8 @@ function CustomerList() {
 
 function PropertyDetailsCard({ location, index }) {
    const { updatePropertyDetails } = useCustomers();
+   const { id } = useParams();
+   const navigate = useNavigate();
    const [isEditing, setIsEditing] = useState(false);
    const [formData, setFormData] = useState({
        year_built: location.property_details?.year_built || '',
@@ -344,9 +346,14 @@ function PropertyDetailsCard({ location, index }) {
                     <button className="text-xs font-bold text-primary-600 hover:text-primary-700 bg-primary-50 px-2 py-1 rounded" onClick={handleSave}>Save Specs</button>
                  </div>
              ) : (
-                <button className="text-xs font-bold text-slate-400 hover:text-primary-500 flex items-center gap-1" onClick={() => setIsEditing(true)}>
-                   <Edit2 size={12}/> Edit Specs
-                </button>
+                <div className="flex gap-2">
+                   <button className="text-xs font-bold text-primary-600 hover:text-primary-700 bg-primary-50 px-2 py-1 rounded flex items-center gap-1 transition-all" onClick={() => navigate(`/customers/${id}/address/${location.id}`)}>
+                       Manage Property
+                   </button>
+                   <button className="text-xs font-bold text-slate-400 hover:text-primary-500 flex items-center gap-1" onClick={() => setIsEditing(true)}>
+                      <Edit2 size={12}/> Edit Specs
+                   </button>
+                </div>
              )}
           </div>
           
@@ -607,99 +614,6 @@ function CustomerDetail() {
            </div>
         </div>
 
-        {/* --- NEW: ERP LIFECYCLE TRACKING --- */}
-        <section className="detail-card glass-panel full-width mt-2 mb-6 border-l-4 border-l-primary-500 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary-100 rounded-bl-full opacity-50 pointer-events-none"></div>
-          <div className="card-header-row mb-6 relative z-10">
-            <h2 className="card-title text-slate-800 m-0">ERP Lifecycle & Operations</h2>
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full border border-slate-200">System Activity</div>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
-             {/* Opportunities / Pipeline */}
-             <div className="bg-white border rounded-lg p-5 shadow-sm border-slate-200 hover:border-primary-300 transition-colors">
-                 <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 tracking-wider text-[11px] uppercase text-primary-600 flex items-center justify-between">
-                    <span>
-                       Sales Pipeline
-                       <span className="bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full ml-2">{customer.opportunities?.length || 0}</span>
-                    </span>
-                    <button onClick={() => setIsStartDealOpen(true)} className="text-[9px] bg-primary-600 hover:bg-primary-700 text-white px-2 py-1 rounded shadow-sm flex items-center gap-1 transition-colors hover:cursor-pointer">
-                       <Plus size={10} /> Start New Deal
-                    </button>
-                 </h3>
-                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                   {customer.opportunities?.length > 0 ? customer.opportunities.map(opp => (
-                      <div key={opp.id} className="relative pl-4">
-                         <div className="absolute left-0 top-1.5 w-2 h-2 rounded-full bg-primary-500 shadow-[0_0_0_4px_rgba(14,165,233,0.1)]"></div>
-                         <div className="absolute left-1 top-4 bottom-[-16px] w-[2px] bg-slate-100 last:hidden"></div>
-                         <div className="flex justify-between items-center mb-1">
-                            <span className="font-bold text-sm text-slate-700">{opp.status}</span>
-                            <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 font-mono leading-none flex items-center justify-center">{formatQuoteId(opp)}</span>
-                         </div>
-                         <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{opp.issue_description || 'No issue description recorded'}</p>
-                      </div>
-                   )) : <div className="text-xs text-slate-400 italic bg-slate-50 p-3 rounded text-center">No active deals found.</div>}
-                </div>
-             </div>
-
-             {/* Work Orders */}
-             <div className="bg-white border rounded-lg p-5 shadow-sm border-slate-200 hover:border-amber-300 transition-colors">
-                <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 tracking-wider text-[11px] uppercase text-amber-600 flex items-center justify-between">
-                   Dispatch Hub <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">{customer.work_orders?.length || 0}</span>
-                </h3>
-                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                   {customer.work_orders?.length > 0 ? customer.work_orders.map(wo => (
-                      <div key={wo.id} className="relative pl-4">
-                         <div className="absolute left-0 top-1.5 w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_0_4px_rgba(245,158,11,0.1)]"></div>
-                         <div className="absolute left-1 top-4 bottom-[-16px] w-[2px] bg-slate-100 last:hidden"></div>
-                         <div className="flex justify-between items-center mb-1">
-                            <span className="font-bold text-sm text-slate-700">{wo.status}</span>
-                            <span className="text-[10px] bg-amber-50 px-1.5 py-0.5 rounded text-amber-700 font-mono font-bold leading-none flex items-center justify-center border border-amber-200/50">#{wo.work_order_number}</span>
-                         </div>
-                         <p className="text-xs text-slate-500">Urgency: <span className="font-medium text-slate-600">{wo.urgency_level}</span></p>
-                      </div>
-                   )) : <div className="text-xs text-slate-400 italic bg-slate-50 p-3 rounded text-center">No scheduled operations logs.</div>}
-                </div>
-             </div>
-          </div>
-        </section>
-
-        <section className="detail-card glass-panel full-width">
-          <div className="card-header-row">
-            <h2 className="card-title">Proposals & Quotes</h2>
-            <button className="text-btn text-primary" onClick={() => setIsCreateProposalOpen(true)}>Create New</button>
-          </div>
-          
-          {customerProposals.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-               {customerProposals.map(prop => (
-                 <div key={prop.id} className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col justify-between" onClick={() => {
-                        if (prop.status === 'Approved') {
-                           const matchedTierName = ['good', 'better', 'best'].find(t => prop.proposal_data?.tiers[t]?.salesPrice === prop.amount) || 'good';
-                           const matchedTierData = prop.proposal_data?.tiers[matchedTierName];
-                           setViewingContract({ proposal: prop, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: prop.date });
-                        } else {
-                           setViewingProposal(prop);
-                        }
-                 }}>
-                    <div className="flex justify-between items-start mb-2">
-                       <span className="font-mono text-xs font-bold text-slate-500 uppercase tracking-wide">{formatQuoteId(prop)}</span>
-                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${prop.status === 'Approved' ? 'bg-success-100 text-success-800' : prop.status === 'Sent' ? 'bg-secondary-100 text-secondary-800' : 'bg-slate-100 text-slate-600'}`}>{prop.status}</span>
-                    </div>
-                    <div className="text-lg font-bold text-slate-800 mb-1">${(prop.amount || 0).toLocaleString()}</div>
-                    <div className="flex items-center gap-1 text-xs text-slate-400">
-                       <Clock size={12}/> {prop.date}
-                    </div>
-                 </div>
-               ))}
-            </div>
-          ) : (
-             <div className="empty-state">
-                <FileText size={32} className="text-slate-300" />
-                <p>No proposals generated yet.</p>
-             </div>
-          )}
-        </section>
       </div>
 
       <Modal
@@ -925,11 +839,385 @@ function CustomerDetail() {
   );
 }
 
+function ProjectCard({ project, navigate, setViewingProposal }) {
+   const hasWorkOrders = project.work_orders?.length > 0;
+   const hasProposals = project.proposals?.length > 0;
+   
+   // If it has a proposal, show the proposal ID instead of the lead ID
+   const displayId = hasProposals ? formatQuoteId(project.proposals[0]) : formatQuoteId(project);
+
+   return (
+      <div className="bg-white/60 backdrop-blur-md border border-slate-200/60 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all group relative overflow-hidden flex flex-col h-full">
+         <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-primary-400 to-primary-600"></div>
+         
+         {/* Header */}
+         <div className="flex justify-between items-start mb-4">
+            <div>
+               <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-primary-600 bg-primary-50 px-2 py-0.5 rounded border border-primary-100/50">{project.status || 'Draft'}</span>
+                  <span className="text-[10px] text-slate-400 font-mono bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/50">{displayId}</span>
+               </div>
+               <h3 className="font-bold text-slate-800 text-sm line-clamp-2 leading-snug">{project.issue_description || 'Active Deal Pipeline'}</h3>
+            </div>
+         </div>
+
+         <div className="mt-auto space-y-4">
+            {/* Proposals Section */}
+            {hasProposals && (
+               <div className="pt-4 border-t border-slate-100/80">
+                  <h4 className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-1"><FileText size={10}/> Quotes & Contracts</h4>
+                  <div className="space-y-2">
+                     {project.proposals.map(prop => (
+                        <div key={prop.id} onClick={() => setViewingProposal(['Sent', 'Approved', 'Lost', 'Voided'].includes(prop.status) ? { ...prop, isReadOnly: true } : prop)} className="bg-white border border-slate-200 rounded-lg p-2.5 hover:border-primary-300 transition-colors cursor-pointer shadow-sm flex justify-between items-center group/prop">
+                           <div>
+                              <div className="text-xs font-bold text-slate-700 mb-0.5">${(prop.amount || 0).toLocaleString()}</div>
+                              <div className="text-[9px] font-medium text-slate-400">{prop.date}</div>
+                           </div>
+                           <span className={`text-[9px] font-bold px-2 py-1 rounded-full ${prop.status === 'Approved' ? 'bg-success-50 text-success-700 border border-success-200/50' : 'bg-slate-50 text-slate-600 border border-slate-200/50 group-hover/prop:bg-primary-50 group-hover/prop:text-primary-600 group-hover/prop:border-primary-200/50 transition-colors'}`}>{prop.status}</span>
+                        </div>
+                     ))}
+                  </div>
+               </div>
+            )}
+
+            {/* Work Orders Section */}
+            {hasWorkOrders && (
+               <div className="pt-4 border-t border-slate-100/80">
+                  <h4 className="text-[9px] font-black uppercase tracking-widest text-amber-600 mb-2 flex items-center gap-1"><Calendar size={10}/> Dispatch Schedule</h4>
+                  <div className="space-y-2">
+                     {project.work_orders.map(wo => (
+                        <div key={wo.id} className="bg-gradient-to-r from-amber-50/50 to-white border border-amber-100 rounded-lg p-2.5 flex justify-between items-center shadow-sm relative overflow-hidden">
+                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-400"></div>
+                           <div className="pl-2">
+                              <div className="text-xs font-bold text-slate-800 flex items-center gap-2 mb-0.5">
+                                 {wo.status}
+                                 <span className="bg-amber-100 text-amber-800 text-[9px] px-1.5 py-0.5 rounded font-mono border border-amber-200/50">#{wo.work_order_number}</span>
+                              </div>
+                              <div className="text-[10px] text-slate-500 font-medium">Urgency: <span className="font-bold text-amber-700/80">{wo.urgency_level}</span></div>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               </div>
+            )}
+         </div>
+      </div>
+   );
+}
+
+function AddressOperations({ id, addressId, address, customer, setViewingProposal }) {
+   const { proposals } = useProposals();
+   const navigate = useNavigate();
+
+   const addressOpportunities = customer?.opportunities?.filter(opp => {
+       const oppAddressId = opp.proposal_data?.service_address_id || opp.site_survey_data?.service_address_id;
+       if (oppAddressId) return oppAddressId === addressId;
+       return true; // If no address assigned yet, show on all
+   }) || [];
+   const addressWorkOrders = customer?.work_orders?.filter(wo => wo.opportunity_id && addressOpportunities.some(opp => opp.id === wo.opportunity_id)) || [];
+   
+   const addressProposals = proposals?.filter(p => {
+       const oppId = p.associated_opportunity_id || p.proposal_data?.associated_opportunity_id;
+       if (oppId && addressOpportunities.some(opp => opp.id === oppId)) return true;
+       if (p.proposal_data?.service_address_id === addressId) return true;
+       if (p.customer?.trim().toLowerCase() === customer?.name?.trim().toLowerCase() && !oppId) return true; // fallback for loose leads
+       return false;
+   }) || [];
+
+   const projects = addressOpportunities.map(opp => {
+       const oppWorkOrders = addressWorkOrders.filter(wo => wo.opportunity_id === opp.id);
+       const oppProposals = addressProposals.filter(p => p.associated_opportunity_id === opp.id || p.proposal_data?.associated_opportunity_id === opp.id);
+       return {
+           ...opp,
+           work_orders: oppWorkOrders,
+           proposals: oppProposals
+       };
+   });
+
+   // Handle unassigned/loose proposals and work orders (edge case cleanup)
+   const assignedWoIds = projects.flatMap(p => p.work_orders.map(w => w.id));
+   const assignedPropIds = projects.flatMap(p => p.proposals.map(pr => pr.id));
+   const looseWorkOrders = addressWorkOrders.filter(wo => !assignedWoIds.includes(wo.id));
+   const looseProposals = addressProposals.filter(p => !assignedPropIds.includes(p.id));
+
+   if (looseWorkOrders.length > 0) {
+      projects.push({
+         id: 'loose-wos',
+         status: 'Orphaned Operations',
+         issue_description: 'Unlinked Dispatch Items',
+         created_at: new Date().toISOString(),
+         work_orders: looseWorkOrders,
+         proposals: []
+      });
+   }
+   if (looseProposals.length > 0) {
+      projects.push({
+         id: 'loose-props',
+         status: 'Orphaned Quotes',
+         issue_description: 'Unlinked Financial Documents',
+         created_at: new Date().toISOString(),
+         work_orders: [],
+         proposals: looseProposals
+      });
+   }
+
+   return (
+      <div className="space-y-6">
+        <section className="detail-card glass-panel full-width border-l-4 border-l-primary-500 shadow-sm relative overflow-hidden bg-gradient-to-br from-white to-slate-50">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary-100 rounded-bl-full opacity-30 pointer-events-none mix-blend-multiply"></div>
+          <div className="absolute bottom-0 left-32 w-48 h-48 bg-secondary-100 rounded-tr-full opacity-20 pointer-events-none mix-blend-multiply"></div>
+          
+          <div className="card-header-row mb-8 relative z-10 flex justify-between items-end border-b border-slate-100 pb-4">
+            <div>
+               <h2 className="card-title text-slate-800 m-0 mb-1 flex items-center gap-2">
+                  <FileText size={20} className="text-primary-500"/> Active Projects
+               </h2>
+               <p className="text-xs text-slate-500 font-medium">Unified timeline of deals, quotes, and dispatch orders.</p>
+            </div>
+            {projects.length > 0 && (
+               <div className="text-[10px] font-black uppercase tracking-widest text-primary-700 bg-primary-50 px-3 py-1.5 rounded-full border border-primary-200/50 flex items-center gap-2 shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse shadow-[0_0_8px_rgba(14,165,233,0.8)]"></span>
+                  {projects.length} Active {projects.length === 1 ? 'Project' : 'Projects'}
+               </div>
+            )}
+          </div>
+          
+          <div className="relative z-10">
+             {projects.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                   {projects.map(project => (
+                      <ProjectCard key={project.id} project={project} navigate={navigate} setViewingProposal={setViewingProposal} />
+                   ))}
+                </div>
+             ) : (
+                <div className="text-center py-16 bg-white/60 backdrop-blur-sm border border-slate-200 border-dashed rounded-2xl shadow-sm transition-all hover:bg-white hover:border-slate-300">
+                   <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 shadow-sm relative">
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary-100 rounded-full animate-ping opacity-75"></div>
+                      <Plus size={24} className="text-slate-300" />
+                   </div>
+                   <h3 className="text-slate-700 font-bold mb-1 text-lg tracking-tight">No Active Projects</h3>
+                   <p className="text-sm text-slate-500 max-w-sm mx-auto font-medium">This property currently has no active sales pipeline or scheduled work orders.</p>
+                   <button onClick={() => navigate('/pipeline')} className="mt-6 text-xs font-bold bg-white text-slate-600 border border-slate-200 px-5 py-2.5 rounded-lg shadow-sm hover:shadow hover:border-slate-300 hover:text-primary-600 transition-all flex items-center justify-center gap-2 mx-auto">
+                       Open Pipeline <ChevronRight size={14}/>
+                   </button>
+                </div>
+             )}
+          </div>
+        </section>
+      </div>
+   );
+}
+
+function AddressDetail() {
+  const { id, addressId } = useParams();
+  const navigate = useNavigate();
+  const { customers, addUnitToAddress } = useCustomers();
+  
+  const customer = customers.find(c => c.id === id);
+  const address = customer?.locations?.find(l => l.id === addressId);
+  
+  const [isAddUnitOpen, setIsAddUnitOpen] = useState(false);
+  const [unitForm, setUnitForm] = useState({ unit_number: '', system_type: '', description: '' });
+  const [viewingProposal, setViewingProposal] = useState(null);
+  const [viewingContract, setViewingContract] = useState(null);
+
+  if (!customer || !address) {
+     return <div className="page-container flex-center"><h3>Address Not Found</h3><button className="btn-primary mt-4" onClick={() => navigate(`/customers/${id}`)}>Go Back</button></div>;
+  }
+
+  const units = address.property_details?.units || [];
+
+  const handleAddUnit = async (e) => {
+     e.preventDefault();
+     await addUnitToAddress(id, addressId, unitForm);
+     setIsAddUnitOpen(false);
+     setUnitForm({ unit_number: '', system_type: '', description: '' });
+  };
+
+  return (
+     <div className="page-container">
+        <button className="back-btn" onClick={() => navigate(`/customers/${id}`)}>
+          <ChevronRight size={18} className="icon-flip" /> Back to Customer
+        </button>
+        <div className="detail-header glass-panel mb-6">
+           <div>
+              <h1 className="detail-name text-2xl">Property Units</h1>
+              <p className="text-slate-500 mt-1 flex items-center gap-2"><MapPin size={16}/> {address.street_address} {address.city && `, ${address.city}`}</p>
+           </div>
+           <button onClick={() => setIsAddUnitOpen(true)} className="btn-primary flex items-center gap-2">
+              <Plus size={16} /> Add Unit
+           </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+           {units.length > 0 ? units.map(unit => (
+               <div key={unit.id} className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/customers/${id}/address/${addressId}/unit/${unit.id}`)}>
+                  <div className="flex justify-between items-start mb-3">
+                     <h3 className="font-bold text-lg text-slate-800">Unit {unit.unit_number}</h3>
+                     <span className="bg-primary-50 text-primary-700 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">{unit.system_type || 'Unknown System'}</span>
+                  </div>
+                  <p className="text-sm text-slate-500 line-clamp-2 mb-4">{unit.description || 'No description'}</p>
+                  <div className="text-xs text-slate-400 font-medium flex items-center gap-1">
+                     <Clock size={12}/> {unit.history?.length || 0} history events
+                  </div>
+               </div>
+           )) : (
+              <div className="col-span-full flex-center p-12 bg-slate-50 border border-slate-200 border-dashed rounded-lg">
+                 <p className="text-slate-500 font-medium">No units added to this property yet.</p>
+              </div>
+           )}
+        </div>
+
+        <AddressOperations id={id} addressId={addressId} address={address} customer={customer} setViewingProposal={setViewingProposal} />
+
+        <Modal isOpen={isAddUnitOpen} onClose={() => setIsAddUnitOpen(false)} title="Add New Unit">
+           <form className="modal-form" onSubmit={handleAddUnit}>
+              <div className="form-group">
+                 <label>Unit Number / Name</label>
+                 <input type="text" value={unitForm.unit_number} onChange={e => setUnitForm({...unitForm, unit_number: e.target.value})} required placeholder="e.g. 1A or Rooftop AC" />
+              </div>
+              <div className="form-group">
+                 <label>System Type</label>
+                 <input type="text" value={unitForm.system_type} onChange={e => setUnitForm({...unitForm, system_type: e.target.value})} required placeholder="e.g. Heat Pump, Furnace" />
+              </div>
+              <div className="form-group">
+                 <label>Description (Optional)</label>
+                 <textarea value={unitForm.description} onChange={e => setUnitForm({...unitForm, description: e.target.value})} className="w-full border border-slate-200 rounded-lg p-3 text-sm" placeholder="Additional details..."></textarea>
+              </div>
+              <div className="modal-actions">
+                 <button type="button" className="btn-secondary" onClick={() => setIsAddUnitOpen(false)}>Cancel</button>
+                 <button type="submit" className="btn-primary">Save Unit</button>
+              </div>
+           </form>
+        </Modal>
+
+        <ProposalViewerModal 
+             isOpen={!!viewingProposal} 
+             onClose={() => setViewingProposal(null)} 
+             proposal={viewingProposal} 
+             onViewContract={(proposalData) => {
+                setViewingProposal(null);
+                const matchedTierName = ['good', 'better', 'best'].find(t => proposalData.proposal_data?.tiers[t]?.salesPrice === proposalData.amount) || 'good';
+                const matchedTierData = proposalData.proposal_data?.tiers[matchedTierName];
+                setViewingContract({ proposal: proposalData, tierName: matchedTierName?.toUpperCase(), tierData: matchedTierData, date: proposalData.date });
+             }}
+         />
+
+         <ContractDocumentModal 
+           isOpen={!!viewingContract}
+           onClose={() => setViewingContract(null)}
+           contractData={viewingContract}
+         />
+     </div>
+  );
+}
+
+function UnitDetail() {
+  const { id, addressId, unitId } = useParams();
+  const navigate = useNavigate();
+  const { customers, addHistoryToUnit } = useCustomers();
+  
+  const customer = customers.find(c => c.id === id);
+  const address = customer?.locations?.find(l => l.id === addressId);
+  const unit = address?.property_details?.units?.find(u => u.id === unitId);
+
+  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [eventForm, setEventForm] = useState({ type: 'Service', description: '', technician: '', cost: '' });
+
+  if (!unit) {
+     return <div className="page-container flex-center"><h3>Unit Not Found</h3><button className="btn-primary mt-4" onClick={() => navigate(`/customers/${id}/address/${addressId}`)}>Go Back</button></div>;
+  }
+
+  const handleAddEvent = async (e) => {
+     e.preventDefault();
+     await addHistoryToUnit(id, addressId, unitId, eventForm);
+     setIsAddEventOpen(false);
+     setEventForm({ type: 'Service', description: '', technician: '', cost: '' });
+  };
+
+  return (
+     <div className="page-container">
+        <button className="back-btn" onClick={() => navigate(`/customers/${id}/address/${addressId}`)}>
+          <ChevronRight size={18} className="icon-flip" /> Back to Units
+        </button>
+        <div className="detail-header glass-panel mb-6">
+           <div>
+              <h1 className="detail-name text-2xl flex items-center gap-3">Unit {unit.unit_number} <span className="bg-primary-50 text-primary-700 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">{unit.system_type}</span></h1>
+              <p className="text-slate-500 mt-1">{unit.description}</p>
+           </div>
+           <button onClick={() => setIsAddEventOpen(true)} className="btn-primary flex items-center gap-2">
+              <Plus size={16} /> Log Activity
+           </button>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+           <div className="p-5 border-b border-slate-100 bg-slate-50">
+              <h2 className="font-bold text-slate-800 text-lg flex items-center gap-2"><FileText size={18} className="text-primary-500"/> Service & Maintenance History</h2>
+           </div>
+           <div className="p-0">
+              {unit.history && unit.history.length > 0 ? (
+                 <div className="divide-y divide-slate-100">
+                    {[...unit.history].reverse().map(event => (
+                       <div key={event.id} className="p-5 hover:bg-slate-50 transition-colors">
+                          <div className="flex justify-between items-start mb-2">
+                             <div className="flex items-center gap-3">
+                                <span className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${event.type === 'Maintenance' ? 'bg-amber-100 text-amber-800' : event.type === 'Installation' ? 'bg-success-100 text-success-800' : 'bg-primary-100 text-primary-800'}`}>
+                                   {event.type}
+                                </span>
+                                <span className="text-sm font-medium text-slate-500 flex items-center gap-1"><Calendar size={14}/> {new Date(event.date).toLocaleDateString()}</span>
+                             </div>
+                             {event.cost && <span className="font-bold text-slate-700">${event.cost}</span>}
+                          </div>
+                          <p className="text-slate-700 text-sm mt-3 leading-relaxed">{event.description}</p>
+                          {event.technician && <div className="mt-3 text-xs font-medium text-slate-400 flex items-center gap-1"><UserIcon size={12}/> Tech: {event.technician}</div>}
+                       </div>
+                    ))}
+                 </div>
+              ) : (
+                 <div className="p-12 text-center text-slate-500 font-medium">No history logged for this unit.</div>
+              )}
+           </div>
+        </div>
+
+        <Modal isOpen={isAddEventOpen} onClose={() => setIsAddEventOpen(false)} title="Log New Activity">
+           <form className="modal-form" onSubmit={handleAddEvent}>
+              <div className="form-group">
+                 <label>Activity Type</label>
+                 <select value={eventForm.type} onChange={e => setEventForm({...eventForm, type: e.target.value})} className="w-full border border-slate-200 rounded-lg p-2 text-sm bg-white outline-none focus:border-primary-500">
+                    <option value="Service">Service / Repair</option>
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="Installation">Installation</option>
+                 </select>
+              </div>
+              <div className="form-group">
+                 <label>Technician Name</label>
+                 <input type="text" value={eventForm.technician} onChange={e => setEventForm({...eventForm, technician: e.target.value})} placeholder="e.g. John Doe" />
+              </div>
+              <div className="form-group">
+                 <label>Cost / Invoice Amount</label>
+                 <input type="number" step="0.01" value={eventForm.cost} onChange={e => setEventForm({...eventForm, cost: e.target.value})} placeholder="0.00" />
+              </div>
+              <div className="form-group">
+                 <label>Activity Description</label>
+                 <textarea value={eventForm.description} onChange={e => setEventForm({...eventForm, description: e.target.value})} className="w-full border border-slate-200 rounded-lg p-3 text-sm" placeholder="What was done?" required rows={4}></textarea>
+              </div>
+              <div className="modal-actions">
+                 <button type="button" className="btn-secondary" onClick={() => setIsAddEventOpen(false)}>Cancel</button>
+                 <button type="submit" className="btn-primary">Save Activity</button>
+              </div>
+           </form>
+        </Modal>
+     </div>
+  );
+}
+
 export default function Customers() {
   return (
     <Routes>
       <Route path="/" element={<CustomerList />} />
       <Route path="/:id" element={<CustomerDetail />} />
+      <Route path="/:id/address/:addressId" element={<AddressDetail />} />
+      <Route path="/:id/address/:addressId/unit/:unitId" element={<UnitDetail />} />
     </Routes>
   );
 }
