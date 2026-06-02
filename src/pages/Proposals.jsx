@@ -169,7 +169,7 @@ export default function Proposals() {
          const oppId = searchParams.get('opp_id');
          const targetProposal = proposals.find(p => p.proposal_data?.associated_opportunity_id === oppId);
          if (targetProposal) {
-             setViewingProposal(['Sent', 'Approved', 'Lost', 'Voided'].includes(targetProposal.status) ? { ...targetProposal, isReadOnly: true } : targetProposal);
+             setViewingProposal(['Approved', 'Lost', 'Voided'].includes(targetProposal.status) ? { ...targetProposal, isReadOnly: true } : targetProposal);
              deepLinkHandled.current = searchString;
          } else {
              toast.error('Proposal not found or still generating.');
@@ -824,7 +824,7 @@ ${equipmentNotes}
                                                             }
                                                             setShowWizard(true);
                                                         } else {
-                                                           setViewingProposal(['Sent', 'Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
+                                                           setViewingProposal(['Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
                                                         }
                                                     }}
                                                  >
@@ -1080,7 +1080,7 @@ ${equipmentNotes}
                                                handleReopen(proposal);
                                            }
                                        } else {
-                                          setViewingProposal(['Sent', 'Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
+                                          setViewingProposal(['Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
                                        }
                                    }}
                                  >
@@ -1258,7 +1258,7 @@ ${equipmentNotes}
                const matchedTierData = proposal.proposal_data?.accepted_tier_data || proposal.proposal_data?.tiers?.[matchedTierName];
                setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
             } else {
-               setViewingProposal(['Sent', 'Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
+               setViewingProposal(['Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
             }
         }}
       />

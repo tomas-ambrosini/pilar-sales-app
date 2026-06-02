@@ -22,6 +22,13 @@ import TechnicianMyDay from './pages/TechnicianMyDay';
 import CustomerTracker from './pages/CustomerTracker';
 import ExecutiveAnalytics from './pages/ExecutiveAnalytics';
 import CampPointsTracker from './pages/CampPointsTracker';
+import WebsiteLayout from './pages/website-mock/WebsiteLayout';
+import HomeMock from './pages/website-mock/Home';
+import ServicesMock from './pages/website-mock/Services';
+import IndustriesMock from './pages/website-mock/Industries';
+import AboutMock from './pages/website-mock/About';
+import FAQsMock from './pages/website-mock/FAQs';
+import ContactMock from './pages/website-mock/Contact';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CustomerProvider } from './context/CustomerContext';
 import { CatalogProvider } from './context/CatalogContext';
@@ -72,6 +79,14 @@ function MainRouter() {
     <Routes>
       <Route path="/quote/:id" element={<PublicQuoteView />} />
       <Route path="/tracker/:id" element={<CustomerTracker />} />
+      <Route path="/website-mock" element={<WebsiteLayout />}>
+        <Route index element={<HomeMock />} />
+        <Route path="services" element={<ServicesMock />} />
+        <Route path="industries" element={<IndustriesMock />} />
+        <Route path="faqs" element={<FAQsMock />} />
+        <Route path="about" element={<AboutMock />} />
+        <Route path="contact" element={<ContactMock />} />
+      </Route>
       <Route path="/camp-points" element={
         <TomasOnlyRoute>
           <CampPointsTracker />

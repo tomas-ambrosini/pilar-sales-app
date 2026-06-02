@@ -223,6 +223,14 @@ export default function Layout() {
                 <div className="nav-icon shrink-0 flex items-center justify-center"><span className="text-lg">🏆</span></div>
                 <span className="nav-label" style={{ color: 'var(--color-primary-300)'}}>World Cup Tracker</span>
               </a>
+              <a 
+                href="/website-mock" 
+                target="_blank"
+                className="nav-link group opacity-50 hover:opacity-100 transition-opacity mt-1"
+              >
+                <div className="nav-icon shrink-0 flex items-center justify-center"><span className="text-lg">🌐</span></div>
+                <span className="nav-label" style={{ color: 'var(--color-primary-300)'}}>Website Mockup</span>
+              </a>
             </div>
           )}
         </nav>

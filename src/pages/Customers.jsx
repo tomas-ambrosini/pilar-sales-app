@@ -868,7 +868,7 @@ function ProjectCard({ project, navigate, setViewingProposal }) {
                   <h4 className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-1"><FileText size={10}/> Quotes & Contracts</h4>
                   <div className="space-y-2">
                      {project.proposals.map(prop => (
-                        <div key={prop.id} onClick={() => setViewingProposal(['Sent', 'Approved', 'Lost', 'Voided'].includes(prop.status) ? { ...prop, isReadOnly: true } : prop)} className="bg-white border border-slate-200 rounded-lg p-2.5 hover:border-primary-300 transition-colors cursor-pointer shadow-sm flex justify-between items-center group/prop">
+                        <div key={prop.id} onClick={() => setViewingProposal(['Approved', 'Lost', 'Voided'].includes(prop.status) ? { ...prop, isReadOnly: true } : prop)} className="bg-white border border-slate-200 rounded-lg p-2.5 hover:border-primary-300 transition-colors cursor-pointer shadow-sm flex justify-between items-center group/prop">
                            <div>
                               <div className="text-xs font-bold text-slate-700 mb-0.5">${(prop.amount || 0).toLocaleString()}</div>
                               <div className="text-[9px] font-medium text-slate-400">{prop.date}</div>
