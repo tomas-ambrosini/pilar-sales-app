@@ -360,7 +360,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                                     <FileText size={14} className="text-slate-400" /> Proposal
                                 </button>
                             )}
-                            {(job.status === 'NEEDS_SCHEDULING' || job.status === 'SCHEDULED' || job.status === 'APPROVED') && (
+                            {['NEEDS_SCHEDULING', 'SCHEDULED', 'APPROVED', 'COMPLETED', 'CLOSED_WON'].includes(job.status) && (
                                 <button onClick={() => { 
                                     if (associatedProposal) {
                                         const matchedTierData = associatedProposal.proposal_data?.accepted_tier_data || associatedProposal.proposal_data?.tiers?.[matchedTierName];
@@ -377,7 +377,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                                     <ShieldCheck size={14} className="text-slate-400" /> Contract
                                 </button>
                             )}
-                            {job.status === 'SCHEDULED' && (
+                            {['SCHEDULED', 'COMPLETED', 'CLOSED_WON'].includes(job.status) && (
                                 <button disabled={loadingInvoice} onClick={async () => {
                                     if (!associatedProposal) return toast.error("No associated proposal found.");
                                     setLoadingInvoice(true);

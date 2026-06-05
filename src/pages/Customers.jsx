@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Routes, Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Search, Plus, Phone, Mail, MapPin, ChevronRight, User as UserIcon, Users, Calendar, FileText, Edit2, Trash2, Tag, Clock } from 'lucide-react';
+import { Search, Plus, Phone, Mail, MapPin, ChevronRight, User as UserIcon, Users, Calendar, FileText, Edit2, Trash2, Tag, Clock, Zap, Activity, Settings, AlertTriangle, Box } from 'lucide-react';
 import Modal from '../components/Modal';
 import './Customers.css';
 import { useCustomers } from '../context/CustomerContext';
@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useProposals } from '../context/ProposalContext';
 import ProposalViewerModal from '../components/ProposalViewerModal';
 import ContractDocumentModal from '../components/ContractDocumentModal';
+import InvoiceDocument from '../components/InvoiceDocument';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import { PIPELINE_STATES } from '../utils/pipelineControls';
@@ -212,28 +213,41 @@ function CustomerList() {
                        if (viewMode === 'active') navigate(`/customers/${customer.id}`);
                        // Archived customers do nothing on row click except via Restore button
                    }}
-                   className={`transition-colors group ${viewMode === 'active' ? 'hover:bg-slate-50 cursor-pointer' : ''}`}
+                   className={`transition-all group ${viewMode === 'active' ? 'hover:bg-primary-50/50 hover:shadow-[inset_0_0_0_1px_rgba(14,165,233,0.1)] cursor-pointer' : ''}`}
                  >
                    <td className="p-4 px-6">
-                     <span className={`font-bold text-slate-900 ${viewMode === 'archived' ? 'opacity-50' : ''}`}>{customer.name}</span>
-                     {customer.tags && customer.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1.5">
-                           {customer.tags.map((t, idx) => (
-                              <span key={idx} className={`bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded text-[10px] uppercase font-black tracking-widest flex items-center gap-1 ${viewMode === 'archived' ? 'opacity-50' : ''}`}><Tag size={10}/> {t}</span>
-                           ))}
+                     <div className="flex items-start gap-3">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 shadow-sm ${viewMode === 'archived' ? 'bg-slate-100 text-slate-400' : 'bg-primary-100 text-primary-700 border border-primary-200'}`}>
+                           {customer.name ? customer.name.charAt(0).toUpperCase() : '?'}
                         </div>
-                     )}
+                        <div>
+                           <span className={`font-bold text-slate-900 ${viewMode === 'archived' ? 'opacity-50' : ''}`}>{customer.name}</span>
+                           {customer.tags && customer.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1.5">
+                                 {customer.tags.map((t, idx) => (
+                                    <span key={idx} className={`bg-white text-slate-600 border border-slate-200 shadow-sm px-2 py-0.5 rounded-full text-[9px] uppercase font-black tracking-widest flex items-center gap-1 ${viewMode === 'archived' ? 'opacity-50' : ''}`}><Tag size={10}/> {t}</span>
+                                 ))}
+                              </div>
+                           )}
+                        </div>
+                     </div>
                    </td>
                    <td className={`p-4 px-6 ${viewMode === 'archived' ? 'opacity-50' : ''}`}>
                       <div className="text-xs font-medium text-slate-600 flex flex-col gap-1">
-                        {customer.phone && <span className="flex items-center gap-1.5"><Phone size={12} className="text-slate-400 transition-colors"/> {customer.phone}</span>}
-                        {customer.email && <span className="flex items-center gap-1.5"><Mail size={12} className="text-slate-400 transition-colors"/> {customer.email}</span>}
+                        {customer.phone && <a href={`tel:${customer.phone}`} onClick={e => e.stopPropagation()} className="flex items-center gap-1.5 hover:text-primary-600 transition-colors"><Phone size={12} className="text-slate-400 group-hover:text-primary-400 transition-colors"/> {customer.phone}</a>}
+                        {customer.email && <a href={`mailto:${customer.email}`} onClick={e => e.stopPropagation()} className="flex items-center gap-1.5 hover:text-primary-600 transition-colors"><Mail size={12} className="text-slate-400 group-hover:text-primary-400 transition-colors"/> {customer.email}</a>}
                         {(!customer.phone && !customer.email) && <span className="text-slate-400 italic">No contact info</span>}
                       </div>
                    </td>
                    <td className={`p-4 px-6 ${viewMode === 'archived' ? 'opacity-50' : ''}`}>
-                     <span className="text-sm font-medium text-slate-600 line-clamp-1 flex items-center gap-1.5">
-                        <MapPin size={14} className="text-slate-400 transition-colors shrink-0"/> {customer.address || <span className="italic">No address on file</span>}
+                     <span className="text-sm font-medium text-slate-600 line-clamp-1 flex flex-col gap-1">
+                        <span className="flex items-center gap-1.5">
+                           <MapPin size={14} className="text-slate-400 transition-colors shrink-0"/> {customer.address || <span className="italic">No address on file</span>}
+                        </span>
+                        {customer.locations?.length > 1 && (
+                           <span className="text-[10px] font-bold text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded w-max">+{customer.locations.length - 1} more propert{customer.locations.length - 1 === 1 ? 'y' : 'ies'}</span>
+                        )}
+                        <span className="text-[10px] text-slate-400 font-medium italic mt-0.5 flex items-center gap-1"><Clock size={10} /> {customer.activity_logs && customer.activity_logs.length > 0 ? `Last activity: ${new Date(customer.activity_logs[0].created_at).toLocaleDateString()}` : 'No recent history'}</span>
                      </span>
                    </td>
                    <td className="p-4 px-6 text-right">
@@ -347,8 +361,8 @@ function PropertyDetailsCard({ location, index }) {
                  </div>
              ) : (
                 <div className="flex gap-2">
-                   <button className="text-xs font-bold text-primary-600 hover:text-primary-700 bg-primary-50 px-2 py-1 rounded flex items-center gap-1 transition-all" onClick={() => navigate(`/customers/${id}/address/${location.id}`)}>
-                       Manage Property
+                   <button className="text-xs font-bold text-white hover:bg-primary-700 bg-primary-600 px-3 py-1.5 rounded flex items-center gap-1 transition-all shadow-sm" onClick={() => navigate(`/customers/${id}/address/${location.id}`)}>
+                       View Lifecycle & Equipment <ChevronRight size={14}/>
                    </button>
                    <button className="text-xs font-bold text-slate-400 hover:text-primary-500 flex items-center gap-1" onClick={() => setIsEditing(true)}>
                       <Edit2 size={12}/> Edit Specs
@@ -428,6 +442,17 @@ function PropertyDetailsCard({ location, index }) {
                      </div>
                   </div>
                )}
+                
+                <div className="mt-4 pt-3 border-t border-slate-100 flex gap-4">
+                   <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Installed Units</span>
+                      <span className="text-sm font-black text-slate-700">{location.property_details?.units?.length || 0} Assets</span>
+                   </div>
+                   <div className="flex flex-col border-l border-slate-200 pl-4">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Lifecycle</span>
+                      <span className="text-sm font-black text-primary-600">Click View to see Proposals & Work Orders</span>
+                   </div>
+                </div>
              </>
           )}
         </section>
@@ -452,6 +477,7 @@ function CustomerDetail() {
   const [newPropertyAddress, setNewPropertyAddress] = useState('');
   const [viewingProposal, setViewingProposal] = useState(null);
   const [viewingContract, setViewingContract] = useState(null);
+  const [viewingInvoice, setViewingInvoice] = useState(null);
   
   const customer = customers.find(c => c.id.toString() === id.toString());
   
@@ -533,35 +559,42 @@ function CustomerDetail() {
         <ChevronRight size={18} className="icon-flip" /> Back to Customers
       </button>
 
-      <div className="detail-header glass-panel">
-        <div className="detail-header-main">
-          <div className="detail-avatar large">
-            {customer.name.charAt(0)}
-          </div>
-          <div>
-            <h1 className="detail-name">{customer.name}</h1>
-            <div className="customer-tags" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-              {customer.tags && customer.tags.map(tag => (
-                <span key={tag} className="inline-block rounded-full font-semibold bg-slate-100 text-slate-600 px-2 py-1 text-xs">{tag}</span>
-              ))}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+         <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-8 py-8 relative">
+            <div className="absolute right-0 top-0 w-64 h-full bg-primary-500/10 blur-3xl mix-blend-overlay"></div>
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+               <div className="flex items-center gap-5">
+                  <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center border border-white/10 backdrop-blur shadow-inner text-4xl font-black text-white">
+                     {customer.name.charAt(0)}
+                  </div>
+                  <div>
+                     <h1 className="text-3xl font-black text-white tracking-tight mb-2">{customer.name}</h1>
+                     {customer.tags && customer.tags.length > 0 && (
+                         <div className="flex flex-wrap gap-2">
+                           {customer.tags.map(tag => (
+                             <span key={tag} className="bg-slate-800 border border-slate-600 text-slate-200 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-widest flex items-center gap-1.5"><Tag size={10}/> {tag}</span>
+                           ))}
+                         </div>
+                     )}
+                  </div>
+               </div>
+               <div className="flex gap-3">
+                  <button onClick={() => {
+                      setEditFormData({
+                          name: customer?.name || '',
+                          email: customer?.email || '',
+                          phone: customer?.phone || '',
+                          address: customer?.address || '',
+                          tags: customer?.tags ? customer.tags.join(', ') : ''
+                      });
+                      setIsEditModalOpen(true);
+                  }} className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center gap-2 font-bold backdrop-blur-sm" title="Edit Customer"><Edit2 size={16} /></button>
+                  <a href={`tel:${customer.phone}`} className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center gap-2 font-bold backdrop-blur-sm" title="Call Customer"><Phone size={16} /></a>
+                  <a href={`mailto:${customer.email}`} className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center gap-2 font-bold backdrop-blur-sm" title="Email Customer"><Mail size={16} /></a>
+                  <button className="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center gap-2 font-bold backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(true)} title="Archive Customer"><Trash2 size={16} /></button>
+               </div>
             </div>
-          </div>
-        </div>
-        <div className="contact-actions">
-          <button className="icon-btn outline" onClick={() => {
-              setEditFormData({
-                  name: customer?.name || '',
-                  email: customer?.email || '',
-                  phone: customer?.phone || '',
-                  address: customer?.address || '',
-                  tags: customer?.tags ? customer.tags.join(', ') : ''
-              });
-              setIsEditModalOpen(true);
-          }} title="Edit Customer"><Edit2 size={18} /></button>
-          <button className="icon-btn outline" onClick={() => setActiveQuickAction('Call Customer')} title="Call Customer"><Phone size={18} /></button>
-          <button className="icon-btn outline" onClick={() => setActiveQuickAction('Email Customer')} title="Email Customer"><Mail size={18} /></button>
-          <button className="icon-btn outline" style={{color: 'var(--color-danger)', borderColor: 'var(--color-danger)'}} onClick={() => setIsDeleteModalOpen(true)} title="Archive Customer"><Trash2 size={18} /></button>
-        </div>
+         </div>
       </div>
 
       <div className="detail-content-grid">
@@ -782,23 +815,14 @@ function CustomerDetail() {
       </Modal>
 
       {/* Viewer Modal Instance */}
-      <ProposalViewerModal 
-          isOpen={!!viewingProposal} 
-          onClose={() => setViewingProposal(null)} 
-          proposal={viewingProposal} 
-          onViewContract={(proposalData) => {
+         <ProposalViewerModal isOpen={!!viewingProposal} onClose={() => setViewingProposal(null)} proposal={viewingProposal} onViewContract={(proposalData) => {
              setViewingProposal(null);
              const matchedTierName = ['good', 'better', 'best'].find(t => proposalData.proposal_data?.tiers[t]?.salesPrice === proposalData.amount) || 'good';
              const matchedTierData = proposalData.proposal_data?.tiers[matchedTierName];
              setViewingContract({ proposal: proposalData, tierName: matchedTierName?.toUpperCase(), tierData: matchedTierData, date: proposalData.date });
-          }}
-      />
-
-      <ContractDocumentModal 
-        isOpen={!!viewingContract}
-        onClose={() => setViewingContract(null)}
-        contractData={viewingContract}
-      />
+          }} />
+         <ContractDocumentModal isOpen={!!viewingContract} onClose={() => setViewingContract(null)} contractData={viewingContract} />
+         <InvoiceDocument isOpen={!!viewingInvoice} onClose={() => setViewingInvoice(null)} invoice={viewingInvoice} />
 
       <Modal isOpen={isStartDealOpen} onClose={() => setIsStartDealOpen(false)} title="Originate New CRM Lead">
          <form onSubmit={handleCreateDeal}>
@@ -839,7 +863,7 @@ function CustomerDetail() {
   );
 }
 
-function ProjectCard({ project, navigate, setViewingProposal }) {
+function ProjectCard({ project, navigate, setViewingProposal, setViewingContract, setViewingInvoice }) {
    const hasWorkOrders = project.work_orders?.length > 0;
    const hasProposals = project.proposals?.length > 0;
    
@@ -862,18 +886,49 @@ function ProjectCard({ project, navigate, setViewingProposal }) {
          </div>
 
          <div className="mt-auto space-y-4">
-            {/* Proposals Section */}
+            {/* Document Vault Section */}
             {hasProposals && (
                <div className="pt-4 border-t border-slate-100/80">
-                  <h4 className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-1"><FileText size={10}/> Quotes & Contracts</h4>
+                  <h4 className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-1"><FileText size={10}/> Document Vault</h4>
                   <div className="space-y-2">
                      {project.proposals.map(prop => (
-                        <div key={prop.id} onClick={() => setViewingProposal(['Approved', 'Lost', 'Voided'].includes(prop.status) ? { ...prop, isReadOnly: true } : prop)} className="bg-white border border-slate-200 rounded-lg p-2.5 hover:border-primary-300 transition-colors cursor-pointer shadow-sm flex justify-between items-center group/prop">
-                           <div>
-                              <div className="text-xs font-bold text-slate-700 mb-0.5">${(prop.amount || 0).toLocaleString()}</div>
-                              <div className="text-[9px] font-medium text-slate-400">{prop.date}</div>
+                        <div key={prop.id} className="bg-white border border-slate-200 rounded-lg p-3 hover:border-primary-300 transition-colors shadow-sm group/prop">
+                           <div className="flex justify-between items-center mb-2">
+                              <div>
+                                 <div className="text-xs font-bold text-slate-700 mb-0.5">${(prop.amount || 0).toLocaleString()}</div>
+                                 <div className="text-[9px] font-medium text-slate-400">{prop.date}</div>
+                              </div>
+                              <span className={`text-[9px] font-bold px-2 py-1 rounded-full ${prop.status === 'Approved' ? 'bg-success-50 text-success-700 border border-success-200/50' : 'bg-slate-50 text-slate-600 border border-slate-200/50 group-hover/prop:bg-primary-50 group-hover/prop:text-primary-600 group-hover/prop:border-primary-200/50 transition-colors'}`}>{prop.status}</span>
                            </div>
-                           <span className={`text-[9px] font-bold px-2 py-1 rounded-full ${prop.status === 'Approved' ? 'bg-success-50 text-success-700 border border-success-200/50' : 'bg-slate-50 text-slate-600 border border-slate-200/50 group-hover/prop:bg-primary-50 group-hover/prop:text-primary-600 group-hover/prop:border-primary-200/50 transition-colors'}`}>{prop.status}</span>
+                           <div className="flex gap-2 mt-2 pt-2 border-t border-slate-100">
+                               <button onClick={() => setViewingProposal(['Approved', 'Lost', 'Voided'].includes(prop.status) ? { ...prop, isReadOnly: true } : prop)} className="flex-1 px-2 py-1.5 text-[10px] font-black bg-slate-50 border border-slate-200 rounded text-slate-600 hover:bg-white hover:border-slate-300 transition-all text-center">Proposal</button>
+                               
+                               {['NEEDS_SCHEDULING', 'SCHEDULED', 'APPROVED', 'COMPLETED', 'CLOSED_WON'].includes(project.status) && (
+                                   <button onClick={() => {
+                                       const matchedTierName = prop.proposal_data?.accepted_tier_name || 'good';
+                                       const matchedTierData = prop.proposal_data?.accepted_tier_data || prop.proposal_data?.tiers?.[matchedTierName];
+                                       setViewingContract({
+                                           proposal: prop,
+                                           tierName: matchedTierName?.toUpperCase() || 'SYSTEM',
+                                           tierData: matchedTierData || {},
+                                           date: new Date(prop.updated_at || prop.created_at).toLocaleDateString()
+                                       });
+                                   }} className="flex-1 px-2 py-1.5 text-[10px] font-black bg-slate-50 border border-slate-200 rounded text-slate-600 hover:bg-white hover:border-slate-300 transition-all text-center">Contract</button>
+                               )}
+                               
+                               {['SCHEDULED', 'COMPLETED', 'CLOSED_WON'].includes(project.status) && (
+                                   <button onClick={async () => {
+                                       toast.loading('Loading invoice...', { id: 'inv' });
+                                       const { data } = await supabase.from('invoices').select('*, proposals(*)').eq('proposal_id', prop.id).single();
+                                       if (data) {
+                                           toast.dismiss('inv');
+                                           setViewingInvoice(data);
+                                       } else {
+                                           toast.error('Invoice not generated yet.', { id: 'inv' });
+                                       }
+                                   }} className="flex-1 px-2 py-1.5 text-[10px] font-black bg-slate-50 border border-slate-200 rounded text-slate-600 hover:bg-white hover:border-slate-300 transition-all text-center">Invoice</button>
+                               )}
+                           </div>
                         </div>
                      ))}
                   </div>
@@ -885,18 +940,24 @@ function ProjectCard({ project, navigate, setViewingProposal }) {
                <div className="pt-4 border-t border-slate-100/80">
                   <h4 className="text-[9px] font-black uppercase tracking-widest text-amber-600 mb-2 flex items-center gap-1"><Calendar size={10}/> Dispatch Schedule</h4>
                   <div className="space-y-2">
-                     {project.work_orders.map(wo => (
+                     {project.work_orders.map(wo => {
+                        let displayStatus = wo.status;
+                        if (['COMPLETED', 'CLOSED_WON'].includes(project.status)) displayStatus = 'Completed';
+                        else if (wo.scheduled_date) displayStatus = `Scheduled: ${new Date(wo.scheduled_date).toLocaleDateString()}`;
+                        
+                        return (
                         <div key={wo.id} className="bg-gradient-to-r from-amber-50/50 to-white border border-amber-100 rounded-lg p-2.5 flex justify-between items-center shadow-sm relative overflow-hidden">
                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-400"></div>
                            <div className="pl-2">
                               <div className="text-xs font-bold text-slate-800 flex items-center gap-2 mb-0.5">
-                                 {wo.status}
+                                 {displayStatus}
                                  <span className="bg-amber-100 text-amber-800 text-[9px] px-1.5 py-0.5 rounded font-mono border border-amber-200/50">#{wo.work_order_number}</span>
                               </div>
                               <div className="text-[10px] text-slate-500 font-medium">Urgency: <span className="font-bold text-amber-700/80">{wo.urgency_level}</span></div>
                            </div>
                         </div>
-                     ))}
+                        );
+                     })}
                   </div>
                </div>
             )}
@@ -905,12 +966,12 @@ function ProjectCard({ project, navigate, setViewingProposal }) {
    );
 }
 
-function AddressOperations({ id, addressId, address, customer, setViewingProposal }) {
+function AddressOperations({ id, addressId, address, customer, setViewingProposal, setViewingContract, setViewingInvoice }) {
    const { proposals } = useProposals();
    const navigate = useNavigate();
 
    const addressOpportunities = customer?.opportunities?.filter(opp => {
-       const oppAddressId = opp.proposal_data?.service_address_id || opp.site_survey_data?.service_address_id;
+       const oppAddressId = opp.proposal_data?.service_address_id || opp.site_survey_data?.property_id || opp.site_survey_data?.service_address_id;
        if (oppAddressId) return oppAddressId === addressId;
        return true; // If no address assigned yet, show on all
    }) || [];
@@ -986,7 +1047,7 @@ function AddressOperations({ id, addressId, address, customer, setViewingProposa
              {projects.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                    {projects.map(project => (
-                      <ProjectCard key={project.id} project={project} navigate={navigate} setViewingProposal={setViewingProposal} />
+                      <ProjectCard key={project.id} project={project} navigate={navigate} setViewingProposal={setViewingProposal} setViewingContract={setViewingContract} setViewingInvoice={setViewingInvoice} />
                    ))}
                 </div>
              ) : (
@@ -1011,7 +1072,7 @@ function AddressOperations({ id, addressId, address, customer, setViewingProposa
 function AddressDetail() {
   const { id, addressId } = useParams();
   const navigate = useNavigate();
-  const { customers, addUnitToAddress } = useCustomers();
+  const { customers, addUnitToAddress, deleteUnit } = useCustomers();
   
   const customer = customers.find(c => c.id === id);
   const address = customer?.locations?.find(l => l.id === addressId);
@@ -1020,6 +1081,9 @@ function AddressDetail() {
   const [unitForm, setUnitForm] = useState({ unit_number: '', system_type: '', description: '' });
   const [viewingProposal, setViewingProposal] = useState(null);
   const [viewingContract, setViewingContract] = useState(null);
+  const [viewingInvoice, setViewingInvoice] = useState(null);
+  
+  const [unitToDelete, setUnitToDelete] = useState(null);
 
   if (!customer || !address) {
      return <div className="page-container flex-center"><h3>Address Not Found</h3><button className="btn-primary mt-4" onClick={() => navigate(`/customers/${id}`)}>Go Back</button></div>;
@@ -1033,42 +1097,96 @@ function AddressDetail() {
      setIsAddUnitOpen(false);
      setUnitForm({ unit_number: '', system_type: '', description: '' });
   };
+  
+  const handleDeleteUnit = async () => {
+     if (!unitToDelete) return;
+     await deleteUnit(id, addressId, unitToDelete.id);
+     setUnitToDelete(null);
+  };
+
+  const parseSpecs = (desc) => {
+      if (!desc) return [];
+      const specs = [];
+      const tonsMatch = desc.match(/(\d+(\.\d+)?)\s*Ton/i);
+      const seerMatch = desc.match(/(\d+(\.\d+)?)\s*SEER/i);
+      if (tonsMatch) specs.push({ label: tonsMatch[0], icon: <Activity size={12}/>, color: 'bg-indigo-50 text-indigo-700 border-indigo-200' });
+      if (seerMatch) specs.push({ label: seerMatch[0], icon: <Zap size={12}/>, color: 'bg-emerald-50 text-emerald-700 border-emerald-200' });
+      return specs;
+  };
 
   return (
      <div className="page-container">
-        <button className="back-btn" onClick={() => navigate(`/customers/${id}`)}>
-          <ChevronRight size={18} className="icon-flip" /> Back to Customer
+        <button className="back-btn group mb-6" onClick={() => navigate(`/customers/${id}`)}>
+          <ChevronRight size={18} className="icon-flip group-hover:-translate-x-1 transition-transform" /> Back to Customer
         </button>
-        <div className="detail-header glass-panel mb-6">
-           <div>
-              <h1 className="detail-name text-2xl">Property Units</h1>
-              <p className="text-slate-500 mt-1 flex items-center gap-2"><MapPin size={16}/> {address.street_address} {address.city && `, ${address.city}`}</p>
+        
+        <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl shadow-xl mb-8 border border-slate-700/50 p-8">
+           <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-primary-500/20 rounded-full blur-3xl mix-blend-overlay"></div>
+           <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl mix-blend-overlay"></div>
+           <div className="relative z-10 flex justify-between items-center">
+               <div>
+                  <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">Property Units</h1>
+                  <p className="text-slate-300 flex items-center gap-2 font-medium"><MapPin size={16} className="text-primary-400"/> {address.street_address} {address.city && `, ${address.city}`}</p>
+               </div>
+               <button onClick={() => setIsAddUnitOpen(true)} className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-5 py-2.5 rounded-lg shadow-sm transition-all flex items-center gap-2 font-bold backdrop-blur-sm">
+                  <Plus size={16} /> Add Custom Unit
+               </button>
            </div>
-           <button onClick={() => setIsAddUnitOpen(true)} className="btn-primary flex items-center gap-2">
-              <Plus size={16} /> Add Unit
-           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-           {units.length > 0 ? units.map(unit => (
-               <div key={unit.id} className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/customers/${id}/address/${addressId}/unit/${unit.id}`)}>
-                  <div className="flex justify-between items-start mb-3">
-                     <h3 className="font-bold text-lg text-slate-800">Unit {unit.unit_number}</h3>
-                     <span className="bg-primary-50 text-primary-700 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">{unit.system_type || 'Unknown System'}</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+           {units.length > 0 ? units.map(unit => {
+               const badges = parseSpecs(unit.description);
+               return (
+               <div key={unit.id} className="group relative bg-white border border-slate-200/80 rounded-xl shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-primary-300 transition-all duration-300 overflow-hidden flex flex-col cursor-pointer" onClick={() => navigate(`/customers/${id}/address/${addressId}/unit/${unit.id}`)}>
+                  <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary-400 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="p-6 flex-1">
+                      <div className="flex justify-between items-start mb-4">
+                         <div className="flex items-center gap-3">
+                             <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 shadow-inner">
+                                 <Settings size={18} className="text-slate-500" />
+                             </div>
+                             <div>
+                                 <h3 className="font-extrabold text-lg text-slate-800 leading-tight">Unit {unit.unit_number}</h3>
+                                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{unit.system_type || 'Unknown System'}</p>
+                             </div>
+                         </div>
+                      </div>
+                      
+                      {badges.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-4">
+                              {badges.map((b, i) => (
+                                  <span key={i} className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md border ${b.color}`}>
+                                      {b.icon} {b.label}
+                                  </span>
+                              ))}
+                          </div>
+                      )}
+                      
+                      <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100">{unit.description || 'No description provided'}</p>
                   </div>
-                  <p className="text-sm text-slate-500 line-clamp-2 mb-4">{unit.description || 'No description'}</p>
-                  <div className="text-xs text-slate-400 font-medium flex items-center gap-1">
-                     <Clock size={12}/> {unit.history?.length || 0} history events
+                  <div className="px-6 py-3 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center mt-auto" onClick={(e) => e.stopPropagation()}>
+                     <div className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
+                        <Clock size={14} className="text-slate-300"/> 
+                        {unit.history?.length || 0} event{unit.history?.length !== 1 ? 's' : ''}
+                     </div>
+                     <button onClick={(e) => { e.preventDefault(); setUnitToDelete(unit); }} className="text-slate-400 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-50 relative z-20">
+                        <Trash2 size={16} />
+                     </button>
                   </div>
                </div>
-           )) : (
-              <div className="col-span-full flex-center p-12 bg-slate-50 border border-slate-200 border-dashed rounded-lg">
-                 <p className="text-slate-500 font-medium">No units added to this property yet.</p>
+           )}) : (
+              <div className="col-span-full flex flex-col items-center justify-center p-16 bg-white/60 backdrop-blur border border-slate-200 border-dashed rounded-2xl shadow-sm">
+                 <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100 shadow-inner">
+                    <Box size={24} className="text-slate-300" />
+                 </div>
+                 <h3 className="text-slate-700 font-bold mb-1 text-lg">No Property Units</h3>
+                 <p className="text-slate-500 font-medium max-w-sm text-center">Add manually or complete a digital proposal to automatically generate units here.</p>
               </div>
            )}
         </div>
 
-        <AddressOperations id={id} addressId={addressId} address={address} customer={customer} setViewingProposal={setViewingProposal} />
+        <AddressOperations id={id} addressId={addressId} address={address} customer={customer} setViewingProposal={setViewingProposal} setViewingContract={setViewingContract} setViewingInvoice={setViewingInvoice} />
 
         <Modal isOpen={isAddUnitOpen} onClose={() => setIsAddUnitOpen(false)} title="Add New Unit">
            <form className="modal-form" onSubmit={handleAddUnit}>
@@ -1081,14 +1199,28 @@ function AddressDetail() {
                  <input type="text" value={unitForm.system_type} onChange={e => setUnitForm({...unitForm, system_type: e.target.value})} required placeholder="e.g. Heat Pump, Furnace" />
               </div>
               <div className="form-group">
-                 <label>Description (Optional)</label>
-                 <textarea value={unitForm.description} onChange={e => setUnitForm({...unitForm, description: e.target.value})} className="w-full border border-slate-200 rounded-lg p-3 text-sm" placeholder="Additional details..."></textarea>
+                 <label>Description & Specs</label>
+                 <textarea value={unitForm.description} onChange={e => setUnitForm({...unitForm, description: e.target.value})} className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all" placeholder="e.g. Trane 3 Ton 16 SEER..." rows={3}></textarea>
               </div>
-              <div className="modal-actions">
+              <div className="modal-actions mt-6">
                  <button type="button" className="btn-secondary" onClick={() => setIsAddUnitOpen(false)}>Cancel</button>
                  <button type="submit" className="btn-primary">Save Unit</button>
               </div>
            </form>
+        </Modal>
+
+        <Modal isOpen={!!unitToDelete} onClose={() => setUnitToDelete(null)} title="Delete Unit?">
+           <div className="p-4 text-center">
+              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
+                 <Trash2 size={24} className="text-red-500" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 mb-2">Delete {unitToDelete?.unit_number}?</h3>
+              <p className="text-sm text-slate-500 mb-6">This will permanently remove the unit and its entire service history from the property. This cannot be undone.</p>
+              <div className="flex gap-3 w-full">
+                  <button onClick={() => setUnitToDelete(null)} className="flex-1 bg-white border border-slate-200 text-slate-600 py-2.5 rounded-lg font-bold hover:bg-slate-50">Cancel</button>
+                  <button onClick={handleDeleteUnit} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg font-bold shadow-sm transition-colors">Yes, Delete Unit</button>
+              </div>
+           </div>
         </Modal>
 
         <ProposalViewerModal 
@@ -1108,6 +1240,12 @@ function AddressDetail() {
            onClose={() => setViewingContract(null)}
            contractData={viewingContract}
          />
+         
+         <InvoiceDocument 
+           isOpen={!!viewingInvoice} 
+           onClose={() => setViewingInvoice(null)} 
+           invoice={viewingInvoice} 
+         />
      </div>
   );
 }
@@ -1115,7 +1253,7 @@ function AddressDetail() {
 function UnitDetail() {
   const { id, addressId, unitId } = useParams();
   const navigate = useNavigate();
-  const { customers, addHistoryToUnit } = useCustomers();
+  const { customers, addHistoryToUnit, updateUnit } = useCustomers();
   
   const customer = customers.find(c => c.id === id);
   const address = customer?.locations?.find(l => l.id === addressId);
@@ -1123,6 +1261,9 @@ function UnitDetail() {
 
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [eventForm, setEventForm] = useState({ type: 'Service', description: '', technician: '', cost: '' });
+  
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ unit_number: '', system_type: '', description: '' });
 
   if (!unit) {
      return <div className="page-container flex-center"><h3>Unit Not Found</h3><button className="btn-primary mt-4" onClick={() => navigate(`/customers/${id}/address/${addressId}`)}>Go Back</button></div>;
@@ -1134,47 +1275,116 @@ function UnitDetail() {
      setIsAddEventOpen(false);
      setEventForm({ type: 'Service', description: '', technician: '', cost: '' });
   };
+  
+  const handleEditUnit = async (e) => {
+     e.preventDefault();
+     await updateUnit(id, addressId, unitId, editForm);
+     setIsEditOpen(false);
+  };
+  
+  const openEdit = () => {
+     setEditForm({ unit_number: unit.unit_number, system_type: unit.system_type || '', description: unit.description || '' });
+     setIsEditOpen(true);
+  };
+
+  const tonsMatch = unit.description?.match(/(\d+(\.\d+)?)\s*Ton/i);
+  const seerMatch = unit.description?.match(/(\d+(\.\d+)?)\s*SEER/i);
+  const brandMatch = unit.description?.split(' ')[0];
 
   return (
-     <div className="page-container">
-        <button className="back-btn" onClick={() => navigate(`/customers/${id}/address/${addressId}`)}>
-          <ChevronRight size={18} className="icon-flip" /> Back to Units
+     <div className="page-container max-w-5xl mx-auto">
+        <button className="back-btn group mb-6" onClick={() => navigate(`/customers/${id}/address/${addressId}`)}>
+          <ChevronRight size={18} className="icon-flip group-hover:-translate-x-1 transition-transform" /> Back to Units
         </button>
-        <div className="detail-header glass-panel mb-6">
-           <div>
-              <h1 className="detail-name text-2xl flex items-center gap-3">Unit {unit.unit_number} <span className="bg-primary-50 text-primary-700 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">{unit.system_type}</span></h1>
-              <p className="text-slate-500 mt-1">{unit.description}</p>
+        
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+           <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-8 py-8 relative">
+              <div className="absolute right-0 top-0 w-64 h-full bg-primary-500/10 blur-3xl mix-blend-overlay"></div>
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                 <div className="flex items-center gap-5">
+                    <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center border border-white/10 backdrop-blur shadow-inner">
+                        <Box size={32} className="text-white" />
+                    </div>
+                    <div>
+                       <div className="flex items-center gap-3 mb-1">
+                          <h1 className="text-3xl font-black text-white tracking-tight">{unit.unit_number}</h1>
+                          <span className="bg-slate-800 border border-slate-600 text-slate-200 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-widest">{unit.system_type || 'System'}</span>
+                       </div>
+                       <p className="text-white opacity-80 font-medium flex items-center gap-2 text-sm"><MapPin size={14}/> {address.street_address}</p>
+                    </div>
+                 </div>
+                 <div className="flex gap-3">
+                    <button onClick={openEdit} className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-5 py-2.5 rounded-lg shadow-sm transition-all flex items-center gap-2 font-bold backdrop-blur-sm">
+                       <Settings size={16} /> Edit Specs
+                    </button>
+                    <button onClick={() => setIsAddEventOpen(true)} className="bg-primary-500 hover:bg-primary-600 text-white px-5 py-2.5 rounded-lg shadow-md transition-all flex items-center gap-2 font-bold border border-primary-400/50">
+                       <Plus size={16} /> Log Activity
+                    </button>
+                 </div>
+              </div>
            </div>
-           <button onClick={() => setIsAddEventOpen(true)} className="btn-primary flex items-center gap-2">
-              <Plus size={16} /> Log Activity
-           </button>
+           <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 bg-slate-50/50">
+               <div className="lg:col-span-2 space-y-6">
+                  <div>
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Technical Description</h3>
+                      <p className="text-slate-700 leading-relaxed font-medium bg-white p-4 rounded-xl border border-slate-200 shadow-sm">{unit.description || 'No description provided.'}</p>
+                  </div>
+               </div>
+               <div>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">System Specifications</h3>
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                     <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
+                         <span className="text-sm font-bold text-slate-600">Brand</span>
+                         <span className="text-sm font-bold text-slate-800">{brandMatch || 'N/A'}</span>
+                     </div>
+                     <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
+                         <span className="text-sm font-bold text-slate-600 flex items-center gap-1.5"><Activity size={14} className="text-indigo-500"/> Tonnage</span>
+                         <span className="text-sm font-black text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">{tonsMatch ? tonsMatch[0] : 'N/A'}</span>
+                     </div>
+                     <div className="px-4 py-3 flex justify-between items-center">
+                         <span className="text-sm font-bold text-slate-600 flex items-center gap-1.5"><Zap size={14} className="text-emerald-500"/> Efficiency</span>
+                         <span className="text-sm font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">{seerMatch ? seerMatch[0] : 'N/A'}</span>
+                     </div>
+                  </div>
+               </div>
+           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-           <div className="p-5 border-b border-slate-100 bg-slate-50">
-              <h2 className="font-bold text-slate-800 text-lg flex items-center gap-2"><FileText size={18} className="text-primary-500"/> Service & Maintenance History</h2>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+           <div className="p-6 border-b border-slate-100 bg-white flex justify-between items-center">
+              <h2 className="font-extrabold text-slate-800 text-xl flex items-center gap-2"><FileText size={20} className="text-primary-500"/> Service Timeline</h2>
+              <span className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-full">{unit.history?.length === 1 ? '1 Event Logged' : (unit.history?.length || 0) + ' Events Logged'}</span>
            </div>
            <div className="p-0">
               {unit.history && unit.history.length > 0 ? (
-                 <div className="divide-y divide-slate-100">
-                    {[...unit.history].reverse().map(event => (
-                       <div key={event.id} className="p-5 hover:bg-slate-50 transition-colors">
-                          <div className="flex justify-between items-start mb-2">
-                             <div className="flex items-center gap-3">
-                                <span className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${event.type === 'Maintenance' ? 'bg-amber-100 text-amber-800' : event.type === 'Installation' ? 'bg-success-100 text-success-800' : 'bg-primary-100 text-primary-800'}`}>
-                                   {event.type}
-                                </span>
-                                <span className="text-sm font-medium text-slate-500 flex items-center gap-1"><Calendar size={14}/> {new Date(event.date).toLocaleDateString()}</span>
-                             </div>
-                             {event.cost && <span className="font-bold text-slate-700">${event.cost}</span>}
+                 <div className="relative border-l-2 border-slate-100 ml-8 my-8 space-y-8 py-4">
+                    {[...unit.history].reverse().map((event, index) => (
+                       <div key={event.id} className="relative pl-8 pr-8">
+                          <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white shadow-sm ${event.type === 'Maintenance' ? 'bg-amber-400' : event.type === 'Installation' ? 'bg-success-500' : 'bg-primary-500'}`}></div>
+                          <div className="bg-white border border-slate-200 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex justify-between items-start mb-2">
+                                 <div className="flex items-center gap-3">
+                                    <span className={`text-[10px] font-black px-2.5 py-1 rounded border uppercase tracking-widest ${event.type === 'Maintenance' ? 'bg-amber-50 text-amber-700 border-amber-200' : event.type === 'Installation' ? 'bg-success-50 text-success-700 border-success-200' : 'bg-primary-50 text-primary-700 border-primary-200'}`}>
+                                       {event.type}
+                                    </span>
+                                    <span className="text-xs font-bold text-slate-400 flex items-center gap-1"><Calendar size={12}/> {new Date(event.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                                 </div>
+                                 {event.cost && <span className="font-black text-slate-700 bg-slate-100 px-2 py-1 rounded text-sm">${parseFloat(event.cost).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>}
+                              </div>
+                              <p className="text-slate-600 text-sm mt-3 leading-relaxed font-medium">{event.description?.replace(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/ig, (id) => 'P2026-' + id.substring(0,6).toUpperCase())}</p>
+                              {event.technician && <div className="mt-4 text-[11px] font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wider"><UserIcon size={12}/> Tech: {event.technician}</div>}
                           </div>
-                          <p className="text-slate-700 text-sm mt-3 leading-relaxed">{event.description}</p>
-                          {event.technician && <div className="mt-3 text-xs font-medium text-slate-400 flex items-center gap-1"><UserIcon size={12}/> Tech: {event.technician}</div>}
                        </div>
                     ))}
                  </div>
               ) : (
-                 <div className="p-12 text-center text-slate-500 font-medium">No history logged for this unit.</div>
+                 <div className="p-16 flex flex-col items-center justify-center text-center">
+                     <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                         <Clock size={20} className="text-slate-300"/>
+                     </div>
+                     <p className="text-slate-500 font-bold text-lg">Clean Record</p>
+                     <p className="text-slate-400 text-sm max-w-xs mt-1">No service history has been logged for this unit yet.</p>
+                 </div>
               )}
            </div>
         </div>
@@ -1183,27 +1393,56 @@ function UnitDetail() {
            <form className="modal-form" onSubmit={handleAddEvent}>
               <div className="form-group">
                  <label>Activity Type</label>
-                 <select value={eventForm.type} onChange={e => setEventForm({...eventForm, type: e.target.value})} className="w-full border border-slate-200 rounded-lg p-2 text-sm bg-white outline-none focus:border-primary-500">
-                    <option value="Service">Service / Repair</option>
-                    <option value="Maintenance">Maintenance</option>
-                    <option value="Installation">Installation</option>
+                 <select value={eventForm.type} onChange={e => setEventForm({...eventForm, type: e.target.value})} className="w-full border border-slate-200 rounded-lg p-2.5 text-sm bg-white font-bold text-slate-700 outline-none focus:border-primary-500 transition-colors">
+                    <option value="Service">🔧 Service / Repair</option>
+                    <option value="Maintenance">🛡️ Maintenance</option>
+                    <option value="Installation">📦 Installation</option>
                  </select>
               </div>
-              <div className="form-group">
-                 <label>Technician Name</label>
-                 <input type="text" value={eventForm.technician} onChange={e => setEventForm({...eventForm, technician: e.target.value})} placeholder="e.g. John Doe" />
-              </div>
-              <div className="form-group">
-                 <label>Cost / Invoice Amount</label>
-                 <input type="number" step="0.01" value={eventForm.cost} onChange={e => setEventForm({...eventForm, cost: e.target.value})} placeholder="0.00" />
+              <div className="grid grid-cols-2 gap-4">
+                  <div className="form-group">
+                     <label>Technician Name</label>
+                     <input type="text" value={eventForm.technician} onChange={e => setEventForm({...eventForm, technician: e.target.value})} placeholder="e.g. John Doe" />
+                  </div>
+                  <div className="form-group">
+                     <label>Cost / Invoice Amount</label>
+                     <div className="relative">
+                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                         <input type="number" step="0.01" className="pl-7" value={eventForm.cost} onChange={e => setEventForm({...eventForm, cost: e.target.value})} placeholder="0.00" />
+                     </div>
+                  </div>
               </div>
               <div className="form-group">
                  <label>Activity Description</label>
-                 <textarea value={eventForm.description} onChange={e => setEventForm({...eventForm, description: e.target.value})} className="w-full border border-slate-200 rounded-lg p-3 text-sm" placeholder="What was done?" required rows={4}></textarea>
+                 <textarea value={eventForm.description} onChange={e => setEventForm({...eventForm, description: e.target.value})} className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none" placeholder="Detailed notes about the work performed..." required rows={4}></textarea>
               </div>
-              <div className="modal-actions">
+              <div className="modal-actions mt-6">
                  <button type="button" className="btn-secondary" onClick={() => setIsAddEventOpen(false)}>Cancel</button>
                  <button type="submit" className="btn-primary">Save Activity</button>
+              </div>
+           </form>
+        </Modal>
+        
+        <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit Unit Specs">
+           <form className="modal-form" onSubmit={handleEditUnit}>
+              <div className="grid grid-cols-2 gap-4">
+                  <div className="form-group">
+                     <label>Unit Name / Number</label>
+                     <input type="text" value={editForm.unit_number} onChange={e => setEditForm({...editForm, unit_number: e.target.value})} required placeholder="e.g. 1A" />
+                  </div>
+                  <div className="form-group">
+                     <label>System Type</label>
+                     <input type="text" value={editForm.system_type} onChange={e => setEditForm({...editForm, system_type: e.target.value})} required placeholder="e.g. Split System" />
+                  </div>
+              </div>
+              <div className="form-group">
+                 <label>Description & Specs</label>
+                 <textarea value={editForm.description} onChange={e => setEditForm({...editForm, description: e.target.value})} className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none" placeholder="Full specification string..." required rows={4}></textarea>
+                 <p className="text-xs text-slate-400 mt-2 font-medium">Tonnage and SEER ratings are automatically parsed from this description block.</p>
+              </div>
+              <div className="modal-actions mt-6">
+                 <button type="button" className="btn-secondary" onClick={() => setIsEditOpen(false)}>Cancel</button>
+                 <button type="submit" className="btn-primary">Save Changes</button>
               </div>
            </form>
         </Modal>

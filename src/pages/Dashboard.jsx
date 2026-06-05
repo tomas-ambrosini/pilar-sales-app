@@ -28,12 +28,12 @@ export default function Dashboard() {
         const { data: svcData } = await supabase.from('service_calls').select(`
            id, created_at, status, urgency, call_type, issue_description, scheduled_start,
            households ( household_name )
-        `).order('created_at', { ascending: false }).limit(20);
+        `).eq('is_active', true).order('created_at', { ascending: false }).limit(20);
         
         const { data: oppData } = await supabase.from('opportunities').select(`
            id, created_at, status, urgency_level, scheduled_date, issue_description,
            households ( household_name ), user_profiles ( full_name )
-        `).order('created_at', { ascending: false }).limit(20);
+        `).eq('is_active', true).order('created_at', { ascending: false }).limit(20);
 
         if (svcData) setServiceCalls(svcData);
         if (oppData) setOpportunities(oppData);

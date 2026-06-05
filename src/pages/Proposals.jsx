@@ -63,7 +63,7 @@ const getEstValueDisplay = (proposal) => {
 export default function Proposals() {
   const { user } = useAuth();
   const { proposals, addProposal, updateProposal, deleteProposal, loading } = useProposals();
-  const { customers } = useCustomers();
+  const { customers, addUnitToAddress } = useCustomers();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showWizard, setShowWizard] = useState(false);
   const [wizardConfig, setWizardConfig] = useState(null);
@@ -575,6 +575,36 @@ ${equipmentNotes}
      };
      
      await updateProposal(proposal.id, finalDbObj);
+
+     // ---- NEW LOGIC: Auto-generate property units from signed proposal ----
+     if (proposal.proposal_data?.household_id && proposal.proposal_data?.service_address_id) {
+         try {
+             const systemsList = isMulti ? systemsPayload : [{
+                 systemName: 'Main System',
+                 tierData: tierData
+             }];
+             
+             for (const sys of systemsList) {
+                 const unitData = {
+                     unit_number: sys.systemName || 'Installed Unit',
+                     system_type: sys.tierData?.type || sys.tierData?.category || 'HVAC System',
+                     description: `Auto-generated from Proposal ${formatQuoteId(proposal)}. Brand: ${sys.tierData?.brand || 'Premium'}, Efficiency: ${sys.tierData?.seer ? sys.tierData.seer + ' SEER' : 'Standard'}`,
+                     history: [{
+                         id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                         type: 'Installation',
+                         date: new Date().toISOString(),
+                         description: `System Installed via Proposal ${formatQuoteId(proposal)}.`,
+                         technician: 'Installation Team',
+                         cost: (sys.tierData?.salesPrice || 0).toString()
+                     }]
+                 };
+                 await addUnitToAddress(proposal.proposal_data.household_id, proposal.proposal_data.service_address_id, unitData);
+             }
+         } catch(e) {
+             console.error("Failed to add equipment to property units", e);
+         }
+     }
+     // ----------------------------------------------------------------------
 
      // Move to the Deposit Collection state
      const finalContractData = { ...signingContract };

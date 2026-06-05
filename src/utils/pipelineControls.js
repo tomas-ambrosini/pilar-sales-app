@@ -40,7 +40,7 @@ async function executeTransition(jobId, currentState, targetState, additionalPay
       console.warn(msg);
       throw new Error(msg);
   }
-  const { data: opp } = await supabase.from('opportunities').select('household_id').eq('id', jobId).single();
+  const { data: opp } = await supabase.from('opportunities').select('*').eq('id', jobId).single();
   
   const { error } = await supabase.from('opportunities').update({ 
       status: targetState, 
@@ -62,6 +62,55 @@ async function executeTransition(jobId, currentState, targetState, additionalPay
       } else if (targetState === PIPELINE_STATES.COMPLETED) {
           activityType = 'Job Completed';
           description = 'The installation/service team has marked this job as successfully completed.';
+          
+          // --- AUTOMATIC UNIT CREATION ---
+          try {
+             const { data: prop } = await supabase.from('proposals').select('id, proposal_data, amount').eq('associated_opportunity_id', jobId).single();
+             const svcAddrId = opp.proposal_data?.service_address_id || opp.site_survey_data?.property_id || opp.site_survey_data?.service_address_id;
+             if (prop && (prop.proposal_data?.accepted_tier_data || prop.proposal_data?.systemTiers) && svcAddrId) {
+                 // Try to get tier data directly, or extract from first system tier
+                 let tierData = prop.proposal_data.accepted_tier_data;
+                 let systemName = "New System";
+                 if (!tierData && prop.proposal_data.systemTiers && prop.proposal_data.systemTiers.length > 0) {
+                     const sys = prop.proposal_data.systemTiers[0];
+                     systemName = sys.systemName || sys.name || systemName;
+                     const acceptedName = prop.proposal_data.accepted_tier_name || 'good';
+                     tierData = sys.tiers?.[acceptedName.toLowerCase()] || {};
+                 }
+                 
+                 if (tierData) {
+                     const { data: addrData } = await supabase.from('addresses').select('property_details').eq('id', svcAddrId).single();
+                     
+                     if (addrData) {
+                         const pd = addrData.property_details || {};
+                         const units = pd.units || [];
+                         const newUnitId = crypto.randomUUID();
+                         
+                         const specsText = [tierData.brand, tierData.tons ? tierData.tons + ' Ton' : null, tierData.seer ? tierData.seer + ' SEER' : null, tierData.series].filter(Boolean).join(' ');
+                         
+                         units.push({
+                             id: newUnitId,
+                             unit_number: systemName,
+                             system_type: tierData.type || "Split System",
+                             description: specsText || "Specs not provided",
+                             history: [{
+                                 id: crypto.randomUUID(),
+                                 date: new Date().toISOString(),
+                                 type: 'Installation',
+                                 description: `Installed new equipment per Proposal #${prop.id}.`,
+                                 cost: prop.amount || 0,
+                                 technician: 'Operations Team'
+                             }]
+                         });
+                         
+                         await supabase.from('addresses').update({ property_details: { ...pd, units } }).eq('id', svcAddrId);
+                         description += ` Successfully registered new unit '${systemName}' to the property records.`;
+                     }
+                 }
+             }
+          } catch(err) {
+             console.error("Failed to auto-create unit from proposal:", err);
+          }
       } else if (targetState === PIPELINE_STATES.SENT && currentState === PIPELINE_STATES.PENDING_VOID) {
           activityType = 'Pipeline Reverted';
           description = 'Deal was moved back to the Active Proposals board.';

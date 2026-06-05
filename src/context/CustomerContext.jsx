@@ -19,6 +19,9 @@ export function CustomerProvider({ children }) {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'households' }, () => {
                 fetchCustomers();
             })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'addresses' }, () => {
+                fetchCustomers();
+            })
             .subscribe();
 
         return () => {
@@ -192,7 +195,7 @@ export function CustomerProvider({ children }) {
             // 1. Insert Household (Account) First so it gets an ID
             const { data: householdData, error: houseError } = await supabase.from('households')
                 .insert({
-                    household_name: customerData.name + ' Account',
+                    household_name: customerData.name,
                     tags: customerData.tags || []
                 })
                 .select()
@@ -369,6 +372,28 @@ export function CustomerProvider({ children }) {
         }
     };
 
+    const deleteUnit = async (householdId, addressId, unitId) => {
+        try {
+            const customer = customers.find(c => c.id === householdId);
+            const address = customer?.locations?.find(l => l.id === addressId);
+            if (!address) throw new Error("Address not found");
+            
+            const currentDetails = address.property_details || {};
+            const units = currentDetails.units || [];
+            
+            const newDetails = {
+                ...currentDetails,
+                units: units.filter(u => u.id !== unitId)
+            };
+            
+            await updatePropertyDetails(addressId, newDetails);
+            return { success: true };
+        } catch (error) {
+            console.error('Failed to delete unit:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
     const addHistoryToUnit = async (householdId, addressId, unitId, historyEvent) => {
         try {
             const customer = customers.find(c => c.id === householdId);
@@ -451,7 +476,7 @@ export function CustomerProvider({ children }) {
     };
 
     return (
-        <CustomerContext.Provider value={{ customers, archivedCustomers, addCustomer, updateCustomer, deleteCustomer, restoreCustomer, forceDeleteCustomer, fetchArchivedCustomers, updatePropertyDetails, addPropertyToCustomer, addUnitToAddress, updateUnit, addHistoryToUnit, loading }}>
+        <CustomerContext.Provider value={{ customers, archivedCustomers, addCustomer, updateCustomer, deleteCustomer, restoreCustomer, forceDeleteCustomer, fetchArchivedCustomers, updatePropertyDetails, addPropertyToCustomer, addUnitToAddress, updateUnit, deleteUnit, addHistoryToUnit, loading }}>
             {children}
         </CustomerContext.Provider>
     );
