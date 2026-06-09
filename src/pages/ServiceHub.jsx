@@ -177,7 +177,33 @@ export default function ServiceHub() {
 
             <div className="flex-1 flex flex-col min-h-0 z-10">
                 {loading ? (
-                    <div className="flex items-center justify-center h-64 text-slate-400 font-bold animate-pulse">Loading Service Board...</div>
+                    <div className="flex gap-6 overflow-x-auto pb-4 hide-scrollbar h-full px-1">
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="flex flex-col flex-1 min-w-[300px] max-w-[340px] shrink-0 bg-white/40 rounded-[24px] border border-white shadow-sm overflow-hidden opacity-70">
+                                <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center animate-pulse">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-slate-200"></div>
+                                        <div className="h-3 bg-slate-200 rounded w-20"></div>
+                                    </div>
+                                    <div className="w-6 h-6 rounded-full bg-white border border-slate-100"></div>
+                                </div>
+                                <div className="flex-1 p-4 flex flex-col gap-4">
+                                    {[1, 2, 3].map(j => (
+                                        <div key={j} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 animate-pulse">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="flex flex-col gap-2 w-full pr-4">
+                                                    <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                                                    <div className="h-3 bg-slate-100 rounded w-1/2"></div>
+                                                </div>
+                                                <div className="h-4 w-16 bg-slate-100 rounded-full shrink-0"></div>
+                                            </div>
+                                            <div className="bg-slate-50 rounded-xl p-3 h-16 w-full mb-3 border border-slate-100"></div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 ) : (
                     <>
                         {viewMode === 'kanban' ? (

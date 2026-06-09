@@ -488,21 +488,42 @@ export default function Tasks() {
 
         {/* Task Rows */}
         {isLoading ? (
-          <div className="flex justify-center py-12 bg-white">
-            <Loader2 className="animate-spin text-slate-300" size={32} />
+          <div className="divide-y divide-slate-100 bg-white rounded-b-2xl pb-2">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px_32px] gap-4 items-center px-6 py-3.5 animate-pulse">
+                <div className="w-8 flex justify-center"><div className="w-[18px] h-[18px] rounded bg-slate-200"></div></div>
+                <div className="flex items-center gap-2"><div className="w-5 h-5 rounded bg-slate-200"></div><div className="h-4 bg-slate-200 rounded w-1/2"></div></div>
+                <div className="flex justify-center"><div className="w-6 h-6 rounded-full bg-slate-200"></div></div>
+                <div className="px-3"><div className="h-6 bg-slate-200 rounded-full w-20"></div></div>
+                <div className="px-3"><div className="h-6 bg-slate-200 rounded-full w-16"></div></div>
+                <div className="px-3"><div className="h-6 bg-slate-200 rounded-full w-24"></div></div>
+                <div className="px-3"><div className="h-4 bg-slate-200 rounded w-16"></div></div>
+                <div><div className="w-6 h-6 rounded bg-slate-200"></div></div>
+              </div>
+            ))}
           </div>
         ) : tasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 bg-white text-center">
-             <CircleDashed size={48} className="text-slate-200 mb-4" />
-             <h3 className="text-lg font-bold text-slate-700">No tasks found</h3>
-             <p className="text-sm text-slate-500">Add a task above to get started.</p>
+          <div className="flex flex-col items-center justify-center py-20 bg-slate-50/50 rounded-b-2xl border-t border-dashed border-slate-200 text-center relative overflow-hidden">
+             {/* Premium Decorative Background Elements */}
+             <div className="absolute top-10 left-10 w-32 h-32 bg-primary-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse"></div>
+             <div className="absolute bottom-10 right-10 w-32 h-32 bg-amber-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse delay-1000"></div>
+             
+             <div className="w-20 h-20 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mb-6 relative z-10">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-transparent rounded-2xl opacity-50"></div>
+                <CheckSquare size={36} className="text-primary-400 relative z-10" />
+             </div>
+             
+             <h3 className="text-xl font-black text-slate-800 mb-2 relative z-10">You're all caught up!</h3>
+             <p className="text-sm font-medium text-slate-500 max-w-[280px] relative z-10">There are no tasks on the board. Add a new task above to kick off your day.</p>
           </div>
         ) : filteredAndSortedTasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 bg-white text-center">
-             <Filter size={48} className="text-slate-200 mb-4" />
-             <h3 className="text-lg font-bold text-slate-700">No matching tasks</h3>
-             <p className="text-sm text-slate-500">Try adjusting your filters to find what you're looking for.</p>
-             <button onClick={() => { setFilterSearch(''); setFilterStatus('All'); setFilterAssignee('All'); }} className="mt-4 text-primary-500 font-bold hover:underline">Clear Filters</button>
+          <div className="flex flex-col items-center justify-center py-20 bg-slate-50/50 rounded-b-2xl border-t border-dashed border-slate-200 text-center">
+             <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mb-5">
+                <Filter size={28} className="text-slate-400" />
+             </div>
+             <h3 className="text-lg font-bold text-slate-700 mb-1">No matching tasks</h3>
+             <p className="text-sm font-medium text-slate-500 max-w-[250px]">Try adjusting your filters or assignee to find what you're looking for.</p>
+             <button onClick={() => { setFilterSearch(''); setFilterStatus('All'); setFilterAssignee('All'); }} className="mt-5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold px-4 py-2 rounded-xl text-xs shadow-sm transition-all focus:ring-2 focus:ring-primary-500 focus:outline-none">Clear All Filters</button>
           </div>
         ) : (
           <div className="divide-y divide-slate-100 bg-white rounded-b-2xl pb-2">

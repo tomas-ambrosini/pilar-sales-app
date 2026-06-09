@@ -109,9 +109,7 @@ export default function SalesPipeline() {
       return maxVal;
   };
 
-  if (loading) {
-     return <div className="p-8 flex justify-center"><div className="animate-spin w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full"></div></div>;
-  }
+
 
   return (
     <div className="p-4 md:p-8 flex flex-col gap-8 h-[calc(100vh-64px)] overflow-hidden bg-slate-50/50 relative">
@@ -142,10 +140,43 @@ export default function SalesPipeline() {
             )}
         </div>
 
-        {/* Main Kanban Container */}
-        <div className="flex-1 flex flex-col min-h-0 z-10">
-            <div className="flex gap-6 overflow-x-auto pb-4 hide-scrollbar h-full px-1">
-                {PIPELINE_COLUMNS.map(col => {
+        {/* Kanban Board Container */}
+        <div className="flex-1 overflow-x-auto overflow-y-hidden rounded-3xl pb-4 -mx-4 md:mx-0 px-4 md:px-0 custom-scrollbar relative z-10">
+            <div className="flex gap-6 h-full min-w-max pb-2">
+                {loading ? (
+                    /* Premium Kanban Skeleton */
+                    <div className="flex gap-6 h-full min-w-max">
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="flex flex-col flex-1 min-w-[300px] max-w-[340px] shrink-0 bg-white/40 rounded-[24px] border border-white shadow-sm overflow-hidden opacity-70">
+                                <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center animate-pulse">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-slate-200"></div>
+                                        <div className="h-3 bg-slate-200 rounded w-20"></div>
+                                    </div>
+                                    <div className="w-6 h-6 rounded-full bg-white border border-slate-100"></div>
+                                </div>
+                                <div className="flex-1 p-4 flex flex-col gap-4">
+                                    {[1, 2, 3].map(j => (
+                                        <div key={j} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 animate-pulse">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="flex flex-col gap-2 w-full pr-4">
+                                                    <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                                                    <div className="h-3 bg-slate-100 rounded w-1/2"></div>
+                                                </div>
+                                                <div className="h-6 w-12 bg-slate-100 rounded-lg shrink-0"></div>
+                                            </div>
+                                            <div className="bg-slate-50 rounded-xl p-3 h-16 w-full mb-3"></div>
+                                            <div className="flex justify-between items-center pt-3 border-t border-slate-50">
+                                                <div className="h-3 w-16 bg-slate-100 rounded"></div>
+                                                <div className="w-6 h-6 rounded-full bg-slate-200"></div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : PIPELINE_COLUMNS.map(col => {
                     const columnJobs = pipeline[col.id] || [];
                     
                     let headerTheme = { bg: 'bg-slate-50/80', border: 'border-slate-200', text: 'text-slate-700', icon: 'text-slate-400' };
