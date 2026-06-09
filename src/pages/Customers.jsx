@@ -1,4 +1,4 @@
-import React, { useState, useDeferredValue } from 'react';
+import React, { useState, useEffect, useDeferredValue } from 'react';
 import { Routes, Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Search, Plus, Phone, Mail, MapPin, ChevronRight, User as UserIcon, Users, Calendar, FileText, Edit2, Trash2, Tag, Clock, Zap, Activity, Settings, AlertTriangle, Box, Shield, CalendarClock } from 'lucide-react';
 import Modal from '../components/Modal';
@@ -10,6 +10,7 @@ import ProposalViewerModal from '../components/ProposalViewerModal';
 import ContractDocumentModal from '../components/ContractDocumentModal';
 import InvoiceDocument from '../components/InvoiceDocument';
 import { useAuth } from '../context/AuthContext';
+import { useRole } from '../context/RoleContext';
 import { supabase } from '../supabaseClient';
 import { PIPELINE_STATES } from '../utils/pipelineControls';
 import { formatQuoteId } from '../utils/formatters';
@@ -18,6 +19,7 @@ function CustomerList() {
   const navigate = useNavigate();
   const { customers, archivedCustomers, loading, addCustomer, restoreCustomer, forceDeleteCustomer } = useCustomers();
   const { user } = useAuth();
+  const { activeRole, ROLES } = useRole();
   const [searchParams] = useSearchParams();
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(() => searchParams.get('action') === 'new');
   const [viewMode, setViewMode] = useState('active');
@@ -78,6 +80,35 @@ function CustomerList() {
     handleCloseModal();
   };
 
+  const handleExportCSV = () => {
+     if (activeRole !== ROLES.ADMIN) {
+         toast.error("Unauthorized: Only Admins can export the customer directory.");
+         return;
+     }
+     
+     const headers = ['Name', 'Email', 'Phone', 'Address', 'Tags', 'Status'];
+     const rows = customers.map(c => [
+         `"${c.name || ''}"`,
+         `"${c.email || ''}"`,
+         `"${c.phone || ''}"`,
+         `"${c.address || ''}"`,
+         `"${(c.tags || []).join('; ')}"`,
+         c.active_maintenance_agreement ? '"VIP"' : '""'
+     ]);
+     
+     const csvContent = "data:text/csv;charset=utf-8," 
+         + [headers.join(','), ...rows.map(e => e.join(','))].join("\n");
+         
+     const encodedUri = encodeURI(csvContent);
+     const link = document.createElement("a");
+     link.setAttribute("href", encodedUri);
+     link.setAttribute("download", `pilar_customers_export_${new Date().toISOString().split('T')[0]}.csv`);
+     document.body.appendChild(link);
+     link.click();
+     document.body.removeChild(link);
+     toast.success("Customer directory exported successfully.");
+  };
+
   const deferredSearchQuery = useDeferredValue(searchQuery);
 
   const filteredCustomers = React.useMemo(() => {
@@ -102,12 +133,22 @@ function CustomerList() {
           </h1>
           <p className="text-slate-500 font-medium mt-1">Centralized database for all customer contacts.</p>
         </div>
-        <button 
-          onClick={() => setIsAddCustomerOpen(true)}
-          className="bg-gradient-to-tr from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm hover:shadow-md active:scale-95 border border-slate-700"
-        >
-          <Plus size={18} /> Add Customer
-        </button>
+        <div className="flex gap-2">
+          {activeRole === ROLES.ADMIN && (
+            <button 
+              onClick={handleExportCSV}
+              className="bg-white hover:bg-slate-50 text-slate-700 font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm active:scale-95 border border-slate-200"
+            >
+              Export CSV
+            </button>
+          )}
+          <button 
+            onClick={() => setIsAddCustomerOpen(true)}
+            className="bg-gradient-to-tr from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm hover:shadow-md active:scale-95 border border-slate-700"
+          >
+            <Plus size={18} /> Add Customer
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -486,6 +527,7 @@ function CustomerDetail() {
   const { customers, updateCustomer, deleteCustomer, addPropertyToCustomer, refreshData } = useCustomers();
   const { proposals } = useProposals();
   const { user } = useAuth();
+  const { canViewFinancials } = useRole();
   
   const [isStartDealOpen, setIsStartDealOpen] = useState(false);
   const [dealForm, setDealForm] = useState({ urgency: 'Medium', issue_description: '' });
@@ -676,6 +718,11 @@ function CustomerDetail() {
                  )}
            </div>
         </div>
+
+        <section className="detail-card glass-panel" style={{ gridColumn: '1 / -1' }}>
+           <h2 className="card-title">Activity Timeline & Audit Log</h2>
+           <ActivityTimeline householdId={customer.id} />
+        </section>
 
       </div>
 
@@ -896,6 +943,7 @@ function CustomerDetail() {
 function ProjectCard({ project, navigate, setViewingProposal, setViewingContract, setViewingInvoice }) {
    const hasWorkOrders = project.work_orders?.length > 0;
    const hasProposals = project.proposals?.length > 0;
+   const { canViewFinancials } = useRole();
    
    // If it has a proposal, show the proposal ID instead of the lead ID
    const displayId = hasProposals ? formatQuoteId(project.proposals[0]) : formatQuoteId(project);
@@ -925,7 +973,7 @@ function ProjectCard({ project, navigate, setViewingProposal, setViewingContract
                         <div key={prop.id} className="bg-white border border-slate-200 rounded-lg p-3 hover:border-primary-300 transition-colors shadow-sm group/prop">
                            <div className="flex justify-between items-center mb-2">
                               <div>
-                                 <div className="text-xs font-bold text-slate-700 mb-0.5">${(prop.amount || 0).toLocaleString()}</div>
+                                 <div className="text-xs font-bold text-slate-700 mb-0.5">{canViewFinancials() ? `$${(prop.amount || 0).toLocaleString()}` : '***'}</div>
                                  <div className="text-[9px] font-medium text-slate-400">{prop.date}</div>
                               </div>
                               <span className={`text-[9px] font-bold px-2 py-1 rounded-full ${prop.status === 'Approved' ? 'bg-success-50 text-success-700 border border-success-200/50' : 'bg-slate-50 text-slate-600 border border-slate-200/50 group-hover/prop:bg-primary-50 group-hover/prop:text-primary-600 group-hover/prop:border-primary-200/50 transition-colors'}`}>{prop.status}</span>
@@ -1284,6 +1332,7 @@ function UnitDetail() {
   const { id, addressId, unitId } = useParams();
   const navigate = useNavigate();
   const { customers, addHistoryToUnit, updateUnit, mergeUnits, undoMerge } = useCustomers();
+  const { canViewFinancials } = useRole();
   
   const customer = customers.find(c => c.id === id);
   const address = customer?.locations?.find(l => l.id === addressId);
@@ -1540,13 +1589,12 @@ function UnitDetail() {
                                       {event.photos && event.photos.length > 0 && (
                                          <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded flex items-center gap-1"><Box size={10}/> {event.photos.length}</span>
                                       )}
-                                      {event.cost && <span className="font-black text-slate-700 bg-slate-100 px-2 py-1 rounded text-sm">${parseFloat(event.cost).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>}
+                                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{new Date(event.date).toLocaleDateString()}</span>
                                   </div>
-                                 {event.sourceUnitData && (
-                                    <button onClick={(e) => { e.stopPropagation(); handleUndoMerge(event.id); }} className="ml-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border border-amber-500/30 px-3 py-1 rounded shadow-sm transition-all text-xs font-bold">
-                                        Undo Merge
-                                    </button>
-                                 )}
+                                  <div className="flex items-center gap-4">
+                                      {event.cost && <span className="font-black text-slate-700 bg-slate-100 px-2 py-1 rounded text-sm">{canViewFinancials() ? `$${parseFloat(event.cost).toLocaleString('en-US', {minimumFractionDigits: 2})}` : '***'}</span>}
+                                      <button className="text-primary-600 hover:text-primary-800 text-xs font-bold px-3 py-1.5 rounded-lg border border-primary-200/50 hover:bg-primary-50 transition-all shadow-sm" onClick={() => setSelectedEvent(event)}>Details</button>
+                                  </div>
                               </div>
                               <p className="text-slate-600 text-sm mt-3 leading-relaxed font-medium line-clamp-2 group-hover:text-slate-800 transition-colors">{event.description?.replace(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/ig, (id) => 'P2026-' + id.substring(0,6).toUpperCase())}</p>
                               <div className="flex justify-between items-center mt-4">
@@ -1596,13 +1644,15 @@ function UnitDetail() {
                      <label>Technician(s) Name</label>
                      <input type="text" value={eventForm.technician} onChange={e => setEventForm({...eventForm, technician: e.target.value})} placeholder="e.g. John Doe, Jane Smith" />
                   </div>
-                  <div className="form-group">
-                     <label>Cost / Invoice Amount</label>
-                     <div className="relative">
-                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-                         <input type="number" step="0.01" style={{ paddingLeft: '1.75rem' }} value={eventForm.cost} onChange={e => setEventForm({...eventForm, cost: e.target.value})} placeholder="0.00" />
-                     </div>
-                  </div>
+                  {canViewFinancials() && (
+                      <div className="form-group">
+                         <label>Cost / Invoice Amount</label>
+                         <div className="relative">
+                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                             <input type="number" step="0.01" style={{ paddingLeft: '1.75rem' }} value={eventForm.cost} onChange={e => setEventForm({...eventForm, cost: e.target.value})} placeholder="0.00" />
+                         </div>
+                      </div>
+                  )}
               </div>
               
               <div className="mt-6 mb-4">
@@ -1779,7 +1829,7 @@ function UnitDetail() {
                         </div>
                         {selectedEvent.cost && <div className="text-right">
                             <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Cost</span>
-                            <span className="font-black text-slate-800 text-xl">${parseFloat(selectedEvent.cost).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                            <span className="font-black text-slate-800 text-xl">{canViewFinancials() ? `$${parseFloat(selectedEvent.cost).toLocaleString('en-US', {minimumFractionDigits: 2})}` : '***'}</span>
                         </div>}
                     </div>
 
@@ -1863,6 +1913,47 @@ function UnitDetail() {
         </Modal>
      </div>
   );
+}
+
+function ActivityTimeline({ householdId }) {
+    const [logs, setLogs] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchLogs = async () => {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('activity_logs')
+                .select('*')
+                .eq('household_id', householdId)
+                .order('created_at', { ascending: false });
+            if (!error && data) {
+                setLogs(data);
+            }
+            setLoading(false);
+        };
+        fetchLogs();
+    }, [householdId]);
+
+    if (loading) return <div className="p-4 text-center text-slate-500 text-sm">Loading audit history...</div>;
+    if (logs.length === 0) return <div className="p-4 text-center text-slate-500 text-sm">No activity recorded yet.</div>;
+
+    return (
+        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+            {logs.map((log) => (
+                <div key={log.id} className="flex gap-4 items-start relative pb-4 border-l-2 border-slate-100 ml-4 pl-4 last:border-transparent">
+                    <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white bg-primary-500 shadow-sm"></div>
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-black text-slate-800 uppercase tracking-widest">{log.activity_type}</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{new Date(log.created_at).toLocaleString()}</span>
+                        </div>
+                        <p className="text-sm font-medium text-slate-600 leading-relaxed">{log.description}</p>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
 }
 
 export default function Customers() {

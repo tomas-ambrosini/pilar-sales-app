@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { useAuth } from '../context/AuthContext';
+import { useRole } from '../context/RoleContext';
 import { Wrench, Search, LayoutGrid, List, Clock, Calendar, CheckCircle2, MoreVertical, ShieldAlert, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ServiceCallModal from '../components/ServiceCallModal';
@@ -14,6 +16,8 @@ const STATUS_COLUMNS = [
 ];
 
 export default function ServiceHub() {
+    const { user } = useAuth();
+    const { activeRole, ROLES } = useRole();
     const [viewMode, setViewMode] = useState('kanban'); // 'kanban' or 'table'
     const [calls, setCalls] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -21,8 +25,10 @@ export default function ServiceHub() {
     const [inspectingCallId, setInspectingCallId] = useState(null);
 
     useEffect(() => {
-        fetchCalls();
-    }, []);
+        if (user && activeRole) {
+            fetchCalls();
+        }
+    }, [user, activeRole]);
 
     const fetchCalls = async () => {
         setLoading(true);
@@ -43,7 +49,17 @@ export default function ServiceHub() {
             console.error("Supabase Error fetching service calls:", error);
             toast.error("Failed to load service calls: " + error.message);
         } else {
-            setCalls(data || []);
+            let finalCalls = data || [];
+            // Enforce RBAC rules
+            if (activeRole === ROLES.TECHNICIAN || activeRole === ROLES.SUBCONTRACTOR) {
+                const crewId = localStorage.getItem('technician_crew_id');
+                if (crewId) {
+                    finalCalls = finalCalls.filter(c => (c.assigned_techs || []).includes(crewId));
+                } else {
+                    finalCalls = []; // Techs with no crew selected see an empty board
+                }
+            }
+            setCalls(finalCalls);
         }
         setLoading(false);
     };

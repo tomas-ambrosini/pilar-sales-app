@@ -31,7 +31,7 @@ export const RoleProvider = ({ children }) => {
 
   // Access Control Helpers
   const canViewFinancials = () => {
-    return activeRole === ROLES.ADMIN || (activeRole === ROLES.MANAGER && activeDepartment === DEPARTMENTS.FINANCE);
+    return !(activeRole === ROLES.TECHNICIAN || activeRole === ROLES.SUBCONTRACTOR);
   };
 
   const isSubcontractor = () => activeRole === ROLES.SUBCONTRACTOR;

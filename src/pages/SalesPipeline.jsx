@@ -8,6 +8,7 @@ import OpportunityOverviewModal from '../components/OpportunityOverviewModal';
 import { formatQuoteId, formatCustomerName } from '../utils/formatters';
 import { useProposals } from '../context/ProposalContext';
 import { useAuth } from '../context/AuthContext';
+import { useRole } from '../context/RoleContext';
 
 const PIPELINE_COLUMNS = [
   { id: PIPELINE_STATES.NEW_LEAD, title: 'Incoming Leads', color: 'border-slate-300', bg: 'bg-slate-100', text: 'text-slate-700' },
@@ -22,6 +23,7 @@ const PIPELINE_COLUMNS = [
 export default function SalesPipeline() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { activeRole, ROLES, canViewFinancials } = useRole();
   const { proposals, createDraft } = useProposals();
   const [pipeline, setPipeline] = useState({});
   const [pipelineFilter, setPipelineFilter] = useState('All Deals');
@@ -61,8 +63,11 @@ export default function SalesPipeline() {
         if (opp.proposal_data?.type === 'SERVICE') return;
 
         // Apply Filters
-        if (pipelineFilter === 'My Deals' && opp.assigned_salesperson_id !== user?.id) return;
-        if (pipelineFilter === 'Unassigned' && opp.assigned_salesperson_id !== null) return;
+        const isSalesRep = activeRole === ROLES.SALES;
+        const currentFilter = isSalesRep ? 'My Deals' : pipelineFilter;
+
+        if (currentFilter === 'My Deals' && opp.assigned_salesperson_id !== user?.id) return;
+        if (currentFilter === 'Unassigned' && opp.assigned_salesperson_id !== null) return;
 
         if (grouped[opp.status]) {
           grouped[opp.status].push(opp);
@@ -128,11 +133,13 @@ export default function SalesPipeline() {
                 <p className="text-slate-500 font-medium ml-1">High-density revenue tracking. Logical progression only.</p>
             </div>
             
-            <div className="flex items-center gap-2 bg-white/80  p-1.5 rounded-2xl border border-slate-200/60 shadow-sm">
-               <button onClick={() => setPipelineFilter('All Deals')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'All Deals' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>All Deals</button>
-               <button onClick={() => setPipelineFilter('My Deals')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'My Deals' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-500 hover:text-primary-600 hover:bg-primary-50'}`}>My Deals</button>
-               <button onClick={() => setPipelineFilter('Unassigned')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'Unassigned' ? 'bg-amber-500 text-white shadow-md' : 'text-slate-500 hover:text-amber-600 hover:bg-amber-50'}`}>Unassigned</button>
-            </div>
+            {activeRole !== ROLES.SALES && (
+                <div className="flex items-center gap-2 bg-white/80  p-1.5 rounded-2xl border border-slate-200/60 shadow-sm">
+                   <button onClick={() => setPipelineFilter('All Deals')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'All Deals' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>All Deals</button>
+                   <button onClick={() => setPipelineFilter('My Deals')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'My Deals' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-500 hover:text-primary-600 hover:bg-primary-50'}`}>My Deals</button>
+                   <button onClick={() => setPipelineFilter('Unassigned')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'Unassigned' ? 'bg-amber-500 text-white shadow-md' : 'text-slate-500 hover:text-amber-600 hover:bg-amber-50'}`}>Unassigned</button>
+                </div>
+            )}
         </div>
 
         {/* Main Kanban Container */}
@@ -200,7 +207,11 @@ export default function SalesPipeline() {
                                                        <span className="font-mono uppercase tracking-widest text-slate-400 whitespace-nowrap">{displayId}</span>
                                                     </span>
                                                 </div>
-                                                {estValue > 0 && <div className="font-black text-emerald-600 text-sm bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100/50">${estValue.toLocaleString()}</div>}
+                                                {estValue > 0 && (
+                                                    <div className="font-black text-emerald-600 text-sm bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100/50">
+                                                        {canViewFinancials() ? `$${estValue.toLocaleString()}` : '***'}
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-100/80 flex flex-col gap-2 mb-4">

@@ -117,6 +117,19 @@ async function executeTransition(jobId, currentState, targetState, additionalPay
       }
       
       if (activityType) {
+          try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session?.user) {
+                  const { data: profile } = await supabase.from('user_profiles').select('full_name').eq('id', session.user.id).single();
+                  const userName = profile?.full_name || session.user.user_metadata?.full_name || session.user.email;
+                  if (userName) {
+                      description += ` (Action taken by: ${userName})`;
+                  }
+              }
+          } catch(e) {
+              console.error("Failed to append user name to audit log:", e);
+          }
+
           await supabase.from('activity_logs').insert({
               household_id: opp.household_id,
               opportunity_id: jobId,
@@ -139,44 +152,76 @@ export const PipelineController = {
   markLost: async (id, current, householdId, reason) => {
       // Special logic: Log Activity
       if (householdId) {
+          let userName = '';
+          try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session?.user) {
+                  const { data: profile } = await supabase.from('user_profiles').select('full_name').eq('id', session.user.id).single();
+                  userName = profile?.full_name || session.user.user_metadata?.full_name || session.user.email;
+              }
+          } catch(e) {}
           await supabase.from('activity_logs').insert({
              household_id: householdId,
              opportunity_id: id,
              activity_type: 'Deal Lost',
-             description: `Deal marked as lost. Reason: ${reason}`
+             description: `Deal marked as lost. Reason: ${reason}${userName ? ` (Action taken by: ${userName})` : ''}`
           });
       }
       return executeTransition(id, current, PIPELINE_STATES.LOST);
   },
   requestVoid: async (id, current, householdId, reason) => {
       if (householdId) {
+          let userName = '';
+          try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session?.user) {
+                  const { data: profile } = await supabase.from('user_profiles').select('full_name').eq('id', session.user.id).single();
+                  userName = profile?.full_name || session.user.user_metadata?.full_name || session.user.email;
+              }
+          } catch(e) {}
           await supabase.from('activity_logs').insert({
              household_id: householdId,
              opportunity_id: id,
              activity_type: 'Void Requested',
-             description: `Deal void requested. Reason: ${reason}`
+             description: `Deal void requested. Reason: ${reason}${userName ? ` (Action taken by: ${userName})` : ''}`
           });
       }
       return executeTransition(id, current, PIPELINE_STATES.PENDING_VOID);
   },
   approveVoid: async (id, current, householdId) => {
       if (householdId) {
+          let userName = 'Admin';
+          try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session?.user) {
+                  const { data: profile } = await supabase.from('user_profiles').select('full_name').eq('id', session.user.id).single();
+                  userName = profile?.full_name || session.user.user_metadata?.full_name || session.user.email;
+              }
+          } catch(e) {}
           await supabase.from('activity_logs').insert({
              household_id: householdId,
              opportunity_id: id,
              activity_type: 'Void Approved',
-             description: `Admin approved the void request.`
+             description: `Admin approved the void request. (Action taken by: ${userName})`
           });
       }
       return executeTransition(id, current, PIPELINE_STATES.VOIDED);
   },
   denyVoid: async (id, current, householdId, returnState = PIPELINE_STATES.SENT) => {
       if (householdId) {
+          let userName = 'Admin';
+          try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session?.user) {
+                  const { data: profile } = await supabase.from('user_profiles').select('full_name').eq('id', session.user.id).single();
+                  userName = profile?.full_name || session.user.user_metadata?.full_name || session.user.email;
+              }
+          } catch(e) {}
           await supabase.from('activity_logs').insert({
              household_id: householdId,
              opportunity_id: id,
              activity_type: 'Void Denied',
-             description: `Admin denied the void request. Returning to active pipeline.`
+             description: `Admin denied the void request. Returning to active pipeline. (Action taken by: ${userName})`
           });
       }
       return executeTransition(id, current, returnState);

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import heic2any from 'heic2any';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useRole } from '../context/RoleContext';
 import { 
   CheckSquare, Square, Plus, Loader2, 
   SignalHigh, SignalMedium, SignalLow, CircleDashed, 
@@ -51,7 +52,8 @@ const AttachmentViewer = ({ update, onImageClick }) => {
 
 export default function Tasks() {
   const { user } = useAuth();
-  const isAdmin = ['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase());
+  const { activeRole, ROLES } = useRole();
+  const isAdmin = ['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase()) || activeRole === ROLES.MANAGER || activeRole === ROLES.ADMIN;
   const [tasks, setTasks] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,6 +75,11 @@ export default function Tasks() {
 
   const filteredAndSortedTasks = useMemo(() => {
     let result = [...tasks];
+
+    // Enforce strict Role-Based Access Control (RBAC)
+    if (activeRole === ROLES.TECHNICIAN || activeRole === ROLES.SUBCONTRACTOR || activeRole === ROLES.SALES) {
+      result = result.filter(t => (t.assigned_to || []).includes(user?.id) || t.user_id === user?.id);
+    }
 
     // Filter by Search
     if (filterSearch.trim()) {
