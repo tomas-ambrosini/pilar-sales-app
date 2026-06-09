@@ -59,7 +59,7 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
           .limit(4);
        
        const { data: oppData } = await supabase.from('opportunities')
-          .select('id, issue_description, status, households(household_name)')
+          .select('id, issue_description, status, households(id, household_name)')
           .ilike('issue_description', `%${q}%`)
           .limit(4);
 
@@ -76,12 +76,16 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
      .filter(cmd => cmd.allowedRoles.includes(activeRole))
      .filter(cmd => !isSearching || cmd.name.toLowerCase().includes(q) || cmd.section.toLowerCase().includes(q));
 
+  const cleanQuery = q.replace(/\s+/g, '');
   const filteredCustomers = isSearching 
-    ? customers.filter(c => c.name?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q)).slice(0, 4)
+    ? customers.filter(c => {
+        const idx = c.searchIndex || `${c.name} ${c.email} ${c.phone}`.toLowerCase().replace(/\s+/g, '');
+        return idx.includes(cleanQuery);
+    }).slice(0, 4)
     : [];
 
   const filteredProposals = isSearching
-    ? proposals.filter(p => p.customer?.toLowerCase().includes(q) || p.id?.toLowerCase().includes(q)).slice(0, 4)
+    ? proposals.filter(p => p.customer?.toLowerCase().includes(q) || p.id?.toLowerCase().includes(q) || p.associated_opportunity_id?.toLowerCase().includes(q)).slice(0, 4)
     : [];
 
   // Global Keyboard Event Listener for Cmd+K and Navigation
@@ -210,7 +214,7 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
                           <Command.Item
                              key={`p_${p.id}`}
                              value={`p_${p.id}`}
-                             onSelect={() => handleSelect({ route: `/proposals` })}
+                             onSelect={() => handleSelect({ route: `/proposals?action=resume_opp&opp_id=${p.associated_opportunity_id || p.id}` })}
                              className="flex items-center gap-3 px-3 py-3 text-sm rounded-lg cursor-pointer data-[selected=true]:bg-primary-50 data-[selected=true]:text-primary-900 text-slate-700 hover:bg-slate-50 transition-colors my-0.5 font-semibold group"
                           >
                              <div className="p-1.5 rounded-md bg-slate-100/80 text-slate-500 group-data-[selected=true]:bg-primary-100 group-data-[selected=true]:text-primary-600 transition-colors">
@@ -258,14 +262,17 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
                            <Command.Item
                               key={`opp_${opp.id}`}
                               value={`opp_${opp.id}`}
-                              onSelect={() => handleSelect({ route: `/pipeline` })}
+                              onSelect={() => handleSelect({ route: opp.households?.id ? `/customers/${opp.households.id}` : `/pipeline` })}
                               className="flex items-center gap-3 px-3 py-3 text-sm rounded-lg cursor-pointer data-[selected=true]:bg-amber-50 data-[selected=true]:text-amber-900 text-slate-700 hover:bg-slate-50 transition-colors my-0.5 font-semibold group"
                            >
                               <div className="p-1.5 rounded-md bg-slate-100/80 text-slate-500 group-data-[selected=true]:bg-amber-100 group-data-[selected=true]:text-amber-600 transition-colors">
                                  <Zap size={16} />
                               </div>
                               <div className="flex flex-col flex-1">
-                                 <span>{opp.households?.household_name || 'Unknown Customer'}</span>
+                                 <div className="flex items-center justify-between">
+                                    <span>{opp.households?.household_name || 'Unknown Customer'}</span>
+                                    <span className="text-[9px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/50">P2026-{opp.id.substring(0,6).toUpperCase()}</span>
+                                 </div>
                                  <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider line-clamp-1">{opp.issue_description || 'No description'} • {opp.status}</span>
                               </div>
                            </Command.Item>
