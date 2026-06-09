@@ -7,20 +7,51 @@ export const ROLES = {
   ADMIN: 'ADMIN',
   MANAGER: 'MANAGER',
   SALES: 'SALES',
+  TECHNICIAN: 'TECHNICIAN',
+  SUBCONTRACTOR: 'SUBCONTRACTOR'
+};
+
+export const DEPARTMENTS = {
+  ADMINISTRATION: 'ADMINISTRATION',
+  FINANCE: 'FINANCE',
+  SALES: 'SALES',
+  SERVICE: 'SERVICE',
+  INSTALL: 'INSTALL'
 };
 
 export const RoleProvider = ({ children }) => {
-  // Try to load from localStorage so it persists across refreshes
   const { user } = useAuth();
   
-  // Legacy mapping: handle any cached SUPER_ADMIN values from prior migration
+  // Map user role (fallback to SALES if none provided for legacy users)
   let mappedRole = user?.role || ROLES.SALES;
   if (mappedRole === 'SUPER_ADMIN') mappedRole = ROLES.ADMIN;
-
+  
   const activeRole = mappedRole;
+  const activeDepartment = user?.department || DEPARTMENTS.SALES;
+
+  // Access Control Helpers
+  const canViewFinancials = () => {
+    return activeRole === ROLES.ADMIN || (activeRole === ROLES.MANAGER && activeDepartment === DEPARTMENTS.FINANCE);
+  };
+
+  const isSubcontractor = () => activeRole === ROLES.SUBCONTRACTOR;
+  const isTechnician = () => activeRole === ROLES.TECHNICIAN;
+  
+  const canEditSystemSettings = () => activeRole === ROLES.ADMIN;
+
+  const value = {
+    activeRole,
+    activeDepartment,
+    ROLES,
+    DEPARTMENTS,
+    canViewFinancials,
+    isSubcontractor,
+    isTechnician,
+    canEditSystemSettings
+  };
 
   return (
-    <RoleContext.Provider value={{ activeRole, ROLES }}>
+    <RoleContext.Provider value={value}>
       {children}
     </RoleContext.Provider>
   );

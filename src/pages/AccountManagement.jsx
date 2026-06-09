@@ -127,19 +127,22 @@ export default function AccountManagement() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-[28px] font-bold text-slate-900 tracking-tight flex items-center gap-3 mb-1">
-            <Shield className="text-primary-600" size={28} />
-            Internal Security & Access
-          </h1>
-          <p className="text-slate-500 font-medium">Manage company access, roles, and employee credentials.</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <div className="flex items-center gap-5">
+           <div className="w-14 h-14 bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl flex items-center justify-center border border-primary-200/50 shadow-inner shrink-0">
+             <Shield className="text-primary-600 drop-shadow-sm" size={28} />
+           </div>
+           <div>
+             <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-1">Internal Security & Access</h1>
+             <p className="text-sm text-slate-500 font-semibold">Manage company access, roles, and employee credentials.</p>
+           </div>
         </div>
         <button 
           onClick={() => setShowCreateModal(true)}
-          className="bg-gradient-to-tr from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm hover:shadow-md active:scale-95 border border-slate-700"
+          className="group relative overflow-hidden bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:-translate-y-0.5 active:scale-95 border border-slate-700 shrink-0"
         >
-          <Plus size={18} /> Provision New Account
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
+          <Plus size={18} className="drop-shadow-md" /> Provision Account
         </button>
       </div>
 
@@ -147,12 +150,12 @@ export default function AccountManagement() {
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           
           {/* Action Bar Inside Card */}
-          <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50">
+          <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/50">
              <div className="relative w-full max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16}/>
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16}/>
                 <input 
                   type="text" 
-                  className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium placeholder-slate-400 shadow-sm" 
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all font-semibold placeholder-slate-400 shadow-sm hover:shadow-md" 
                   placeholder="Search by name, username, or email..." 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
@@ -162,13 +165,13 @@ export default function AccountManagement() {
 
          <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-600">
-               <thead className="bg-slate-50 text-xs uppercase font-black tracking-widest text-slate-400 border-b border-slate-200">
+               <thead className="bg-slate-50 text-[10px] uppercase font-black tracking-widest text-slate-500 border-b border-slate-200">
                   <tr>
-                     <th className="px-6 py-4">User</th>
-                     <th className="px-6 py-4 text-center">Role</th>
-                     <th className="px-6 py-4 text-center">Status</th>
-                     <th className="px-6 py-4 text-center">Security</th>
-                     <th className="px-6 py-4 text-center">Actions</th>
+                     <th className="px-6 py-5">Employee Details</th>
+                     <th className="px-6 py-5 text-center">Authorization Level</th>
+                     <th className="px-6 py-5 text-center">Network Status</th>
+                     <th className="px-6 py-5 text-center">Security</th>
+                     <th className="px-6 py-5 text-right">Actions</th>
                   </tr>
                </thead>
                <tbody className="divide-y divide-slate-100">
@@ -203,54 +206,65 @@ export default function AccountManagement() {
                   ) : (
                      filteredUsers.map(u => {
                         return (
-                         <tr key={u.id} className="hover:bg-slate-50 transition-colors">
-                            <td className="px-6 py-4">
-                               <div className="flex items-center gap-3">
+                         <tr key={u.id} className="hover:bg-slate-50/80 transition-colors cursor-pointer group">
+                            <td className="px-6 py-5 border-b border-slate-100">
+                               <div className="flex items-center gap-4">
                                   {u.avatar_url ? (
-                                     <img src={u.avatar_url} alt={u.full_name || 'User'} className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0" />
+                                     <img src={u.avatar_url} alt={u.full_name || 'User'} className="w-11 h-11 rounded-full object-cover shadow-sm ring-2 ring-white shrink-0" />
                                   ) : (
-                                     <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-black text-sm border border-slate-200 uppercase shrink-0">
+                                     <div className="w-11 h-11 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-600 font-black text-sm shadow-sm ring-2 ring-white uppercase shrink-0">
                                         {(u.full_name?.charAt(0) || u.email?.charAt(0) || 'U')}
                                      </div>
                                   )}
                                   <div className="flex flex-col min-w-0">
-                                     <div className="font-bold text-slate-800 flex items-center flex-wrap gap-1">
-                                        <span className="truncate">{u.full_name || 'System User'}</span>
+                                     <div className="font-bold text-slate-900 flex items-center flex-wrap gap-2 text-[15px]">
+                                        <span className="truncate group-hover:text-primary-600 transition-colors">{u.full_name || 'System User'}</span>
                                         <UserBadges user={u} manualBadgeKeys={userBadgesMap[u.id] || []} />
                                      </div>
                                      <div className="font-mono text-xs text-slate-400 mt-0.5 truncate">{u.username || u.email || 'No login bound'}</div>
                                   </div>
                                </div>
                             </td>
-                            <td className="px-6 py-4 text-center">
-                               {u.role === 'ADMIN' ? (
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full text-white shadow-sm align-middle" style={{ background: '#001b71', border: '1px solid #001050' }}>
-                                     <Shield size={11} /> ADMIN
-                                  </span>
-                               ) : u.role === 'MANAGER' ? (
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full text-white shadow-sm align-middle" style={{ background: '#39b54a', border: '1px solid #2d9a3d' }}>
-                                     <Shield size={11} /> MANAGER
-                                  </span>
-                               ) : (
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full bg-white text-slate-400 align-middle border border-slate-200">
-                                     SALES
-                                  </span>
-                               )}
+                            <td className="px-6 py-5 text-center border-b border-slate-100">
+                               <div className="flex flex-col items-center gap-1.5">
+                                  {u.role === 'ADMIN' ? (
+                                     <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black tracking-widest uppercase rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm">
+                                        <Shield size={12} className="text-indigo-500" /> ADMIN
+                                     </span>
+                                  ) : u.role === 'MANAGER' ? (
+                                     <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black tracking-widest uppercase rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">
+                                        <Shield size={12} className="text-emerald-500" /> MANAGER
+                                     </span>
+                                  ) : (
+                                     <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black tracking-widest uppercase rounded-full bg-slate-50 text-slate-600 border border-slate-200 shadow-sm">
+                                        {u.role || 'SALES'}
+                                     </span>
+                                  )}
+                                  {u.department && (
+                                     <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest bg-white border border-slate-100 px-2 py-0.5 rounded-full shadow-sm opacity-80">
+                                        {u.department}
+                                     </span>
+                                  )}
+                               </div>
                             </td>
-                            <td className="px-6 py-4 text-center">
+                            <td className="px-6 py-5 text-center border-b border-slate-100">
                                {u.status === 'active' ? (
-                                 <span className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-600"><UserCheck size={14}/> Active</span>
+                                 <span className="inline-flex items-center justify-center gap-1.5 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100"><UserCheck size={14}/> Active</span>
                                ) : (
-                                 <span className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-danger-600"><UserX size={14}/> Inactive</span>
+                                 <span className="inline-flex items-center justify-center gap-1.5 text-[11px] font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-100"><UserX size={14}/> Suspended</span>
                                )}
                             </td>
-                           <td className="px-6 py-4 font-mono text-xs text-slate-500 text-center">
-                              {u.must_change_password ? <span className="text-amber-500 font-bold">Pending Setup</span> : 'Secured'}
+                           <td className="px-6 py-5 text-center border-b border-slate-100">
+                              {u.must_change_password ? (
+                                 <span className="inline-flex items-center justify-center gap-1.5 text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-100"><Key size={12} /> Pending Setup</span>
+                              ) : (
+                                 <span className="inline-flex items-center justify-center gap-1.5 text-[11px] font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200"><Check size={12} /> Secured</span>
+                              )}
                            </td>
-                           <td className="px-6 py-4 text-center" style={{ verticalAlign: 'middle' }}>
-                              <div className="inline-flex items-center justify-center gap-3">
-                                 <button onClick={() => { setShowEditModal(u); setEditBadges(userBadgesMap[u.id] || []); }} className="text-primary-600 hover:text-primary-800 font-bold text-xs transition-colors">Manage</button>
-                                 <button onClick={() => setShowResetModal(u)} className="text-slate-400 hover:text-amber-600 transition-colors" title="Force Password Reset"><Key size={16}/></button>
+                           <td className="px-6 py-5 text-right border-b border-slate-100" style={{ verticalAlign: 'middle' }}>
+                              <div className="inline-flex items-center justify-end gap-2">
+                                 <button onClick={(e) => { e.stopPropagation(); setShowResetModal(u); }} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="Force Password Reset"><Key size={16}/></button>
+                                 <button onClick={(e) => { e.stopPropagation(); setShowEditModal(u); setEditBadges(userBadgesMap[u.id] || []); }} className="px-4 py-2 bg-white border border-slate-200 hover:border-primary-300 hover:text-primary-700 text-slate-600 font-bold text-xs rounded-lg shadow-sm transition-all hover:shadow">Manage</button>
                               </div>
                            </td>
                         </tr>
@@ -284,10 +298,22 @@ export default function AccountManagement() {
                   <div className="flex gap-4">
                      <div className="flex-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Role</label>
-                        <select name="role" defaultValue="MANAGER" className="w-full border rounded p-2 text-sm font-bold">
-                           <option value="SALES">SALES</option>
-                           <option value="MANAGER">MANAGER</option>
+                        <select name="role" defaultValue="SALES" className="w-full border rounded p-2 text-sm font-bold">
                            <option value="ADMIN">ADMIN</option>
+                           <option value="MANAGER">MANAGER</option>
+                           <option value="SALES">SALES</option>
+                           <option value="TECHNICIAN">TECHNICIAN</option>
+                           <option value="SUBCONTRACTOR">SUBCONTRACTOR</option>
+                        </select>
+                     </div>
+                     <div className="flex-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Department</label>
+                        <select name="department" defaultValue="SALES" className="w-full border rounded p-2 text-sm font-bold">
+                           <option value="ADMINISTRATION">ADMINISTRATION</option>
+                           <option value="FINANCE">FINANCE</option>
+                           <option value="SALES">SALES</option>
+                           <option value="SERVICE">SERVICE</option>
+                           <option value="INSTALL">INSTALL</option>
                         </select>
                      </div>
                   </div>
@@ -343,13 +369,27 @@ export default function AccountManagement() {
                      <label className="text-xs font-bold text-slate-500 uppercase">Username (Optional)</label>
                      <input type="text" name="username" defaultValue={showEditModal.username || ''} className="w-full border rounded p-2 text-sm font-semibold" />
                   </div>
-                  <div>
-                     <label className="text-xs font-bold text-slate-500 uppercase">Account Role</label>
-                     <select name="role" defaultValue={showEditModal.role} className="w-full border rounded p-2 text-sm font-bold">
-                        <option value="SALES">SALES</option>
-                        <option value="MANAGER">MANAGER</option>
-                        <option value="ADMIN">ADMIN</option>
-                     </select>
+                  <div className="flex gap-4">
+                     <div className="flex-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Account Role</label>
+                        <select name="role" defaultValue={showEditModal.role || 'SALES'} className="w-full border rounded p-2 text-sm font-bold">
+                           <option value="ADMIN">ADMIN</option>
+                           <option value="MANAGER">MANAGER</option>
+                           <option value="SALES">SALES</option>
+                           <option value="TECHNICIAN">TECHNICIAN</option>
+                           <option value="SUBCONTRACTOR">SUBCONTRACTOR</option>
+                        </select>
+                     </div>
+                     <div className="flex-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Department</label>
+                        <select name="department" defaultValue={showEditModal.department || 'SALES'} className="w-full border rounded p-2 text-sm font-bold">
+                           <option value="ADMINISTRATION">ADMINISTRATION</option>
+                           <option value="FINANCE">FINANCE</option>
+                           <option value="SALES">SALES</option>
+                           <option value="SERVICE">SERVICE</option>
+                           <option value="INSTALL">INSTALL</option>
+                        </select>
+                     </div>
                   </div>
                   <div>
                      <label className="text-xs font-bold text-slate-500 uppercase">Network Access</label>

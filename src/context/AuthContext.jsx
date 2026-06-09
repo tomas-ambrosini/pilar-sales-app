@@ -57,7 +57,7 @@ export function AuthProvider({ children }) {
          }).eq('id', authUser.id).then(()=>{});
       }
 
-      setUser({ ...authUser, ...data, avatar_url: mergedAvatar, full_name: mergedName });
+      setUser({ ...authUser, ...data, avatar_url: mergedAvatar, full_name: mergedName, department: data.department });
     } else {
       // In the new architecture, accounts are provisioned via Edge Functions, so a profile should always exist.
       // If it doesn't exist yet (legacy dev), simulate a safe minimal record in-memory.

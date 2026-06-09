@@ -14,44 +14,9 @@ import NotificationsPanel from './NotificationsPanel';
 import { useNotifications } from '../context/NotificationsContext';
 import './Layout.css';
 
-const navGroups = [
-  {
-    title: 'Operations',
-    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES],
-    items: [
-      { path: '/', label: 'Dashboard', icon: LayoutDashboard, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
-      { path: '/customers', label: 'Customers', icon: Users, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
-      { path: '/pipeline', label: 'Deal Pipeline', icon: ClipboardList, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
-      { path: '/dispatch', label: 'Dispatch Board', icon: Truck, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
-      { path: '/service', label: 'Service Hub', icon: Wrench, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
-      { path: '/my-day', label: 'My Route', icon: Navigation, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] }
-    ]
-  },
-  {
-    title: 'Workspace',
-    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES],
-    items: [
-      { path: '/calendar', label: 'Calendar', icon: CalendarClock, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
-      { path: '/tasks', label: 'Tasks', icon: CheckSquare, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
-      { path: '/proposals', label: 'Proposals List', icon: FileCheck, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] }
-    ]
-  },
-  {
-    title: 'Admin',
-    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
-    items: [
-      { path: '/analytics', label: 'Analytics', icon: TrendingUp, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
-      { path: '/catalog', label: 'Catalog', icon: BookOpen, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
-      { path: '/finance', label: 'Finance', icon: DollarSign, allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
-      { path: '/template-settings', label: 'Templates', icon: FileText, allowedRoles: [ROLES.ADMIN] },
-      { path: '/account-management', label: 'Settings', icon: Settings, allowedRoles: [ROLES.ADMIN] }
-    ]
-  }
-];
-
 export default function Layout() {
   const { user, logout } = useAuth();
-  const { activeRole } = useRole();
+  const { activeRole, canViewFinancials, isSubcontractor } = useRole();
   const location = useLocation();
   const notificationsContext = useNotifications();
   const NotificationsUnreadCount = notificationsContext?.unreadCount || 0;
@@ -61,6 +26,41 @@ export default function Layout() {
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [forceChannelId, setForceChannelId] = useState(null);
+
+  const navGroups = [
+    {
+      title: 'Operations',
+      allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.TECHNICIAN, ROLES.SUBCONTRACTOR],
+      items: [
+        { path: '/', label: 'Dashboard', icon: LayoutDashboard, isVisible: !isSubcontractor() },
+        { path: '/customers', label: 'Customers', icon: Users, isVisible: !isSubcontractor() },
+        { path: '/pipeline', label: 'Deal Pipeline', icon: ClipboardList, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES].includes(activeRole) },
+        { path: '/dispatch', label: 'Dispatch Board', icon: Truck, isVisible: [ROLES.ADMIN, ROLES.MANAGER].includes(activeRole) },
+        { path: '/service', label: 'Service Hub', icon: Wrench, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.TECHNICIAN].includes(activeRole) },
+        { path: '/my-day', label: 'My Route', icon: Navigation, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.TECHNICIAN, ROLES.SUBCONTRACTOR].includes(activeRole) }
+      ]
+    },
+    {
+      title: 'Workspace',
+      allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.TECHNICIAN, ROLES.SUBCONTRACTOR],
+      items: [
+        { path: '/calendar', label: 'Calendar', icon: CalendarClock, isVisible: !isSubcontractor() },
+        { path: '/tasks', label: 'Tasks', icon: CheckSquare, isVisible: true },
+        { path: '/proposals', label: 'Proposals List', icon: FileCheck, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES].includes(activeRole) }
+      ]
+    },
+    {
+      title: 'Admin',
+      allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
+      items: [
+        { path: '/analytics', label: 'Analytics', icon: TrendingUp, isVisible: canViewFinancials() },
+        { path: '/catalog', label: 'Catalog', icon: BookOpen, isVisible: [ROLES.ADMIN, ROLES.MANAGER].includes(activeRole) },
+        { path: '/finance', label: 'Finance', icon: DollarSign, isVisible: canViewFinancials() },
+        { path: '/template-settings', label: 'Templates', icon: FileText, isVisible: activeRole === ROLES.ADMIN },
+        { path: '/account-management', label: 'Settings', icon: Settings, isVisible: activeRole === ROLES.ADMIN }
+      ]
+    }
+  ];
   
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -191,7 +191,7 @@ export default function Layout() {
           {navGroups
             .filter(group => group.allowedRoles.includes(activeRole))
             .map((group, idx) => {
-              const visibleItems = group.items.filter(item => item.allowedRoles.includes(activeRole));
+              const visibleItems = group.items.filter(item => item.isVisible);
               if (visibleItems.length === 0) return null;
 
               return (
@@ -330,7 +330,7 @@ export default function Layout() {
       <nav className="bottom-nav glass-panel custom-scrollbar">
         {navGroups
           .flatMap(g => g.items)
-          .filter(item => item.allowedRoles.includes(activeRole))
+          .filter(item => item.isVisible)
           .map((item) => (
           <NavLink
             key={item.path}
