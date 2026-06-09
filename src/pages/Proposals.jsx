@@ -1318,7 +1318,7 @@ ${equipmentNotes}
       {/* Signature Capture Overlay */}
       {signingContract && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 modal-layout-wrapper">
-           <div className="absolute -inset-10 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSigningContract(null)}></div>
+           <div className="absolute -inset-10 bg-slate-900/60 " onClick={() => setSigningContract(null)}></div>
            <div className="relative z-10 w-full max-w-lg">
               <SignaturePad 
                 onSave={(signatureData) => executeSignedContract(signatureData)} 

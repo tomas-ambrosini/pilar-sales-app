@@ -128,7 +128,7 @@ export default function SalesPipeline() {
                 <p className="text-slate-500 font-medium ml-1">High-density revenue tracking. Logical progression only.</p>
             </div>
             
-            <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/60 shadow-sm">
+            <div className="flex items-center gap-2 bg-white/80  p-1.5 rounded-2xl border border-slate-200/60 shadow-sm">
                <button onClick={() => setPipelineFilter('All Deals')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'All Deals' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>All Deals</button>
                <button onClick={() => setPipelineFilter('My Deals')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'My Deals' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-500 hover:text-primary-600 hover:bg-primary-50'}`}>My Deals</button>
                <button onClick={() => setPipelineFilter('Unassigned')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'Unassigned' ? 'bg-amber-500 text-white shadow-md' : 'text-slate-500 hover:text-amber-600 hover:bg-amber-50'}`}>Unassigned</button>
@@ -151,8 +151,8 @@ export default function SalesPipeline() {
                     if (col.id === PIPELINE_STATES.LOST) headerTheme = { bg: 'bg-red-50/80', border: 'border-red-200', text: 'text-red-800', icon: 'text-red-500' };
 
                     return (
-                        <div key={col.id} className="flex flex-col flex-1 min-w-[300px] max-w-[340px] shrink-0 bg-white/60 backdrop-blur-xl rounded-[24px] border border-white/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
-                            <div className={`p-4 border-b ${headerTheme.border} ${headerTheme.bg} flex justify-between items-center backdrop-blur-md`}>
+                        <div key={col.id} className="flex flex-col flex-1 min-w-[300px] max-w-[340px] shrink-0 bg-white/60  rounded-[24px] border border-white/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
+                            <div className={`p-4 border-b ${headerTheme.border} ${headerTheme.bg} flex justify-between items-center `}>
                                 <div className="flex items-center gap-2">
                                     <div className={`w-2 h-2 rounded-full ${headerTheme.text.replace('text', 'bg')}`}></div>
                                     <span className={`font-black uppercase tracking-widest text-[11px] ${headerTheme.text}`}>{col.title}</span>

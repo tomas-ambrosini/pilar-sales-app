@@ -132,7 +132,7 @@ export default function ServiceHub() {
                 </div>
                 
                 <div className="flex items-center gap-3">
-                    <div className="relative w-full sm:w-64 bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/60 transition-all focus-within:ring-2 focus-within:ring-purple-500">
+                    <div className="relative w-full sm:w-64 bg-white/80  rounded-2xl shadow-sm border border-slate-200/60 transition-all focus-within:ring-2 focus-within:ring-purple-500">
                         <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
                         <input 
                             type="text" 
@@ -142,7 +142,7 @@ export default function ServiceHub() {
                             onChange={e => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    <div className="flex bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-2xl p-1 shadow-sm">
+                    <div className="flex bg-white/80  border border-slate-200/60 rounded-2xl p-1 shadow-sm">
                         <button 
                             onClick={() => setViewMode('kanban')}
                             className={`p-2 rounded-xl flex items-center gap-1.5 text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'kanban' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}
@@ -179,8 +179,8 @@ export default function ServiceHub() {
                                     if (col.id === 'Completed') headerTheme = { bg: 'bg-cyan-50/80', border: 'border-cyan-200', text: 'text-cyan-800', icon: 'text-cyan-500' };
 
                                     return (
-                                        <div key={col.id} className="flex flex-col flex-1 min-w-[300px] max-w-[340px] shrink-0 bg-white/60 backdrop-blur-xl rounded-[24px] border border-white/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
-                                            <div className={`p-4 border-b ${headerTheme.border} ${headerTheme.bg} flex justify-between items-center backdrop-blur-md`}>
+                                        <div key={col.id} className="flex flex-col flex-1 min-w-[300px] max-w-[340px] shrink-0 bg-white/60  rounded-[24px] border border-white/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
+                                            <div className={`p-4 border-b ${headerTheme.border} ${headerTheme.bg} flex justify-between items-center `}>
                                                 <div className="flex items-center gap-2">
                                                     <div className={`w-2 h-2 rounded-full ${headerTheme.text.replace('text', 'bg')}`}></div>
                                                     <h2 className={`font-black uppercase tracking-widest text-[11px] ${headerTheme.text}`}>{col.title}</h2>

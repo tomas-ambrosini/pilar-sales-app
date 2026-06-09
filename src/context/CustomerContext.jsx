@@ -43,6 +43,7 @@ export function CustomerProvider({ children }) {
                 .select(`
                     id,
                     household_name,
+                    active_maintenance_agreement,
                     tags,
                     created_at,
                     addresses!addresses_household_id_fkey ( id, street_address, city, state, zip, property_details, is_primary_residence ),
@@ -62,6 +63,7 @@ export function CustomerProvider({ children }) {
                         .select(`
                             id,
                             household_name,
+                            active_maintenance_agreement,
                             tags,
                             created_at,
                             addresses!addresses_household_id_fkey ( id, street_address, city, state, zip, property_details, is_primary_residence ),
@@ -95,10 +97,41 @@ export function CustomerProvider({ children }) {
                         phone: primaryContact.primary_phone || '',
                         address: addressString, // Still keeping this as fallback string for old ui
                         locations: locations, // New Multi-Location Array
+                        active_maintenance_agreement: household.active_maintenance_agreement || false,
                         tags: household.tags || [],
                         addedDate: new Date(household.created_at).toLocaleDateString(),
                         opportunities: household.opportunities || [],
                         work_orders: household.work_orders || [],
+                        latestActivityDate: (() => {
+                            let latest = null;
+                            if (locations) {
+                                locations.forEach(l => {
+                                    l.property_details?.units?.forEach(u => {
+                                        u.history?.forEach(h => {
+                                            const hDate = new Date(h.date).getTime();
+                                            if (!latest || hDate > latest) latest = hDate;
+                                        });
+                                    });
+                                });
+                            }
+                            return latest;
+                        })(),
+                        searchIndex: (() => {
+                            const parts = [
+                                primaryContact.first_name, primaryContact.last_name, household.household_name,
+                                primaryContact.email, primaryContact.primary_phone,
+                                ...(household.tags || [])
+                            ];
+                            if (locations) {
+                                locations.forEach(l => {
+                                    parts.push(l.street_address, l.city);
+                                    l.property_details?.units?.forEach(u => {
+                                        parts.push(u.unit_number, u.system_type, u.brand, u.description, u.model_number, u.serial_number);
+                                    });
+                                });
+                            }
+                            return parts.filter(Boolean).join(' ').toLowerCase().replace(/\s+/g, '');
+                        })(),
                         raw: household // Keep full relational data for advanced CRM views
                     };
                 });
@@ -127,6 +160,7 @@ export function CustomerProvider({ children }) {
                 .select(`
                     id,
                     household_name,
+                    active_maintenance_agreement,
                     tags,
                     created_at,
                     addresses!addresses_household_id_fkey ( id, street_address, city, state, zip, property_details, is_primary_residence ),
@@ -153,10 +187,41 @@ export function CustomerProvider({ children }) {
                         phone: primaryContact.primary_phone || '',
                         address: addressString,
                         locations: locations,
+                        active_maintenance_agreement: household.active_maintenance_agreement || false,
                         tags: household.tags || [],
                         addedDate: new Date(household.created_at).toLocaleDateString(),
                         opportunities: household.opportunities || [],
                         work_orders: household.work_orders || [],
+                        latestActivityDate: (() => {
+                            let latest = null;
+                            if (locations) {
+                                locations.forEach(l => {
+                                    l.property_details?.units?.forEach(u => {
+                                        u.history?.forEach(h => {
+                                            const hDate = new Date(h.date).getTime();
+                                            if (!latest || hDate > latest) latest = hDate;
+                                        });
+                                    });
+                                });
+                            }
+                            return latest;
+                        })(),
+                        searchIndex: (() => {
+                            const parts = [
+                                primaryContact.first_name, primaryContact.last_name, household.household_name,
+                                primaryContact.email, primaryContact.primary_phone,
+                                ...(household.tags || [])
+                            ];
+                            if (locations) {
+                                locations.forEach(l => {
+                                    parts.push(l.street_address, l.city);
+                                    l.property_details?.units?.forEach(u => {
+                                        parts.push(u.unit_number, u.system_type, u.brand, u.description, u.model_number, u.serial_number);
+                                    });
+                                });
+                            }
+                            return parts.filter(Boolean).join(' ').toLowerCase().replace(/\s+/g, '');
+                        })(),
                         raw: household
                     };
                 });
@@ -253,6 +318,9 @@ export function CustomerProvider({ children }) {
             
             if (updatedData.tags) {
                 await supabase.from('households').update({ tags: updatedData.tags }).eq('id', id);
+            }
+            if (updatedData.active_maintenance_agreement !== undefined) {
+                await supabase.from('households').update({ active_maintenance_agreement: updatedData.active_maintenance_agreement }).eq('id', id);
             }
             
             const contactUpdates = {};
@@ -359,15 +427,121 @@ export function CustomerProvider({ children }) {
             const currentDetails = address.property_details || {};
             const units = currentDetails.units || [];
             
+            const oldUnit = units.find(u => u.id === unitId);
+            if (!oldUnit) throw new Error("Unit not found");
+            
+            const changes = [];
+            if (unitData.unit_number && unitData.unit_number !== oldUnit.unit_number) changes.push(`Name changed from "${oldUnit.unit_number}" to "${unitData.unit_number}"`);
+            if (unitData.system_type !== undefined && unitData.system_type !== oldUnit.system_type) changes.push(`Type changed from "${oldUnit.system_type || 'None'}" to "${unitData.system_type || 'None'}"`);
+            if (unitData.brand !== undefined && unitData.brand !== oldUnit.brand) changes.push(`Brand changed to "${unitData.brand || 'None'}"`);
+            if (unitData.tonnage !== undefined && unitData.tonnage !== oldUnit.tonnage) changes.push(`Tonnage changed to "${unitData.tonnage || 'None'}"`);
+            if (unitData.seer !== undefined && unitData.seer !== oldUnit.seer) changes.push(`Efficiency changed to "${unitData.seer || 'None'}"`);
+            if (unitData.description !== undefined && unitData.description !== oldUnit.description) changes.push(`Description updated`);
+            
+            let updatedHistory = oldUnit.history || [];
+            if (changes.length > 0) {
+                updatedHistory = [
+                    ...updatedHistory,
+                    {
+                        id: crypto.randomUUID(),
+                        type: 'System',
+                        date: new Date().toISOString(),
+                        description: `System specs updated: ${changes.join(', ')}.`,
+                        technician: 'System Auto-Log',
+                        cost: 0
+                    }
+                ];
+            }
+            
             const newDetails = {
                 ...currentDetails,
-                units: units.map(u => u.id === unitId ? { ...u, ...unitData } : u)
+                units: units.map(u => u.id === unitId ? { ...u, ...unitData, history: updatedHistory } : u)
             };
             
             await updatePropertyDetails(addressId, newDetails);
             return { success: true };
         } catch (error) {
             console.error('Failed to update unit:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
+    const mergeUnits = async (householdId, addressId, targetUnitId, sourceUnitId) => {
+        try {
+            const customer = customers.find(c => c.id === householdId);
+            const address = customer?.locations?.find(l => l.id === addressId);
+            if (!address) throw new Error("Address not found");
+            
+            const currentDetails = address.property_details || {};
+            const units = currentDetails.units || [];
+            
+            const targetUnit = units.find(u => u.id === targetUnitId);
+            const sourceUnit = units.find(u => u.id === sourceUnitId);
+            
+            if (!targetUnit || !sourceUnit) throw new Error("Units not found");
+            
+            const mergeEvent = {
+                id: crypto.randomUUID(),
+                type: 'System',
+                date: new Date().toISOString(),
+                description: `Absorbed service history from legacy unit: ${sourceUnit.unit_number} (${sourceUnit.system_type || 'Unknown Type'}).`,
+                technician: 'System Auto-Log',
+                cost: 0,
+                sourceUnitData: sourceUnit
+            };
+            
+            const mergedHistory = [...(targetUnit.history || []), ...(sourceUnit.history || []), mergeEvent]
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+                
+            const newUnits = units
+                .filter(u => u.id !== sourceUnitId)
+                .map(u => u.id === targetUnitId ? { ...u, history: mergedHistory } : u);
+                
+            const newDetails = {
+                ...currentDetails,
+                units: newUnits
+            };
+            
+            await updatePropertyDetails(addressId, newDetails);
+            return { success: true };
+        } catch (error) {
+            console.error('Failed to merge units:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
+    const undoMerge = async (householdId, addressId, targetUnitId, eventId) => {
+        try {
+            const customer = customers.find(c => c.id === householdId);
+            const address = customer?.locations?.find(l => l.id === addressId);
+            if (!address) throw new Error("Address not found");
+            
+            const currentDetails = address.property_details || {};
+            const units = currentDetails.units || [];
+            
+            const targetUnit = units.find(u => u.id === targetUnitId);
+            if (!targetUnit) throw new Error("Unit not found");
+            
+            const mergeEvent = targetUnit.history?.find(e => e.id === eventId);
+            if (!mergeEvent || !mergeEvent.sourceUnitData) throw new Error("Invalid merge event");
+            
+            const sourceUnitData = mergeEvent.sourceUnitData;
+            
+            const sourceHistoryIds = new Set(sourceUnitData.history?.map(e => e.id) || []);
+            const newHistory = targetUnit.history.filter(e => e.id !== eventId && !sourceHistoryIds.has(e.id));
+            
+            const newUnits = units.map(u => u.id === targetUnitId ? { ...u, history: newHistory } : u);
+            newUnits.push(sourceUnitData);
+            
+            const newDetails = {
+                ...currentDetails,
+                units: newUnits
+            };
+            
+            await updatePropertyDetails(addressId, newDetails);
+            return { success: true };
+        } catch (error) {
+            console.error('Failed to undo merge:', error);
             return { success: false, error: error.message };
         }
     };
@@ -476,7 +650,7 @@ export function CustomerProvider({ children }) {
     };
 
     return (
-        <CustomerContext.Provider value={{ customers, archivedCustomers, addCustomer, updateCustomer, deleteCustomer, restoreCustomer, forceDeleteCustomer, fetchArchivedCustomers, updatePropertyDetails, addPropertyToCustomer, addUnitToAddress, updateUnit, deleteUnit, addHistoryToUnit, loading }}>
+        <CustomerContext.Provider value={{ customers, archivedCustomers, addCustomer, updateCustomer, deleteCustomer, restoreCustomer, forceDeleteCustomer, fetchArchivedCustomers, updatePropertyDetails, addPropertyToCustomer, addUnitToAddress, updateUnit, deleteUnit, mergeUnits, undoMerge, addHistoryToUnit, loading }}>
             {children}
         </CustomerContext.Provider>
     );
