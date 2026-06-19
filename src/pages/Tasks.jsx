@@ -397,30 +397,30 @@ export default function Tasks() {
 
   const getPriorityConfig = (priority) => {
     switch(priority?.toLowerCase()) {
-      case 'critical': return { icon: <Flame size={14} className="text-rose-500" />, text: 'Critical', bg: 'bg-rose-50 text-rose-700 border-rose-200/60' };
-      case 'high': return { icon: <SignalHigh size={14} className="text-orange-500" />, text: 'High', bg: 'bg-orange-50 text-orange-700 border-orange-200/60' };
-      case 'medium': return { icon: <SignalMedium size={14} className="text-blue-500" />, text: 'Medium', bg: 'bg-blue-50 text-blue-700 border-blue-200/60' };
-      case 'low': return { icon: <SignalLow size={14} className="text-slate-400" />, text: 'Low', bg: 'bg-slate-50 text-slate-600 border-slate-200/60' };
-      default: return { icon: <CircleDashed size={14} className="text-slate-400" />, text: 'None', bg: 'bg-slate-50 text-slate-500 border-slate-200/60' };
+      case 'critical': return { icon: <Flame size={14} className="text-rose-600" />, text: 'Critical', bg: 'bg-rose-500/10 text-rose-700 ring-1 ring-rose-500/20' };
+      case 'high': return { icon: <SignalHigh size={14} className="text-orange-600" />, text: 'High', bg: 'bg-orange-500/10 text-orange-700 ring-1 ring-orange-500/20' };
+      case 'medium': return { icon: <SignalMedium size={14} className="text-blue-600" />, text: 'Medium', bg: 'bg-blue-500/10 text-blue-700 ring-1 ring-blue-500/20' };
+      case 'low': return { icon: <SignalLow size={14} className="text-slate-500" />, text: 'Low', bg: 'bg-slate-500/10 text-slate-700 ring-1 ring-slate-500/20' };
+      default: return { icon: <CircleDashed size={14} className="text-slate-400" />, text: 'None', bg: 'bg-slate-500/5 text-slate-600 ring-1 ring-slate-500/10' };
     }
   };
 
   const getStatusConfig = (status) => {
     switch(status?.toLowerCase()) {
-      case 'done': return { icon: <CheckCircle2 size={14} className="text-emerald-500" />, text: 'Done', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200/60' };
-      case 'in progress': return { icon: <Clock size={14} className="text-amber-500" />, text: 'In Progress', bg: 'bg-amber-50 text-amber-700 border-amber-200/60' };
-      case 'review': return { icon: <AlertCircle size={14} className="text-purple-500" />, text: 'Review', bg: 'bg-purple-50 text-purple-700 border-purple-200/60' };
-      default: return { icon: <CircleDashed size={14} className="text-slate-400" />, text: 'To Do', bg: 'bg-slate-50 text-slate-600 border-slate-200/60' };
+      case 'done': return { icon: <CheckCircle2 size={14} className="text-emerald-600" />, text: 'Done', bg: 'bg-emerald-500/10 text-emerald-700 ring-1 ring-emerald-500/20' };
+      case 'in progress': return { icon: <Clock size={14} className="text-amber-600" />, text: 'In Progress', bg: 'bg-amber-500/10 text-amber-700 ring-1 ring-amber-500/20' };
+      case 'review': return { icon: <AlertCircle size={14} className="text-purple-600" />, text: 'Review', bg: 'bg-purple-500/10 text-purple-700 ring-1 ring-purple-500/20' };
+      default: return { icon: <CircleDashed size={14} className="text-slate-400" />, text: 'To Do', bg: 'bg-slate-500/5 text-slate-600 ring-1 ring-slate-500/10' };
     }
   };
 
   const getProgressConfig = (progress) => {
     const val = parseInt(progress) || 0;
-    if (val >= 100) return { text: 'Completed', bg: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' };
-    if (val >= 75) return { text: 'Almost Done', bg: 'bg-blue-50 text-blue-700 border border-blue-200/60' };
-    if (val >= 50) return { text: 'Halfway', bg: 'bg-indigo-50 text-indigo-700 border border-indigo-200/60' };
-    if (val >= 25) return { text: 'Just Started', bg: 'bg-amber-50 text-amber-700 border border-amber-200/60' };
-    return { text: 'Not Started', bg: 'bg-slate-50 text-slate-600 border border-slate-200/60' };
+    if (val >= 100) return { text: 'Completed', bg: 'bg-emerald-500/10 text-emerald-700 ring-1 ring-emerald-500/20' };
+    if (val >= 75) return { text: 'Almost Done', bg: 'bg-blue-500/10 text-blue-700 ring-1 ring-blue-500/20' };
+    if (val >= 50) return { text: 'Halfway', bg: 'bg-indigo-500/10 text-indigo-700 ring-1 ring-indigo-500/20' };
+    if (val >= 25) return { text: 'Just Started', bg: 'bg-amber-500/10 text-amber-700 ring-1 ring-amber-500/20' };
+    return { text: 'Not Started', bg: 'bg-slate-500/5 text-slate-600 ring-1 ring-slate-500/10' };
   };
 
   const getUserInitials = (name) => {
@@ -446,11 +446,11 @@ export default function Tasks() {
              const colTasks = filteredAndSortedTasks.filter(t => (t.status || 'To Do').toLowerCase() === status.toLowerCase());
              const statusConfig = getStatusConfig(status);
              return (
-               <div key={status} className="flex flex-col w-[320px] shrink-0 bg-slate-50/80 rounded-2xl border border-slate-200 shadow-sm flex-1 max-w-[360px]">
-                 <div className="px-5 py-4 border-b border-slate-200/60 flex items-center justify-between bg-white rounded-t-2xl">
-                   <div className="flex items-center gap-2 font-black text-slate-700">
+               <div key={status} className="flex flex-col w-[320px] shrink-0 rounded-[24px] flex-1 max-w-[360px] bg-slate-50/40 ring-1 ring-slate-200/50">
+                 <div className="px-5 py-4 flex items-center justify-between">
+                   <div className="flex items-center gap-2 font-extrabold text-slate-800 text-[12px] uppercase tracking-wider">
                      {statusConfig.icon} {status} 
-                     <span className="bg-slate-100 text-slate-500 text-[10px] py-0.5 px-2 rounded-full font-bold">{colTasks.length}</span>
+                     <span className="text-slate-400 text-[11px] ml-1 font-bold">{colTasks.length}</span>
                    </div>
                  </div>
                  <Droppable droppableId={status}>
@@ -468,31 +468,31 @@ export default function Tasks() {
                           return (
                             <Draggable key={task.id} draggableId={task.id} index={index}>
                               {(provided, snapshot) => (
-                                <div
+                                  <div
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  className={`bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all group relative ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-primary-500 scale-105 z-50' : ''} ${isDone ? 'opacity-60 grayscale' : ''}`}
+                                  className={`bg-white p-5 rounded-2xl ring-1 ring-slate-900/5 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_16px_-6px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300 group relative ${snapshot.isDragging ? 'shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] ring-1 ring-slate-900/10 scale-[1.02] z-50 cursor-grabbing' : 'cursor-grab'} ${isDone ? 'opacity-60' : ''}`}
                                 >
                                   <div className="flex justify-between items-start mb-2 gap-2">
-                                    <h4 className="font-bold text-[13px] text-slate-800 leading-snug line-clamp-2">{task.title}</h4>
-                                    <div className="text-slate-300 group-hover:text-slate-400 cursor-grab active:cursor-grabbing">
+                                    <h4 className="font-bold text-[14px] text-slate-900 leading-snug line-clamp-2">{task.title}</h4>
+                                    <div className="text-slate-300 group-hover:text-slate-400 transition-colors">
                                       <GripVertical size={14} />
                                     </div>
                                   </div>
                                   
                                   <div className="flex flex-wrap gap-2 mb-4 mt-3">
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${prioConfig.bg} flex items-center gap-1`}>
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${prioConfig.bg} flex items-center gap-1`}>
                                       {prioConfig.icon} {prioConfig.text}
                                     </span>
                                     {task.due_date && (
-                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border bg-slate-50 border-slate-200 text-slate-500 flex items-center gap-1">
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-50 text-slate-500 ring-1 ring-slate-200 flex items-center gap-1">
                                         <Calendar size={10} /> {new Date(task.due_date).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
                                       </span>
                                     )}
                                   </div>
 
-                                  <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-100">
+                                  <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-50">
                                     <div className="flex -space-x-1.5">
                                       {assignees.slice(0,3).map(a => (
                                         a.avatar_url ? 
@@ -503,7 +503,7 @@ export default function Tasks() {
                                     </div>
                                     <button 
                                       onClick={(e) => { e.stopPropagation(); setViewMode('list'); setTimeout(() => toggleExpand(task), 100); }} 
-                                      className="text-[10px] font-bold text-slate-400 hover:text-primary-500 flex items-center gap-1 bg-slate-50 hover:bg-primary-50 px-2 py-1 rounded-lg transition-colors"
+                                      className="text-[10px] font-bold text-slate-400 hover:text-primary-500 flex items-center gap-1 bg-slate-50/50 hover:bg-primary-50 px-2 py-1 rounded-lg transition-colors"
                                     >
                                       <MessageSquare size={12} /> Open
                                     </button>
@@ -597,7 +597,7 @@ export default function Tasks() {
 
         <div className="flex flex-col gap-3 items-end">
           {/* View Toggle */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200/50">
+          <div className="flex items-center bg-slate-100/50 p-1 rounded-[14px] shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] border border-slate-200/40">
             {[
               { id: 'list', icon: <ListIcon size={16} />, label: 'List' },
               { id: 'board', icon: <KanbanSquare size={16} />, label: 'Board' },
@@ -606,10 +606,10 @@ export default function Tasks() {
               <button
                 key={view.id}
                 onClick={() => setViewMode(view.id)}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-sm font-bold transition-all ${
                   viewMode === view.id 
-                  ? 'bg-white text-slate-800 shadow-sm ring-1 ring-slate-200/50' 
-                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                  ? 'bg-white text-slate-900 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.1)] ring-1 ring-slate-900/5' 
+                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-200/40'
                 }`}
               >
                 {view.icon} {view.label}
@@ -618,7 +618,7 @@ export default function Tasks() {
           </div>
 
           {/* Filter Bar */}
-          <div className="flex items-center gap-3 bg-white border border-slate-200/80 p-1.5 rounded-2xl shadow-sm flex-wrap">
+          <div className="flex items-center gap-2 bg-white ring-1 ring-slate-900/5 p-1.5 rounded-[18px] shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)] flex-wrap">
            <div className="relative flex items-center">
               <Search size={14} className="absolute left-3 text-slate-400" />
               <input 
@@ -626,16 +626,16 @@ export default function Tasks() {
                 placeholder="Search tasks..." 
                 value={filterSearch}
                 onChange={(e) => setFilterSearch(e.target.value)}
-                className="pl-8 pr-4 py-2 bg-slate-50 border-transparent rounded-xl text-xs font-bold focus:ring-2 focus:ring-primary-500 focus:bg-white outline-none w-48 transition-all"
+                className="pl-8 pr-4 py-2 bg-slate-50/50 hover:bg-slate-100/50 border-transparent rounded-[12px] text-xs font-bold focus:ring-2 focus:ring-primary-500 focus:bg-white outline-none w-48 transition-all"
               />
            </div>
 
-           <div className="hidden sm:block w-px h-6 bg-slate-200"></div>
+           <div className="hidden sm:block w-px h-6 bg-slate-100/60 mx-1"></div>
 
            <select 
              value={filterStatus}
              onChange={(e) => setFilterStatus(e.target.value)}
-             className="appearance-none bg-slate-50 border-transparent rounded-xl px-4 py-2 pr-8 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer"
+             className="appearance-none bg-slate-50/50 hover:bg-slate-100/50 border-transparent rounded-[12px] px-4 py-2 pr-8 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer transition-colors"
            >
               <option value="All">All Status</option>
               <option value="Open">Open Only</option>
@@ -645,7 +645,7 @@ export default function Tasks() {
            <select 
              value={filterAssignee}
              onChange={(e) => setFilterAssignee(e.target.value)}
-             className="appearance-none bg-slate-50 border-transparent rounded-xl px-4 py-2 pr-8 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer max-w-[150px] truncate"
+             className="appearance-none bg-slate-50/50 hover:bg-slate-100/50 border-transparent rounded-[12px] px-4 py-2 pr-8 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer max-w-[150px] truncate transition-colors"
            >
               <option value="All">All Team</option>
               {teamMembers.map(member => (
@@ -656,20 +656,20 @@ export default function Tasks() {
            {(filterSearch || filterStatus !== 'All' || filterAssignee !== 'All') && (
              <button 
                onClick={() => { setFilterSearch(''); setFilterStatus('All'); setFilterAssignee('All'); }}
-               className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors ml-1"
+               className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-[12px] transition-colors ml-1"
                title="Clear Filters"
              >
                 <X size={16} />
              </button>
            )}
-        </div>
+          </div>
         </div>
       </div>
 
       {viewMode === 'list' && (
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-xl flex flex-col">
+      <div className="bg-white border border-slate-200/60 rounded-3xl shadow-2xl shadow-slate-200/50 flex flex-col overflow-hidden ring-1 ring-slate-900/5">
         {/* Table Header */}
-        <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px_32px] gap-4 items-center px-6 py-4 bg-slate-50/80 border-b border-slate-200 text-[11px] font-black text-slate-400 uppercase tracking-widest rounded-t-2xl">
+        <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px_32px] gap-4 items-center px-6 py-4 bg-slate-50/50 border-b border-slate-100/50 text-[10px] font-black text-slate-400 uppercase tracking-wider">
           <div className="w-8 flex justify-center"><CheckSquare size={16} /></div>
           <div>Task Name</div>
           <div className="text-center">Assigned To</div>
@@ -681,7 +681,7 @@ export default function Tasks() {
         </div>
 
         {/* Input Row */}
-        <form onSubmit={addTask} className="border-b border-slate-100 bg-white hover:bg-slate-50/80 transition-colors">
+        <form onSubmit={addTask} className="border-b border-slate-100/50 bg-white hover:bg-slate-50/30 transition-colors">
           <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px_32px] gap-4 items-center px-6 py-3.5">
             <div className="w-8 flex justify-center text-slate-300"><Plus size={18} /></div>
             <input 
@@ -702,7 +702,7 @@ export default function Tasks() {
 
         {/* Task Rows */}
         {isLoading ? (
-          <div className="divide-y divide-slate-100 bg-white rounded-b-2xl pb-2">
+          <div className="divide-y divide-slate-100/40 bg-white pb-2">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px_32px] gap-4 items-center px-6 py-3.5 animate-pulse">
                 <div className="w-8 flex justify-center"><div className="w-[18px] h-[18px] rounded bg-slate-200"></div></div>
@@ -740,7 +740,7 @@ export default function Tasks() {
              <button onClick={() => { setFilterSearch(''); setFilterStatus('All'); setFilterAssignee('All'); }} className="mt-5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold px-4 py-2 rounded-xl text-xs shadow-sm transition-all focus:ring-2 focus:ring-primary-500 focus:outline-none">Clear All Filters</button>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100 bg-white rounded-b-2xl pb-2">
+          <div className="divide-y divide-slate-100/40 bg-white pb-2">
             {filteredAndSortedTasks.map(task => {
                const isDone = task.status?.toLowerCase() === 'done';
                const prioConfig = getPriorityConfig(task.priority);
@@ -748,18 +748,19 @@ export default function Tasks() {
                const progConfig = getProgressConfig(task.progress);
                const assignees = teamMembers.filter(m => (task.assigned_to || []).includes(m.id));
 
-               return (
-                 <div key={task.id} className="flex flex-col border-b border-slate-50 last:border-0 hover:bg-slate-50/80 transition-colors group">
-                   <div className={`grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px_32px] gap-4 items-center px-6 py-3.5 ${isDone ? 'opacity-50 grayscale' : ''}`}>
-                     {/* Checkbox */}
-                     <div className="w-8 flex justify-center">
-                       <button 
-                          onClick={(e) => { e.stopPropagation(); updateTask(task.id, 'status', isDone ? 'To Do' : 'Done'); }} 
-                          className={`w-[18px] h-[18px] rounded flex items-center justify-center transition-all shadow-sm ${isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-2 border-slate-300 hover:border-emerald-400 text-transparent'}`}
-                       >
-                         {isDone && <Check size={12} strokeWidth={4} />}
-                       </button>
-                     </div>
+                return (
+                  <div key={task.id} className="flex flex-col border-b border-slate-100/40 last:border-0 hover:bg-slate-50/40 transition-colors group relative">
+                    <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-primary-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className={`grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px_32px] gap-4 items-center px-6 py-3.5 ${isDone ? 'opacity-50 grayscale' : ''}`}>
+                      {/* Checkbox */}
+                      <div className="w-8 flex justify-center">
+                        <button 
+                           onClick={(e) => { e.stopPropagation(); updateTask(task.id, 'status', isDone ? 'To Do' : 'Done'); }} 
+                           className={`w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 ${isDone ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20 scale-110' : 'bg-white ring-2 ring-inset ring-slate-200 hover:ring-emerald-400 text-transparent'}`}
+                        >
+                          {isDone && <Check size={12} strokeWidth={4} className="animate-in zoom-in" />}
+                        </button>
+                      </div>
                      
                      {/* Title */}
                      <div className="flex items-center gap-2 w-full pr-4 min-w-0">
@@ -832,7 +833,7 @@ export default function Tasks() {
                    <div className="relative">
                       <button 
                          onClick={() => { setActiveMenuId(task.id); setActiveMenuType('status'); }}
-                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[11px] font-extrabold tracking-wide transition-all w-full justify-between hover:shadow-sm hover:scale-[1.02] active:scale-95 ${statusConfig.bg}`}
+                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-extrabold tracking-wide transition-all w-full justify-between hover:shadow-md hover:-translate-y-0.5 active:scale-95 ${statusConfig.bg}`}
                       >
                          <div className="flex items-center gap-1.5">{statusConfig.icon} {statusConfig.text}</div>
                          <ChevronDown size={12} className="opacity-40" />
@@ -853,7 +854,7 @@ export default function Tasks() {
                    <div className="relative">
                       <button 
                          onClick={() => { setActiveMenuId(task.id); setActiveMenuType('progress'); }}
-                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-extrabold tracking-wide transition-all w-full justify-between hover:shadow-sm hover:scale-[1.02] active:scale-95 ${progConfig.bg}`}
+                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-extrabold tracking-wide transition-all w-full justify-between hover:shadow-md hover:-translate-y-0.5 active:scale-95 ${progConfig.bg}`}
                       >
                          <span>{progConfig.text}</span>
                          <ChevronDown size={12} className="opacity-40" />
@@ -880,7 +881,7 @@ export default function Tasks() {
                    <div className="relative">
                       <button 
                          onClick={() => { setActiveMenuId(task.id); setActiveMenuType('priority'); }}
-                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[11px] font-extrabold tracking-wide transition-all w-full justify-between hover:shadow-sm hover:scale-[1.02] active:scale-95 ${prioConfig.bg}`}
+                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-extrabold tracking-wide transition-all w-full justify-between hover:shadow-md hover:-translate-y-0.5 active:scale-95 ${prioConfig.bg}`}
                       >
                          <div className="flex items-center gap-1.5">{prioConfig.icon} {prioConfig.text}</div>
                          <ChevronDown size={12} className="opacity-40" />
