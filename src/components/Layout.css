@@ -378,3 +378,74 @@
     padding-bottom: 2rem; /* Remove bottom nav space */
   }
 }
+
+/* FullCalendar Premium Theme Overrides */
+.fc-premium-theme .fc {
+  font-family: inherit;
+}
+.fc-premium-theme .fc-toolbar-title {
+  font-size: 1.25rem !important;
+  font-weight: 900 !important;
+  color: var(--color-slate-800);
+}
+.fc-premium-theme .fc-button-primary {
+  background-color: white !important;
+  border: 1px solid var(--color-slate-200) !important;
+  color: var(--color-slate-700) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+  font-weight: 700 !important;
+  text-transform: capitalize !important;
+  transition: all 0.2s;
+  padding: 0.5rem 1rem !important;
+}
+.fc-premium-theme .fc-button-primary:not(:disabled):hover {
+  background-color: var(--color-slate-50) !important;
+  border-color: var(--color-slate-300) !important;
+}
+.fc-premium-theme .fc-button-primary:not(:disabled):focus {
+  box-shadow: 0 0 0 2px var(--color-primary-100) !important;
+}
+.fc-premium-theme .fc-button-active {
+  background-color: var(--color-slate-800) !important;
+  color: white !important;
+  border-color: var(--color-slate-800) !important;
+}
+.fc-premium-theme .fc-theme-standard th {
+  border: none !important;
+  padding: 0.75rem 0;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-slate-400);
+  background: var(--color-slate-50);
+}
+.fc-premium-theme .fc-scrollgrid {
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--color-slate-200) !important;
+}
+.fc-premium-theme .fc-theme-standard td, .fc-premium-theme .fc-theme-standard th {
+  border-color: var(--color-slate-100) !important;
+}
+.fc-premium-theme .fc-daygrid-day {
+  transition: background-color 0.2s;
+}
+.fc-premium-theme .fc-daygrid-day:hover {
+  background-color: var(--color-slate-50/50);
+}
+.fc-premium-theme .fc-day-today {
+  background-color: var(--color-primary-50/30) !important;
+}
+.fc-premium-theme .fc-daygrid-day-number {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--color-slate-600);
+  padding: 0.5rem !important;
+}
+.fc-premium-theme .fc-event {
+  border: none !important;
+  background: transparent !important;
+  margin-top: 2px !important;
+}

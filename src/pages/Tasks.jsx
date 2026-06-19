@@ -7,8 +7,14 @@ import {
   CheckSquare, Square, Plus, Loader2, 
   SignalHigh, SignalMedium, SignalLow, CircleDashed, 
   Calendar, Users, ChevronDown, Flame, AlertCircle, Clock, Check, CheckCircle2, ChevronRight,
-  Paperclip, Send, FileText, Download, X, MessageSquare, Image as ImageIcon, Trash2, Search, Filter
+  Paperclip, Send, FileText, Download, X, MessageSquare, Image as ImageIcon, Trash2, Search, Filter,
+  List as ListIcon, KanbanSquare, Calendar as CalendarIcon, GripVertical
 } from 'lucide-react';
+import { useNotifications } from '../context/NotificationsContext';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
 
 const AttachmentViewer = ({ update, onImageClick }) => {
   const [imgError, setImgError] = useState(false);
@@ -53,7 +59,9 @@ const AttachmentViewer = ({ update, onImageClick }) => {
 export default function Tasks() {
   const { user } = useAuth();
   const { activeRole, ROLES } = useRole();
+  const { createNotification } = useNotifications();
   const isAdmin = ['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase()) || activeRole === ROLES.MANAGER || activeRole === ROLES.ADMIN;
+  const [viewMode, setViewMode] = useState('list');
   const [tasks, setTasks] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -220,6 +228,20 @@ export default function Tasks() {
         setActiveMenuType(null);
     }
 
+    // Trigger Notification for Done status
+    if (field === 'status' && value?.toLowerCase() === 'done') {
+      const task = previousTasks.find(t => t.id === taskId);
+      if (task && task.user_id && task.user_id !== user.id) {
+         createNotification({
+           user_id: task.user_id,
+           type: 'task_completed',
+           title: 'Task Completed',
+           message: `${user.user_metadata?.full_name || 'Someone'} completed: ${task.title}`,
+           link: '/tasks'
+         });
+      }
+    }
+
     const { error } = await supabase
       .from('tasks')
       .update({ [field]: value })
@@ -359,6 +381,15 @@ export default function Tasks() {
       newAssignees = newAssignees.filter(id => id !== userId);
     } else {
       newAssignees.push(userId);
+      if (userId !== user.id) {
+         createNotification({
+           user_id: userId,
+           type: 'task_assigned',
+           title: 'New Task Assignment',
+           message: `You were assigned to: ${task.title}`,
+           link: '/tasks'
+         });
+      }
     }
     
     updateTask(taskId, 'assigned_to', newAssignees);
@@ -397,6 +428,165 @@ export default function Tasks() {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+    const { source, destination, draggableId } = result;
+    if (source.droppableId === destination.droppableId) return;
+
+    const newStatus = destination.droppableId;
+    updateTask(draggableId, 'status', newStatus);
+  };
+
+  const renderBoardView = () => {
+    const columns = ['To Do', 'In Progress', 'Review', 'Done'];
+    return (
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="flex gap-6 overflow-x-auto pb-4 hide-scrollbar min-h-[600px] w-full px-1">
+          {columns.map(status => {
+             const colTasks = filteredAndSortedTasks.filter(t => (t.status || 'To Do').toLowerCase() === status.toLowerCase());
+             const statusConfig = getStatusConfig(status);
+             return (
+               <div key={status} className="flex flex-col w-[320px] shrink-0 bg-slate-50/80 rounded-2xl border border-slate-200 shadow-sm flex-1 max-w-[360px]">
+                 <div className="px-5 py-4 border-b border-slate-200/60 flex items-center justify-between bg-white rounded-t-2xl">
+                   <div className="flex items-center gap-2 font-black text-slate-700">
+                     {statusConfig.icon} {status} 
+                     <span className="bg-slate-100 text-slate-500 text-[10px] py-0.5 px-2 rounded-full font-bold">{colTasks.length}</span>
+                   </div>
+                 </div>
+                 <Droppable droppableId={status}>
+                   {(provided, snapshot) => (
+                     <div 
+                       ref={provided.innerRef} 
+                       {...provided.droppableProps}
+                       className={`flex-1 p-3 overflow-y-auto space-y-3 transition-colors ${snapshot.isDraggingOver ? 'bg-primary-50/20' : ''}`}
+                     >
+                       {colTasks.map((task, index) => {
+                          const prioConfig = getPriorityConfig(task.priority);
+                          const assignees = teamMembers.filter(m => (task.assigned_to || []).includes(m.id));
+                          const isDone = status.toLowerCase() === 'done';
+                          
+                          return (
+                            <Draggable key={task.id} draggableId={task.id} index={index}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className={`bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all group relative ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-primary-500 scale-105 z-50' : ''} ${isDone ? 'opacity-60 grayscale' : ''}`}
+                                >
+                                  <div className="flex justify-between items-start mb-2 gap-2">
+                                    <h4 className="font-bold text-[13px] text-slate-800 leading-snug line-clamp-2">{task.title}</h4>
+                                    <div className="text-slate-300 group-hover:text-slate-400 cursor-grab active:cursor-grabbing">
+                                      <GripVertical size={14} />
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex flex-wrap gap-2 mb-4 mt-3">
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${prioConfig.bg} flex items-center gap-1`}>
+                                      {prioConfig.icon} {prioConfig.text}
+                                    </span>
+                                    {task.due_date && (
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border bg-slate-50 border-slate-200 text-slate-500 flex items-center gap-1">
+                                        <Calendar size={10} /> {new Date(task.due_date).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-100">
+                                    <div className="flex -space-x-1.5">
+                                      {assignees.slice(0,3).map(a => (
+                                        a.avatar_url ? 
+                                        <img key={a.id} src={a.avatar_url} className="w-6 h-6 rounded-full border-2 border-white bg-white" /> :
+                                        <div key={a.id} className="w-6 h-6 rounded-full border-2 border-white bg-slate-800 text-white flex items-center justify-center text-[8px] font-bold">{getUserInitials(a.full_name)}</div>
+                                      ))}
+                                      {assignees.length === 0 && <div className="w-6 h-6 rounded-full border-2 border-slate-200 border-dashed bg-slate-50 flex items-center justify-center text-slate-400"><Users size={10}/></div>}
+                                    </div>
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); setViewMode('list'); setTimeout(() => toggleExpand(task), 100); }} 
+                                      className="text-[10px] font-bold text-slate-400 hover:text-primary-500 flex items-center gap-1 bg-slate-50 hover:bg-primary-50 px-2 py-1 rounded-lg transition-colors"
+                                    >
+                                      <MessageSquare size={12} /> Open
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </Draggable>
+                          );
+                       })}
+                       {provided.placeholder}
+                     </div>
+                   )}
+                 </Droppable>
+               </div>
+             );
+          })}
+        </div>
+      </DragDropContext>
+    );
+  };
+
+  const renderCalendarView = () => {
+    const events = filteredAndSortedTasks
+      .filter(t => t.due_date)
+      .map(t => {
+        const prioConfig = getPriorityConfig(t.priority);
+        return {
+          id: t.id,
+          title: t.title,
+          start: t.due_date,
+          allDay: true,
+          extendedProps: {
+            task: t,
+            bgClass: prioConfig.bg
+          }
+        };
+      });
+
+    const handleEventClick = (info) => {
+      const task = info.event.extendedProps.task;
+      setViewMode('list');
+      setTimeout(() => { toggleExpand(task); }, 100);
+    };
+
+    const handleEventDrop = (info) => {
+      const taskId = info.event.id;
+      // Preserve local time string YYYY-MM-DD
+      const dateStr = info.event.start.toISOString();
+      updateTask(taskId, 'due_date', dateStr);
+    };
+
+    const renderEventContent = (eventInfo) => {
+      const { task, bgClass } = eventInfo.event.extendedProps;
+      const isDone = task.status?.toLowerCase() === 'done';
+      return (
+        <div className={`w-full overflow-hidden text-[10px] px-1.5 py-1 rounded cursor-pointer ${bgClass} ${isDone ? 'opacity-50 line-through' : ''}`}>
+          <div className="font-bold truncate">{eventInfo.event.title}</div>
+        </div>
+      );
+    };
+
+    return (
+      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl min-h-[700px] fc-premium-theme animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <FullCalendar
+          plugins={[dayGridPlugin, interactionPlugin]}
+          initialView="dayGridMonth"
+          events={events}
+          eventClick={handleEventClick}
+          editable={true}
+          eventDrop={handleEventDrop}
+          eventContent={renderEventContent}
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth'
+          }}
+          height="auto"
+          dayMaxEvents={3}
+        />
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-[1400px] mx-auto py-8 px-4 lg:px-8">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
@@ -405,8 +595,30 @@ export default function Tasks() {
           <p className="text-slate-500 text-sm mt-1">Manage cross-functional tasks and assignments.</p>
         </div>
 
-        {/* Filter Bar */}
-        <div className="flex items-center gap-3 bg-white border border-slate-200/80 p-1.5 rounded-2xl shadow-sm flex-wrap">
+        <div className="flex flex-col gap-3 items-end">
+          {/* View Toggle */}
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200/50">
+            {[
+              { id: 'list', icon: <ListIcon size={16} />, label: 'List' },
+              { id: 'board', icon: <KanbanSquare size={16} />, label: 'Board' },
+              { id: 'calendar', icon: <CalendarIcon size={16} />, label: 'Calendar' }
+            ].map(view => (
+              <button
+                key={view.id}
+                onClick={() => setViewMode(view.id)}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
+                  viewMode === view.id 
+                  ? 'bg-white text-slate-800 shadow-sm ring-1 ring-slate-200/50' 
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                }`}
+              >
+                {view.icon} {view.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Filter Bar */}
+          <div className="flex items-center gap-3 bg-white border border-slate-200/80 p-1.5 rounded-2xl shadow-sm flex-wrap">
            <div className="relative flex items-center">
               <Search size={14} className="absolute left-3 text-slate-400" />
               <input 
@@ -451,8 +663,10 @@ export default function Tasks() {
              </button>
            )}
         </div>
+        </div>
       </div>
 
+      {viewMode === 'list' && (
       <div className="bg-white border border-slate-200 rounded-2xl shadow-xl flex flex-col">
         {/* Table Header */}
         <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px_32px] gap-4 items-center px-6 py-4 bg-slate-50/80 border-b border-slate-200 text-[11px] font-black text-slate-400 uppercase tracking-widest rounded-t-2xl">
@@ -852,8 +1066,13 @@ export default function Tasks() {
           </div>
         )}
       </div>
+      )}
 
-      {/* Image Lightbox */}
+      {/* Board View */}
+      {viewMode === 'board' && renderBoardView()}
+
+      {/* Calendar View */}
+      {viewMode === 'calendar' && renderCalendarView()}{/* Image Lightbox */}
       {activeImage && (
         <div 
             className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-md" 
