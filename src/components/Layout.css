@@ -85,9 +85,9 @@
 }
 
 .sidebar.collapsed .sidebar-nav {
+  padding: 0;
   padding-left: 0.5rem;
-  padding-right: 208px;
-  margin-right: -200px;
+  width: 260px;
   pointer-events: none;
   overflow-y: auto;
   overflow-x: hidden;
@@ -152,7 +152,8 @@
   justify-content: flex-start;
   padding-left: 16px;
   border-radius: 9999px;
-  margin: 0 auto;
+  margin: 0;
+  margin-left: 8px;
   z-index: 10;
   pointer-events: auto;
 }
