@@ -13,7 +13,7 @@ import AccountManagement from './pages/AccountManagement';
 import TemplateDashboard from './pages/TemplateDashboard';
 import FinancialSettings from './pages/FinancialSettings';
 import FinanceDashboard from './pages/FinanceDashboard';
-import SalesPipeline from './pages/SalesPipeline';
+import Sales from './pages/Sales';
 import DispatchHub from './pages/DispatchHub';
 import Tasks from './pages/Tasks';
 import CompanyCalendar from './pages/CompanyCalendar';
@@ -95,7 +95,6 @@ function MainRouter() {
         <Route path="/" element={<Layout />}>
           {/* SALES DOMAINS */}
           <Route path="customers/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><Customers /></RoleRoute>} />
-          <Route path="proposals/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><Proposals /></RoleRoute>} />
           <Route path="tasks/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><Tasks /></RoleRoute>} />
           <Route path="calendar/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><CompanyCalendar /></RoleRoute>} />
           <Route path="service/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'DISPATCHER']}><ServiceHub /></RoleRoute>} />
@@ -103,7 +102,7 @@ function MainRouter() {
           
           {/* MANAGER DOMAINS */}
           <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><Catalog /></RoleRoute>} />
-          <Route path="pipeline/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><SalesPipeline /></RoleRoute>} />
+          <Route path="sales/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><Sales /></RoleRoute>} />
           <Route path="dispatch" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'DISPATCHER']}><DispatchHub /></RoleRoute>} />
 
           {/* SUPER ADMIN EXCLUSIVE DOMAINS */}

@@ -9,6 +9,7 @@ import { formatQuoteId, formatCustomerName } from '../utils/formatters';
 import { useProposals } from '../context/ProposalContext';
 import { useAuth } from '../context/AuthContext';
 import { useRole } from '../context/RoleContext';
+import Proposals from './Proposals';
 
 const PIPELINE_COLUMNS = [
   { id: PIPELINE_STATES.NEW_LEAD, title: 'Incoming Leads', color: 'border-slate-300', bg: 'bg-slate-100', text: 'text-slate-700' },
@@ -20,7 +21,7 @@ const PIPELINE_COLUMNS = [
   { id: PIPELINE_STATES.LOST, title: 'Lost Deal', color: 'border-red-300', bg: 'bg-red-100', text: 'text-red-700' }
 ];
 
-export default function SalesPipeline() {
+export default function Sales() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { activeRole, ROLES, canViewFinancials } = useRole();
@@ -31,6 +32,7 @@ export default function SalesPipeline() {
   const [activeAssignMenu, setActiveAssignMenu] = useState(null);
   const [loading, setLoading] = useState(true);
   const [inspectingJob, setInspectingJob] = useState(null);
+  const [activeTab, setActiveTab] = useState('pipeline');
 
   useEffect(() => {
     fetchOpportunities();
@@ -146,9 +148,20 @@ export default function SalesPipeline() {
                     <div className="bg-emerald-100 text-emerald-600 p-2.5 rounded-2xl shadow-inner border border-emerald-200">
                         <Zap size={24} strokeWidth={2.5}/>
                     </div>
-                    Sales Pipeline
+                    Sales Hub
                 </h1>
-                <p className="text-slate-500 font-medium ml-1">High-density revenue tracking. Logical progression only.</p>
+                <div className="flex bg-slate-200/50 p-1 rounded-xl w-fit ml-1 mt-2 border border-slate-200/80">
+                    <button 
+                        onClick={() => setActiveTab('pipeline')} 
+                        className={`px-5 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'pipeline' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                        Pipeline
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('proposals')} 
+                        className={`px-5 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'proposals' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                        Proposals
+                    </button>
+                </div>
             </div>
             
             {activeRole !== ROLES.SALES && (
@@ -160,6 +173,14 @@ export default function SalesPipeline() {
             )}
         </div>
 
+        {activeTab === 'proposals' ? (
+            <div className="flex-1 overflow-hidden rounded-3xl relative z-10 bg-white shadow-sm border border-slate-200">
+                <div className="h-full overflow-y-auto">
+                    <Proposals embedded={true} />
+                </div>
+            </div>
+        ) : (
+        <React.Fragment>
         {/* Kanban Board Container */}
         <div className="flex-1 overflow-x-auto overflow-y-hidden rounded-3xl pb-4 -mx-4 md:mx-0 px-4 md:px-0 custom-scrollbar relative z-10">
             <div className="flex gap-6 h-full min-w-max pb-2">
@@ -383,6 +404,8 @@ export default function SalesPipeline() {
                 })}
             </div>
         </div>
+        </React.Fragment>
+        )}
       <OpportunityOverviewModal 
           isOpen={!!inspectingJob} 
           onClose={() => setInspectingJob(null)} 

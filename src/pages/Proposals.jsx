@@ -60,7 +60,7 @@ const getEstValueDisplay = (proposal) => {
     return { min: finalMin, max: finalMax, hasRange };
 };
 
-export default function Proposals() {
+export default function Proposals({ embedded = false }) {
   const { user } = useAuth();
   const { proposals, addProposal, updateProposal, deleteProposal, loading } = useProposals();
   const { customers, addUnitToAddress } = useCustomers();
@@ -619,8 +619,9 @@ ${equipmentNotes}
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className={embedded ? "space-y-6" : "p-6 space-y-6"}>
       {/* Header */}
+      {!embedded && (
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-[28px] font-bold text-slate-900 tracking-tight flex items-center gap-3 mb-1">
@@ -636,6 +637,7 @@ ${equipmentNotes}
           <Plus size={18} /> Generate Quote
         </button>
       </div>
+      )}
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
           
