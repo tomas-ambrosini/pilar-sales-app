@@ -228,7 +228,9 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
 
                 {/* Unit Info Box */}
                 {(resolvedSystemsList && resolvedSystemsList.length > 0) ? (
-                    resolvedSystemsList.map((sys, idx) => (
+                    resolvedSystemsList.map((sys, idx) => {
+                        const sysData = sys.tierData || sys.selectedTierData || {};
+                        return (
                         <div key={idx} className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
                             <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
                                 <div className="flex-1 px-3 py-1.5 border-r border-slate-300">{sys.systemName} - {templateConfig.sectionTitles?.unitInfo || 'Unit Info'}</div>
@@ -244,21 +246,21 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                                             <span className="w-20 text-slate-500">Serial:</span> <span></span>
                                         </div>
                                         <div className="flex border-b border-slate-200 pb-1">
-                                            <span className="w-20 text-slate-500">Efficiency:</span> <span className="text-slate-600">{sys.tierData?.seer ? `${sys.tierData.seer} SEER` : 'Standard Ratings'}</span>
+                                            <span className="w-20 text-slate-500">Efficiency:</span> <span className="text-slate-600">{sysData.seer ? `${sysData.seer} SEER` : 'Standard Ratings'}</span>
                                         </div>
                                         <div className="flex border-b border-slate-200 pb-1">
-                                            <span className="w-20 text-slate-500">Brand:</span> <span className="text-slate-600">{sys.tierData?.brand || 'Premium'} {sys.tierData?.series || ''}</span>
+                                            <span className="w-20 text-slate-500">Brand:</span> <span className="text-slate-600">{sysData.brand || 'Premium'} {sysData.series || ''}</span>
                                         </div>
                                         <div className="flex border-b border-slate-200 pb-1">
-                                            <span className="w-20 text-slate-500">Dimensions:</span> <span className="text-slate-600">{sys.tierData?.tons ? `${sys.tierData.tons} Ton System` : 'Per Layout'}</span>
+                                            <span className="w-20 text-slate-500">Dimensions:</span> <span className="text-slate-600">{sysData.tons ? `${sysData.tons} Ton System` : 'Per Layout'}</span>
                                         </div>
                                         <div className="flex pb-1">
-                                            <span className="w-20 text-slate-500">Type of Unit:</span> <span className="text-slate-600">{sys.tierData?.category || sys.tierData?.type || 'System Replacement'}</span>
+                                            <span className="w-20 text-slate-500">Type of Unit:</span> <span className="text-slate-600">{sysData.category || sysData.type || 'System Replacement'}</span>
                                         </div>
                                     </div>
                                     <div className="w-40 border border-slate-300 bg-[#e2e8f0]/40 flex items-center justify-center text-slate-400 font-bold tracking-widest rounded mx-2 my-1 overflow-hidden p-1">
-                                        {sys.tierData?.image_url || sys.tierData?.image ? (
-                                            <img src={sys.tierData.image_url || sys.tierData.image} alt={sys.systemName} className="object-contain w-full h-full" />
+                                        {sysData.image_url || sysData.image ? (
+                                            <img src={sysData.image_url || sysData.image} alt={sys.systemName} className="object-contain w-full h-full" />
                                         ) : (
                                             "PHOTO"
                                         )}
@@ -266,12 +268,13 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                                 </div>
                                 <div className="w-32 border-l border-slate-300 flex flex-col justify-end pb-3 text-center bg-[#f8fafc]">
                                     <div className="px-3 flex items-center justify-end text-slate-800 gap-1 font-black text-lg">
-                                        $ <span>{(sys.tierData?.salesPrice || 0).toLocaleString()}</span>
+                                        $ <span>{(sysData.salesPrice || sysData.price || 0).toLocaleString()}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    ))
+                    );
+                })
                 ) : (
                     <div className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
                         <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">

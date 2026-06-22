@@ -108,10 +108,31 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
     const matchedTierName = associatedProposal?.proposal_data?.accepted_tier_name || ['good', 'better', 'best'].find(t => associatedProposal?.proposal_data?.tiers?.[t]?.salesPrice === associatedProposal?.amount) || 'good';
 
     const getProposalAmount = () => {
+        let amount = 0;
         if (associatedProposal?.amount > 0) return associatedProposal.amount;
-        if (associatedProposal?.proposal_data?.accepted_tier_data?.salesPrice) return associatedProposal.proposal_data.accepted_tier_data.salesPrice;
-        if (associatedProposal?.proposal_data?.accepted_tier_data?.price) return associatedProposal.proposal_data.accepted_tier_data.price;
-        if (associatedProposal?.proposal_data?.tiers?.[matchedTierName.toLowerCase()]?.salesPrice) return associatedProposal.proposal_data.tiers[matchedTierName.toLowerCase()].salesPrice;
+        
+        // Always prioritize the Opportunity's accepted tier data since that is the final source of truth for signed deals
+        const sourceData = job.proposal_data || associatedProposal?.proposal_data;
+        if (sourceData?.accepted_tier_data) {
+            const accData = sourceData.accepted_tier_data;
+            if (accData.salesPrice) return accData.salesPrice;
+            if (accData.price) return accData.price;
+            
+            // Multi-system proposal handling
+            if (accData.systemsList && Array.isArray(accData.systemsList)) {
+                amount = accData.systemsList.reduce((sum, sys) => {
+                    const price = sys.selectedTierData?.salesPrice || sys.selectedTierData?.price || 0;
+                    return sum + price;
+                }, 0);
+                if (amount > 0) return amount;
+            }
+        }
+        
+        // Fallback to unaccepted proposal tier data
+        if (associatedProposal?.proposal_data?.tiers?.[matchedTierName.toLowerCase()]?.salesPrice) {
+            return associatedProposal.proposal_data.tiers[matchedTierName.toLowerCase()].salesPrice;
+        }
+        
         return 0;
     };
     const displayAmount = getProposalAmount();
@@ -165,10 +186,10 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
             <div className="w-full bg-white border-b border-slate-200 p-4 shrink-0 shadow-sm z-10">
                 <div className="flex items-center justify-between max-w-4xl mx-auto">
                     {[
-                        { label: 'Lead', match: ['NEW_LEAD', 'QUOTING', 'PROPOSAL_SENT', 'APPROVED', 'NEEDS_SCHEDULING', 'SCHEDULED', 'COMPLETED', 'CLOSED_WON'] },
-                        { label: 'Quoted', match: ['PROPOSAL_SENT', 'APPROVED', 'NEEDS_SCHEDULING', 'SCHEDULED', 'COMPLETED', 'CLOSED_WON'] },
-                        { label: 'Approved', match: ['APPROVED', 'NEEDS_SCHEDULING', 'SCHEDULED', 'COMPLETED', 'CLOSED_WON'] },
-                        { label: 'Scheduled', match: ['SCHEDULED', 'COMPLETED', 'CLOSED_WON'] },
+                        { label: 'Lead', match: ['NEW_LEAD', 'QUOTING', 'PROPOSAL_SENT', 'APPROVED', 'NEEDS_SCHEDULING', 'SCHEDULED', 'Working', 'En Route', 'COMPLETED', 'CLOSED_WON'] },
+                        { label: 'Quoted', match: ['PROPOSAL_SENT', 'APPROVED', 'NEEDS_SCHEDULING', 'SCHEDULED', 'Working', 'En Route', 'COMPLETED', 'CLOSED_WON'] },
+                        { label: 'Approved', match: ['APPROVED', 'NEEDS_SCHEDULING', 'SCHEDULED', 'Working', 'En Route', 'COMPLETED', 'CLOSED_WON'] },
+                        { label: 'Scheduled', match: ['SCHEDULED', 'Working', 'En Route', 'COMPLETED', 'CLOSED_WON'] },
                         { label: 'Complete', match: ['COMPLETED', 'CLOSED_WON'] }
                     ].map((step, idx, arr) => {
                         const isCompleted = step.match.includes(job.status);
