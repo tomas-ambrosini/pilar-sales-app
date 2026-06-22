@@ -186,7 +186,7 @@ export function ProposalProvider({ children }) {
 
     const updateProposal = async (id, updatedData) => {
         const oldProposal = proposals.find(p => p.id === id);
-        const oppId = oldProposal?.proposal_data?.associated_opportunity_id;
+        const oppId = oldProposal?.associated_opportunity_id || oldProposal?.proposal_data?.associated_opportunity_id;
         
         setProposals(prev => prev.map(p => p.id === id ? { ...p, ...updatedData } : p));
         const { error } = await supabase.from('proposals').update(updatedData).eq('id', id);
