@@ -50,11 +50,7 @@ const RoleRoute = ({ children, allowedRoles }) => {
   
   if (!user) return <Navigate to="/" replace />;
   
-  // Map simulated long role to route code
-  const roleCode = 
-      activeRole === ROLES.ADMIN ? 'ADMIN' :
-      activeRole === ROLES.MANAGER ? 'MANAGER' :
-      'SALES';
+  const roleCode = activeRole;
   
   if (!allowedRoles.includes(roleCode)) {
     // Hard rejection fallback matrices 
