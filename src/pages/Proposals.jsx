@@ -436,7 +436,7 @@ ${equipmentNotes}
      if (oppId) {
          try {
              // Get existing opportunity data
-             const { data: oppRow } = await supabase.from('opportunities').select('household_id, proposal_data').eq('id', oppId).single();
+             const { data: oppRow } = await supabase.from('opportunities').select('household_id, proposal_data, status').eq('id', oppId).single();
              
              // Inject the accepted tier and signature into the Opportunity's proposal_data payload
              const updatedOppPayload = {
@@ -450,7 +450,7 @@ ${equipmentNotes}
 
              // Update Sales Pipeline Opportunity.
              try {
-                await PipelineController.approveDeal(oppId, PIPELINE_STATES.PROPOSAL_SENT, {
+                await PipelineController.approveDeal(oppId, oppRow?.status || PIPELINE_STATES.SENT, {
                      dispatch_notes: workOrderNotes,
                      proposal_data: updatedOppPayload
                 });

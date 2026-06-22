@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient';
 import { CheckCircle, Zap, Shield, HelpCircle, HardDrive, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatQuoteId } from '../utils/formatters';
+import { PipelineController, PIPELINE_STATES } from '../utils/pipelineControls';
 
 export default function PublicQuoteView() {
     const { id } = useParams();
@@ -89,6 +90,38 @@ export default function PublicQuoteView() {
                 .eq('id', id);
 
             if (error) throw error;
+            
+            // Fix: Public Quote acceptance "Black Hole" - Trigger pipeline progression
+            const oppId = proposal.associated_opportunity_id || proposal.proposal_data?.associated_opportunity_id;
+            if (oppId) {
+                try {
+                    const { data: oppRow } = await supabase.from('opportunities').select('status, household_id').eq('id', oppId).single();
+                    if (oppRow) {
+                        await PipelineController.approveDeal(oppId, oppRow.status || PIPELINE_STATES.SENT, {
+                            proposal_data: {
+                                ...proposal.proposal_data,
+                                signature: signature,
+                                manager_approved: false
+                            }
+                        });
+
+                        // Simultaneously auto-generate the Operational Work Order for Dispatch
+                        await supabase.from('work_orders').insert({
+                            opportunity_id: oppId,
+                            household_id: oppRow.household_id,
+                            status: 'Unscheduled',
+                            urgency_level: 'Medium',
+                            execution_payload: {
+                                tierName: tierName,
+                                price: price,
+                                signature: signature
+                            }
+                        });
+                    }
+                } catch (pipeErr) {
+                    console.error("Failed to advance pipeline from public quote view:", pipeErr);
+                }
+            }
             
             setAccepted(true);
             setProposal(prev => ({...prev, status: 'Approved', proposal_data: updatedPayload}));

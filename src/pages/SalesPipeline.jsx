@@ -69,9 +69,17 @@ export default function SalesPipeline() {
         if (currentFilter === 'My Deals' && opp.assigned_salesperson_id !== user?.id) return;
         if (currentFilter === 'Unassigned' && opp.assigned_salesperson_id !== null) return;
 
-        if (grouped[opp.status]) {
-          grouped[opp.status].push(opp);
-        } else if (opp.status !== PIPELINE_STATES.VOIDED && opp.status !== PIPELINE_STATES.PENDING_VOID) {
+        // Normalize Technician Field Statuses back to Sales Pipeline Columns
+        let normalizedStatus = opp.status;
+        if (normalizedStatus === 'Working' || normalizedStatus === 'En Route') {
+            normalizedStatus = PIPELINE_STATES.SCHEDULED;
+        } else if (normalizedStatus === 'Completed') {
+            normalizedStatus = PIPELINE_STATES.COMPLETED;
+        }
+
+        if (grouped[normalizedStatus]) {
+          grouped[normalizedStatus].push(opp);
+        } else if (normalizedStatus !== PIPELINE_STATES.VOIDED && normalizedStatus !== PIPELINE_STATES.PENDING_VOID) {
             // Failsafe for orphaned states
             grouped[PIPELINE_STATES.NEW_LEAD].push(opp);
         }
