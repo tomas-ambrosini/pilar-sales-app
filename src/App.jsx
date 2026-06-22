@@ -98,17 +98,17 @@ function MainRouter() {
       ) : (
         <Route path="/" element={<Layout />}>
           {/* SALES DOMAINS */}
-          <Route path="customers/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Customers /></RoleRoute>} />
-          <Route path="proposals/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Proposals /></RoleRoute>} />
-          <Route path="tasks/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Tasks /></RoleRoute>} />
-          <Route path="calendar/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><CompanyCalendar /></RoleRoute>} />
-          <Route path="service/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><ServiceHub /></RoleRoute>} />
-          <Route path="my-day" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><TechnicianMyDay /></RoleRoute>} />
+          <Route path="customers/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><Customers /></RoleRoute>} />
+          <Route path="proposals/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><Proposals /></RoleRoute>} />
+          <Route path="tasks/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><Tasks /></RoleRoute>} />
+          <Route path="calendar/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><CompanyCalendar /></RoleRoute>} />
+          <Route path="service/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'DISPATCHER']}><ServiceHub /></RoleRoute>} />
+          <Route path="my-day" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><TechnicianMyDay /></RoleRoute>} />
           
           {/* MANAGER DOMAINS */}
           <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><Catalog /></RoleRoute>} />
-          <Route path="pipeline/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><SalesPipeline /></RoleRoute>} />
-          <Route path="dispatch" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><DispatchHub /></RoleRoute>} />
+          <Route path="pipeline/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><SalesPipeline /></RoleRoute>} />
+          <Route path="dispatch" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'DISPATCHER']}><DispatchHub /></RoleRoute>} />
 
           {/* SUPER ADMIN EXCLUSIVE DOMAINS */}
           <Route path="analytics" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><ExecutiveAnalytics /></RoleRoute>} />
@@ -117,7 +117,7 @@ function MainRouter() {
           <Route path="finance/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><FinanceDashboard /></RoleRoute>} />
           
           {/* WILDCARDS / DEFAULTS */}
-          <Route index element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Dashboard /></RoleRoute>} />
+          <Route index element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><Dashboard /></RoleRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       )}

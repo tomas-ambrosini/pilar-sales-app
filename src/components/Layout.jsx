@@ -30,23 +30,23 @@ export default function Layout() {
   const navGroups = [
     {
       title: 'Operations',
-      allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.TECHNICIAN, ROLES.SUBCONTRACTOR],
+      allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.DISPATCHER, ROLES.TECHNICIAN, ROLES.SUBCONTRACTOR],
       items: [
         { path: '/', label: 'Dashboard', icon: LayoutDashboard, isVisible: !isSubcontractor() },
         { path: '/customers', label: 'Customers', icon: Users, isVisible: !isSubcontractor() },
-        { path: '/pipeline', label: 'Deal Pipeline', icon: ClipboardList, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES].includes(activeRole) },
-        { path: '/dispatch', label: 'Dispatch Board', icon: Truck, isVisible: [ROLES.ADMIN, ROLES.MANAGER].includes(activeRole) },
-        { path: '/service', label: 'Service Hub', icon: Wrench, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.TECHNICIAN].includes(activeRole) },
-        { path: '/my-day', label: 'My Route', icon: Navigation, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.TECHNICIAN, ROLES.SUBCONTRACTOR].includes(activeRole) }
+        { path: '/pipeline', label: 'Deal Pipeline', icon: ClipboardList, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.DISPATCHER].includes(activeRole) },
+        { path: '/dispatch', label: 'Dispatch Board', icon: Truck, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER].includes(activeRole) },
+        { path: '/service', label: 'Service Hub', icon: Wrench, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER, ROLES.TECHNICIAN].includes(activeRole) },
+        { path: '/my-day', label: 'My Route', icon: Navigation, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER, ROLES.TECHNICIAN, ROLES.SUBCONTRACTOR].includes(activeRole) }
       ]
     },
     {
       title: 'Workspace',
-      allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.TECHNICIAN, ROLES.SUBCONTRACTOR],
+      allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.DISPATCHER, ROLES.TECHNICIAN, ROLES.SUBCONTRACTOR],
       items: [
         { path: '/calendar', label: 'Calendar', icon: CalendarClock, isVisible: !isSubcontractor() },
         { path: '/tasks', label: 'Tasks', icon: CheckSquare, isVisible: true },
-        { path: '/proposals', label: 'Proposals List', icon: FileCheck, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES].includes(activeRole) }
+        { path: '/proposals', label: 'Proposals List', icon: FileCheck, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.DISPATCHER].includes(activeRole) }
       ]
     },
     {

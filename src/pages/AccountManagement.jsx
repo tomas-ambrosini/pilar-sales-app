@@ -303,6 +303,7 @@ export default function AccountManagement() {
                            <option value="ADMIN">ADMIN</option>
                            <option value="MANAGER">MANAGER</option>
                            <option value="SALES">SALES</option>
+                           <option value="DISPATCHER">DISPATCHER</option>
                            <option value="TECHNICIAN">TECHNICIAN</option>
                            <option value="SUBCONTRACTOR">SUBCONTRACTOR</option>
                         </select>
@@ -378,6 +379,7 @@ export default function AccountManagement() {
                            <option value="ADMIN">ADMIN</option>
                            <option value="MANAGER">MANAGER</option>
                            <option value="SALES">SALES</option>
+                           <option value="DISPATCHER">DISPATCHER</option>
                            <option value="TECHNICIAN">TECHNICIAN</option>
                            <option value="SUBCONTRACTOR">SUBCONTRACTOR</option>
                         </select>
