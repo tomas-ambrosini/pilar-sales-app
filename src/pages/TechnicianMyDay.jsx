@@ -223,10 +223,12 @@ function JobCard({ job, index, onUpdate, crewId }) {
             const noteEntry = `\n[TECH ${timestamp}]: ${note}`;
 
             if (isService) {
-                const newDesc = (job.issue_description || '') + noteEntry;
+                const { data: latestSvc } = await supabase.from('service_calls').select('issue_description').eq('id', job.id).single();
+                const newDesc = (latestSvc?.issue_description || job.issue_description || '') + noteEntry;
                 await supabase.from('service_calls').update({ issue_description: newDesc }).eq('id', job.id);
             } else {
-                const pData = job.proposal_data || {};
+                const { data: latestOpp } = await supabase.from('opportunities').select('proposal_data').eq('id', job.id).single();
+                const pData = latestOpp?.proposal_data || job.proposal_data || {};
                 const newNotes = (pData.dispatch_notes || '') + noteEntry;
                 await supabase.from('opportunities').update({ proposal_data: { ...pData, dispatch_notes: newNotes } }).eq('id', job.id);
             }

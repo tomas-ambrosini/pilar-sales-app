@@ -78,7 +78,9 @@ export default function PublicQuoteView() {
             const updatedPayload = { 
                 ...proposal.proposal_data, 
                 approval_snapshot: snapshot,
-                signature_data: signature
+                signature_data: signature,
+                accepted_tier_name: tierName,
+                accepted_tier_data: tierData
             };
 
             const { error } = await supabase
@@ -97,12 +99,15 @@ export default function PublicQuoteView() {
                 try {
                     const { data: oppRow } = await supabase.from('opportunities').select('status, household_id').eq('id', oppId).single();
                     if (oppRow) {
+                        const oppPayload = {
+                            ...proposal.proposal_data,
+                            signature: signature,
+                            manager_approved: false,
+                            accepted_tier_name: tierName,
+                            accepted_tier_data: tierData
+                        };
                         await PipelineController.approveDeal(oppId, oppRow.status || PIPELINE_STATES.SENT, {
-                            proposal_data: {
-                                ...proposal.proposal_data,
-                                signature: signature,
-                                manager_approved: false
-                            }
+                            proposal_data: oppPayload
                         });
 
                         // Simultaneously auto-generate the Operational Work Order for Dispatch

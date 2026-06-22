@@ -74,9 +74,12 @@ export default function DepositCollectionModal({ isOpen, onClose, contractData, 
 
             if (invoiceError) throw invoiceError;
 
+            // Fetch latest to prevent wiping out data saved by contract execution
+            const { data: latestRow } = await supabase.from('proposals').select('proposal_data').eq('id', proposal.id).single();
+            
             // Update proposal_data with deposit info for easy UI access
             const updatedProposalData = {
-                ...(proposal.proposal_data || {}),
+                ...(latestRow?.proposal_data || proposal.proposal_data || {}),
                 deposit_collected: true,
                 deposit_amount: depositAmount,
                 deposit_method: paymentMethod
