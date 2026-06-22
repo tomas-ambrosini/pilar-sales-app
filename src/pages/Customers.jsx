@@ -598,6 +598,7 @@ function CustomerDetail() {
          assigned_salesperson_id: user?.id,
          urgency_level: dealForm.urgency,
          issue_description: dealForm.issue_description,
+         proposal_data: { intaken_by: user?.full_name || 'System' },
          status: PIPELINE_STATES.NEW_LEAD
      });
      

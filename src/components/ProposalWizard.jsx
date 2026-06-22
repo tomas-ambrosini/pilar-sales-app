@@ -586,7 +586,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
            status: 'SENT', urgency_level: 'Medium',
            issue_description: `Auto-generated Digital Proposal with 3 Tiers for ${propAddressString}.`,
            site_survey_data: { ...survey, photos: photos, property_id: selectedProp?.id, property_address: propAddressString },
-           proposal_data: { ...finalProposalData, wizard_state: wizardState }
+           proposal_data: { ...finalProposalData, wizard_state: wizardState, intaken_by: user?.full_name || 'System' }
        }).select().single();
        
        if (oppError) console.error("Failed to insert Opportunity into Pipeline:", oppError);

@@ -124,7 +124,7 @@ export default function DispatchHub() {
                    issue_description: oppForm.issueDescription,
                    dispatch_notes: oppForm.dispatchNotes,
                    assigned_salesperson_id: oppForm.assignedSalespersonId || null,
-                   proposal_data: { type: oppForm.type },
+                   proposal_data: { type: oppForm.type, intaken_by: user?.full_name || 'System' },
                    status: PIPELINE_STATES.NEW_LEAD
                });
 

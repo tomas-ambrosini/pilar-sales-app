@@ -98,7 +98,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
 
 ${callData.issue_description}`,
                 status: 'Lead',
-                proposal_data: { type: 'SALES' }
+                proposal_data: { type: 'SALES', intaken_by: user?.full_name || 'System' }
             }).select().single();
 
             if (oppError) throw oppError;

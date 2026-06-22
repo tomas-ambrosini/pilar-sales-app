@@ -345,6 +345,11 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                             </div>
                         </div>
 
+                        <div className="mb-4 flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Lead Intaken By</div>
+                            <div className="text-sm font-black text-slate-800">{job.proposal_data?.intaken_by || 'System'}</div>
+                        </div>
+
                         <div className="mb-4">
                             <div className="flex justify-between items-center mb-1">
                                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dispatch Notes</div>
