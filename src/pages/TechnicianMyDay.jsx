@@ -179,16 +179,31 @@ function JobCard({ job, index, onUpdate, crewId }) {
         setIsSigning(false);
         try {
             const amt = parseFloat(invoiceAmount);
+            
+            let targetProposalId = null;
+            let targetCustomerId = job.customer_id || job.customers?.id || null;
+            
+            if (!isService) {
+                const { data: propData } = await supabase.from('proposals')
+                    .select('id, customer_id')
+                    .eq('associated_opportunity_id', job.id)
+                    .eq('status', 'Approved')
+                    .single();
+                
+                if (propData) {
+                    targetProposalId = propData.id;
+                    if (propData.customer_id) targetCustomerId = propData.customer_id;
+                }
+            }
+
             // Generate the invoice record
             const { error: invError } = await supabase.from('invoices').insert({
-                household_id: job.household_id || job.households?.id || null,
-                opportunity_id: isService ? null : job.id,
-                service_call_id: isService ? job.id : null,
-                amount: amt,
+                proposal_id: targetProposalId,
+                customer_id: targetCustomerId,
                 total_contract_amount: amt,
                 deposit_collected: paymentCollected ? amt : 0,
                 balance_due: paymentCollected ? 0 : amt,
-                status: paymentCollected ? 'Paid in Full' : 'UNPAID',
+                status: paymentCollected ? 'Paid in Full' : 'Partial Payment',
                 due_date: new Date().toISOString(),
                 customer_signature: signatureData,
                 signed_by: signedBy,
