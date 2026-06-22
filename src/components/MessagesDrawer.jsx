@@ -289,8 +289,16 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                  last_read_at: new Date().toISOString() 
                }, { onConflict: 'channel_id,user_id' }).then();
             } else {
-              // Not the active channel: Add unread badge
-              setUnreadCounts(prev => ({ ...prev, [newMessage.channel_id]: (prev[newMessage.channel_id] || 0) + 1 }));
+              // Not the active channel: Add unread badge if user is a member
+              const { data: memberCheck } = await supabase
+                .from('channel_members')
+                .select('id')
+                .eq('channel_id', newMessage.channel_id)
+                .eq('user_id', user.id)
+                .maybeSingle();
+              if (memberCheck) {
+                setUnreadCounts(prev => ({ ...prev, [newMessage.channel_id]: (prev[newMessage.channel_id] || 0) + 1 }));
+              }
             }
             
           } else if (payload.event === 'UPDATE') {

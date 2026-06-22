@@ -118,8 +118,18 @@ export default function Layout() {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'chat_messages' },
-        (payload) => {
+        async (payload) => {
           if (payload.new.sender_id !== user.id) {
+            
+            // Verify user is a member of this channel before notifying
+            const { data: memberCheck } = await supabase
+              .from('channel_members')
+              .select('id')
+              .eq('channel_id', payload.new.channel_id)
+              .eq('user_id', user.id)
+              .maybeSingle();
+
+            if (!memberCheck) return; // User is not explicitly in this group chat
             
             const isMentioned = Boolean(user.full_name) && payload.new.body.toLowerCase().includes(`@${user.full_name.replace(/\s+/g, '').toLowerCase()}`);
             const currentDrawerState = isMessagesOpenRef.current;
