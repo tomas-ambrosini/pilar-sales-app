@@ -107,6 +107,15 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
 
     const matchedTierName = associatedProposal?.proposal_data?.accepted_tier_name || ['good', 'better', 'best'].find(t => associatedProposal?.proposal_data?.tiers?.[t]?.salesPrice === associatedProposal?.amount) || 'good';
 
+    const getProposalAmount = () => {
+        if (associatedProposal?.amount > 0) return associatedProposal.amount;
+        if (associatedProposal?.proposal_data?.accepted_tier_data?.salesPrice) return associatedProposal.proposal_data.accepted_tier_data.salesPrice;
+        if (associatedProposal?.proposal_data?.accepted_tier_data?.price) return associatedProposal.proposal_data.accepted_tier_data.price;
+        if (associatedProposal?.proposal_data?.tiers?.[matchedTierName.toLowerCase()]?.salesPrice) return associatedProposal.proposal_data.tiers[matchedTierName.toLowerCase()].salesPrice;
+        return 0;
+    };
+    const displayAmount = getProposalAmount();
+
     // Determine the action button text based on status
     let actionText = 'Resume';
     let actionColor = 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-600/20';
@@ -223,16 +232,16 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Value</div>
-                                    <div className="text-lg font-black text-slate-800">${(associatedProposal.amount || 0).toLocaleString()}</div>
+                                    <div className="text-lg font-black text-slate-800">${displayAmount.toLocaleString()}</div>
                                 </div>
                                 <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100/50">
                                     <div className="text-[10px] font-bold text-emerald-600/70 uppercase tracking-widest mb-1 flex items-center gap-1"><Wallet size={10}/> Deposit</div>
-                                    <div className="text-lg font-black text-emerald-700">${(associatedProposal.amount * ((associatedProposal.proposal_data?.deposit_percentage || 0) / 100)).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})}</div>
+                                    <div className="text-lg font-black text-emerald-700">${(displayAmount * ((associatedProposal.proposal_data?.deposit_percentage || 0) / 100)).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})}</div>
                                 </div>
                             </div>
                             <div className="mt-3 bg-blue-50/50 p-3 rounded-xl border border-blue-100/50 flex justify-between items-center">
                                 <div className="text-[10px] font-bold text-blue-600/70 uppercase tracking-widest">Balance Due</div>
-                                <div className="text-lg font-black text-blue-700">${(associatedProposal.amount - (associatedProposal.amount * ((associatedProposal.proposal_data?.deposit_percentage || 0) / 100))).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})}</div>
+                                <div className="text-lg font-black text-blue-700">${(displayAmount - (displayAmount * ((associatedProposal.proposal_data?.deposit_percentage || 0) / 100))).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})}</div>
                             </div>
                         </div>
                     )}
@@ -360,7 +369,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                                     <FileText size={14} className="text-slate-400" /> Proposal
                                 </button>
                             )}
-                            {['NEEDS_SCHEDULING', 'SCHEDULED', 'APPROVED', 'COMPLETED', 'CLOSED_WON'].includes(job.status) && (
+                            {['NEEDS_SCHEDULING', 'SCHEDULED', 'APPROVED', 'COMPLETED', 'CLOSED_WON', 'Working', 'En Route'].includes(job.status) && (
                                 <button onClick={() => { 
                                     if (associatedProposal) {
                                         const matchedTierData = associatedProposal.proposal_data?.accepted_tier_data || associatedProposal.proposal_data?.tiers?.[matchedTierName];
@@ -377,7 +386,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                                     <ShieldCheck size={14} className="text-slate-400" /> Contract
                                 </button>
                             )}
-                            {['SCHEDULED', 'COMPLETED', 'CLOSED_WON'].includes(job.status) && (
+                            {['SCHEDULED', 'COMPLETED', 'CLOSED_WON', 'Working', 'En Route'].includes(job.status) && (
                                 <button disabled={loadingInvoice} onClick={async () => {
                                     if (!associatedProposal) return toast.error("No associated proposal found.");
                                     setLoadingInvoice(true);
