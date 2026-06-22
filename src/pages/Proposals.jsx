@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useProposals } from '../context/ProposalContext';
 import { useCustomers } from '../context/CustomerContext';
+import { useRole } from '../context/RoleContext';
 import { Search, Plus, Calendar, Settings, ShieldCheck, Mail, Printer, AlertTriangle, FileText, Share, Clock, Home, PenTool, CheckCircle, Smartphone, Edit2, Trash2, ArrowRight, CalendarClock, Lock, Link, Copy, ThumbsDown, RotateCcw, LayoutGrid, List as ListIcon, Ban, Check, X } from 'lucide-react';
 import Modal from '../components/Modal';
 import toast from 'react-hot-toast';
@@ -60,8 +61,9 @@ const getEstValueDisplay = (proposal) => {
     return { min: finalMin, max: finalMax, hasRange };
 };
 
-export default function Proposals({ embedded = false }) {
+export default function Proposals({ embedded = false, pipelineFilter = 'All Deals' }) {
   const { user } = useAuth();
+  const { activeRole, ROLES } = useRole();
   const { proposals, addProposal, updateProposal, deleteProposal, loading } = useProposals();
   const { customers, addUnitToAddress } = useCustomers();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -688,6 +690,16 @@ ${equipmentNotes}
                const filteredProposals = proposals.filter(p => {
                    const matchesStatus = filterMode === 'All' || p.status === filterMode;
                    if (!matchesStatus) return false;
+
+                   // Pipeline Filter Enforcement
+                   const isManager = [ROLES.ADMIN, ROLES.MANAGER].includes(activeRole);
+                   const effectiveFilter = isManager ? pipelineFilter : 'My Deals';
+                   
+                   if (effectiveFilter === 'My Deals') {
+                       const belongsToUser = p.created_by === user?.id || (p.proposal_data && p.proposal_data.salesperson_id === user?.id);
+                       if (!belongsToUser) return false;
+                   }
+
                    if (dateFilter === 'all') return true;
                    
                    const dateString = p.updated_at || p.created_at || p.date;

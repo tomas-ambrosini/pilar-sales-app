@@ -65,8 +65,8 @@ export default function Sales() {
         if (opp.proposal_data?.type === 'SERVICE') return;
 
         // Apply Filters
-        const isSalesRep = activeRole === ROLES.SALES;
-        const currentFilter = isSalesRep ? 'My Deals' : pipelineFilter;
+        const isManager = [ROLES.ADMIN, ROLES.MANAGER].includes(activeRole);
+        const currentFilter = isManager ? pipelineFilter : 'My Deals';
 
         if (currentFilter === 'My Deals' && opp.assigned_salesperson_id !== user?.id) return;
         if (currentFilter === 'Unassigned' && opp.assigned_salesperson_id !== null) return;
@@ -164,11 +164,10 @@ export default function Sales() {
                 </div>
             </div>
             
-            {activeRole !== ROLES.SALES && (
+            {[ROLES.ADMIN, ROLES.MANAGER].includes(activeRole) && (
                 <div className="flex items-center gap-2 bg-white/80  p-1.5 rounded-2xl border border-slate-200/60 shadow-sm">
                    <button onClick={() => setPipelineFilter('All Deals')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'All Deals' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>All Deals</button>
                    <button onClick={() => setPipelineFilter('My Deals')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'My Deals' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-500 hover:text-primary-600 hover:bg-primary-50'}`}>My Deals</button>
-                   <button onClick={() => setPipelineFilter('Unassigned')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'Unassigned' ? 'bg-amber-500 text-white shadow-md' : 'text-slate-500 hover:text-amber-600 hover:bg-amber-50'}`}>Unassigned</button>
                 </div>
             )}
         </div>
@@ -176,7 +175,7 @@ export default function Sales() {
         {activeTab === 'proposals' ? (
             <div className="flex-1 overflow-hidden rounded-3xl relative z-10 bg-white shadow-sm border border-slate-200">
                 <div className="h-full overflow-y-auto">
-                    <Proposals embedded={true} />
+                    <Proposals embedded={true} pipelineFilter={pipelineFilter} />
                 </div>
             </div>
         ) : (
