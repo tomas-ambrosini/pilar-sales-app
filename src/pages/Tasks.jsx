@@ -502,7 +502,7 @@ export default function Tasks() {
                                       {assignees.length === 0 && <div className="w-6 h-6 rounded-full border-2 border-slate-200 border-dashed bg-slate-50 flex items-center justify-center text-slate-400"><Users size={10}/></div>}
                                     </div>
                                     <button 
-                                      onClick={(e) => { e.stopPropagation(); setViewMode('list'); setTimeout(() => toggleExpand(task), 100); }} 
+                                      onClick={(e) => { e.stopPropagation(); toggleExpand(task); }} 
                                       className="text-[10px] font-bold text-slate-400 hover:text-primary-500 flex items-center gap-1 bg-slate-50/50 hover:bg-primary-50 px-2 py-1 rounded-lg transition-colors"
                                     >
                                       <MessageSquare size={12} /> Open
@@ -544,8 +544,7 @@ export default function Tasks() {
 
     const handleEventClick = (info) => {
       const task = info.event.extendedProps.task;
-      setViewMode('list');
-      setTimeout(() => { toggleExpand(task); }, 100);
+      toggleExpand(task);
     };
 
     const handleEventDrop = (info) => {
@@ -583,6 +582,127 @@ export default function Tasks() {
           height="auto"
           dayMaxEvents={3}
         />
+      </div>
+    );
+  };
+
+  const renderTaskModal = () => {
+    if (!expandedTaskId) return null;
+    const task = tasks.find(t => t.id === expandedTaskId);
+    if (!task) return null;
+
+    return (
+      <div className="fixed inset-0 z-[9000] flex items-center justify-center p-4 sm:p-6 md:p-12 bg-slate-900/30 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="absolute inset-0" onClick={() => setExpandedTaskId(null)}></div>
+        
+        <div className="relative w-full max-w-4xl bg-white h-[90vh] rounded-3xl shadow-2xl border border-slate-200/60 flex flex-col animate-in zoom-in-95 duration-300 overflow-hidden ring-1 ring-slate-900/5">
+          {/* Header */}
+          <div className="flex justify-between items-center px-6 py-5 bg-white border-b border-slate-100 z-10 shrink-0">
+            <h2 className="font-black text-xl text-slate-800 tracking-tight pr-4 truncate">{task.title}</h2>
+            <button onClick={() => setExpandedTaskId(null)} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors shrink-0"><X size={20}/></button>
+          </div>
+          
+          {/* Content Area - Split into Description (Top) and Activity (Bottom) */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-8">
+            {/* Description Section */}
+            <div className="flex flex-col">
+              <div className="flex justify-between items-center mb-3">
+                <label className="text-[11px] font-black text-slate-800 uppercase tracking-[0.2em] flex items-center gap-2"><FileText size={14} className="text-primary-500" /> Description & Notes</label>
+                <button onClick={() => saveDescription(task.id)} className="text-[10px] font-bold text-white bg-slate-800 hover:bg-slate-900 px-3 py-1.5 rounded-full shadow-sm transition-all hover:scale-[1.02] active:scale-95">Save Details</button>
+              </div>
+              <div className="bg-white border border-slate-200/60 rounded-xl p-1 shadow-inner focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-300 transition-all min-h-[200px]">
+                <textarea
+                  value={activeDescription}
+                  onChange={(e) => setActiveDescription(e.target.value)}
+                  onBlur={() => saveDescription(task.id)}
+                  placeholder="Add extensive details, links, or a paragraph form of the task..."
+                  className="w-full h-full bg-transparent border-none p-3 text-[14px] text-slate-700 outline-none resize-y min-h-[190px] leading-relaxed placeholder-slate-300"
+                />
+              </div>
+            </div>
+
+            {/* Updates Feed Section */}
+            <div className="flex flex-col relative">
+              <div className="flex justify-between items-center mb-4">
+                <label className="text-[11px] font-black text-slate-800 uppercase tracking-[0.2em] flex items-center gap-2"><MessageSquare size={14} className="text-primary-500" /> Activity Stream</label>
+              </div>
+              
+              <div id={`updates-container-${task.id}`} className="px-1 pb-4 space-y-5 relative">
+                {taskUpdates[task.id]?.length > 0 && (
+                  <div className="absolute left-[19px] top-4 bottom-4 w-px bg-gradient-to-b from-slate-200 via-slate-200 to-transparent z-0" />
+                )}
+                
+                {(!taskUpdates[task.id] || taskUpdates[task.id].length === 0) ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-slate-400 border border-dashed border-slate-200 rounded-xl bg-slate-50">
+                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-2 shadow-sm">
+                      <MessageSquare size={20} className="text-slate-300" />
+                    </div>
+                    <p className="text-xs font-bold">No activity yet</p>
+                  </div>
+                ) : (
+                  taskUpdates[task.id].map(update => (
+                    <div key={update.id} className="relative z-10 flex gap-3 group">
+                      {update.user_profiles?.avatar_url ? (
+                        <img src={update.user_profiles.avatar_url} className="w-10 h-10 rounded-full border-[3px] border-white shadow-sm shrink-0 object-cover ring-1 ring-slate-100" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs font-bold shrink-0 border-[3px] border-white shadow-sm ring-1 ring-slate-100">
+                          {getUserInitials(update.user_profiles?.full_name)}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-baseline mb-1">
+                          <span className="text-sm font-bold text-slate-800 truncate pr-2">{update.user_profiles?.full_name || 'Unknown User'}</span>
+                          <span className="text-[10px] font-bold tracking-wide text-slate-400 shrink-0">{new Date(update.created_at).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <div className="bg-white border border-slate-100 shadow-sm rounded-2xl rounded-tl-sm p-3 group-hover:shadow-md transition-all">
+                          <p className="text-[13px] text-slate-600 whitespace-pre-wrap leading-relaxed">{update.content}</p>
+                          <AttachmentViewer update={update} onImageClick={setActiveImage} />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div ref={updatesEndRef} />
+              </div>
+
+              {/* Integrated Command Console */}
+              <div className="mt-2 bg-white rounded-xl border border-slate-200 shadow-sm p-1 focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-300 transition-all flex flex-col relative sticky bottom-0 z-20">
+                {attachmentFile && (
+                  <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100 m-2 mb-1">
+                    {attachmentFile.type.startsWith('image/') ? <ImageIcon size={14} className="text-primary-500"/> : <FileText size={14} className="text-primary-500"/>}
+                    <span className="text-xs text-slate-700 font-bold truncate flex-1">{attachmentFile.name}</span>
+                    <button onClick={() => setAttachmentFile(null)} className="text-slate-400 hover:text-rose-500 bg-white border border-slate-200 rounded-full p-1 transition-colors"><X size={12}/></button>
+                  </div>
+                )}
+                <textarea
+                  value={newUpdateContent}
+                  onChange={(e) => setNewUpdateContent(e.target.value)}
+                  placeholder="Write a status update..."
+                  className="w-full bg-transparent border-none text-[14px] p-3 outline-none resize-none min-h-[44px] max-h-[120px] placeholder-slate-300"
+                  rows={1}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitUpdate(task.id); }
+                  }}
+                />
+                <div className="flex justify-between items-center px-2 pb-1 pt-1">
+                  <div className="flex items-center">
+                    <input type="file" ref={fileInputRef} onChange={(e) => { if (e.target.files && e.target.files[0]) setAttachmentFile(e.target.files[0]); }} className="hidden" />
+                    <button onClick={() => fileInputRef.current?.click()} className="text-slate-400 hover:text-primary-500 hover:bg-primary-50 p-2 rounded-full transition-all group" title="Attach File">
+                      <Paperclip size={18} className="group-hover:-rotate-12 transition-transform" />
+                    </button>
+                  </div>
+                  <button 
+                    onClick={() => submitUpdate(task.id)}
+                    disabled={isUploading || (!newUpdateContent.trim() && !attachmentFile)}
+                    className="bg-slate-800 hover:bg-slate-900 disabled:opacity-30 text-white px-4 py-1.5 rounded-full shadow-sm transition-all flex items-center justify-center font-bold text-xs gap-1.5 hover:scale-[1.02] active:scale-95"
+                  >
+                    {isUploading ? <Loader2 size={14} className="animate-spin" /> : <>Post <Send size={12} className="-mt-0.5" /></>}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
@@ -667,406 +787,209 @@ export default function Tasks() {
       </div>
 
       {viewMode === 'list' && (
-      <div className="bg-white border border-slate-200/60 rounded-3xl shadow-2xl shadow-slate-200/50 flex flex-col overflow-hidden ring-1 ring-slate-900/5">
-        {/* Table Header */}
-        <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px_32px] gap-4 items-center px-6 py-4 bg-slate-50/50 border-b border-slate-100/50 text-[10px] font-black text-slate-400 uppercase tracking-wider">
-          <div className="w-8 flex justify-center"><CheckSquare size={16} /></div>
-          <div>Task Name</div>
-          <div className="text-center">Assigned To</div>
-          <div className="px-3">Status</div>
-          <div className="px-3">Progress</div>
-          <div className="px-3">Priority</div>
-          <div className="px-3">Due Date</div>
-          <div></div>
-        </div>
-
-        {/* Input Row */}
-        <form onSubmit={addTask} className="border-b border-slate-100/50 bg-white hover:bg-slate-50/30 transition-colors">
-          <div className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px_32px] gap-4 items-center px-6 py-3.5">
-            <div className="w-8 flex justify-center text-slate-300"><Plus size={18} /></div>
-            <input 
-              type="text" 
-              placeholder="Add a new task... (Press Enter)"
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-              disabled={isSubmitting}
-              className="w-full bg-transparent border-none text-slate-800 text-sm font-bold focus:ring-0 p-0 outline-none placeholder-slate-300"
-            />
-            {/* Empty cells for visual balance */}
-            <div className="col-span-5 text-xs text-slate-400 flex items-center justify-end pr-2">
-               {isSubmitting && <Loader2 size={14} className="animate-spin text-primary-500" />}
-            </div>
-            <div></div>
-          </div>
-        </form>
-
-        {/* Task Rows */}
-        {isLoading ? (
-          <div className="divide-y divide-slate-100/40 bg-white pb-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px_32px] gap-4 items-center px-6 py-3.5 animate-pulse">
-                <div className="w-8 flex justify-center"><div className="w-[18px] h-[18px] rounded bg-slate-200"></div></div>
-                <div className="flex items-center gap-2"><div className="w-5 h-5 rounded bg-slate-200"></div><div className="h-4 bg-slate-200 rounded w-1/2"></div></div>
-                <div className="flex justify-center"><div className="w-6 h-6 rounded-full bg-slate-200"></div></div>
-                <div className="px-3"><div className="h-6 bg-slate-200 rounded-full w-20"></div></div>
-                <div className="px-3"><div className="h-6 bg-slate-200 rounded-full w-16"></div></div>
-                <div className="px-3"><div className="h-6 bg-slate-200 rounded-full w-24"></div></div>
-                <div className="px-3"><div className="h-4 bg-slate-200 rounded w-16"></div></div>
-                <div><div className="w-6 h-6 rounded bg-slate-200"></div></div>
+        <div className="flex flex-col gap-8 animate-in fade-in duration-500">
+          {/* Top Sticky Input Row */}
+          <div className="bg-white border border-slate-200/60 rounded-2xl shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)] ring-1 ring-slate-900/5 overflow-hidden">
+            <form onSubmit={addTask} className="bg-white hover:bg-slate-50/30 transition-colors">
+              <div className="flex items-center px-6 py-4 gap-4">
+                <div className="w-6 flex justify-center text-slate-300"><Plus size={18} /></div>
+                <input 
+                  type="text" 
+                  placeholder="Add a new task... (Press Enter)"
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  disabled={isSubmitting}
+                  className="flex-1 bg-transparent border-none text-slate-800 text-[15px] font-bold focus:ring-0 p-0 outline-none placeholder-slate-300"
+                />
+                {isSubmitting && <Loader2 size={16} className="animate-spin text-primary-500" />}
               </div>
-            ))}
+            </form>
           </div>
-        ) : tasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-slate-50/50 rounded-b-2xl border-t border-dashed border-slate-200 text-center relative overflow-hidden">
-             {/* Premium Decorative Background Elements */}
-             <div className="absolute top-10 left-10 w-32 h-32 bg-primary-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse"></div>
-             <div className="absolute bottom-10 right-10 w-32 h-32 bg-amber-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse delay-1000"></div>
-             
-             <div className="w-20 h-20 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mb-6 relative z-10">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-transparent rounded-2xl opacity-50"></div>
-                <CheckSquare size={36} className="text-primary-400 relative z-10" />
-             </div>
-             
-             <h3 className="text-xl font-black text-slate-800 mb-2 relative z-10">You're all caught up!</h3>
-             <p className="text-sm font-medium text-slate-500 max-w-[280px] relative z-10">There are no tasks on the board. Add a new task above to kick off your day.</p>
-          </div>
-        ) : filteredAndSortedTasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-slate-50/50 rounded-b-2xl border-t border-dashed border-slate-200 text-center">
-             <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mb-5">
-                <Filter size={28} className="text-slate-400" />
-             </div>
-             <h3 className="text-lg font-bold text-slate-700 mb-1">No matching tasks</h3>
-             <p className="text-sm font-medium text-slate-500 max-w-[250px]">Try adjusting your filters or assignee to find what you're looking for.</p>
-             <button onClick={() => { setFilterSearch(''); setFilterStatus('All'); setFilterAssignee('All'); }} className="mt-5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold px-4 py-2 rounded-xl text-xs shadow-sm transition-all focus:ring-2 focus:ring-primary-500 focus:outline-none">Clear All Filters</button>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100/40 bg-white pb-2">
-            {filteredAndSortedTasks.map(task => {
-               const isDone = task.status?.toLowerCase() === 'done';
-               const prioConfig = getPriorityConfig(task.priority);
-               const statusConfig = getStatusConfig(task.status);
-               const progConfig = getProgressConfig(task.progress);
-               const assignees = teamMembers.filter(m => (task.assigned_to || []).includes(m.id));
 
-                return (
-                  <div key={task.id} className="flex flex-col border-b border-slate-100/40 last:border-0 hover:bg-slate-50/40 transition-colors group relative">
-                    <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-primary-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className={`grid grid-cols-[auto_minmax(300px,1fr)_120px_140px_140px_140px_120px_32px] gap-4 items-center px-6 py-3.5 ${isDone ? 'opacity-50 grayscale' : ''}`}>
-                      {/* Checkbox */}
-                      <div className="w-8 flex justify-center">
-                        <button 
-                           onClick={(e) => { e.stopPropagation(); updateTask(task.id, 'status', isDone ? 'To Do' : 'Done'); }} 
-                           className={`w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 ${isDone ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20 scale-110' : 'bg-white ring-2 ring-inset ring-slate-200 hover:ring-emerald-400 text-transparent'}`}
-                        >
-                          {isDone && <Check size={12} strokeWidth={4} className="animate-in zoom-in" />}
-                        </button>
-                      </div>
-                     
-                     {/* Title */}
-                     <div className="flex items-center gap-2 w-full pr-4 min-w-0">
-                       <button onClick={() => toggleExpand(task)} className={`transition-colors flex-shrink-0 ${expandedTaskId === task.id ? 'text-primary-500' : 'text-slate-300 hover:text-primary-500'}`}>
-                          {expandedTaskId === task.id ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-                       </button>
-                       <input 
-                         type="text" 
-                         value={task.title}
-                         onChange={(e) => {
-                            const newTasks = [...tasks];
-                            const t = newTasks.find(t => t.id === task.id);
-                            t.title = e.target.value;
-                            setTasks(newTasks);
-                         }}
-                         onBlur={(e) => updateTask(task.id, 'title', e.target.value)}
-                         className={`w-full bg-transparent border-none text-sm font-bold focus:ring-0 p-0 outline-none truncate ${isDone ? 'line-through text-slate-400' : 'text-slate-800'}`}
-                       />
+          {isLoading ? (
+            <div className="bg-white border border-slate-200/60 rounded-2xl shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)] ring-1 ring-slate-900/5 p-6 animate-pulse space-y-4">
+              {[1, 2, 3].map(i => <div key={i} className="h-10 bg-slate-100 rounded-xl w-full" />)}
+            </div>
+          ) : tasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 text-center relative overflow-hidden">
+              <div className="w-20 h-20 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mb-6 relative z-10">
+                  <CheckSquare size={36} className="text-primary-400" />
+              </div>
+              <h3 className="text-xl font-black text-slate-800 mb-2 relative z-10">You're all caught up!</h3>
+              <p className="text-sm font-medium text-slate-500 max-w-[280px] relative z-10">There are no tasks on the board. Add a new task above to kick off your day.</p>
+            </div>
+          ) : filteredAndSortedTasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 text-center">
+              <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mb-5">
+                  <Filter size={28} className="text-slate-400" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-700 mb-1">No matching tasks</h3>
+              <p className="text-sm font-medium text-slate-500 max-w-[250px]">Try adjusting your filters or assignee to find what you're looking for.</p>
+              <button onClick={() => { setFilterSearch(''); setFilterStatus('All'); setFilterAssignee('All'); }} className="mt-5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold px-4 py-2 rounded-xl text-xs shadow-sm transition-all focus:ring-2 focus:ring-primary-500 focus:outline-none">Clear All Filters</button>
+            </div>
+          ) : (
+            /* Grouped Lists */
+            ['To Do', 'In Progress', 'Review', 'Done'].map(status => {
+               const groupTasks = filteredAndSortedTasks.filter(t => (t.status || 'To Do').toLowerCase() === status.toLowerCase());
+               if (groupTasks.length === 0 && status !== 'To Do') return null; // Always show To Do, even if empty
+
+               return (
+                 <div key={status} className="flex flex-col">
+                   <div className="flex items-center gap-2 mb-3 px-2">
+                     {getStatusConfig(status).icon}
+                     <h3 className="font-extrabold text-slate-800 text-[14px]">{status}</h3>
+                     <span className="text-slate-400 text-[11px] font-bold bg-slate-100 px-2 py-0.5 rounded-full">{groupTasks.length}</span>
+                   </div>
+                   
+                   {groupTasks.length === 0 ? (
+                     <div className="bg-transparent border border-dashed border-slate-200 rounded-2xl py-8 text-center flex flex-col items-center justify-center">
+                       <CheckSquare size={24} className="text-slate-300 mb-2"/>
+                       <p className="text-slate-400 text-[13px] font-bold">No tasks here</p>
                      </div>
+                   ) : (
+                     <div className="bg-white border border-slate-200/60 rounded-2xl shadow-sm ring-1 ring-slate-900/5 overflow-visible">
+                       {groupTasks.map(task => {
+                          const isDone = task.status?.toLowerCase() === 'done';
+                          const prioConfig = getPriorityConfig(task.priority);
+                          const statusConfig = getStatusConfig(task.status);
+                          const progConfig = getProgressConfig(task.progress);
+                          const assignees = teamMembers.filter(m => (task.assigned_to || []).includes(m.id));
 
-                   {/* Assignees */}
-                   <div className="relative flex justify-center">
-                      <button 
-                         onClick={() => { setActiveMenuId(task.id); setActiveMenuType('assignee'); }}
-                         className="flex -space-x-2 overflow-hidden hover:opacity-80 transition-opacity p-1 rounded hover:bg-slate-100"
-                      >
-                         {assignees.length > 0 ? (
-                           assignees.slice(0, 3).map((a, i) => (
-                             a.avatar_url ? 
-                             <img key={a.id} src={a.avatar_url} className="inline-block h-7 w-7 rounded-full ring-2 ring-white" /> :
-                             <div key={a.id} className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 ring-2 ring-white text-[10px] font-bold text-white uppercase">{getUserInitials(a.full_name)}</div>
-                           ))
-                         ) : (
-                           <div className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-dashed border-slate-300 bg-slate-50 text-slate-400"><Users size={12} /></div>
-                         )}
-                         {assignees.length > 3 && (
-                           <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 ring-2 ring-white text-[10px] font-bold text-slate-600">+{assignees.length - 3}</div>
-                         )}
-                      </button>
-                      
-                      {activeMenuId === task.id && activeMenuType === 'assignee' && (
-                        <div ref={menuRef} className="absolute left-0 top-full mt-1 w-56 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 z-50">
-                           <div className="px-3 pb-2 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 mb-2">Assign To</div>
-                           <div className="max-h-48 overflow-y-auto">
-                              {teamMembers.map(member => {
-                                 const isAssigned = (task.assigned_to || []).includes(member.id);
-                                 return (
-                                   <button 
-                                     key={member.id} 
-                                     onClick={() => toggleAssignee(task.id, member.id)} 
-                                     className="w-full flex items-center justify-between px-3 py-2 hover:bg-slate-50 text-sm"
-                                   >
-                                      <div className="flex items-center gap-2">
-                                        {member.avatar_url ? 
-                                          <img src={member.avatar_url} className="h-6 w-6 rounded-full" /> :
-                                          <div className="h-6 w-6 rounded-full bg-slate-800 text-white flex items-center justify-center text-[9px] font-bold">{getUserInitials(member.full_name)}</div>
-                                        }
-                                        <span className="font-medium text-slate-700 truncate">{member.full_name}</span>
-                                      </div>
-                                      {isAssigned && <Check size={14} className="text-primary-500" />}
-                                   </button>
-                                 );
-                              })}
-                           </div>
-                        </div>
-                      )}
-                   </div>
-
-                   {/* Status */}
-                   <div className="relative">
-                      <button 
-                         onClick={() => { setActiveMenuId(task.id); setActiveMenuType('status'); }}
-                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-extrabold tracking-wide transition-all w-full justify-between hover:shadow-md hover:-translate-y-0.5 active:scale-95 ${statusConfig.bg}`}
-                      >
-                         <div className="flex items-center gap-1.5">{statusConfig.icon} {statusConfig.text}</div>
-                         <ChevronDown size={12} className="opacity-40" />
-                      </button>
-                      
-                      {activeMenuId === task.id && activeMenuType === 'status' && (
-                        <div ref={menuRef} className="absolute left-0 top-full mt-2 w-44 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/80 p-1.5 z-50 animate-in zoom-in-95 duration-100">
-                           {['To Do', 'In Progress', 'Review', 'Done'].map(s => (
-                             <button key={s} onClick={() => updateTask(task.id, 'status', s)} className="w-full text-left px-3 py-2 text-[13px] text-slate-700 hover:bg-slate-100 rounded-xl font-bold transition-colors">
-                               {s}
-                             </button>
-                           ))}
-                        </div>
-                      )}
-                   </div>
-
-                   {/* Progress */}
-                   <div className="relative">
-                      <button 
-                         onClick={() => { setActiveMenuId(task.id); setActiveMenuType('progress'); }}
-                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-extrabold tracking-wide transition-all w-full justify-between hover:shadow-md hover:-translate-y-0.5 active:scale-95 ${progConfig.bg}`}
-                      >
-                         <span>{progConfig.text}</span>
-                         <ChevronDown size={12} className="opacity-40" />
-                      </button>
-                      
-                      {activeMenuId === task.id && activeMenuType === 'progress' && (
-                        <div ref={menuRef} className="absolute left-0 top-full mt-2 w-44 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/80 p-1.5 z-50 animate-in zoom-in-95 duration-100">
-                           {[
-                             { val: 0, text: 'Not Started' },
-                             { val: 25, text: 'Just Started' },
-                             { val: 50, text: 'Halfway' },
-                             { val: 75, text: 'Almost Done' },
-                             { val: 100, text: 'Completed' }
-                           ].map(p => (
-                             <button key={p.val} onClick={() => updateTask(task.id, 'progress', p.val)} className="w-full text-left px-3 py-2 text-[13px] text-slate-700 hover:bg-slate-100 rounded-xl font-bold transition-colors">
-                               {p.text}
-                             </button>
-                           ))}
-                        </div>
-                      )}
-                   </div>
-
-                   {/* Priority */}
-                   <div className="relative">
-                      <button 
-                         onClick={() => { setActiveMenuId(task.id); setActiveMenuType('priority'); }}
-                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-extrabold tracking-wide transition-all w-full justify-between hover:shadow-md hover:-translate-y-0.5 active:scale-95 ${prioConfig.bg}`}
-                      >
-                         <div className="flex items-center gap-1.5">{prioConfig.icon} {prioConfig.text}</div>
-                         <ChevronDown size={12} className="opacity-40" />
-                      </button>
-                      
-                      {activeMenuId === task.id && activeMenuType === 'priority' && (
-                        <div ref={menuRef} className="absolute left-0 top-full mt-2 w-44 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/80 p-1.5 z-50 animate-in zoom-in-95 duration-100">
-                           {['None', 'Low', 'Medium', 'High', 'Critical'].map(p => (
-                             <button key={p} onClick={() => updateTask(task.id, 'priority', p)} className="w-full text-left px-3 py-2 text-[13px] text-slate-700 hover:bg-slate-100 rounded-xl font-bold transition-colors">
-                               {p}
-                             </button>
-                           ))}
-                        </div>
-                      )}
-                   </div>
-
-                   {/* Due Date */}
-                   <div>
-                      <div className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-100 rounded-full border border-transparent hover:border-slate-200 hover:shadow-sm transition-all cursor-text group/date">
-                         <Calendar size={14} className="text-slate-400 group-hover/date:text-primary-500 transition-colors shrink-0" />
-                         <input 
-                           type="date" 
-                           value={task.due_date ? task.due_date.split('T')[0] : ''}
-                           onChange={(e) => updateTask(task.id, 'due_date', e.target.value ? new Date(e.target.value).toISOString() : null)}
-                           className="bg-transparent border-none text-[11px] font-extrabold tracking-wide text-slate-600 focus:ring-0 p-0 outline-none w-full cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full"
-                         />
-                      </div>
-                   </div>
-
-                   {/* Delete Action (Admins Only) */}
-                   <div className="flex justify-end">
-                     {isAdmin ? (
-                       <button 
-                         onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }} 
-                         className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors"
-                         title="Delete Task"
-                       >
-                         <Trash2 size={16} />
-                       </button>
-                     ) : <div className="w-8"></div>}
-                   </div>
-
-                 </div>
-
-                 {/* Expandable Area - Legendary Workspace */}
-                 {expandedTaskId === task.id && (
-                   <div className="px-4 pb-4 pt-0 md:px-6 md:pb-6 md:pt-2 ml-[52px] animate-in fade-in slide-in-from-top-4 duration-300">
-                     <div className="flex flex-col lg:flex-row gap-6 bg-gradient-to-br from-white to-slate-50/80 border border-slate-200/60 rounded-[24px] p-6 shadow-2xl shadow-slate-200/50 ring-1 ring-white/50 relative overflow-hidden">
-                        
-                        {/* Subtle background glow */}
-                        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-primary-100/30 rounded-full blur-3xl pointer-events-none"></div>
-
-                        {/* Description Section (Left 60%) */}
-                        <div className="flex flex-col w-full lg:w-3/5 h-[500px]">
-                          <div className="flex justify-between items-center mb-4 pl-1">
-                            <label className="text-[11px] font-black text-slate-800 uppercase tracking-[0.2em] flex items-center gap-2"><FileText size={14} className="text-primary-500" /> Description & Notes</label>
-                            <button onClick={() => saveDescription(task.id)} className="text-[11px] font-bold text-white bg-slate-800 hover:bg-slate-900 px-4 py-2 rounded-full shadow-md shadow-slate-900/10 transition-all hover:scale-[1.02] active:scale-95">Save Details</button>
-                          </div>
-                          <div className="flex-1 bg-white border border-slate-200/60 rounded-2xl p-1 shadow-inner relative group focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-300 transition-all">
-                            <textarea
-                              value={activeDescription}
-                              onChange={(e) => setActiveDescription(e.target.value)}
-                              onBlur={() => saveDescription(task.id)}
-                              placeholder="Add extensive details, links, or a paragraph form of the task..."
-                              className="w-full h-full bg-transparent border-none p-4 text-[15px] text-slate-700 outline-none resize-none leading-relaxed placeholder-slate-300"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Updates Feed Section (Right 40%) */}
-                        <div className="flex flex-col w-full lg:w-2/5 h-[500px] relative">
-                          <div className="flex justify-between items-center mb-4 pl-1">
-                            <label className="text-[11px] font-black text-slate-800 uppercase tracking-[0.2em] flex items-center gap-2"><MessageSquare size={14} className="text-primary-500" /> Activity Stream</label>
-                          </div>
-                          
-                          {/* Timeline Feed */}
-                          <div id={`updates-container-${task.id}`} className="flex-1 overflow-y-auto px-1 pb-4 space-y-6 relative">
-                            {/* Vertical Line */}
-                            {taskUpdates[task.id]?.length > 0 && (
-                              <div className="absolute left-[23px] top-4 bottom-4 w-px bg-gradient-to-b from-slate-200 via-slate-200 to-transparent z-0" />
-                            )}
-                            
-                            {(!taskUpdates[task.id] || taskUpdates[task.id].length === 0) ? (
-                              <div className="flex flex-col items-center justify-center h-full text-slate-400">
-                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 border border-slate-100 shadow-inner">
-                                  <MessageSquare size={24} className="opacity-40" />
-                                </div>
-                                <p className="text-sm font-medium">No activity yet.</p>
-                                <p className="text-xs text-slate-400 text-center max-w-[200px] mt-1">Be the first to post an update or attach a file.</p>
+                          return (
+                            <div key={task.id} onClick={() => toggleExpand(task)} className={`flex items-center justify-between border-b border-slate-100/40 last:border-0 hover:bg-slate-50/40 transition-colors group relative px-6 py-3 cursor-pointer ${isDone ? 'opacity-60 grayscale' : ''}`}>
+                              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-primary-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              
+                              {/* Left: Checkbox + Title */}
+                              <div className="flex items-center gap-4 flex-1 min-w-0 pr-6">
+                                <button 
+                                   onClick={(e) => { e.stopPropagation(); updateTask(task.id, 'status', isDone ? 'To Do' : 'Done'); }} 
+                                   className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 ${isDone ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20 scale-110' : 'bg-white ring-2 ring-inset ring-slate-200 hover:ring-emerald-400 text-transparent'}`}
+                                >
+                                  {isDone && <Check size={12} strokeWidth={4} className="animate-in zoom-in" />}
+                                </button>
+                                <input 
+                                  type="text" 
+                                  value={task.title}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onChange={(e) => {
+                                     const newTasks = [...tasks];
+                                     const t = newTasks.find(t => t.id === task.id);
+                                     t.title = e.target.value;
+                                     setTasks(newTasks);
+                                  }}
+                                  onBlur={(e) => updateTask(task.id, 'title', e.target.value)}
+                                  className={`w-full bg-transparent border-none text-[13px] font-bold focus:ring-0 p-0 outline-none truncate ${isDone ? 'line-through text-slate-400' : 'text-slate-800'}`}
+                                />
                               </div>
-                            ) : (
-                              taskUpdates[task.id].map(update => (
-                                <div key={update.id} className="relative z-10 flex gap-4 group">
-                                  {update.user_profiles?.avatar_url ? (
-                                    <img src={update.user_profiles.avatar_url} className="w-10 h-10 rounded-full border-[3px] border-white shadow-sm shrink-0 object-cover ring-1 ring-slate-100" />
-                                  ) : (
-                                    <div className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs font-bold shrink-0 border-[3px] border-white shadow-sm ring-1 ring-slate-100">
-                                      {getUserInitials(update.user_profiles?.full_name)}
+
+                              {/* Right: Badges */}
+                              <div className="flex items-center gap-4 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                {/* Assignees */}
+                                <div className="relative flex justify-center">
+                                  <button 
+                                      onClick={() => { setActiveMenuId(task.id); setActiveMenuType('assignee'); }}
+                                      className="flex -space-x-2 overflow-hidden hover:opacity-80 transition-opacity p-1 rounded hover:bg-slate-100"
+                                  >
+                                      {assignees.length > 0 ? (
+                                        assignees.slice(0, 3).map((a, i) => (
+                                          a.avatar_url ? 
+                                          <img key={a.id} src={a.avatar_url} className="inline-block h-6 w-6 rounded-full ring-2 ring-white" /> :
+                                          <div key={a.id} className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 ring-2 ring-white text-[9px] font-bold text-white uppercase">{getUserInitials(a.full_name)}</div>
+                                        ))
+                                      ) : (
+                                        <div className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-slate-300 bg-slate-50 text-slate-400"><Users size={12} /></div>
+                                      )}
+                                      {assignees.length > 3 && (
+                                        <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 ring-2 ring-white text-[9px] font-bold text-slate-600">+{assignees.length - 3}</div>
+                                      )}
+                                  </button>
+                                  {activeMenuId === task.id && activeMenuType === 'assignee' && (
+                                    <div ref={menuRef} className="absolute right-0 top-full mt-1 w-56 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 z-50">
+                                      <div className="px-3 pb-2 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 mb-2">Assign To</div>
+                                      <div className="max-h-48 overflow-y-auto">
+                                          {teamMembers.map(member => {
+                                            const isAssigned = (task.assigned_to || []).includes(member.id);
+                                            return (
+                                              <button key={member.id} onClick={() => toggleAssignee(task.id, member.id)} className="w-full flex items-center justify-between px-3 py-2 hover:bg-slate-50 text-sm">
+                                                  <div className="flex items-center gap-2">
+                                                    {member.avatar_url ? <img src={member.avatar_url} className="h-6 w-6 rounded-full" /> : <div className="h-6 w-6 rounded-full bg-slate-800 text-white flex items-center justify-center text-[9px] font-bold">{getUserInitials(member.full_name)}</div>}
+                                                    <span className="font-medium text-slate-700 truncate">{member.full_name}</span>
+                                                  </div>
+                                                  {isAssigned && <Check size={14} className="text-primary-500" />}
+                                              </button>
+                                            );
+                                          })}
+                                      </div>
                                     </div>
                                   )}
-                                  <div className="flex-1 pt-1 min-w-0">
-                                    <div className="flex justify-between items-baseline mb-1">
-                                      <span className="text-sm font-bold text-slate-800 truncate pr-2">{update.user_profiles?.full_name || 'Unknown User'}</span>
-                                      <span className="text-[10px] font-bold tracking-wide text-slate-400 shrink-0">{new Date(update.created_at).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
+                                </div>
+
+                                {/* Status */}
+                                <div className="relative w-[90px] flex justify-start">
+                                  <button onClick={() => { setActiveMenuId(task.id); setActiveMenuType('status'); }} className={`flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-extrabold tracking-wide transition-all hover:shadow-sm active:scale-95 whitespace-nowrap ${statusConfig.bg}`}>
+                                    <div className="flex items-center gap-1.5">{statusConfig.icon} {statusConfig.text}</div>
+                                  </button>
+                                  {activeMenuId === task.id && activeMenuType === 'status' && (
+                                    <div ref={menuRef} className="absolute left-0 top-full mt-2 w-44 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/80 p-1.5 z-50 animate-in zoom-in-95 duration-100">
+                                      {['To Do', 'In Progress', 'Review', 'Done'].map(s => <button key={s} onClick={() => updateTask(task.id, 'status', s)} className="w-full text-left px-3 py-2 text-[13px] text-slate-700 hover:bg-slate-100 rounded-xl font-bold transition-colors">{s}</button>)}
                                     </div>
-                                    <div className="bg-white border border-slate-100 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] rounded-[16px] rounded-tl-sm p-3.5 group-hover:shadow-[0_4px_12px_-4px_rgba(0,0,0,0.08)] transition-all">
-                                      <p className="text-[13px] text-slate-600 whitespace-pre-wrap leading-relaxed">{update.content}</p>
-                                      
-                                      <AttachmentViewer update={update} onImageClick={setActiveImage} />
+                                  )}
+                                </div>
+
+                                {/* Progress */}
+                                <div className="relative w-[100px] flex justify-start">
+                                  <button onClick={() => { setActiveMenuId(task.id); setActiveMenuType('progress'); }} className={`flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-extrabold tracking-wide transition-all hover:shadow-sm active:scale-95 whitespace-nowrap ${progConfig.bg}`}>
+                                    <span>{progConfig.text}</span>
+                                  </button>
+                                  {activeMenuId === task.id && activeMenuType === 'progress' && (
+                                    <div ref={menuRef} className="absolute left-0 top-full mt-2 w-44 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/80 p-1.5 z-50 animate-in zoom-in-95 duration-100">
+                                      {[{ val: 0, text: 'Not Started' }, { val: 25, text: 'Just Started' }, { val: 50, text: 'Halfway' }, { val: 75, text: 'Almost Done' }, { val: 100, text: 'Completed' }].map(p => <button key={p.val} onClick={() => updateTask(task.id, 'progress', p.val)} className="w-full text-left px-3 py-2 text-[13px] text-slate-700 hover:bg-slate-100 rounded-xl font-bold transition-colors">{p.text}</button>)}
                                     </div>
+                                  )}
+                                </div>
+
+                                {/* Priority */}
+                                <div className="relative w-[90px] flex justify-start">
+                                  <button onClick={() => { setActiveMenuId(task.id); setActiveMenuType('priority'); }} className={`flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-extrabold tracking-wide transition-all hover:shadow-sm active:scale-95 whitespace-nowrap ${prioConfig.bg}`}>
+                                    <div className="flex items-center gap-1.5">{prioConfig.icon} {prioConfig.text}</div>
+                                  </button>
+                                  {activeMenuId === task.id && activeMenuType === 'priority' && (
+                                    <div ref={menuRef} className="absolute right-0 top-full mt-2 w-44 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/80 p-1.5 z-50 animate-in zoom-in-95 duration-100">
+                                      {['None', 'Low', 'Medium', 'High', 'Critical'].map(p => <button key={p} onClick={() => updateTask(task.id, 'priority', p)} className="w-full text-left px-3 py-2 text-[13px] text-slate-700 hover:bg-slate-100 rounded-xl font-bold transition-colors">{p}</button>)}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Due Date */}
+                                <div className="w-[100px] flex justify-end">
+                                  <div className="flex items-center gap-2 px-2 py-1 hover:bg-slate-100 rounded-full border border-transparent hover:border-slate-200 hover:shadow-sm transition-all cursor-text group/date">
+                                    <Calendar size={12} className="text-slate-400 group-hover/date:text-primary-500 transition-colors shrink-0" />
+                                    <input 
+                                      type="date" 
+                                      value={task.due_date ? task.due_date.split('T')[0] : ''}
+                                      onChange={(e) => updateTask(task.id, 'due_date', e.target.value ? new Date(e.target.value).toISOString() : null)}
+                                      className="bg-transparent border-none text-[10px] font-extrabold tracking-wide text-slate-600 focus:ring-0 p-0 outline-none w-full cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full"
+                                    />
                                   </div>
                                 </div>
-                              ))
-                            )}
-                            <div ref={updatesEndRef} />
-                          </div>
 
-                          {/* Integrated Command Console */}
-                          <div className="mt-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm shadow-slate-200/50 p-1 focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-300 transition-all flex flex-col relative">
-                            {attachmentFile && (
-                              <div className="flex items-center gap-2 bg-slate-50/80 px-3 py-2 rounded-xl border border-slate-100 m-2 mb-1">
-                                {attachmentFile.type.startsWith('image/') ? <ImageIcon size={14} className="text-primary-500"/> : <FileText size={14} className="text-primary-500"/>}
-                                <span className="text-xs text-slate-700 font-bold truncate flex-1">{attachmentFile.name}</span>
-                                <button onClick={() => setAttachmentFile(null)} className="text-slate-400 hover:text-rose-500 bg-white border border-slate-200 rounded-full p-1 transition-colors hover:shadow-sm"><X size={12}/></button>
-                              </div>
-                            )}
-                            
-                            <textarea
-                              value={newUpdateContent}
-                              onChange={(e) => setNewUpdateContent(e.target.value)}
-                              placeholder="Write a status update..."
-                              className="w-full bg-transparent border-none text-[14px] p-3 outline-none resize-none min-h-[44px] max-h-[120px] placeholder-slate-300"
-                              rows={1}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                  e.preventDefault();
-                                  submitUpdate(task.id);
-                                }
-                              }}
-                            />
-                            
-                            <div className="flex justify-between items-center px-2 pb-2 pt-1">
-                              <div className="flex items-center">
-                                <input 
-                                  type="file" 
-                                  ref={fileInputRef} 
-                                  onChange={(e) => {
-                                    if (e.target.files && e.target.files[0]) {
-                                      setAttachmentFile(e.target.files[0]);
-                                    }
-                                  }}
-                                  className="hidden" 
-                                />
-                                <button 
-                                  onClick={() => fileInputRef.current?.click()} 
-                                  className="text-slate-400 hover:text-primary-500 hover:bg-primary-50 p-2 rounded-full transition-all group"
-                                  title="Attach File"
-                                >
-                                  <Paperclip size={18} className="group-hover:-rotate-12 transition-transform" />
-                                </button>
-                              </div>
-                              <button 
-                                onClick={() => submitUpdate(task.id)}
-                                disabled={isUploading || (!newUpdateContent.trim() && !attachmentFile)}
-                                className="bg-slate-800 hover:bg-slate-900 disabled:opacity-30 text-white px-5 py-2 rounded-full shadow-md transition-all flex items-center justify-center font-bold text-xs gap-2 hover:scale-[1.02] active:scale-95"
-                              >
-                                {isUploading ? (
-                                  <><Loader2 size={16} className="animate-spin" /> Sending...</>
-                                ) : (
-                                  <>Post <Send size={14} className="-mt-0.5" /></>
+                                {/* Delete Action (Admins Only) */}
+                                {isAdmin && (
+                                  <button onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }} className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors ml-2" title="Delete Task">
+                                    <Trash2 size={14} />
+                                  </button>
                                 )}
-                              </button>
+                              </div>
                             </div>
-                          </div>
-
-                        </div>
+                          );
+                       })}
                      </div>
-                   </div>
-                 )}
+                   )}
                  </div>
                );
-            })}
-          </div>
-        )}
-      </div>
+            })
+          )}
+        </div>
       )}
 
       {/* Board View */}
@@ -1107,6 +1030,9 @@ export default function Tasks() {
             />
         </div>
       )}
+
+      {/* Render Modal Panel at the root level */}
+      {renderTaskModal()}
     </div>
   );
 }

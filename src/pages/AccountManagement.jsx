@@ -73,6 +73,7 @@ export default function AccountManagement() {
     e.preventDefault();
     const fd = new FormData(e.target);
     const payload = Object.fromEntries(fd.entries());
+    if (!payload.username || payload.username.trim() === '') payload.username = null;
     
     try {
        toast.loading('Provisioning account...', { id: 'create' });
@@ -342,6 +343,7 @@ export default function AccountManagement() {
                   e.preventDefault();
                   const fd = new FormData(e.target);
                   const fdObj = Object.fromEntries(fd.entries());
+                  if (!fdObj.username || fdObj.username.trim() === '') fdObj.username = null;
                   await handleUpdateUser(showEditModal, fdObj);
 
                   // Sync badges
@@ -514,9 +516,9 @@ export default function AccountManagement() {
                <p className="text-sm text-slate-600 mb-6">Send the following secure message to the team member so they can log in.</p>
                
                <div className="relative bg-slate-50 border border-slate-200 rounded-lg p-4 font-mono text-xs leading-relaxed text-slate-700 mb-4 whitespace-pre-wrap select-all">
-{`Your Pilar Home CRM dashboard is ready.
+{`Your Lotarri dashboard is ready.
 
-1. Go to: crm.pilarhome.com (or your vercel link)
+1. Go to: lotarri.com
 2. Login Email: ${successPayload.email}
 3. Temp Password: ${successPayload.password}
 
@@ -527,7 +529,7 @@ Note: You will be forced to create a secure permanent password upon your first l
                   <button type="button" onClick={() => setSuccessPayload(null)} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors">Close</button>
                   <button 
                     onClick={() => {
-                        const msg = `Your Pilar Home CRM dashboard is ready.\n\n1. Go to: crm.pilarhome.com (or your vercel link)\n2. Login Email: ${successPayload.email}\n3. Temp Password: ${successPayload.password}\n\nNote: You will be forced to create a secure permanent password upon your first login.`;
+                        const msg = `Your Lotarri dashboard is ready.\n\n1. Go to: lotarri.com\n2. Login Email: ${successPayload.email}\n3. Temp Password: ${successPayload.password}\n\nNote: You will be forced to create a secure permanent password upon your first login.`;
                         navigator.clipboard.writeText(msg);
                         toast.success('Message copied to clipboard!');
                     }} 
