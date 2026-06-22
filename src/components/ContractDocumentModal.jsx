@@ -68,10 +68,10 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
 
    // Resolve multi-system contracts dynamically for standard accepted packages
    let resolvedSystemsList = tierData?.systemsList;
-   if ((!resolvedSystemsList || resolvedSystemsList.length === 0) && proposal?.proposal_data?.systemTiers && proposal.proposal_data.systemTiers.length > 1) {
+   if ((!resolvedSystemsList || resolvedSystemsList.length === 0) && proposal?.proposal_data?.systemTiers && proposal.proposal_data.systemTiers.length > 0) {
        resolvedSystemsList = proposal.proposal_data.systemTiers.map(sys => {
            const matchedTierName = (tierName || 'good').toLowerCase();
-           const td = sys.tiers?.[matchedTierName];
+           const td = sys.tiers?.[matchedTierName] || sys.altTiers?.[matchedTierName];
            if (!td) return null;
            return {
                systemId: sys.systemId,

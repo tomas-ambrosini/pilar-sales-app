@@ -105,6 +105,18 @@ export default function SalesPipeline() {
   };
 
   const getEstValue = (proposalData) => {
+      // If deal is accepted, use exact signed value
+      if (proposalData?.accepted_tier_data) {
+          const accData = proposalData.accepted_tier_data;
+          if (accData.salesPrice) return accData.salesPrice;
+          if (accData.price) return accData.price;
+          if (accData.systemsList && Array.isArray(accData.systemsList)) {
+              let amt = accData.systemsList.reduce((sum, sys) => sum + (sys.selectedTierData?.salesPrice || sys.selectedTierData?.price || sys.tierData?.salesPrice || sys.tierData?.price || 0), 0);
+              if (amt > 0) return amt;
+          }
+      }
+
+      // Fallback: Calculate Max Potential Value from available tiers
       if (!proposalData?.systemTiers || proposalData.systemTiers.length === 0) return 0;
       let maxVal = 0;
       proposalData.systemTiers.forEach(sys => {
