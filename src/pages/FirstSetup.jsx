@@ -31,11 +31,41 @@ export default function FirstSetup() {
       setLoading(true);
       setError(null);
 
-      // 1. Update Password in Auth System
-      const { error: authError } = await supabase.auth.updateUser({ password });
-      if (authError) throw authError;
+      // 1. Update Password in Auth System (Using direct fetch to bypass SDK "Auth session missing" bug)
+      const { data: sessionData } = await supabase.auth.getSession();
+      let accessToken = sessionData?.session?.access_token;
+      
+      if (!accessToken) {
+         // Fallback to localStorage directly if SDK memory is wiped
+         try {
+            const tokenStr = localStorage.getItem('sb-rwzyejhpjayxpebxrybe-auth-token');
+            if (tokenStr) {
+               accessToken = JSON.parse(tokenStr).access_token;
+            }
+         } catch(e) {}
+      }
 
-      // 2. Update Profile & Clear Flag
+      if (!accessToken) {
+         throw new Error("Unable to read session token. Please ensure cookies/local storage are enabled, then refresh the page.");
+      }
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://rwzyejhpjayxpebxrybe.supabase.co';
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3enllamhwamF5eHBlYnhyeWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMTYwMDgsImV4cCI6MjA4OTU5MjAwOH0.ryE5wcyDNpZOInQD0XRC1YcE0RtxHfTz-WNj_2tIu44';
+
+      const passUpdateRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+         method: 'PUT',
+         headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+            'apikey': supabaseAnonKey
+         },
+         body: JSON.stringify({ password })
+      });
+
+      if (!passUpdateRes.ok) {
+         const passErrData = await passUpdateRes.json();
+         throw new Error(passErrData.msg || passErrData.message || "Failed to update password");
+      }
       try {
          // Attempt to update via the edge function to bypass RLS blocks
          const { data: edgeData, error: edgeError } = await supabase.functions.invoke('admin-action', {

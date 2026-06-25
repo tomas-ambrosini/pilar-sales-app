@@ -40,8 +40,14 @@ serve(async (req) => {
 
     // ACTION: completeFirstSetup (Allowed for ANY authenticated user to themselves)
     if (action === 'completeFirstSetup') {
-      const { full_name } = payload;
+      const { full_name, password } = payload;
       
+      // Update password via Admin API if provided
+      if (password) {
+         const { error: passError } = await supabaseAdmin.auth.admin.updateUserById(user.id, { password });
+         if (passError) throw passError;
+      }
+
       const updatePayload: any = { must_change_password: false };
       if (full_name) updatePayload.full_name = full_name;
 
