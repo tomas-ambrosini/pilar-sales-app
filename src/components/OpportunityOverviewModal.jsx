@@ -108,27 +108,30 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
     const matchedTierName = associatedProposal?.proposal_data?.accepted_tier_name || ['good', 'better', 'best'].find(t => associatedProposal?.proposal_data?.tiers?.[t]?.salesPrice === associatedProposal?.amount) || 'good';
 
     const getProposalAmount = () => {
-        let amount = 0;
-        if (associatedProposal?.amount > 0) return associatedProposal.amount;
+        const sourceData = job.proposal_data || associatedProposal?.proposal_data || {};
         
-        // Always prioritize the Opportunity's accepted tier data since that is the final source of truth for signed deals
-        const sourceData = job.proposal_data || associatedProposal?.proposal_data;
+        // 1. Explicit final amounts
+        if (sourceData.total_contract_amount > 0) return sourceData.total_contract_amount;
+        if (sourceData.approval_snapshot?.price > 0) return sourceData.approval_snapshot.price;
+        if (associatedProposal?.amount > 0) return associatedProposal.amount;
+        if (job.amount > 0) return job.amount;
+        
+        // 2. Accepted tier data
         if (sourceData?.accepted_tier_data) {
             const accData = sourceData.accepted_tier_data;
             if (accData.salesPrice) return accData.salesPrice;
             if (accData.price) return accData.price;
             
-            // Multi-system proposal handling
+            // Multi-system
             if (accData.systemsList && Array.isArray(accData.systemsList)) {
-                amount = accData.systemsList.reduce((sum, sys) => {
-                    const price = sys.selectedTierData?.salesPrice || sys.selectedTierData?.price || 0;
-                    return sum + price;
+                let sum = accData.systemsList.reduce((s, sys) => {
+                    return s + (sys.selectedTierData?.salesPrice || sys.selectedTierData?.price || 0);
                 }, 0);
-                if (amount > 0) return amount;
+                if (sum > 0) return sum;
             }
         }
         
-        // Fallback to unaccepted proposal tier data
+        // 3. Unaccepted proposal tier data fallback
         if (associatedProposal?.proposal_data?.tiers?.[matchedTierName.toLowerCase()]?.salesPrice) {
             return associatedProposal.proposal_data.tiers[matchedTierName.toLowerCase()].salesPrice;
         }
@@ -136,6 +139,14 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
         return 0;
     };
     const displayAmount = getProposalAmount();
+
+    const getDepositAmount = () => {
+        const pData = job.proposal_data || associatedProposal?.proposal_data || {};
+        if (pData.deposit_amount > 0) return pData.deposit_amount;
+        return displayAmount * ((pData.deposit_percentage || 0) / 100);
+    };
+    const displayDeposit = getDepositAmount();
+    const displayBalance = Math.max(0, displayAmount - displayDeposit);
 
     // Determine the action button text based on status
     let actionText = 'Resume';
@@ -245,7 +256,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                     </div>
 
                     {/* Financial Snapshot */}
-                    {associatedProposal && (
+                    {(associatedProposal || displayAmount > 0) && (
                         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm transition-shadow hover:shadow-md">
                             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                 <DollarSign size={14} /> Financial Snapshot
@@ -253,16 +264,16 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Value</div>
-                                    <div className="text-lg font-black text-slate-800">${displayAmount.toLocaleString()}</div>
+                                    <div className="text-lg font-black text-slate-800">${displayAmount.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})}</div>
                                 </div>
                                 <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100/50">
                                     <div className="text-[10px] font-bold text-emerald-600/70 uppercase tracking-widest mb-1 flex items-center gap-1"><Wallet size={10}/> Deposit</div>
-                                    <div className="text-lg font-black text-emerald-700">${(displayAmount * ((associatedProposal.proposal_data?.deposit_percentage || 0) / 100)).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})}</div>
+                                    <div className="text-lg font-black text-emerald-700">${displayDeposit.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})}</div>
                                 </div>
                             </div>
                             <div className="mt-3 bg-blue-50/50 p-3 rounded-xl border border-blue-100/50 flex justify-between items-center">
                                 <div className="text-[10px] font-bold text-blue-600/70 uppercase tracking-widest">Balance Due</div>
-                                <div className="text-lg font-black text-blue-700">${(displayAmount - (displayAmount * ((associatedProposal.proposal_data?.deposit_percentage || 0) / 100))).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})}</div>
+                                <div className="text-lg font-black text-blue-700">${displayBalance.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})}</div>
                             </div>
                         </div>
                     )}
