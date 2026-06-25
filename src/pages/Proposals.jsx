@@ -691,7 +691,7 @@ ${equipmentNotes}
                    if (!matchesStatus) return false;
 
                    // Pipeline Filter Enforcement
-                   const isManager = [ROLES.ADMIN, ROLES.MANAGER].includes(activeRole);
+                   const isManager = [ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER].includes(activeRole);
                    const effectiveFilter = isManager ? pipelineFilter : 'My Deals';
                    
                    if (effectiveFilter === 'My Deals') {

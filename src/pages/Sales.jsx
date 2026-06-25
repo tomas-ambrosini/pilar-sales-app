@@ -80,7 +80,7 @@ export default function Sales() {
         if (opp.proposal_data?.type === 'SERVICE') return;
 
         // Apply Filters
-        const isManager = [ROLES.ADMIN, ROLES.MANAGER].includes(activeRole);
+        const isManager = [ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER].includes(activeRole);
         const currentFilter = isManager ? pipelineFilter : 'My Deals';
 
         if (currentFilter === 'My Deals' && opp.assigned_salesperson_id !== user?.id) return;
@@ -183,7 +183,7 @@ export default function Sales() {
                 </div>
             </div>
             
-            {[ROLES.ADMIN, ROLES.MANAGER].includes(activeRole) && (
+            {[ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER].includes(activeRole) && (
                 <div className="flex items-center gap-2 bg-white/80  p-1.5 rounded-2xl border border-slate-200/60 shadow-sm">
                    <button onClick={() => setPipelineFilter('All Deals')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'All Deals' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>All Deals</button>
                    <button onClick={() => setPipelineFilter('My Deals')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'My Deals' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-500 hover:text-primary-600 hover:bg-primary-50'}`}>My Deals</button>
