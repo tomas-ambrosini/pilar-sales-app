@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { Lock, User, ArrowRight, ShieldCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Lock, User, ArrowRight, ShieldCheck, AlertCircle, Eye, EyeOff, LogOut } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function FirstSetup() {
@@ -83,10 +83,23 @@ export default function FirstSetup() {
       window.location.href = '/';
       
     } catch (err) {
-      setError(err.message || "Failed to secure account.");
+      const errMsg = err.message || "Failed to secure account.";
+      setError(errMsg);
+      
+      // Handle zombie sessions (where server session was deleted e.g., by admin reset, but browser kept old JWT)
+      if (errMsg.includes('Session from session_id claim in JWT does not exist') || errMsg.includes('Auth session missing')) {
+         toast.error("Your session has expired. Please log in again.");
+         await supabase.auth.signOut();
+         window.location.href = '/login';
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSignOut = async () => {
+     await supabase.auth.signOut();
+     window.location.href = '/login';
   };
 
   return (
@@ -154,9 +167,17 @@ export default function FirstSetup() {
            <button 
              type="submit" 
              disabled={loading}
-             className="w-full mt-6 bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+             className="w-full bg-slate-700 hover:bg-slate-800 text-white py-3.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-md shadow-slate-200 mt-2"
            >
-             {loading ? 'Securing...' : 'Save & Enter Pilar Home'} {!loading && <ArrowRight size={18} />}
+             {loading ? 'Securing Account...' : 'Save & Enter Pilar Home'} <ArrowRight size={18} />
+           </button>
+
+           <button
+             type="button"
+             onClick={handleSignOut}
+             className="w-full text-slate-500 hover:text-slate-700 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors mt-4"
+           >
+             <LogOut size={16} /> Sign out and try again
            </button>
         </form>
       </div>
