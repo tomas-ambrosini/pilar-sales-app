@@ -283,6 +283,10 @@ export default function Sales() {
                                         assignedRep = user;
                                     }
 
+                                    const isAssignedToOther = job.assigned_salesperson_id && job.assigned_salesperson_id !== user?.id;
+                                    const isDispatcherViewingOther = activeRole === ROLES.DISPATCHER && isAssignedToOther;
+                                    const canActOnDeal = !isDispatcherViewingOther;
+
                                     return (
                                         <div key={job.id} onClick={() => setInspectingJob(job)} className={`group relative cursor-pointer bg-white rounded-2xl shadow-sm border p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}>
                                             
@@ -398,7 +402,7 @@ export default function Sales() {
 
                                             {/* Action Buttons */}
                                             <div className="flex justify-end mt-3">
-                                                {col.id === PIPELINE_STATES.NEW_LEAD && (
+                                                {col.id === PIPELINE_STATES.NEW_LEAD && canActOnDeal && (
                                                     <button onClick={async (e) => {
                                                         e.stopPropagation();
                                                         try {
@@ -440,7 +444,7 @@ export default function Sales() {
                                                         View Deal <ArrowRight size={12} strokeWidth={3} />
                                                     </button>
                                                 )}
-                                                {col.id === PIPELINE_STATES.QUOTING && (
+                                                {col.id === PIPELINE_STATES.QUOTING && canActOnDeal && (
                                                     <button onClick={(e) => { 
                                                         e.stopPropagation(); 
                                                         navigate(`/proposals?action=resume_opp&opp_id=${job.id}`); 
