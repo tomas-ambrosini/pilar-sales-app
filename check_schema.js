@@ -1,12 +1,13 @@
-import { supabase } from './src/supabaseClient.js';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+dotenv.config();
 
-async function check() {
-  const { data, error } = await supabase.from('opportunities').select('*').limit(1);
-  console.log("Error:", error);
-  if (data && data.length > 0) {
-    console.log("Columns:", Object.keys(data[0]));
-  } else {
-    console.log("No data, but query successful?");
-  }
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+async function run() {
+    const { data, error } = await supabase.from('user_profiles').select('email').limit(1);
+    console.log(error);
 }
-check();
+run();

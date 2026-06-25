@@ -63,11 +63,31 @@ export function AuthProvider({ children }) {
     setIsLoading(false);
   };
 
-  const login = async (email, password) => {
+  const login = async (emailOrUsername, password) => {
     setIsLoading(true);
     setError(null);
+    
+    let loginEmail = emailOrUsername.trim();
+    
+    // If it doesn't look like an email, assume it's a username and try to resolve it
+    if (!loginEmail.includes('@')) {
+       const { data: profile, error: profErr } = await supabase
+         .from('user_profiles')
+         .select('email')
+         .ilike('username', loginEmail)
+         .single();
+         
+       if (profile?.email) {
+          loginEmail = profile.email;
+       } else {
+          setError("Username not found. Please check your spelling or use your email address.");
+          setIsLoading(false);
+          return false;
+       }
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
+      email: loginEmail,
       password,
     });
     
