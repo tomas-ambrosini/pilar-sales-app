@@ -72,12 +72,24 @@ export default function AccountManagement() {
   const handleClearSetup = async (e, targetUser) => {
      e.stopPropagation();
      try {
-       const { error } = await supabase.from('user_profiles').update({ must_change_password: false }).eq('id', targetUser.id);
+       const { data, error } = await supabase.functions.invoke('admin-action', {
+         body: { 
+           action: 'updateUser', 
+           payload: { 
+             targetUserId: targetUser.id, 
+             role: targetUser.role,
+             status: targetUser.status,
+             must_change_password: false 
+           } 
+         }
+       });
        if (error) throw error;
+       if (data?.error) throw new Error(data.error);
+
        toast.success(`Cleared setup flag for ${targetUser.full_name}`);
        fetchUsers();
      } catch (err) {
-       toast.error(err.message || "Failed to clear setup flag");
+       toast.error("Failed to clear setup flag. Ensure backend is deployed.");
      }
   };
 
