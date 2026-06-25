@@ -69,6 +69,18 @@ export default function AccountManagement() {
     return data;
   };
 
+  const handleClearSetup = async (e, targetUser) => {
+     e.stopPropagation();
+     try {
+       const { error } = await supabase.from('user_profiles').update({ must_change_password: false }).eq('id', targetUser.id);
+       if (error) throw error;
+       toast.success(`Cleared setup flag for ${targetUser.full_name}`);
+       fetchUsers();
+     } catch (err) {
+       toast.error(err.message || "Failed to clear setup flag");
+     }
+  };
+
   const handleCreateUser = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
@@ -264,6 +276,9 @@ export default function AccountManagement() {
                            </td>
                            <td className="px-6 py-5 text-right border-b border-slate-100" style={{ verticalAlign: 'middle' }}>
                               <div className="inline-flex items-center justify-end gap-2">
+                                 {u.must_change_password && (
+                                    <button onClick={(e) => handleClearSetup(e, u)} className="px-3 py-2 bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-200 font-bold text-xs rounded-lg shadow-sm transition-all" title="Manually mark as Secured">Clear Setup</button>
+                                 )}
                                  <button onClick={(e) => { e.stopPropagation(); setShowResetModal(u); }} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="Force Password Reset"><Key size={16}/></button>
                                  <button onClick={(e) => { e.stopPropagation(); setShowEditModal(u); setEditBadges(userBadgesMap[u.id] || []); }} className="px-4 py-2 bg-white border border-slate-200 hover:border-primary-300 hover:text-primary-700 text-slate-600 font-bold text-xs rounded-lg shadow-sm transition-all hover:shadow">Manage</button>
                               </div>

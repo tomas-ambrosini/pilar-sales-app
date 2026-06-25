@@ -64,16 +64,15 @@ export default function FirstSetup() {
          throw new Error(passErrData.msg || passErrData.message || "Failed to update password");
       }
       try {
-         // Attempt to update via the edge function to bypass RLS blocks
-         const { data: edgeData, error: edgeError } = await supabase.functions.invoke('admin-action', {
-            body: { action: 'completeFirstSetup', payload: {} }
-         });
-         
-         if (edgeError) throw edgeError;
-         if (edgeData?.error) throw new Error(edgeData.error);
+         // Users can update their own profile flag
+         const { error: profileError } = await supabase.from('user_profiles')
+            .update({ must_change_password: false })
+            .eq('id', user.id);
+            
+         if (profileError) throw profileError;
          
       } catch (profileErr) {
-         console.warn("Could not clear setup flag via edge function:", profileErr.message);
+         console.warn("Could not clear setup flag directly:", profileErr.message);
          // Fallback: the user successfully updated password, but RLS/Edge failed.
          // We'll bypass the prompt locally so they aren't stuck in a loop.
          localStorage.setItem(`setup_complete_${user.id}`, 'true');
