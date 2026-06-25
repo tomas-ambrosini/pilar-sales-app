@@ -35,7 +35,12 @@ export default function DispatchHub() {
       phone: '',
       email: '',
       address: '',
-      city: ''
+      city: '',
+      sameAsService: true,
+      billingAddress: '',
+      billingCity: '',
+      billingState: '',
+      billingZip: ''
    });
 
    // Opportunity / Service Form
@@ -110,7 +115,11 @@ export default function DispatchHub() {
               address: customerForm.address,
               city: customerForm.city,
               state: 'FL',
-              zip: ''
+              zip: '',
+              billing_address: customerForm.sameAsService ? customerForm.address : customerForm.billingAddress,
+              billing_city: customerForm.sameAsService ? customerForm.city : customerForm.billingCity,
+              billing_state: customerForm.sameAsService ? 'FL' : customerForm.billingState,
+              billing_zip: customerForm.sameAsService ? '' : customerForm.billingZip
            });
            
            if (!response.success) {
@@ -309,6 +318,41 @@ export default function DispatchHub() {
                                        <div className="form-group mb-6">
                                            <label className="text-xs font-bold text-slate-500">City</label>
                                            <input required type="text" value={customerForm.city} onChange={e => setCustomerForm({...customerForm, city: e.target.value})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
+                                       </div>
+
+                                       <div className="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200/60">
+                                            <label className="flex items-center gap-2 cursor-pointer mb-2 text-sm font-semibold text-slate-700">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={customerForm.sameAsService} 
+                                                    onChange={e => setCustomerForm({...customerForm, sameAsService: e.target.checked})}
+                                                    className="w-4 h-4 rounded text-primary-600 focus:ring-primary-500 border-slate-300"
+                                                />
+                                                Billing Address is same as Service Address
+                                            </label>
+
+                                            {!customerForm.sameAsService && (
+                                                <div className="mt-4 pt-4 border-t border-slate-200 grid grid-cols-1 gap-4">
+                                                    <div className="form-group">
+                                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Billing Street</label>
+                                                        <input required={!customerForm.sameAsService} type="text" value={customerForm.billingAddress} onChange={e => setCustomerForm({...customerForm, billingAddress: e.target.value})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
+                                                    </div>
+                                                    <div className="grid grid-cols-3 gap-3">
+                                                        <div className="form-group col-span-1">
+                                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">City</label>
+                                                            <input required={!customerForm.sameAsService} type="text" value={customerForm.billingCity} onChange={e => setCustomerForm({...customerForm, billingCity: e.target.value})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
+                                                        </div>
+                                                        <div className="form-group col-span-1">
+                                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">State</label>
+                                                            <input required={!customerForm.sameAsService} type="text" value={customerForm.billingState} onChange={e => setCustomerForm({...customerForm, billingState: e.target.value})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
+                                                        </div>
+                                                        <div className="form-group col-span-1">
+                                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Zip</label>
+                                                            <input required={!customerForm.sameAsService} type="text" value={customerForm.billingZip} onChange={e => setCustomerForm({...customerForm, billingZip: e.target.value})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                        </div>
                                        <div className="flex gap-3">
                                            <button type="button" onClick={() => setIsNewCustomer(false)} className="btn-secondary flex-1 py-2.5">Cancel</button>

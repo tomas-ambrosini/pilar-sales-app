@@ -39,7 +39,13 @@ function CustomerList() {
     email: '',
     phone: '',
     address: '',
-    tags: ''
+    city: '',
+    tags: '',
+    sameAsService: true,
+    billingAddress: '',
+    billingCity: '',
+    billingState: '',
+    billingZip: ''
   });
 
   const handleInputChange = (e) => {
@@ -48,7 +54,11 @@ function CustomerList() {
   };
 
   const handleCloseModal = () => {
-    setFormData({ firstName: '', lastName: '', email: '', phone: '', address: '' });
+    setFormData({ 
+      firstName: '', lastName: '', email: '', phone: '', 
+      address: '', city: '', tags: '', sameAsService: true, 
+      billingAddress: '', billingCity: '', billingState: '', billingZip: '' 
+    });
     setIsAddCustomerOpen(false);
   };
 
@@ -64,7 +74,14 @@ function CustomerList() {
       email: formData.email,
       phone: formData.phone,
       address: formData.address,
+      city: formData.city,
+      state: 'FL',
+      zip: '',
       tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+      billing_address: formData.sameAsService ? formData.address : formData.billingAddress,
+      billing_city: formData.sameAsService ? formData.city : formData.billingCity,
+      billing_state: formData.sameAsService ? 'FL' : formData.billingState,
+      billing_zip: formData.sameAsService ? '' : formData.billingZip
     });
 
     if (result && !result.success) {
@@ -376,6 +393,46 @@ function CustomerList() {
             <input type="text" id="address" placeholder="123 Main St" value={formData.address} onChange={handleInputChange} />
           </div>
           <div className="form-group">
+            <label htmlFor="city">City</label>
+            <input type="text" id="city" placeholder="Miami" value={formData.city} onChange={handleInputChange} />
+          </div>
+          
+          <div className="form-group bg-slate-50 p-4 rounded-xl border border-slate-200 mt-2 mb-2">
+             <label className="flex items-center gap-2 cursor-pointer mb-2 text-sm font-semibold text-slate-700">
+                 <input 
+                     type="checkbox" 
+                     id="sameAsService"
+                     checked={formData.sameAsService} 
+                     onChange={(e) => setFormData(prev => ({...prev, sameAsService: e.target.checked}))}
+                     className="w-4 h-4 rounded text-primary-600 focus:ring-primary-500 border-slate-300"
+                 />
+                 Billing Address is same as Service Address
+             </label>
+
+             {!formData.sameAsService && (
+                 <div className="mt-4 pt-4 border-t border-slate-200 grid grid-cols-1 gap-4">
+                     <div>
+                         <label htmlFor="billingAddress">Billing Street</label>
+                         <input required={!formData.sameAsService} type="text" id="billingAddress" value={formData.billingAddress} onChange={handleInputChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
+                     </div>
+                     <div className="grid grid-cols-3 gap-3">
+                         <div className="col-span-1">
+                             <label htmlFor="billingCity">City</label>
+                             <input required={!formData.sameAsService} type="text" id="billingCity" value={formData.billingCity} onChange={handleInputChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
+                         </div>
+                         <div className="col-span-1">
+                             <label htmlFor="billingState">State</label>
+                             <input required={!formData.sameAsService} type="text" id="billingState" value={formData.billingState} onChange={handleInputChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
+                         </div>
+                         <div className="col-span-1">
+                             <label htmlFor="billingZip">Zip</label>
+                             <input required={!formData.sameAsService} type="text" id="billingZip" value={formData.billingZip} onChange={handleInputChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
+                         </div>
+                     </div>
+                 </div>
+             )}
+          </div>
+          <div className="form-group">
             <label htmlFor="tags">Tags (comma separated)</label>
             <input type="text" id="tags" placeholder="Residential, VIP" value={formData.tags} onChange={handleInputChange} />
           </div>
@@ -676,7 +733,11 @@ function CustomerDetail() {
           <div className="info-list">
             <div className="info-item">
               <MapPin size={16} className="text-slate-400" />
-              <span>{customer.address}</span>
+              <span><span className="font-semibold text-slate-500 text-[10px] uppercase mr-1">Service:</span> {customer.address}</span>
+            </div>
+            <div className="info-item">
+              <MapPin size={16} className="text-slate-400" />
+              <span><span className="font-semibold text-slate-500 text-[10px] uppercase mr-1">Billing:</span> {customer.billing_address}</span>
             </div>
             <div className="info-item">
               <Phone size={16} className="text-slate-400" />

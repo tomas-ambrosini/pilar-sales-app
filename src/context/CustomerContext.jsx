@@ -49,6 +49,8 @@ export function CustomerProvider({ children }) {
                     active_maintenance_agreement,
                     tags,
                     created_at,
+                    billing_address_id,
+                    service_address_id,
                     addresses!addresses_household_id_fkey ( id, street_address, city, state, zip, property_details, is_primary_residence ),
                     contacts ( id, first_name, last_name, primary_phone, email, role ),
                     opportunities ( id, status, urgency_level, issue_description, created_at, proposal_data, site_survey_data ),
@@ -69,6 +71,8 @@ export function CustomerProvider({ children }) {
                             active_maintenance_agreement,
                             tags,
                             created_at,
+                            billing_address_id,
+                            service_address_id,
                             addresses!addresses_household_id_fkey ( id, street_address, city, state, zip, property_details, is_primary_residence ),
                             contacts ( id, first_name, last_name, primary_phone, email, role ),
                             opportunities ( id, status, urgency_level, issue_description, created_at, proposal_data, site_survey_data ),
@@ -89,8 +93,11 @@ export function CustomerProvider({ children }) {
                 const formatted = data.map(household => {
                     const primaryContact = household.contacts && household.contacts.length > 0 ? household.contacts[0] : {};
                     const locations = household.addresses && household.addresses.length > 0 ? household.addresses : [];
-                    const primaryAddress = locations[0] || {};
+                    const primaryAddress = locations.find(l => l.id === household.service_address_id) || locations[0] || {};
+                    const billingAddressObj = locations.find(l => l.id === household.billing_address_id) || primaryAddress;
+                    
                     const addressString = primaryAddress.street_address ? `${primaryAddress.street_address} ${primaryAddress.city ? ', ' + primaryAddress.city : ''}`.trim() : 'No address provided';
+                    const billingAddressString = billingAddressObj.street_address ? `${billingAddressObj.street_address} ${billingAddressObj.city ? ', ' + billingAddressObj.city : ''}`.trim() : addressString;
                     
                     return {
                         id: household.id, // Primary key is the Household ID
@@ -99,6 +106,9 @@ export function CustomerProvider({ children }) {
                         email: primaryContact.email || '',
                         phone: primaryContact.primary_phone || '',
                         address: addressString, // Still keeping this as fallback string for old ui
+                        billing_address: billingAddressString,
+                        billing_address_obj: billingAddressObj,
+                        primary_address_obj: primaryAddress,
                         locations: locations, // New Multi-Location Array
                         active_maintenance_agreement: household.active_maintenance_agreement || false,
                         tags: household.tags || [],
@@ -272,6 +282,8 @@ export function CustomerProvider({ children }) {
 
             // 2. Insert Initial Address linked to Household
             let addressId = null;
+            let billingAddressId = null;
+
             if (customerData.address) {
                 const { data: addressData, error: addressError } = await supabase.from('addresses')
                     .insert({ 
@@ -291,9 +303,39 @@ export function CustomerProvider({ children }) {
                     throw addressError;
                 }
                 addressId = addressData.id;
+            }
 
-                // Bind back legacy fallback
-                await supabase.from('households').update({ service_address_id: addressId }).eq('id', householdData.id);
+            // 2.5 Insert Billing Address if distinct
+            if (customerData.billing_address && customerData.billing_address !== customerData.address) {
+                const { data: billingData, error: billingError } = await supabase.from('addresses')
+                    .insert({ 
+                        street_address: customerData.billing_address, 
+                        city: customerData.billing_city || '', 
+                        state: customerData.billing_state || '', 
+                        zip: customerData.billing_zip || '',
+                        household_id: householdData.id,
+                        property_details: {},
+                        is_primary_residence: false
+                    })
+                    .select()
+                    .single();
+                
+                if (billingError) {
+                    await supabase.from('households').delete().eq('id', householdData.id);
+                    throw billingError;
+                }
+                billingAddressId = billingData.id;
+            } else {
+                billingAddressId = addressId; // fallback to same as service
+            }
+
+            // Bind back to household
+            const updatePayload = {};
+            if (addressId) updatePayload.service_address_id = addressId;
+            if (billingAddressId) updatePayload.billing_address_id = billingAddressId;
+            
+            if (Object.keys(updatePayload).length > 0) {
+                await supabase.from('households').update(updatePayload).eq('id', householdData.id);
             }
 
             // 3. Insert Primary Contact
