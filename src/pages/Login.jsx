@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Lock, Mail, ArrowRight, AlertCircle, User, Shield } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, User, Shield, Eye, EyeOff } from 'lucide-react';
 import './Login.css';
 
 export default function Login() {
   const { login, isLoading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,21 +53,27 @@ export default function Login() {
           </div>
 
           <div className="input-group">
-            <div className="flex justify-between w-full">
-              <label htmlFor="password">Password</label>
-              <a href="#" className="forgot-link">Forgot?</a>
-            </div>
-            <div className="input-wrapper">
+            <label htmlFor="password">Password</label>
+            <div className="input-wrapper relative">
               <Lock size={18} className="input-icon" />
               <input 
                 id="password"
-                type="password" 
+                type={showPassword ? "text" : "password"} 
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
                 required
+                className="pr-10"
               />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 

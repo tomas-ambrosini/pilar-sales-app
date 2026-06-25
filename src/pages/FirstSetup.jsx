@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { Lock, User, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Lock, User, ArrowRight, ShieldCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function FirstSetup() {
   const { user } = useAuth();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [displayName, setDisplayName] = useState(user?.full_name || '');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -20,10 +21,6 @@ export default function FirstSetup() {
     }
     if (password.length < 8) {
        setError("Password must be at least 8 characters long.");
-       return;
-    }
-    if (!displayName.trim()) {
-       setError("Display name is required.");
        return;
     }
 
@@ -69,7 +66,7 @@ export default function FirstSetup() {
       try {
          // Attempt to update via the edge function to bypass RLS blocks
          const { data: edgeData, error: edgeError } = await supabase.functions.invoke('admin-action', {
-            body: { action: 'completeFirstSetup', payload: { full_name: displayName } }
+            body: { action: 'completeFirstSetup', payload: {} }
          });
          
          if (edgeError) throw edgeError;
@@ -100,7 +97,7 @@ export default function FirstSetup() {
               <ShieldCheck size={32} />
            </div>
            <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-2">Secure Your Account</h2>
-           <p className="text-slate-500 text-sm font-medium">Welcome to Pilar Home! Please choose a new password and confirm your display name before proceeding.</p>
+           <p className="text-slate-500 text-sm font-medium">Welcome to Pilar Home! Please choose a new password before proceeding.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -109,33 +106,26 @@ export default function FirstSetup() {
                 <AlertCircle size={16} /> {error}
              </div>
            )}
-           
-           <div className="space-y-1">
-             <label className="text-xs font-bold text-slate-500 uppercase">Display Name</label>
-             <div className="relative">
-                <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input 
-                  type="text"
-                  value={displayName}
-                  onChange={e => setDisplayName(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-primary-500 focus:ring-1 focus:ring-primary-500 font-bold text-slate-700"
-                  required
-                />
-             </div>
-           </div>
 
            <div className="space-y-1">
              <label className="text-xs font-bold text-slate-500 uppercase">New Password</label>
              <div className="relative">
                 <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-primary-500 focus:ring-1 focus:ring-primary-500 font-bold text-slate-700"
+                  className="w-full pl-12 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-primary-500 focus:ring-1 focus:ring-primary-500 font-bold text-slate-700"
                   required
                   placeholder="Minimum 8 characters"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
              </div>
            </div>
 
@@ -144,12 +134,20 @@ export default function FirstSetup() {
              <div className="relative">
                 <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-primary-500 focus:ring-1 focus:ring-primary-500 font-bold text-slate-700"
+                  className="w-full pl-12 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-primary-500 focus:ring-1 focus:ring-primary-500 font-bold text-slate-700"
                   required
+                  placeholder="Minimum 8 characters"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
              </div>
            </div>
 
