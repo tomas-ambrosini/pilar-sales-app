@@ -369,6 +369,10 @@ export default function AccountManagement() {
                      <input type="text" name="full_name" defaultValue={showEditModal.full_name} required className="w-full border rounded p-2 text-sm font-semibold" />
                   </div>
                   <div>
+                     <label className="text-xs font-bold text-slate-500 uppercase">Email</label>
+                     <input type="text" readOnly value={showEditModal.email || 'No email bound'} className="w-full border rounded p-2 text-sm font-semibold bg-slate-50 text-slate-500 cursor-not-allowed" />
+                  </div>
+                  <div>
                      <label className="text-xs font-bold text-slate-500 uppercase">Username (Optional)</label>
                      <input type="text" name="username" defaultValue={showEditModal.username || ''} className="w-full border rounded p-2 text-sm font-semibold" />
                   </div>
