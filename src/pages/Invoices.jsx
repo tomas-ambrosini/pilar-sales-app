@@ -36,7 +36,8 @@ export default function Invoices({ isSubView = false }) {
             const { error } = await supabase.from('invoices').update({
                 status: 'Paid in Full',
                 deposit_collected: totalAmt,
-                balance_due: 0
+                balance_due: 0,
+                updated_at: new Date().toISOString()
             }).eq('id', inv.id);
             if (error) throw error;
             

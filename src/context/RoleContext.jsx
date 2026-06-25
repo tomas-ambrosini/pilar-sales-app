@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 
 const RoleContext = createContext();
@@ -40,7 +40,7 @@ export const RoleProvider = ({ children }) => {
   
   const canEditSystemSettings = () => activeRole === ROLES.ADMIN;
 
-  const value = {
+  const value = useMemo(() => ({
     activeRole,
     activeDepartment,
     ROLES,
@@ -49,7 +49,7 @@ export const RoleProvider = ({ children }) => {
     isSubcontractor,
     isTechnician,
     canEditSystemSettings
-  };
+  }), [activeRole, activeDepartment]);
 
   return (
     <RoleContext.Provider value={value}>

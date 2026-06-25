@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 
 const AuthContext = createContext();
@@ -9,11 +9,7 @@ export function AuthProvider({ children }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      fetchUserProfile(session?.user);
-    });
-
+    // onAuthStateChange automatically fires on initial load, no need to duplicate getSession
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         fetchUserProfile(session?.user);
@@ -54,14 +50,15 @@ export function AuthProvider({ children }) {
          supabase.from('user_profiles').update({ 
            avatar_url: mergedAvatar,
            full_name: mergedName 
-         }).eq('id', authUser.id).then(()=>{});
+         }).eq('id', authUser.id).then(()=>{}).catch(console.error);
       }
 
       setUser({ ...authUser, ...data, avatar_url: mergedAvatar, full_name: mergedName, department: data.department });
     } else {
       // In the new architecture, accounts are provisioned via Edge Functions, so a profile should always exist.
       // If it doesn't exist yet (legacy dev), simulate a safe minimal record in-memory.
-      setUser({ ...authUser, role: 'SALES', must_change_password: false });
+      const simulatedName = authUser?.user_metadata?.full_name || authUser?.email?.split('@')[0] || 'Unknown User';
+      setUser({ ...authUser, role: 'SALES', full_name: simulatedName, must_change_password: false });
     }
     setIsLoading(false);
   };
@@ -85,11 +82,17 @@ export function AuthProvider({ children }) {
   // PUBLIC SIGNUP COMPLETELY REMOVED. Accounts must be provisioned via Admin tools.
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("Signout error:", err);
+    }
   };
 
+  const contextValue = useMemo(() => ({ user, login, logout, isLoading, error }), [user, isLoading, error]);
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading, error }}>
+    <AuthContext.Provider value={contextValue}>
       {!isLoading && children}
     </AuthContext.Provider>
   );

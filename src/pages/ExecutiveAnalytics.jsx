@@ -4,24 +4,7 @@ import { DollarSign, TrendingUp, Users, Target, CheckCircle, Wrench, Download, C
 import { motion } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 
-// Helper to generate realistic trailing 6 months data for the demo
-const generateHistoricalData = () => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-    let baseRevenue = 120000;
-    let baseJobs = 150;
-    
-    return months.map(m => {
-        const variance = Math.random() * 20000 - 5000; // Random growth
-        baseRevenue += variance;
-        baseJobs += Math.floor(Math.random() * 20 - 5);
-        return {
-            name: m,
-            revenue: Math.floor(baseRevenue),
-            jobs: baseJobs,
-            winRate: Math.floor(65 + Math.random() * 15)
-        };
-    });
-};
+// Historical tracking dynamically resolved from Postgres
 
 const COLORS = ['#0f172a', '#3b82f6', '#f59e0b', '#10b981'];
 
@@ -38,40 +21,124 @@ export default function ExecutiveAnalytics() {
 
     const fetchLiveMetrics = async () => {
         try {
-            // Fetch live invoices to compute total revenue
-            const { data: invoices } = await supabase.from('invoices').select('amount, status').eq('status', 'PAID');
-            const totalInvoiced = (invoices || []).reduce((sum, inv) => sum + (inv.amount || 0), 0);
+            // Get dates for 6 months ago to today
+            const now = new Date();
+            const sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(now.getMonth() - 5);
+            sixMonthsAgo.setDate(1); // Start of the 6th month ago
 
-            // Fetch service calls to compute jobs completed and callbacks
-            const { data: serviceCalls } = await supabase.from('service_calls').select('status, tags');
-            const totalServiceCompleted = (serviceCalls || []).filter(s => s.status === 'Completed' || s.status === 'COMPLETED').length;
-            const callbackJobs = (serviceCalls || []).filter(s => s.tags && s.tags.includes('Callback')).length;
+            // Fetch live invoices
+            const { data: invoices } = await supabase
+                .from('invoices')
+                .select('amount, status, updated_at')
+                .in('status', ['PAID', 'Paid in Full']);
 
-            // Fetch opportunities for win rate
-            const { data: opps } = await supabase.from('opportunities').select('status');
-            const oppsWon = (opps || []).filter(o => o.status === 'APPROVED' || o.status === 'COMPLETED').length;
-            const oppsTotal = (opps || []).length || 1; // prevent div by 0
-            
-            const totalJobs = totalServiceCompleted + oppsWon;
-            const baseJobs = 854;
-            const finalJobs = baseJobs + totalJobs;
-            
-            const baseCallbacks = 14; // roughly 1.6% natively
-            const finalCallbacks = baseCallbacks + callbackJobs;
-            const callbackRate = ((finalCallbacks / finalJobs) * 100).toFixed(1);
+            // Fetch service calls
+            const { data: serviceCalls } = await supabase
+                .from('service_calls')
+                .select('status, tags, created_at, updated_at');
 
-            setLiveMetrics({
-                totalRevenueYtd: 840500 + totalInvoiced, // 840k base + live data for demo impact
-                totalJobsCompleted: finalJobs,
-                averageTicket: Math.floor((840500 + totalInvoiced) / finalJobs),
-                winRate: Math.floor(((580 + oppsWon) / (800 + oppsTotal)) * 100), // Padding history
-                callbackRate: parseFloat(callbackRate)
+            // Fetch opportunities
+            const { data: opps } = await supabase
+                .from('opportunities')
+                .select('status, created_at, updated_at');
+
+            // Build 6 month buckets dynamically
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const historyMap = {};
+            let current = new Date(sixMonthsAgo);
+            for (let i = 0; i < 6; i++) {
+                const monthKey = `${current.getFullYear()}-${current.getMonth()}`;
+                historyMap[monthKey] = {
+                    name: monthNames[current.getMonth()],
+                    revenue: 0,
+                    jobs: 0,
+                    wonCount: 0,
+                    totalOpps: 0,
+                    winRate: 0
+                };
+                current.setMonth(current.getMonth() + 1);
+            }
+
+            let totalRevenueYtd = 0;
+            let totalJobsCompleted = 0;
+            let callbackJobs = 0;
+            let oppsWonTotal = 0;
+            let oppsTotalCount = 0;
+
+            // Process Invoices
+            (invoices || []).forEach(inv => {
+                const amt = parseFloat(inv.amount || 0);
+                totalRevenueYtd += amt;
+                
+                if (inv.updated_at) {
+                    const d = new Date(inv.updated_at);
+                    if (d >= sixMonthsAgo) {
+                        const mKey = `${d.getFullYear()}-${d.getMonth()}`;
+                        if (historyMap[mKey]) historyMap[mKey].revenue += amt;
+                    }
+                }
             });
 
-            // Update the last month of historical data with live revenue
-            const history = generateHistoricalData();
-            history[history.length - 1].revenue += totalInvoiced;
-            history[history.length - 1].jobs += totalJobs;
+            // Process Service Calls
+            (serviceCalls || []).forEach(s => {
+                const isCompleted = s.status === 'Completed' || s.status === 'COMPLETED';
+                const isCallback = s.tags && s.tags.includes('Callback');
+                
+                if (isCompleted) totalJobsCompleted++;
+                if (isCallback) callbackJobs++;
+
+                if (isCompleted && s.updated_at) {
+                    const d = new Date(s.updated_at);
+                    if (d >= sixMonthsAgo) {
+                        const mKey = `${d.getFullYear()}-${d.getMonth()}`;
+                        if (historyMap[mKey]) historyMap[mKey].jobs++;
+                    }
+                }
+            });
+
+            // Process Opportunities
+            (opps || []).forEach(o => {
+                const isWon = o.status === 'APPROVED' || o.status === 'COMPLETED' || o.status === 'CLOSED_WON';
+                oppsTotalCount++;
+                if (isWon) {
+                    oppsWonTotal++;
+                    totalJobsCompleted++;
+                }
+
+                if (o.updated_at) {
+                    const d = new Date(o.updated_at);
+                    if (d >= sixMonthsAgo) {
+                        const mKey = `${d.getFullYear()}-${d.getMonth()}`;
+                        if (historyMap[mKey]) {
+                            historyMap[mKey].totalOpps++;
+                            if (isWon) {
+                                historyMap[mKey].jobs++;
+                                historyMap[mKey].wonCount++;
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Finalize historical data
+            const history = Object.values(historyMap).map(bucket => {
+                bucket.winRate = bucket.totalOpps > 0 ? Math.floor((bucket.wonCount / bucket.totalOpps) * 100) : 0;
+                return bucket;
+            });
+
+            const finalJobs = totalJobsCompleted || 1; // prevent div by 0 for ticket size
+            const winRate = oppsTotalCount > 0 ? Math.floor((oppsWonTotal / oppsTotalCount) * 100) : 0;
+            const callbackRate = totalJobsCompleted > 0 ? parseFloat(((callbackJobs / totalJobsCompleted) * 100).toFixed(1)) : 0;
+
+            setLiveMetrics({
+                totalRevenueYtd: totalRevenueYtd,
+                totalJobsCompleted: totalJobsCompleted,
+                averageTicket: Math.floor(totalRevenueYtd / finalJobs),
+                winRate: winRate,
+                callbackRate: callbackRate
+            });
+
             setHistoricalData(history);
             
         } catch (error) {

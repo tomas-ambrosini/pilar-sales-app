@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Phone, User, MapPin, Search, Plus, AlertCircle, CalendarClock, Zap, CheckCircle2, UserCheck, Map } from 'lucide-react';
 import { PIPELINE_STATES } from '../utils/pipelineControls';
@@ -16,7 +17,16 @@ export default function DispatchHub() {
    const [matchedCustomer, setMatchedCustomer] = useState(null);
    const [isNewCustomer, setIsNewCustomer] = useState(false);
    const [loading, setLoading] = useState(false);
-   const [activeTab, setActiveTab] = useState('map'); // default to map or intake
+   const [searchParams, setSearchParams] = useSearchParams();
+   const [activeTab, setActiveTab] = useState('map');
+
+   React.useEffect(() => {
+       const action = searchParams.get('action');
+       if (action === 'new_call') {
+           setActiveTab('intake');
+           setOppForm(prev => ({ ...prev, type: 'SERVICE' }));
+       }
+   }, [searchParams]);
 
    // Customer Form
    const [customerForm, setCustomerForm] = useState({
@@ -44,34 +54,48 @@ export default function DispatchHub() {
 
    React.useEffect(() => {
        const fetchTeamLoad = async () => {
-           const { data: usersData } = await supabase.from('user_profiles').select('id, full_name, avatar_url');
-           const { data: oppsData } = await supabase.from('opportunities').select('assigned_salesperson_id, status').in('status', [PIPELINE_STATES.NEW_LEAD, PIPELINE_STATES.QUOTING, PIPELINE_STATES.SENT]);
-           
-           if (usersData) {
-               const load = usersData.map(user => {
-                   const count = oppsData ? oppsData.filter(o => o.assigned_salesperson_id === user.id).length : 0;
-                   return { ...user, activeCount: count };
-               }).sort((a, b) => a.activeCount - b.activeCount);
-               setTeamLoad(load);
+           try {
+               const { data: usersData, error: usersError } = await supabase.from('user_profiles').select('id, full_name, avatar_url');
+               if (usersError) throw usersError;
+               
+               const { data: oppsData, error: oppsError } = await supabase.from('opportunities').select('assigned_salesperson_id, status').in('status', [PIPELINE_STATES.NEW_LEAD, PIPELINE_STATES.QUOTING, PIPELINE_STATES.SENT]);
+               if (oppsError) throw oppsError;
+               
+               if (usersData) {
+                   const load = usersData.map(user => {
+                       const count = oppsData ? oppsData.filter(o => o.assigned_salesperson_id === user.id).length : 0;
+                       return { ...user, activeCount: count };
+                   }).sort((a, b) => a.activeCount - b.activeCount);
+                   setTeamLoad(load);
+               }
+           } catch (error) {
+               console.error("Failed to fetch team load:", error);
+               toast.error("Failed to fetch Team Load board data.");
            }
        };
        fetchTeamLoad();
    }, []);
 
+   const searchTimeoutRef = React.useRef(null);
+
    const handleSearch = (e) => {
       const q = e.target.value.toLowerCase();
       setSearchQuery(q);
       
-      if (q.length > 1) {
-         const matches = customers.filter(c => 
-            c.phone?.includes(q) || 
-            c.name?.toLowerCase().includes(q) || 
-            c.address?.toLowerCase().includes(q)
-         );
-         setSearchResults(matches);
-      } else {
-         setSearchResults([]);
-      }
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+      
+      searchTimeoutRef.current = setTimeout(() => {
+          if (q.length > 1) {
+             const matches = customers.filter(c => 
+                c.phone?.includes(q) || 
+                c.name?.toLowerCase().includes(q) || 
+                c.address?.toLowerCase().includes(q)
+             );
+             setSearchResults(matches);
+          } else {
+             setSearchResults([]);
+          }
+      }, 300);
    };
 
    const handleCreateCustomer = async (e) => {
@@ -114,6 +138,9 @@ export default function DispatchHub() {
    const handleInjectOpportunity = async () => {
        if (!matchedCustomer) return toast.error("Please select or create a customer first.");
        if (!oppForm.issueDescription) return toast.error("Issue description is required.");
+       if (oppForm.type === 'SALES' && !oppForm.assignedSalespersonId) {
+           return toast.error("A salesperson must be assigned to this lead.");
+       }
        
        setLoading(true);
        try {
@@ -123,8 +150,12 @@ export default function DispatchHub() {
                    urgency_level: oppForm.urgency,
                    issue_description: oppForm.issueDescription,
                    dispatch_notes: oppForm.dispatchNotes,
-                   assigned_salesperson_id: oppForm.assignedSalespersonId || null,
-                   proposal_data: { type: oppForm.type, intaken_by: user?.full_name || 'System' },
+                   assigned_salesperson_id: oppForm.assignedSalespersonId,
+                   proposal_data: { 
+                       type: oppForm.type, 
+                       intaken_by: user?.full_name || 'System',
+                       dispatcher: user?.full_name || 'System'
+                   },
                    status: PIPELINE_STATES.NEW_LEAD
                });
 
@@ -408,9 +439,6 @@ export default function DispatchHub() {
                                               <div className="text-center py-4 text-xs font-medium text-slate-400 italic">No sales team members found.</div>
                                            )}
                                        </div>
-                                       {oppForm.assignedSalespersonId === '' && teamLoad.length > 0 && (
-                                           <p className="text-[10px] font-medium text-slate-400 mt-2 text-right">Leave unselected to push to the Unassigned queue.</p>
-                                       )}
                                    </div>
                                )}
 

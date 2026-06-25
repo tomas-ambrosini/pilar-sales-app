@@ -217,7 +217,7 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
 
                                             {/* Approved Equipment Matrix */}
                                             {proposal.status === 'Approved' && (() => {
-                                                const matchedTierName = data?.accepted_tier_name || ['good', 'better', 'best'].find(t => data?.tiers?.[t]?.salesPrice === proposal.amount) || 'good';
+                                                const matchedTierName = data?.accepted_tier_name || ['good', 'better', 'best'].find(t => Math.abs((data?.tiers?.[t]?.salesPrice || 0) * discountMultiplier - (proposal.amount || 0)) < 1) || 'good';
                                                 const matchedTierData = data?.accepted_tier_data || data?.tiers?.[matchedTierName];
                                                 if (!matchedTierData) return null;
                                                 

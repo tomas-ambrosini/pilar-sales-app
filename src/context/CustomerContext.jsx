@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
+import { debounce } from '../utils/debounce';
 
 const CustomerContext = createContext(null);
 
@@ -14,13 +15,15 @@ export function CustomerProvider({ children }) {
     useEffect(() => {
         fetchCustomers();
         
+        const debouncedFetch = debounce(fetchCustomers, 1000);
+
         // Listen to changes on households, so when one is added we refresh
         const channel = supabase.channel('realtime_customers')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'households' }, () => {
-                fetchCustomers();
+                debouncedFetch();
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'addresses' }, () => {
-                fetchCustomers();
+                debouncedFetch();
             })
             .subscribe();
 
@@ -280,7 +283,11 @@ export function CustomerProvider({ children }) {
                     })
                     .select()
                     .single();
-                if (addressError) throw addressError;
+                
+                if (addressError) {
+                    await supabase.from('households').delete().eq('id', householdData.id);
+                    throw addressError;
+                }
                 addressId = addressData.id;
 
                 // Bind back legacy fallback
@@ -300,7 +307,12 @@ export function CustomerProvider({ children }) {
                     primary_phone: customerData.phone || '',
                     email: customerData.email || ''
                 });
-            if (contactError) throw contactError;
+            
+            if (contactError) {
+                if (addressId) await supabase.from('addresses').delete().eq('id', addressId);
+                await supabase.from('households').delete().eq('id', householdData.id);
+                throw contactError;
+            }
 
             // Trigger optimistic refresh
             fetchCustomers();
@@ -649,8 +661,10 @@ export function CustomerProvider({ children }) {
         }
     };
 
+    const contextValue = useMemo(() => ({ customers, archivedCustomers, addCustomer, updateCustomer, deleteCustomer, restoreCustomer, forceDeleteCustomer, fetchArchivedCustomers, updatePropertyDetails, addPropertyToCustomer, addUnitToAddress, updateUnit, deleteUnit, mergeUnits, undoMerge, addHistoryToUnit, loading }), [customers, archivedCustomers, loading]);
+
     return (
-        <CustomerContext.Provider value={{ customers, archivedCustomers, addCustomer, updateCustomer, deleteCustomer, restoreCustomer, forceDeleteCustomer, fetchArchivedCustomers, updatePropertyDetails, addPropertyToCustomer, addUnitToAddress, updateUnit, deleteUnit, mergeUnits, undoMerge, addHistoryToUnit, loading }}>
+        <CustomerContext.Provider value={contextValue}>
             {children}
         </CustomerContext.Provider>
     );

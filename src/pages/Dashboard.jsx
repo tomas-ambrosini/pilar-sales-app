@@ -4,21 +4,19 @@ import { Plus, Users, Send, CheckCircle, Clock, ChevronRight, FileText, ArrowUpR
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useRole, ROLES } from '../context/RoleContext';
 import { useCustomers } from '../context/CustomerContext';
 import { useProposals } from '../context/ProposalContext';
 import { formatQuoteId, formatCustomerName } from '../utils/formatters';
 import { computeDashboardMetrics } from '../utils/dashboardMetrics';
 import { supabase } from '../supabaseClient';
-import NewServiceCallModal from '../components/NewServiceCallModal';
-
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { activeRole, ROLES } = useRole();
   const { customers } = useCustomers();
   const { proposals } = useProposals();
   const [timeRange, setTimeRange] = useState(7);
-  const [isNewServiceModalOpen, setIsNewServiceModalOpen] = useState(false);
-  
   const [serviceCalls, setServiceCalls] = useState([]);
   const [opportunities, setOpportunities] = useState([]);
   const [feedItems, setFeedItems] = useState([]);
@@ -57,11 +55,11 @@ export default function Dashboard() {
          .on('postgres_changes', { event: '*', schema: 'public', table: 'opportunities' }, fetchOpsData)
          .subscribe();
 
-     const handleOpenModal = () => setIsNewServiceModalOpen(true);
-     window.addEventListener('open-new-service-modal', handleOpenModal);
+     const handleOpenServiceModal = () => navigate('/service?action=new_call');
+     window.addEventListener('open-new-service-modal', handleOpenServiceModal);
      
      return () => {
-         window.removeEventListener('open-new-service-modal', handleOpenModal);
+         window.removeEventListener('open-new-service-modal', handleOpenServiceModal);
          supabase.removeChannel(svcChannel);
          supabase.removeChannel(oppChannel);
      };
@@ -76,7 +74,7 @@ export default function Dashboard() {
   const emergencyCount = serviceCalls.filter(s => s.urgency === 'EMERGENCY' && s.status !== 'Completed').length;
   
   const today = new Date().toISOString().split('T')[0];
-  const dispatchUnassigned = serviceCalls.filter(s => s.status === 'Pending').length + opportunities.filter(o => o.status === 'APPROVED' || o.status === 'NEEDS_SCHEDULING').length;
+  const dispatchPending = serviceCalls.filter(s => s.status === 'Pending').length + opportunities.filter(o => o.status === 'APPROVED' || o.status === 'NEEDS_SCHEDULING').length;
   
   // Scheduled today
   const dispatchToday = serviceCalls.filter(s => s.scheduled_start?.startsWith(today)).length + opportunities.filter(o => o.scheduled_date === today).length;
@@ -120,8 +118,9 @@ export default function Dashboard() {
 
       {/* Quick Actions (Enterprise Minimal) */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+         {[ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.DISPATCHER].includes(activeRole) && (
          <button 
-            onClick={() => navigate('/proposals?action=new')}
+            onClick={() => navigate('/sales?tab=proposals&action=new')}
             className="group flex flex-col justify-between bg-gradient-to-tr from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white p-5 rounded-2xl shadow-sm transition-all focus:outline-none text-left border border-slate-700 hover:shadow-md"
          >
             <div className="flex items-center justify-between w-full mb-4">
@@ -135,9 +134,11 @@ export default function Dashboard() {
                <div className="text-xs font-medium text-slate-300">New sales proposal</div>
             </div>
          </button>
+         )}
 
+         {[ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER].includes(activeRole) && (
          <button 
-            onClick={() => window.dispatchEvent(new CustomEvent('open-new-service-modal'))}
+            onClick={() => navigate('/dispatch?action=new_call')}
             className="group flex flex-col justify-between bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 p-5 rounded-2xl shadow-sm transition-all focus:outline-none text-left hover:shadow-md hover:border-slate-300"
          >
             <div className="flex items-center justify-between w-full mb-4">
@@ -151,7 +152,9 @@ export default function Dashboard() {
                <div className="text-xs font-medium text-slate-500">Record a customer issue</div>
             </div>
          </button>
+         )}
 
+         {[ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER].includes(activeRole) && (
          <button 
             onClick={() => navigate('/dispatch')}
             className="group flex flex-col justify-between bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 p-5 rounded-2xl shadow-sm transition-all focus:outline-none text-left hover:shadow-md hover:border-slate-300"
@@ -167,7 +170,9 @@ export default function Dashboard() {
                <div className="text-xs font-medium text-slate-500">Route active jobs & crews</div>
             </div>
          </button>
+         )}
 
+         {[ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.DISPATCHER].includes(activeRole) && (
          <button 
             onClick={() => navigate('/calendar')}
             className="group flex flex-col justify-between bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 p-5 rounded-2xl shadow-sm transition-all focus:outline-none text-left hover:shadow-md hover:border-slate-300"
@@ -183,6 +188,7 @@ export default function Dashboard() {
                <div className="text-xs font-medium text-slate-500">View today's agenda</div>
             </div>
          </button>
+         )}
       </motion.div>
 
       <motion.h3 variants={itemVariants} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-2">
@@ -242,8 +248,8 @@ export default function Dashboard() {
                 </span>
             </div>
             <div className="relative z-10">
-                <h4 className="text-slate-500 font-bold text-sm tracking-wide uppercase mb-1">Unassigned Dispatch</h4>
-                <div className="text-3xl font-black text-slate-900 tracking-tight">{dispatchUnassigned}</div>
+                <h4 className="text-slate-500 font-bold text-sm tracking-wide uppercase mb-1">Pending Dispatches</h4>
+                <div className="text-3xl font-black text-slate-900 tracking-tight">{dispatchPending}</div>
             </div>
         </div>
       </motion.div>
@@ -329,10 +335,6 @@ export default function Dashboard() {
          </div>
       </motion.div>
 
-      <NewServiceCallModal 
-        isOpen={isNewServiceModalOpen} 
-        onClose={() => setIsNewServiceModalOpen(false)} 
-      />
     </motion.div>
   );
 }

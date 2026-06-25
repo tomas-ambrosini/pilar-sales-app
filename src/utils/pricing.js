@@ -54,19 +54,18 @@ export const calculateTierPrice = (rawEquipCost, tierType, margins) => {
   const nontaxableLabor = 0; // placeholder – actual addons handled elsewhere
   
   const taxRate = parseFloat(margins?.sales_tax) || 0.07;
-  let targetMargin = parseFloat(margins?.good_margin) || 0.35;
-  if (tierType === 'Better') targetMargin = parseFloat(margins?.better_margin) || 0.40;
-  if (tierType === 'Best') targetMargin = parseFloat(margins?.best_margin) || 0.45;
+  // UI controls the markup multiplier dynamically.
+  let targetMargin = parseFloat(margins?.good_margin) || 0.30;
+  if (tierType === 'Better') targetMargin = parseFloat(margins?.better_margin) || 0.30;
+  if (tierType === 'Best') targetMargin = parseFloat(margins?.best_margin) || 0.30;
   
   const rawMaterialsTotal = rawEquipCost + taxableMaterials;
-  const subtotalCost = rawMaterialsTotal + nontaxableLabor;
-  const taxAmount = rawMaterialsTotal * taxRate;
-  
   const serviceReserve = parseFloat(margins?.service_reserve) || 0.05;
   const markupMultiplier = 1.0 + targetMargin + serviceReserve;
   
-  const markedUpSubtotal = subtotalCost * markupMultiplier;
-  const grandTotal = markedUpSubtotal + taxAmount;
+  const markedUpMaterials = rawMaterialsTotal * markupMultiplier;
+  const taxAmount = markedUpMaterials * taxRate;
+  const grandTotal = markedUpMaterials + taxAmount + nontaxableLabor;
   
   return Math.round(grandTotal);
 };
@@ -98,9 +97,9 @@ export const evaluateDealHealth = (soldPrice, retailPrice, totalHardCost, comput
   const discountRatio = soldPrice / retailPrice;
   const isBelowPAR = discountRatio < 0.85;
 
-  // Global Hard Constraint -> Less than 35% True Margin triggers a flag for Service Managers.
-  // Less than PAR also triggers a flag because salesperson took a hit/penalty.
-  const isFlagged = isBelowPAR || (netMarginPercent < 0.35);
+  // Global Hard Constraint -> Less than 20% True Margin triggers a flag for Service Managers.
+  // (Note: A 30% markup yields roughly a 23% true margin, so the threshold is safely set to 20%).
+  const isFlagged = isBelowPAR || (netMarginPercent < 0.20);
 
   return {
       netMarginPercent,

@@ -42,10 +42,16 @@ async function executeTransition(jobId, currentState, targetState, additionalPay
   }
   const { data: opp } = await supabase.from('opportunities').select('*').eq('id', jobId).single();
   
+  if (opp?.status !== currentState) {
+      const msg = `Pipeline Sync Error: Deal status changed behind the scenes (expected ${currentState}, got ${opp?.status}). Refreshing is required.`;
+      console.warn(msg);
+      throw new Error(msg);
+  }
+  
   const { error } = await supabase.from('opportunities').update({ 
       status: targetState, 
       ...additionalPayload 
-  }).eq('id', jobId);
+  }).eq('id', jobId).eq('status', currentState);
   
   if (error) throw error;
   
@@ -88,23 +94,33 @@ async function executeTransition(jobId, currentState, targetState, additionalPay
                          
                          const specsText = [tierData.brand, tierData.tons ? tierData.tons + ' Ton' : null, tierData.seer ? tierData.seer + ' SEER' : null, tierData.series].filter(Boolean).join(' ');
                          
-                         units.push({
-                             id: newUnitId,
-                             unit_number: systemName,
-                             system_type: tierData.type || "Split System",
-                             description: specsText || "Specs not provided",
-                             history: [{
-                                 id: crypto.randomUUID(),
-                                 date: new Date().toISOString(),
-                                 type: 'Installation',
-                                 description: `Installed new equipment per Proposal #${prop.id}.`,
-                                 cost: prop.amount || 0,
-                                 technician: 'Operations Team'
-                             }]
-                         });
+                         const installationDesc = `Installed new equipment per Proposal #${prop.id}.`;
                          
-                         await supabase.from('addresses').update({ property_details: { ...pd, units } }).eq('id', svcAddrId);
-                         description += ` Successfully registered new unit '${systemName}' to the property records.`;
+                         const isDuplicate = units.some(u => 
+                             u.history && u.history.some(h => h.description === installationDesc)
+                         );
+                         
+                         if (!isDuplicate) {
+                             units.push({
+                                 id: newUnitId,
+                                 unit_number: systemName,
+                                 system_type: tierData.type || "Split System",
+                                 description: specsText || "Specs not provided",
+                                 history: [{
+                                     id: crypto.randomUUID(),
+                                     date: new Date().toISOString(),
+                                     type: 'Installation',
+                                     description: installationDesc,
+                                     cost: prop.amount || 0,
+                                     technician: 'Operations Team'
+                                 }]
+                             });
+                             
+                             await supabase.from('addresses').update({ property_details: { ...pd, units } }).eq('id', svcAddrId);
+                             description += ` Successfully registered new unit '${systemName}' to the property records.`;
+                         } else {
+                             description += ` Unit '${systemName}' was already registered to the property (skipped duplication).`;
+                         }
                      }
                  }
              }
@@ -114,6 +130,9 @@ async function executeTransition(jobId, currentState, targetState, additionalPay
       } else if (targetState === PIPELINE_STATES.SENT && currentState === PIPELINE_STATES.PENDING_VOID) {
           activityType = 'Pipeline Reverted';
           description = 'Deal was moved back to the Active Proposals board.';
+      } else if (targetState === PIPELINE_STATES.SENT && currentState !== PIPELINE_STATES.PENDING_VOID) {
+          activityType = 'Deal Proposed';
+          description = 'Digital proposal finalized and marked as Sent.';
       }
       
       if (activityType) {
@@ -144,7 +163,7 @@ async function executeTransition(jobId, currentState, targetState, additionalPay
 
 export const PipelineController = {
   startProposal: (id, current) => executeTransition(id, current, PIPELINE_STATES.QUOTING),
-  sendProposal: (id, current) => executeTransition(id, current, PIPELINE_STATES.SENT),
+  sendProposal: (id, current, payload = {}) => executeTransition(id, current, PIPELINE_STATES.SENT, payload),
   approveDeal: (id, current, payload = {}) => executeTransition(id, current, PIPELINE_STATES.NEEDS_SCHEDULING, payload),
   scheduleDeal: (id, current, payload = {}) => executeTransition(id, current, PIPELINE_STATES.SCHEDULED, payload),
   completeDeal: (id, current, payload = {}) => executeTransition(id, current, PIPELINE_STATES.COMPLETED, payload),
@@ -159,7 +178,7 @@ export const PipelineController = {
                   const { data: profile } = await supabase.from('user_profiles').select('full_name').eq('id', session.user.id).single();
                   userName = profile?.full_name || session.user.user_metadata?.full_name || session.user.email;
               }
-          } catch(e) {}
+          } catch(_) {}
           await supabase.from('activity_logs').insert({
              household_id: householdId,
              opportunity_id: id,
@@ -178,7 +197,7 @@ export const PipelineController = {
                   const { data: profile } = await supabase.from('user_profiles').select('full_name').eq('id', session.user.id).single();
                   userName = profile?.full_name || session.user.user_metadata?.full_name || session.user.email;
               }
-          } catch(e) {}
+          } catch(_) {}
           await supabase.from('activity_logs').insert({
              household_id: householdId,
              opportunity_id: id,
@@ -197,7 +216,7 @@ export const PipelineController = {
                   const { data: profile } = await supabase.from('user_profiles').select('full_name').eq('id', session.user.id).single();
                   userName = profile?.full_name || session.user.user_metadata?.full_name || session.user.email;
               }
-          } catch(e) {}
+          } catch(_) {}
           await supabase.from('activity_logs').insert({
              household_id: householdId,
              opportunity_id: id,
@@ -216,7 +235,7 @@ export const PipelineController = {
                   const { data: profile } = await supabase.from('user_profiles').select('full_name').eq('id', session.user.id).single();
                   userName = profile?.full_name || session.user.user_metadata?.full_name || session.user.email;
               }
-          } catch(e) {}
+          } catch(_) {}
           await supabase.from('activity_logs').insert({
              household_id: householdId,
              opportunity_id: id,

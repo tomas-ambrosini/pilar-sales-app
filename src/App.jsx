@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import Customers from './pages/Customers';
 import Catalog from './pages/CatalogEditor';
@@ -35,6 +35,7 @@ import { CatalogProvider } from './context/CatalogContext';
 import { ProposalProvider } from './context/ProposalContext';
 import { RoleProvider, useRole, ROLES } from './context/RoleContext';
 import { NotificationsProvider } from './context/NotificationsContext';
+import { supabase } from './supabaseClient';
 
 const TomasOnlyRoute = ({ children }) => {
   const { user } = useAuth();
@@ -58,6 +59,13 @@ const RoleRoute = ({ children, allowedRoles }) => {
   }
   
   return children;
+};
+
+const ProposalsRedirect = () => {
+  const { search } = useLocation();
+  const params = new URLSearchParams(search);
+  params.set('tab', 'proposals');
+  return <Navigate to={`/sales?${params.toString()}`} replace />;
 };
 
 function MainRouter() {
@@ -112,6 +120,7 @@ function MainRouter() {
           <Route path="finance/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><FinanceDashboard /></RoleRoute>} />
           
           {/* WILDCARDS / DEFAULTS */}
+          <Route path="proposals/*" element={<ProposalsRedirect />} />
           <Route index element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><Dashboard /></RoleRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
@@ -121,10 +130,12 @@ function MainRouter() {
 }
 
 import { Toaster } from 'react-hot-toast';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
   return (
-    <AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
       <CustomerProvider>
         <CatalogProvider>
           <ProposalProvider>
@@ -152,7 +163,8 @@ function App() {
           </ProposalProvider>
         </CatalogProvider>
       </CustomerProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

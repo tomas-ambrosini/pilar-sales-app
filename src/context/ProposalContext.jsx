@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { PipelineController, PIPELINE_STATES } from '../utils/pipelineControls';
 import toast from 'react-hot-toast';
 import { useAuth } from './AuthContext';
+import { debounce } from '../utils/debounce';
 
 const ProposalContext = createContext(null);
 
@@ -86,9 +87,10 @@ export function ProposalProvider({ children }) {
         fetchProposals();
         
         // Setup Realtime Subscription
+        const debouncedFetch = debounce(fetchProposals, 1000);
         const channel = supabase.channel('realtime_proposals')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'proposals' }, payload => {
-                fetchProposals(); // Re-fetch on any change
+                debouncedFetch(); // Re-fetch on any change
             })
             .subscribe();
 
@@ -342,8 +344,10 @@ export function ProposalProvider({ children }) {
         }
     };
 
+    const contextValue = useMemo(() => ({ proposals, createDraft, addProposal, updateProposal, deleteProposal, loading }), [proposals, loading]);
+
     return (
-        <ProposalContext.Provider value={{ proposals, createDraft, addProposal, updateProposal, deleteProposal, loading }}>
+        <ProposalContext.Provider value={contextValue}>
             {children}
         </ProposalContext.Provider>
     );

@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from './AuthContext';
+import toast from 'react-hot-toast';
 
 const NotificationsContext = createContext();
 
@@ -38,6 +39,21 @@ export function NotificationsProvider({ children }) {
               }
               setNotifications((prev) => [newNotif, ...prev]);
               setUnreadCount((prev) => prev + 1);
+
+              // Visual popup
+              toast((t) => (
+                <div 
+                  onClick={() => toast.dismiss(t.id)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div style={{fontWeight: 'bold', marginBottom: '4px', color: '#38bdf8'}}>
+                    {newNotif.title}
+                  </div>
+                  <div style={{fontSize: '0.85rem', color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '220px'}}>
+                    {newNotif.message}
+                  </div>
+                </div>
+              ), { duration: 5000, position: 'top-right', style: { background: '#1e293b', color: '#fff', borderRadius: '12px', border: '1px solid #334155' } });
             };
             resolveNotification();
           } else if (payload.eventType === 'UPDATE') {
@@ -64,7 +80,7 @@ export function NotificationsProvider({ children }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user?.id]);
 
   const fetchNotifications = async () => {
     if (!user) return;
@@ -150,17 +166,17 @@ export function NotificationsProvider({ children }) {
     }
   };
 
+  const contextValue = useMemo(() => ({
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    refreshNotifications: fetchNotifications,
+    createNotification
+  }), [notifications, unreadCount]);
+
   return (
-    <NotificationsContext.Provider
-      value={{
-        notifications,
-        unreadCount,
-        markAsRead,
-        markAllAsRead,
-        refreshNotifications: fetchNotifications,
-        createNotification
-      }}
-    >
+    <NotificationsContext.Provider value={contextValue}>
       {children}
     </NotificationsContext.Provider>
   );

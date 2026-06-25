@@ -60,8 +60,11 @@ export default function PublicQuoteView() {
             const price = proposal.amount || 0;
             let tierName = 'Proposal Details';
             let tierData = null;
+            const discountPercent = proposal.applied_discount_percent || proposal.proposal_data?.applied_discount_percent || 0;
+            const discountMultiplier = 1 - (discountPercent / 100);
+
             if (proposal.proposal_data?.tiers) {
-                tierName = ['good', 'better', 'best'].find(t => proposal.proposal_data.tiers[t]?.salesPrice === price) || 'System';
+                tierName = ['good', 'better', 'best'].find(t => Math.abs((proposal.proposal_data.tiers[t]?.salesPrice || 0) * discountMultiplier - price) < 1) || 'System';
                 tierData = proposal.proposal_data.tiers[tierName] || proposal.proposal_data.tiers['good'];
             }
 
@@ -156,10 +159,16 @@ export default function PublicQuoteView() {
     let tierName = 'Proposal Details';
     let tierData = null;
     
+    const discountPercent = proposal.applied_discount_percent || proposal.proposal_data?.applied_discount_percent || 0;
+    const discountMultiplier = 1 - (discountPercent / 100);
+
     if (proposal.proposal_data?.tiers) {
-        tierName = ['good', 'better', 'best'].find(t => proposal.proposal_data.tiers[t]?.salesPrice === price) || 'System Configuration';
+        tierName = ['good', 'better', 'best'].find(t => Math.abs((proposal.proposal_data.tiers[t]?.salesPrice || 0) * discountMultiplier - price) < 1) || 'System Configuration';
         tierData = proposal.proposal_data.tiers[tierName] || proposal.proposal_data.tiers['good'];
     }
+    
+    const systemTiers = proposal.proposal_data?.systemTiers || [];
+    const hasMultipleSystems = systemTiers.length > 1;
 
     return (
         <div className="min-h-screen bg-[#fafafc] px-4 py-8 lg:py-12 flex justify-center">
@@ -196,36 +205,41 @@ export default function PublicQuoteView() {
                     </div>
 
                     {/* Features Breakdown */}
-                    {tierData && (
-                        <div className="p-8">
-                            <h3 className="text-lg font-bold text-slate-800 mb-6">What's Included in Your System</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-3">
-                                   <div className="mt-0.5 text-primary-500"><HardDrive size={18}/></div>
-                                   <div>
-                                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5">Equipment</p>
-                                       <p className="font-bold text-slate-800 text-sm">{tierData.brand} {tierData.series || 'Series'}</p>
-                                   </div>
+                    {(hasMultipleSystems ? systemTiers : (tierData ? [ { systemName: 'System Details', tiers: { [tierName]: tierData } } ] : [])).map((sys, sysIdx) => {
+                        const sysTierData = hasMultipleSystems ? (sys.tiers?.[tierName] || sys.tiers?.['good']) : sys.tiers?.[tierName];
+                        if (!sysTierData) return null;
+                        
+                        return (
+                            <div key={sysIdx} className="p-8 border-b border-slate-100 last:border-b-0">
+                                <h3 className="text-lg font-bold text-slate-800 mb-6">{hasMultipleSystems ? sys.systemName : "What's Included in Your System"}</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                                       <div className="mt-0.5 text-primary-500"><HardDrive size={18}/></div>
+                                       <div>
+                                           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5">Equipment</p>
+                                           <p className="font-bold text-slate-800 text-sm">{sysTierData.brand} {sysTierData.series || 'Series'}</p>
+                                       </div>
+                                    </div>
+                                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                                       <div className="mt-0.5 text-primary-500"><Zap size={18}/></div>
+                                       <div>
+                                           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5">Efficiency</p>
+                                           <p className="font-bold text-slate-800 text-sm">Up to {sysTierData.seer || 18} SEER2</p>
+                                       </div>
+                                    </div>
                                 </div>
-                                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-3">
-                                   <div className="mt-0.5 text-primary-500"><Zap size={18}/></div>
-                                   <div>
-                                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5">Efficiency</p>
-                                       <p className="font-bold text-slate-800 text-sm">Up to {tierData.seer || 18} SEER2</p>
-                                   </div>
-                                </div>
+                                
+                                <ul className="mt-6 space-y-3">
+                                    {sysTierData.features && sysTierData.features.map((feat, idx) => (
+                                       <li key={idx} className="flex gap-3 text-sm font-medium text-slate-600 items-start">
+                                          <div className="mt-0.5 text-emerald-500"><CheckCircle size={16}/></div>
+                                          {feat}
+                                       </li>
+                                    ))}
+                                </ul>
                             </div>
-                            
-                            <ul className="mt-6 space-y-3">
-                                {tierData.features && tierData.features.map((feat, idx) => (
-                                   <li key={idx} className="flex gap-3 text-sm font-medium text-slate-600 items-start">
-                                      <div className="mt-0.5 text-emerald-500"><CheckCircle size={16}/></div>
-                                      {feat}
-                                   </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
+                        );
+                    })}
                     
                     {/* Why Pilar Home Trust Elements */}
                     {!accepted && (

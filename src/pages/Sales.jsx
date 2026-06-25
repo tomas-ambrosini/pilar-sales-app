@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import { PIPELINE_STATES, PipelineController } from '../utils/pipelineControls';
 import { AlertTriangle, Clock, ArrowRight, DollarSign, Calendar, Zap, AlertCircle, MapPin, UserCircle2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import OpportunityOverviewModal from '../components/OpportunityOverviewModal';
 import { formatQuoteId, formatCustomerName } from '../utils/formatters';
 import { useProposals } from '../context/ProposalContext';
@@ -12,8 +12,8 @@ import { useRole } from '../context/RoleContext';
 import Proposals from './Proposals';
 
 const PIPELINE_COLUMNS = [
-  { id: PIPELINE_STATES.NEW_LEAD, title: 'Incoming Leads', color: 'border-slate-300', bg: 'bg-slate-100', text: 'text-slate-700' },
-  { id: PIPELINE_STATES.QUOTING, title: 'Quoting', color: 'border-purple-300', bg: 'bg-purple-100', text: 'text-purple-700' },
+  { id: PIPELINE_STATES.NEW_LEAD, title: 'Incoming Leads', color: 'border-purple-300', bg: 'bg-purple-100', text: 'text-purple-700' },
+  { id: PIPELINE_STATES.QUOTING, title: 'Quoting', color: 'border-slate-300', bg: 'bg-slate-100', text: 'text-slate-700' },
   { id: PIPELINE_STATES.SENT, title: 'Proposal Sent', color: 'border-blue-300', bg: 'bg-blue-100', text: 'text-blue-700' },
   { id: PIPELINE_STATES.NEEDS_SCHEDULING, title: 'Needs Scheduling', color: 'border-amber-300', bg: 'bg-amber-100', text: 'text-amber-700' },
   { id: PIPELINE_STATES.SCHEDULED, title: 'Scheduled', color: 'border-emerald-300', bg: 'bg-emerald-100', text: 'text-emerald-700' },
@@ -32,15 +32,30 @@ export default function Sales() {
   const [activeAssignMenu, setActiveAssignMenu] = useState(null);
   const [loading, setLoading] = useState(true);
   const [inspectingJob, setInspectingJob] = useState(null);
-  const [activeTab, setActiveTab] = useState('pipeline');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(() => {
+     return searchParams.get('tab') || (searchParams.get('action') ? 'proposals' : 'pipeline');
+  });
 
   useEffect(() => {
-    fetchOpportunities();
+     const tab = searchParams.get('tab');
+     const action = searchParams.get('action');
+     if (tab === 'proposals' || action) {
+         setActiveTab('proposals');
+     } else if (tab === 'pipeline') {
+         setActiveTab('pipeline');
+     }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (activeTab === 'pipeline') {
+        fetchOpportunities();
+    }
     const channel = supabase.channel('realtime_pipeline')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'opportunities' }, () => fetchOpportunities())
       .subscribe();
     return () => supabase.removeChannel(channel);
-  }, [pipelineFilter]);
+  }, [pipelineFilter, activeTab]);
 
   const fetchOpportunities = async () => {
     try {
@@ -69,7 +84,6 @@ export default function Sales() {
         const currentFilter = isManager ? pipelineFilter : 'My Deals';
 
         if (currentFilter === 'My Deals' && opp.assigned_salesperson_id !== user?.id) return;
-        if (currentFilter === 'Unassigned' && opp.assigned_salesperson_id !== null) return;
 
         // Normalize Technician Field Statuses back to Sales Pipeline Columns
         let normalizedStatus = opp.status;
@@ -110,25 +124,30 @@ export default function Sales() {
       // If deal is accepted, use exact signed value
       if (proposalData?.accepted_tier_data) {
           const accData = proposalData.accepted_tier_data;
-          if (accData.salesPrice) return accData.salesPrice;
-          if (accData.price) return accData.price;
+          if (accData.salesPrice) return { exact: accData.salesPrice };
+          if (accData.price) return { exact: accData.price };
           if (accData.systemsList && Array.isArray(accData.systemsList)) {
               let amt = accData.systemsList.reduce((sum, sys) => sum + (sys.selectedTierData?.salesPrice || sys.selectedTierData?.price || sys.tierData?.salesPrice || sys.tierData?.price || 0), 0);
-              if (amt > 0) return amt;
+              if (amt > 0) return { exact: amt };
           }
       }
 
       // Fallback: Calculate Max Potential Value from available tiers
-      if (!proposalData?.systemTiers || proposalData.systemTiers.length === 0) return 0;
+      if (!proposalData?.systemTiers || proposalData.systemTiers.length === 0) return null;
       let maxVal = 0;
+      let minVal = 0;
       proposalData.systemTiers.forEach(sys => {
           const t = sys.tiers || sys.altTiers;
           if (t) {
              const prices = [t.good?.salesPrice, t.better?.salesPrice, t.best?.salesPrice].filter(Boolean);
-             if (prices.length) maxVal += Math.max(...prices);
+             if (prices.length) {
+                 maxVal += Math.max(...prices);
+                 minVal += Math.min(...prices);
+             }
           }
       });
-      return maxVal;
+      if (maxVal === 0 && minVal === 0) return null;
+      return { min: minVal, max: maxVal };
   };
 
 
@@ -138,7 +157,7 @@ export default function Sales() {
         {/* Subtle background decoration */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
             <div className="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-primary-100/40 blur-3xl"></div>
-            <div className="absolute top-[60%] -left-[10%] w-[40%] h-[40%] rounded-full bg-purple-100/40 blur-3xl"></div>
+            <div className="absolute top-[60%] -left-[10%] w-[40%] h-[40%] rounded-full bg-slate-200/40 blur-3xl"></div>
         </div>
         
         {/* Header Block */}
@@ -173,8 +192,8 @@ export default function Sales() {
         </div>
 
         {activeTab === 'proposals' ? (
-            <div className="flex-1 overflow-hidden rounded-3xl relative z-10 bg-white shadow-sm border border-slate-200">
-                <div className="h-full overflow-y-auto">
+            <div className="flex-1 overflow-hidden relative z-10 pb-4">
+                <div className="h-full overflow-y-auto custom-scrollbar">
                     <Proposals embedded={true} pipelineFilter={pipelineFilter} />
                 </div>
             </div>
@@ -220,8 +239,8 @@ export default function Sales() {
                     const columnJobs = pipeline[col.id] || [];
                     
                     let headerTheme = { bg: 'bg-slate-50/80', border: 'border-slate-200', text: 'text-slate-700', icon: 'text-slate-400' };
-                    if (col.id === PIPELINE_STATES.NEW_LEAD) headerTheme = { bg: 'bg-slate-100/80', border: 'border-slate-300', text: 'text-slate-800', icon: 'text-slate-500' };
-                    if (col.id === PIPELINE_STATES.QUOTING) headerTheme = { bg: 'bg-purple-50/80', border: 'border-purple-200', text: 'text-purple-800', icon: 'text-purple-500' };
+                    if (col.id === PIPELINE_STATES.NEW_LEAD) headerTheme = { bg: 'bg-purple-50/80', border: 'border-purple-200', text: 'text-purple-800', icon: 'text-purple-500' };
+                    if (col.id === PIPELINE_STATES.QUOTING) headerTheme = { bg: 'bg-slate-100/80', border: 'border-slate-300', text: 'text-slate-800', icon: 'text-slate-500' };
                     if (col.id === PIPELINE_STATES.SENT) headerTheme = { bg: 'bg-blue-50/80', border: 'border-blue-200', text: 'text-blue-800', icon: 'text-blue-500' };
                     if (col.id === PIPELINE_STATES.NEEDS_SCHEDULING) headerTheme = { bg: 'bg-amber-50/80', border: 'border-amber-200', text: 'text-amber-800', icon: 'text-amber-500' };
                     if (col.id === PIPELINE_STATES.SCHEDULED) headerTheme = { bg: 'bg-emerald-50/80', border: 'border-emerald-200', text: 'text-emerald-800', icon: 'text-emerald-500' };
@@ -258,7 +277,11 @@ export default function Sales() {
                                     
                                     const associatedProposal = proposals.find(p => p.associated_opportunity_id === job.id || p.proposal_data?.associated_opportunity_id === job.id);
                                     const displayId = associatedProposal ? formatQuoteId(associatedProposal) : formatQuoteId(job);
-                                    const assignedRep = job.assigned_salesperson_id ? teamMembers.find(m => m.id === job.assigned_salesperson_id) : null;
+                                    // Fallback to current user if their profile isn't in teamMembers yet (e.g. legacy dev environment)
+                                    let assignedRep = job.assigned_salesperson_id ? teamMembers.find(m => m.id === job.assigned_salesperson_id) : null;
+                                    if (!assignedRep && job.assigned_salesperson_id === user?.id) {
+                                        assignedRep = user;
+                                    }
 
                                     return (
                                         <div key={job.id} onClick={() => setInspectingJob(job)} className={`group relative cursor-pointer bg-white rounded-2xl shadow-sm border p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}>
@@ -278,9 +301,13 @@ export default function Sales() {
                                                        <span className="font-mono uppercase tracking-widest text-slate-400 whitespace-nowrap">{displayId}</span>
                                                     </span>
                                                 </div>
-                                                {estValue > 0 && (
+                                                {estValue && (
                                                     <div className="font-black text-emerald-600 text-sm bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100/50">
-                                                        {canViewFinancials() ? `$${estValue.toLocaleString()}` : '***'}
+                                                        {canViewFinancials() ? (
+                                                            estValue.exact 
+                                                              ? `$${estValue.exact.toLocaleString()}` 
+                                                              : (estValue.min !== estValue.max ? `$${estValue.min.toLocaleString()} - $${estValue.max.toLocaleString()}` : `$${estValue.max.toLocaleString()}`)
+                                                        ) : '***'}
                                                     </div>
                                                 )}
                                             </div>
@@ -288,7 +315,7 @@ export default function Sales() {
                                             <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-100/80 flex flex-col gap-2 mb-4">
                                                 <div className="flex items-center gap-2 text-[11px] font-medium text-slate-600">
                                                     <MapPin size={12} className="text-slate-400"/> 
-                                                    <span className="truncate">{job.households?.addresses?.[0]?.city || 'No city provided'}</span>
+                                                    <span className="truncate">{job.households?.addresses?.city || (Array.isArray(job.households?.addresses) ? job.households.addresses[0]?.city : null) || 'No city provided'}</span>
                                                 </div>
                                                 
                                                 {col.id === PIPELINE_STATES.NEW_LEAD && (
@@ -311,16 +338,62 @@ export default function Sales() {
                                                     <Clock size={12} className="shrink-0" /> <span className="truncate">{Math.floor(hoursInStage)}h in stage</span>
                                                 </div>
 
-                                                {assignedRep && (
-                                                    <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-1.5 py-1 rounded-full text-[10px] font-bold text-slate-700 shadow-sm shrink-0">
-                                                        {assignedRep.avatar_url ? (
-                                                            <img src={assignedRep.avatar_url} className="w-5 h-5 rounded-full object-cover" />
+                                                <div className="relative">
+                                                    <div 
+                                                        onClick={(e) => { e.stopPropagation(); setActiveAssignMenu(activeAssignMenu === job.id ? null : job.id); }}
+                                                        className={`flex items-center gap-1 ${assignedRep ? 'bg-slate-50 border-slate-200' : 'bg-white border-dashed border-slate-300 hover:bg-slate-50'} border px-1.5 py-1 rounded-full text-[10px] font-bold text-slate-700 shadow-sm shrink-0 cursor-pointer transition-colors`}
+                                                    >
+                                                        {assignedRep ? (
+                                                            <>
+                                                                {assignedRep.avatar_url ? (
+                                                                    <img src={assignedRep.avatar_url} className="w-5 h-5 rounded-full object-cover" />
+                                                                ) : (
+                                                                    <div className="w-5 h-5 rounded-full bg-slate-800 text-white flex items-center justify-center text-[8px]">{assignedRep.full_name?.substring(0, 2).toUpperCase()}</div>
+                                                                )}
+                                                                <span className="max-w-[70px] truncate">{assignedRep.full_name?.split(' ')[0]}</span>
+                                                            </>
                                                         ) : (
-                                                            <div className="w-5 h-5 rounded-full bg-slate-800 text-white flex items-center justify-center text-[8px]">{assignedRep.full_name?.substring(0, 2).toUpperCase()}</div>
+                                                            <>
+                                                                <UserCircle2 size={16} className="text-slate-400" />
+                                                                <span className="text-slate-500">Unassigned</span>
+                                                            </>
                                                         )}
-                                                        <span className="max-w-[70px] truncate">{assignedRep.full_name?.split(' ')[0]}</span>
                                                     </div>
-                                                )}
+
+                                                    {activeAssignMenu === job.id && (
+                                                        <div className="absolute right-0 bottom-full mb-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2">
+                                                            <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Assign Rep</span>
+                                                                <button onClick={(e) => { e.stopPropagation(); setActiveAssignMenu(null); }} className="text-slate-400 hover:text-slate-600"><X size={12} /></button>
+                                                            </div>
+                                                            <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                                                                {teamMembers.map(member => (
+                                                                    <div 
+                                                                        key={member.id}
+                                                                        onClick={async (e) => {
+                                                                            e.stopPropagation();
+                                                                            try {
+                                                                                await supabase.from('opportunities').update({ assigned_salesperson_id: member.id }).eq('id', job.id);
+                                                                                setActiveAssignMenu(null);
+                                                                                toast.success(`Assigned to ${member.full_name}`);
+                                                                            } catch (err) {
+                                                                                toast.error('Failed to assign rep');
+                                                                            }
+                                                                        }}
+                                                                        className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-primary-50 transition-colors ${assignedRep?.id === member.id ? 'bg-primary-50/50' : ''}`}
+                                                                    >
+                                                                        {member.avatar_url ? (
+                                                                            <img src={member.avatar_url} className="w-6 h-6 rounded-full object-cover shrink-0" />
+                                                                        ) : (
+                                                                            <div className="w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold shrink-0">{member.full_name?.substring(0, 2).toUpperCase()}</div>
+                                                                        )}
+                                                                        <span className="text-xs font-semibold text-slate-700 truncate">{member.full_name}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             {/* Action Buttons */}
@@ -331,7 +404,7 @@ export default function Sales() {
                                                         try {
                                                             await PipelineController.startProposal(job.id, job.status);
                                                             
-                                                            await createDraft({
+                                                            const newDraft = await createDraft({
                                                                 customer: formatCustomerName(job.households?.household_name, 'Unknown Client'),
                                                                 amount: 0,
                                                                 associated_opportunity_id: job.id,
@@ -340,18 +413,16 @@ export default function Sales() {
                                                                     wizard_state: {
                                                                         step: 2,
                                                                         selectedCustomerId: job.household_id,
-                                                                        selectedLocationId: job.service_address_id || job.households?.addresses?.[0]?.id || ''
+                                                                        selectedLocationId: job.service_address_id || job.households?.addresses?.id || (Array.isArray(job.households?.addresses) ? job.households.addresses[0]?.id : null) || ''
                                                                     }
                                                                 }
                                                             });
 
-                                                            localStorage.setItem('pilar_draft_customer', JSON.stringify({
-                                                                id: job.id,
-                                                                household_id: job.household_id,
-                                                                site_survey_data: { property_id: job.service_address_id || job.households?.addresses?.[0]?.id || '' },
-                                                                forceStep: 2
-                                                            }));
-                                                            navigate(`/proposals?action=resume_opp&opp_id=${job.id}`);
+                                                            if (newDraft && newDraft.id) {
+                                                                navigate(`/proposals?action=resume&id=${newDraft.id}`);
+                                                            } else {
+                                                                toast.error('Failed to create draft.');
+                                                            }
                                                         } catch (err) {
                                                             toast.error('Failed to transition lead.');
                                                         }
@@ -372,19 +443,16 @@ export default function Sales() {
                                                 {col.id === PIPELINE_STATES.QUOTING && (
                                                     <button onClick={(e) => { 
                                                         e.stopPropagation(); 
-                                                        localStorage.setItem('pilar_draft_customer', JSON.stringify({
-                                                            id: job.id,
-                                                            household_id: job.household_id,
-                                                            site_survey_data: { property_id: job.service_address_id || job.households?.addresses?.[0]?.id || '' },
-                                                            forceStep: 2
-                                                        }));
                                                         navigate(`/proposals?action=resume_opp&opp_id=${job.id}`); 
-                                                    }} className="text-[10px] font-black text-purple-700 bg-purple-100 hover:bg-purple-200 px-3 py-1.5 rounded-lg transition-all border border-purple-200/50 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
+                                                    }} className="text-[10px] font-black text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-all border border-slate-200/50 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
                                                         Resume <ArrowRight size={12} strokeWidth={3} />
                                                     </button>
                                                 )}
                                                 {col.id === PIPELINE_STATES.SENT && (
-                                                    <button onClick={(e) => { e.stopPropagation(); setInspectingJob(job); }} className="text-[10px] font-black text-blue-700 bg-blue-100 hover:bg-blue-200 px-3 py-1.5 rounded-lg transition-all border border-blue-200/50 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
+                                                    <button onClick={(e) => { 
+                                                        e.stopPropagation(); 
+                                                        navigate(`/proposals?action=view_proposal&opp_id=${job.id}`); 
+                                                    }} className="text-[10px] font-black text-blue-700 bg-blue-100 hover:bg-blue-200 px-3 py-1.5 rounded-lg transition-all border border-blue-200/50 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
                                                         View Proposal <ArrowRight size={12} strokeWidth={3} />
                                                     </button>
                                                 )}
@@ -414,7 +482,7 @@ export default function Sales() {
                   try {
                       await PipelineController.startProposal(job.id, job.status);
                       
-                      await createDraft({
+                      const newDraft = await createDraft({
                           customer: job.households?.household_name || 'Unknown Client',
                           amount: 0,
                           associated_opportunity_id: job.id,
@@ -423,29 +491,21 @@ export default function Sales() {
                               wizard_state: {
                                   step: 2,
                                   selectedCustomerId: job.household_id,
-                                  selectedLocationId: job.service_address_id || job.households?.addresses?.[0]?.id || ''
+                                  selectedLocationId: job.service_address_id || job.households?.addresses?.id || (Array.isArray(job.households?.addresses) ? job.households.addresses[0]?.id : null) || ''
                               }
                           }
                       });
 
-                      localStorage.setItem('pilar_draft_customer', JSON.stringify({
-                          id: job.id,
-                          household_id: job.household_id,
-                          site_survey_data: {
-                              property_id: job.service_address_id || job.households?.addresses?.[0]?.id || ''
-                          },
-                          forceStep: 2
-                      }));
-                      navigate(`/proposals?action=resume_opp&opp_id=${job.id}`);
+                      if (newDraft && newDraft.id) {
+                          navigate(`/proposals?action=resume&id=${newDraft.id}`);
+                      } else {
+                          toast.error('Failed to create draft.');
+                      }
                   } catch (e) { toast.error('Failed to transition lead.'); }
-              } else if (job.status === 'QUOTING' || job.status === 'PROPOSAL_SENT') {
-                  localStorage.setItem('pilar_draft_customer', JSON.stringify({
-                      id: job.id,
-                      household_id: job.household_id,
-                      site_survey_data: { property_id: job.service_address_id || job.households?.addresses?.[0]?.id || '' },
-                      forceStep: 2
-                  }));
+              } else if (job.status === 'QUOTING') {
                   navigate(`/proposals?action=resume_opp&opp_id=${job.id}`);
+              } else if (job.status === 'PROPOSAL_SENT') {
+                  navigate(`/proposals?action=view_proposal&opp_id=${job.id}`);
               } else if (job.status === 'APPROVED' || job.status === 'NEEDS_SCHEDULING') {
                   toast.success('Navigating to Dispatch Hub to route job...');
                   navigate('/dispatch');

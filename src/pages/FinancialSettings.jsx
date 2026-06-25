@@ -129,14 +129,14 @@ export default function FinancialSettings() {
                     {/* Main Settings Matrix */}
                     <div className="md:col-span-8 space-y-6">
                         
-                        {/* Margins Block */}
+                        {/* Markups Block */}
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                             <div className="p-6 pb-0">
                                 <div className="flex items-center gap-2 mb-1">
                                     <Zap size={18} className="text-primary-500" />
-                                    <h2 className="text-lg font-bold text-slate-900 tracking-tight">Financial Margins</h2>
+                                    <h2 className="text-lg font-bold text-slate-900 tracking-tight">Financial Markups</h2>
                                 </div>
-                                <p className="text-sm font-medium text-slate-500 mb-6">These thresholds define the true target margin applied at each system tier.</p>
+                                <p className="text-sm font-medium text-slate-500 mb-6">These thresholds define the true target markup applied at each system tier.</p>
                             </div>
                             
                             <div className="p-6 pt-0">
@@ -145,7 +145,7 @@ export default function FinancialSettings() {
                                     <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col justify-between transition-all hover:bg-white hover:border-slate-300 hover:shadow-sm">
                                         <div className="mb-4">
                                             <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1">Target Threshold</span>
-                                            <span className="text-sm font-bold text-slate-700">Best Tier Margin</span>
+                                            <span className="text-sm font-bold text-slate-700">Best Tier Markup</span>
                                         </div>
                                         <div className="relative">
                                             <input 
@@ -164,7 +164,7 @@ export default function FinancialSettings() {
                                     <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col justify-between transition-all hover:bg-white hover:border-slate-300 hover:shadow-sm">
                                         <div className="mb-4">
                                             <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1">Target Threshold</span>
-                                            <span className="text-sm font-bold text-slate-700">Better Tier Margin</span>
+                                            <span className="text-sm font-bold text-slate-700">Better Tier Markup</span>
                                         </div>
                                         <div className="relative">
                                             <input 
@@ -183,7 +183,7 @@ export default function FinancialSettings() {
                                     <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col justify-between transition-all hover:bg-white hover:border-slate-300 hover:shadow-sm">
                                         <div className="mb-4">
                                             <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1">Target Threshold</span>
-                                            <span className="text-sm font-bold text-slate-700">Good Tier Margin</span>
+                                            <span className="text-sm font-bold text-slate-700">Good Tier Markup</span>
                                         </div>
                                         <div className="relative">
                                             <input 

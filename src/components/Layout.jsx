@@ -113,6 +113,14 @@ export default function Layout() {
     if (isMessagesOpenRef.current) {
       setHasUnreadMessages(false);
     }
+    
+    // Cache user's allowed channels to prevent N x M Query Storms on global chat broadcasts
+    let allowedChannels = [];
+    const fetchAllowedChannels = async () => {
+      const { data } = await supabase.from('channel_members').select('channel_id').eq('user_id', user.id);
+      if (data) allowedChannels = data.map(d => d.channel_id);
+    };
+    fetchAllowedChannels();
 
     const channelListener = supabase.channel(`global_tracker_${user.id}`)
       .on(
@@ -121,15 +129,8 @@ export default function Layout() {
         async (payload) => {
           if (payload.new.sender_id !== user.id) {
             
-            // Verify user is a member of this channel before notifying
-            const { data: memberCheck } = await supabase
-              .from('channel_members')
-              .select('id')
-              .eq('channel_id', payload.new.channel_id)
-              .eq('user_id', user.id)
-              .maybeSingle();
-
-            if (!memberCheck) return; // User is not explicitly in this group chat
+            // Verify user is a member of this channel before notifying (using memory cache to avoid DDOS)
+            if (!allowedChannels.includes(payload.new.channel_id)) return;
             
             const isMentioned = Boolean(user.full_name) && payload.new.body.toLowerCase().includes(`@${user.full_name.replace(/\s+/g, '').toLowerCase()}`);
             const currentDrawerState = isMessagesOpenRef.current;
@@ -183,7 +184,7 @@ export default function Layout() {
     return () => {
       supabase.removeChannel(channelListener);
     };
-  }, [user]);
+  }, [user?.id]);
 
   const handleOpenModal = (title) => setActiveModal(title);
   const handleCloseModal = () => setActiveModal(null);

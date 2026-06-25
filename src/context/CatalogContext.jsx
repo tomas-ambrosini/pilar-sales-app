@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
+import { debounce } from '../utils/debounce';
 
 const CatalogContext = createContext(null);
 
@@ -9,9 +10,10 @@ export function CatalogProvider({ children }) {
 
     useEffect(() => {
         fetchCatalog();
+        const debouncedFetch = debounce(fetchCatalog, 1000);
         const channel = supabase.channel('realtime_catalog')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'equipment_catalog' }, () => {
-                fetchCatalog();
+                debouncedFetch();
             })
             .subscribe();
         return () => supabase.removeChannel(channel);
@@ -56,8 +58,10 @@ export function CatalogProvider({ children }) {
         return { success: true };
     };
 
+    const contextValue = useMemo(() => ({ catalog, addEquipment, updateEquipment, deleteEquipment, loading }), [catalog, loading]);
+
     return (
-        <CatalogContext.Provider value={{ catalog, addEquipment, updateEquipment, deleteEquipment, loading }}>
+        <CatalogContext.Provider value={contextValue}>
             {children}
         </CatalogContext.Provider>
     );

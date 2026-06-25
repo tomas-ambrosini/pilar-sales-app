@@ -4,6 +4,7 @@ import { CompanyCalendarEngine } from '../components/calendar/CompanyCalendarEng
 import { useCompanyCalendarEvents } from '../hooks/useCompanyCalendarEvents';
 import { mutateCalendarEvent } from '../lib/calendar/mutationSources';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import OpportunityOverviewModal from '../components/OpportunityOverviewModal';
 import ServiceCallModal from '../components/ServiceCallModal';
@@ -11,6 +12,7 @@ import ServiceCallModal from '../components/ServiceCallModal';
 
 export default function CompanyCalendar() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [dateRange, setDateRange] = useState({ start: null, end: null });
   const [filters, setFilters] = useState({
     department_id: 'ALL',
@@ -60,16 +62,17 @@ export default function CompanyCalendar() {
         setInspectingServiceCallId(eventData.source_id);
         break;
       case 'proposal_viewer':
-        console.log("Routing to Proposal Viewer for Proposal ID:", eventData.source_id);
-        // We'll dispatch an event or open a modal for this if needed later
-        // Example: setInspectingProposalId(eventData.source_id);
+        if (eventData.opportunity_id) {
+            navigate(`/proposals?action=resume_opp&opp_id=${eventData.opportunity_id}`);
+        } else {
+            navigate('/proposals');
+        }
         break;
       case 'dispatch_hub':
-        // Future route handling
-        console.log("Routing to Dispatch Hub for WO:", eventData.work_order_id);
+        navigate('/dispatch');
         break;
       case 'task_editor':
-        console.log("Routing to Task Editor for Task:", eventData.id);
+        navigate('/'); // Routes to dashboard for tasks right now
         break;
       default:
         console.log("No specific route target defined for:", eventData.route_target);

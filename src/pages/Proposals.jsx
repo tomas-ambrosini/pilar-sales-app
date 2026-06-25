@@ -77,27 +77,11 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
      const searchString = searchParams.toString();
      if (searchString && deepLinkHandled.current === searchString) return;
 
-     const draftCustStr = localStorage.getItem('pilar_draft_customer');
-     if (draftCustStr && searchParams.get('action') !== 'resume_opp') {
-         try {
-            const draftCust = JSON.parse(draftCustStr);
-            setWizardConfig({
-                isDraft: true,
-                step: 1,
-                selectedCustomerId: draftCust.household_id || draftCust.customer_id || '',
-                selectedLocationId: draftCust.site_survey_data?.property_id || '',
-                survey: draftCust.site_survey_data || null,
-                proposal_data: { associated_opportunity_id: draftCust.id || draftCust.dbId }
-            });
-            setShowWizard(true);
-            deepLinkHandled.current = searchString;
-         } catch(e){}
-         localStorage.removeItem('pilar_draft_customer');
-     } else if (searchParams.get('action') === 'new') {
+     if (searchParams.get('action') === 'new') {
          setShowWizard(true);
          setWizardConfig(true);
          deepLinkHandled.current = searchString;
-         window.history.replaceState({}, document.title, window.location.pathname);
+         setSearchParams({}, { replace: true });
      } else if (searchParams.get('action') === 'resume' && searchParams.get('id')) {
          const checkResume = async () => {
              const id = searchParams.get('id');
@@ -111,75 +95,60 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
              if (targetProposal && ['Lead', 'Draft', 'Sent', 'Opened'].includes(targetProposal.status)) {
                  if (['Lead', 'Draft'].includes(targetProposal.status) && targetProposal.created_by && targetProposal.created_by !== user?.id) {
                      toast.error('Access Denied: This draft is locked by its creator.');
-                     window.history.replaceState(null, "", "/proposals");
+                     setSearchParams({}, { replace: true });
                      return;
                  }
                  setWizardConfig({ id: targetProposal.id, ...targetProposal });
                  setShowWizard(true);
                  deepLinkHandled.current = searchString;
              }
-             window.history.replaceState(null, "", "/proposals");
+             setSearchParams({}, { replace: true });
          };
          checkResume();
      } else if (searchParams.get('action') === 'resume_opp' && searchParams.get('opp_id')) {
          const checkOpp = async () => {
              const oppId = searchParams.get('opp_id');
-             let targetProposal = proposals.find(p => p.proposal_data?.associated_opportunity_id === oppId);
+             let targetProposal = proposals.find(p => p.proposal_data?.associated_opportunity_id === oppId || p.associated_opportunity_id === oppId);
              
              if (!targetProposal) {
-                 const { data } = await supabase.from('proposals').select('*').eq('associated_opportunity_id', oppId).order('created_at', { ascending: false }).limit(1).single();
+                 const { data } = await supabase.from('proposals').select('*').eq('associated_opportunity_id', oppId).order('created_at', { ascending: false }).limit(1).maybeSingle();
                  if (data) targetProposal = data;
              }
 
-             if (targetProposal && ['Lead', 'Draft', 'Sent', 'Opened'].includes(targetProposal.status)) {
+             if (targetProposal) {
                  if (['Lead', 'Draft'].includes(targetProposal.status) && targetProposal.created_by && targetProposal.created_by !== user?.id) {
                      toast.error('Access Denied: This draft is locked by its creator.');
-                     window.history.replaceState(null, "", "/proposals");
+                     setSearchParams({}, { replace: true });
                      return;
                  }
                  setWizardConfig({ id: targetProposal.id, step: targetProposal.proposal_data?.wizard_state?.step || 2, isDraft: true, ...targetProposal });
                  setShowWizard(true);
                  deepLinkHandled.current = searchString;
              } else {
-                 const draftCustStr = localStorage.getItem('pilar_draft_customer');
-                 if (draftCustStr) {
-                     try {
-                         const draftCust = JSON.parse(draftCustStr);
-                         setWizardConfig({
-                             isDraft: true,
-                             step: 2,
-                             selectedCustomerId: draftCust.household_id || draftCust.customer_id || '',
-                             selectedLocationId: draftCust.site_survey_data?.property_id || '',
-                             survey: draftCust.site_survey_data || null,
-                             proposal_data: { associated_opportunity_id: draftCust.id || oppId }
-                         });
-                         setShowWizard(true);
-                         deepLinkHandled.current = searchString;
-                     } catch(e){}
-                 }
+                 toast.error(`Could not find an active quoting draft for opportunity: ${oppId}`);
              }
 
              // Use native history API to strip URL params without triggering a React Router re-render cycle
              // This guarantees the modal state batch is NOT aborted.
              setTimeout(() => {
                  localStorage.removeItem('pilar_draft_customer');
-                 window.history.replaceState(null, '', '/proposals');
+                 setSearchParams({}, { replace: true });
              }, 50);
          };
          checkOpp();
      } else if (searchParams.get('action') === 'view_proposal' && searchParams.get('opp_id')) {
          const oppId = searchParams.get('opp_id');
-         const targetProposal = proposals.find(p => p.proposal_data?.associated_opportunity_id === oppId);
+         const targetProposal = proposals.find(p => p.proposal_data?.associated_opportunity_id === oppId || p.associated_opportunity_id === oppId);
          if (targetProposal) {
              setViewingProposal(['Approved', 'Lost', 'Voided'].includes(targetProposal.status) ? { ...targetProposal, isReadOnly: true } : targetProposal);
              deepLinkHandled.current = searchString;
          } else {
              toast.error('Proposal not found or still generating.');
          }
-         window.history.replaceState(null, "", "/proposals");
+         setSearchParams({}, { replace: true });
      } else if (searchParams.get('action') === 'view_contract' && searchParams.get('opp_id')) {
          const oppId = searchParams.get('opp_id');
-         const targetProposal = proposals.find(p => p.proposal_data?.associated_opportunity_id === oppId);
+         const targetProposal = proposals.find(p => p.proposal_data?.associated_opportunity_id === oppId || p.associated_opportunity_id === oppId);
          if (targetProposal && (targetProposal.status === 'Approved' || targetProposal.proposal_data?.accepted_tier_name || targetProposal.proposal_data?.accepted_tier_data)) {
              const matchedTierName = targetProposal.proposal_data?.accepted_tier_name || ['good', 'better', 'best'].find(t => targetProposal.proposal_data?.tiers?.[t]?.salesPrice === targetProposal.amount) || 'good';
              const matchedTierData = targetProposal.proposal_data?.accepted_tier_data || targetProposal.proposal_data?.tiers?.[matchedTierName];
@@ -194,7 +163,7 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
          } else {
              toast.error('Contract not found. Deal might not be signed yet.');
          }
-         window.history.replaceState(null, "", "/proposals");
+         setSearchParams({}, { replace: true });
      }
   }, [searchParams, proposals, user, loading]);
 
@@ -499,13 +468,36 @@ ${equipmentNotes}
              // Rebuild the wizard systems array strictly with only the declined systems
              const filteredWizardSystems = (originalWizardState.systems || []).filter(sys => extractedIds.includes(sys.id));
              
+             let newOppId = null;
+             if (proposal.proposal_data?.associated_opportunity_id) {
+                 const { data: originalOpp } = await supabase.from('opportunities').select('*').eq('id', proposal.proposal_data.associated_opportunity_id).single();
+                 if (originalOpp) {
+                     const clonedOppData = {
+                         household_id: originalOpp.household_id,
+                         assigned_salesperson_id: originalOpp.assigned_salesperson_id,
+                         status: 'NEW_LEAD',
+                         urgency_level: originalOpp.urgency_level || 'Medium',
+                         issue_description: `Split/Extracted from Deal ${formatQuoteId(proposal)}. Systems declined by customer.`,
+                         site_survey_data: originalOpp.site_survey_data,
+                         is_active: true
+                     };
+                     const { data: clonedOpp, error: cloneError } = await supabase.from('opportunities').insert(clonedOppData).select().single();
+                     if (clonedOpp) {
+                         newOppId = clonedOpp.id;
+                     } else if (cloneError) {
+                         console.error("Failed to clone opportunity for extraction:", cloneError);
+                     }
+                 }
+             }
+
              const newLead = await addProposal({
                  customer: proposal.customer,
                  status: 'Lead',
                  amount: 0, // Reset projected amount as pricing gets updated upon drafting
+                 associated_opportunity_id: newOppId,
                  proposal_data: {
                      ...(proposal.proposal_data || {}),
-                     associated_opportunity_id: proposal.proposal_data?.associated_opportunity_id || null,
+                     associated_opportunity_id: newOppId,
                      systemTiers: extractedSystems,
                      signature_data: null,      // Erase previous signatures from new doc
                      accepted_tier_data: null,  // Erase previous acceptance
@@ -621,7 +613,7 @@ ${equipmentNotes}
   };
 
   return (
-    <div className={embedded ? "space-y-6" : "p-6 space-y-6"}>
+    <div className={embedded ? "h-full" : "p-6 space-y-6"}>
       {/* Header */}
       {!embedded && (
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -640,10 +632,9 @@ ${equipmentNotes}
         </button>
       </div>
       )}
-
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
           
-          <div className="p-4 border-b border-slate-100 flex justify-between gap-2 overflow-x-auto bg-slate-50 custom-scrollbar">
+          <div className="shrink-0 p-4 border-b border-slate-100 flex justify-between gap-2 overflow-x-auto bg-slate-50 custom-scrollbar">
              <div className="flex gap-2">
                 {['All', 'Lead', 'Draft', 'Sent', 'Approved', 'Pending Void', 'Voided', 'Lost'].map(mode => (
                     <button 
@@ -655,7 +646,15 @@ ${equipmentNotes}
                     </button>
                 ))}
              </div>
-             <div className="flex gap-2 shrink-0">
+             <div className="flex gap-2 shrink-0 items-center">
+                 {embedded && (
+                     <button 
+                         onClick={() => { setWizardConfig(null); setShowWizard(true); }}
+                         className="bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm border border-primary-700"
+                     >
+                         <Plus size={14} strokeWidth={3} /> New Quote
+                     </button>
+                 )}
                  <select 
                     className="bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-lg px-2 shadow-sm outline-none focus:ring-2 focus:ring-slate-800 transition-colors hover:bg-slate-50 cursor-pointer"
                     value={dateFilter}

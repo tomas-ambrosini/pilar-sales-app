@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { EventRegistry } from '../lib/calendar/EventRegistry';
 import { supabase } from '../supabaseClient';
 
@@ -14,6 +15,7 @@ export function useCompanyCalendarEvents(dateStart, dateEnd, filters) {
       setEvents(unifiedEvents);
     } catch (error) {
       console.error("Failed to fetch calendar events:", error);
+      toast.error("Failed to sync calendar events from server.");
     } finally {
       setLoading(false);
     }

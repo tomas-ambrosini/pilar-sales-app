@@ -6,6 +6,7 @@ import { useCustomers } from '../context/CustomerContext';
 import { useAuth } from '../context/AuthContext';
 import { useProposals } from '../context/ProposalContext';
 import { Check, Image as ImageIcon, Layers, Tag, DollarSign, Calculator, AlertTriangle, ArrowRight, ArrowLeft, Save, Clock, RefreshCcw, Edit2, X, Search, Box } from 'lucide-react';
+import { PipelineController } from '../utils/pipelineControls';
 
 export default function ProposalWizard({ onComplete, addProposal, updateProposal, editModeData }) {
   const hasPreloadedData = typeof editModeData === 'object' && editModeData !== null;
@@ -13,28 +14,10 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const isEditing = hasPreloadedData && editModeData.id != null && !isDraftLaunch;
   const editingId = isEditing ? editModeData.id : null;
 
-  // Local Storage Draft Recovery
-  const [localDraftPayload, setLocalDraftPayload] = useState(() => {
-      if (hasPreloadedData) return null;
-      try {
-          const d = localStorage.getItem('pilar_wizard_draft');
-          if (!d) return null;
-          const parsed = JSON.parse(d);
-          
-          let isEmpty = true;
-          if (parsed.step > 1) isEmpty = false;
-          else if (parsed.selectedCustomerId) isEmpty = false;
-          else if (parsed.systems && parsed.systems[0]) {
-             const survey = parsed.systems[0].survey;
-             if (survey && (survey.systemType || survey.currentTonnage || survey.existingBrand)) isEmpty = false;
-             for (let i = 1; i <= 27; i++) {
-                if (survey && survey[`m${i}`]) isEmpty = false;
-             }
-          }
-          return isEmpty ? null : parsed;
-      } catch(e) { return null; }
-  });
-  const [showRestoreBanner, setShowRestoreBanner] = useState(!!localDraftPayload);
+  // Local Storage Draft Recovery is now handled dynamically per-customer via useEffect below
+  const [localDraftPayload, setLocalDraftPayload] = useState(null);
+  const [showRestoreBanner, setShowRestoreBanner] = useState(false);
+  const sessionId = React.useRef(Date.now().toString());
   
   const [step, setStep] = useState(() => {
      if (isEditing) return 6;
@@ -47,8 +30,40 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   });
   const { customers } = useCustomers();
   const { user } = useAuth();
-  const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [selectedCustomerId, setSelectedCustomerId] = useState(() => {
+      if (hasPreloadedData) return editModeData.selectedCustomerId || editModeData.proposal_data?.wizard_state?.selectedCustomerId || '';
+      return '';
+  });
   const [selectedLocationId, setSelectedLocationId] = useState('');
+
+  useEffect(() => {
+      if (isEditing || isDraftLaunch) return;
+      
+      const key = selectedCustomerId ? `pilar_wizard_draft_${selectedCustomerId}` : 'pilar_wizard_draft_new';
+      try {
+          const d = localStorage.getItem(key);
+          if (!d) return;
+          const parsed = JSON.parse(d);
+          let isEmpty = true;
+          if (parsed.sessionId === sessionId.current) return; // Ignore drafts saved by this exact session
+
+          if (parsed.step > 1) {
+              isEmpty = false;
+          } else if (parsed.systems && parsed.systems[0]) {
+             const survey = parsed.systems[0].survey;
+             if (survey && (survey.systemType || survey.currentTonnage || survey.existingBrand)) isEmpty = false;
+             for (let i = 1; i <= 27; i++) {
+                if (survey && survey[`m${i}`]) isEmpty = false;
+             }
+          }
+          if (!isEmpty) {
+              setLocalDraftPayload(parsed);
+              setShowRestoreBanner(true);
+          }
+      } catch (e) {
+          // ignore
+      }
+  }, [selectedCustomerId, isEditing, isDraftLaunch]);
   
   const generateEmptySystem = (id) => ({
     id,
@@ -118,7 +133,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     
     const draftPayload = {
         wizard_state: { step, selectedCustomerId, selectedLocationId, systems },
-        associated_opportunity_id: editModeData?.associated_opportunity_id || null
+        associated_opportunity_id: editModeData?.associated_opportunity_id || editModeData?.proposal_data?.associated_opportunity_id || null
     };
     
     const customerName = selectedCustomerId 
@@ -165,6 +180,10 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
             associated_opportunity_id: editModeData?.associated_opportunity_id || editModeData?.proposal_data?.associated_opportunity_id || null
          };
          
+         // Failsafe: Do not auto-save over a finalized proposal
+         const currentStatus = editModeData?.status || 'Lead';
+         if (['Sent', 'Completed', 'Lost'].includes(currentStatus)) return;
+         
          const customerName = selectedCustomerId 
              ? customers.find(c => c.id === selectedCustomerId)?.name || 'Unknown' 
              : 'Unknown Customer';
@@ -205,12 +224,13 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
   }, [step, selectedCustomerId, selectedLocationId, systems, dbReady, isEditing, draftServerId]);
 
-  // Aggressive Local Storage Auto-Save
+  // Aggressive Local Storage Auto-Save (Namespaced)
   useEffect(() => {
-      if (showRestoreBanner) return; // Don't overwrite if they haven't decided yet
-      const payload = { step, selectedCustomerId, selectedLocationId, systems, draftServerId };
-      localStorage.setItem('pilar_wizard_draft', JSON.stringify(payload));
-  }, [step, selectedCustomerId, selectedLocationId, systems, draftServerId, showRestoreBanner]);
+      if (showRestoreBanner || isEditing) return; // Don't overwrite if they haven't decided yet or if editing
+      const payload = { sessionId: sessionId.current, step, selectedCustomerId, selectedLocationId, systems, draftServerId };
+      const key = selectedCustomerId ? `pilar_wizard_draft_${selectedCustomerId}` : 'pilar_wizard_draft_new';
+      localStorage.setItem(key, JSON.stringify(payload));
+  }, [step, selectedCustomerId, selectedLocationId, systems, draftServerId, showRestoreBanner, isEditing]);
 
   // Handle Edit/Clone Mode Rehydration
   useEffect(() => {
@@ -464,7 +484,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        };
     });
 
-    const finalAmount = Math.max((finalTiers.better?.salesPrice || 0), (finalTiers.good?.salesPrice || 0), 0);
+    const finalAmount = Math.max((finalTiers.best?.salesPrice || 0), (finalTiers.better?.salesPrice || 0), (finalTiers.good?.salesPrice || 0), 0);
     const cust = customers.find(c => c.id.toString() === selectedCustomerId.toString());
     if (!cust) return;
 
@@ -538,7 +558,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        return {
            systemId: sys.id,
            systemName: sys.name,
-           tiers: Object.keys(sysTiers).length > 0 ? sysTiers : null,
+           tiers: Object.values(sysTiers).some(Boolean) ? sysTiers : null,
            altTiers: altTracksArray.length > 0 ? altTracksArray[0].tiers : null,
            altTracks: altTracksArray
        };
@@ -569,11 +589,20 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     } else if (existingOppId && targetHouseholdId) {
        const linkedProposalData = { ...finalProposalData, associated_opportunity_id: existingOppId, wizard_state: wizardState };
        
-       await supabase.from('opportunities').update({
-           status: 'SENT',
-           site_survey_data: { ...survey, photos: photos, property_id: selectedProp?.id, property_address: propAddressString },
-           proposal_data: linkedProposalData
-       }).eq('id', existingOppId);
+       const { data: oppObj } = await supabase.from('opportunities').select('status').eq('id', existingOppId).single();
+       const currentStatus = oppObj ? oppObj.status : 'QUOTING';
+       
+       if (currentStatus !== 'SENT') {
+           await PipelineController.sendProposal(existingOppId, currentStatus, {
+               site_survey_data: { ...survey, photos: photos, property_id: selectedProp?.id, property_address: propAddressString },
+               proposal_data: linkedProposalData
+           });
+       } else {
+           await supabase.from('opportunities').update({
+               site_survey_data: { ...survey, photos: photos, property_id: selectedProp?.id, property_address: propAddressString },
+               proposal_data: linkedProposalData
+           }).eq('id', existingOppId);
+       }
 
        if (draftServerId) {
           updateProposal(draftServerId, { customer: customerName, amount: finalAmount, status: 'Sent', associated_opportunity_id: existingOppId, proposal_data: linkedProposalData, updated_at: new Date().toISOString() });
@@ -581,9 +610,11 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
           addProposal({ customer: customerName, amount: finalAmount, associated_opportunity_id: existingOppId, proposal_data: linkedProposalData });
        }
     } else if (targetHouseholdId) {
+       // Insert as QUOTING so PipelineController captures the proper status jump to SENT
        const { data: oppData, error: oppError } = await supabase.from('opportunities').insert({
            household_id: targetHouseholdId,
-           status: 'SENT', urgency_level: 'Medium',
+           status: 'QUOTING', urgency_level: 'Medium',
+           assigned_salesperson_id: user?.id,
            issue_description: `Auto-generated Digital Proposal with 3 Tiers for ${propAddressString}.`,
            site_survey_data: { ...survey, photos: photos, property_id: selectedProp?.id, property_address: propAddressString },
            proposal_data: { ...finalProposalData, wizard_state: wizardState, intaken_by: user?.full_name || 'System' }
@@ -593,6 +624,10 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        
        const finalOppId = oppData ? oppData.id : null;
        const linkedProposalData = { ...finalProposalData, associated_opportunity_id: finalOppId, wizard_state: wizardState };
+       
+       if (finalOppId) {
+           await PipelineController.sendProposal(finalOppId, 'QUOTING', { proposal_data: linkedProposalData });
+       }
        
        if (draftServerId) {
           updateProposal(draftServerId, { customer: customerName, amount: finalAmount, status: 'Sent', associated_opportunity_id: finalOppId, proposal_data: linkedProposalData, updated_at: new Date().toISOString() });
@@ -607,19 +642,25 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
        }
     }
     
-    // Auto-Log: Deal Proposed / Draft Updated
-    const finalOppIdToLog = isEditing ? (editModeData?.proposal_data?.associated_opportunity_id || editModeData?.associated_opportunity_id) : (existingOppId || (typeof oppData !== 'undefined' ? oppData?.id : null));
-    const hIdToLog = targetHouseholdId || editModeData?.household_id;
-    if (finalOppIdToLog && hIdToLog) {
-        supabase.from('activity_logs').insert({
-            household_id: hIdToLog,
-            opportunity_id: finalOppIdToLog,
-            activity_type: isEditing ? 'Proposal Updated' : 'Deal Proposed',
-            description: isEditing ? 'Sales representative modified the active proposal draft.' : 'Digital proposal finalized and marked as Sent.'
-        }).then();
+    // Auto-Log: Draft Updated only if we didn't just propose the deal (which is handled by pipeline controller)
+    if (isEditing) {
+        const finalOppIdToLog = editModeData?.proposal_data?.associated_opportunity_id || editModeData?.associated_opportunity_id;
+        const hIdToLog = targetHouseholdId || editModeData?.household_id;
+        if (finalOppIdToLog && hIdToLog) {
+            supabase.from('activity_logs').insert({
+                household_id: hIdToLog,
+                opportunity_id: finalOppIdToLog,
+                activity_type: 'Proposal Updated',
+                description: 'Sales representative modified the active proposal draft.'
+            }).then();
+        }
     }
     
-    localStorage.removeItem('pilar_wizard_draft');
+    const keyToRemove = targetHouseholdId ? `pilar_wizard_draft_${targetHouseholdId}` : 'pilar_wizard_draft_new';
+    localStorage.removeItem(keyToRemove);
+    localStorage.removeItem('pilar_wizard_draft'); // Clean up global just in case
+    
+    setStep(7);
     onComplete();
   };
 
@@ -649,7 +690,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
              </div>
              <p className="text-slate-300 text-sm mb-5">We found a quote you were working on recently. Would you like to resume it?</p>
              <div className="flex flex-wrap gap-3">
-                <button onClick={() => setShowRestoreBanner(false)} className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-lg border border-slate-700 transition-colors w-auto">Discard Draft</button>
+                <button onClick={() => { setShowRestoreBanner(false); setLocalDraftPayload(null); localStorage.removeItem(selectedCustomerId ? `pilar_wizard_draft_${selectedCustomerId}` : 'pilar_wizard_draft_new'); }} className="text-slate-500 hover:text-slate-800 p-2"><X size={18}/></button>
+                <button onClick={() => { setShowRestoreBanner(false); setLocalDraftPayload(null); localStorage.removeItem(selectedCustomerId ? `pilar_wizard_draft_${selectedCustomerId}` : 'pilar_wizard_draft_new'); }} className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-lg border border-slate-700 transition-colors w-auto">Discard Draft</button>
                 <button onClick={handleRestoreLocalDraft} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg border border-blue-500 transition-colors shadow-sm w-auto">Resume Progress</button>
              </div>
           </div>

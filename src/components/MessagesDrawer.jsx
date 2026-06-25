@@ -254,10 +254,10 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
 
     fetchMessagesAndMembers();
 
-    const globalChannelListener = supabase.channel(`chat_update_${activeChannelId}_msgs_${Date.now()}`)
+    const globalChannelListener = supabase.channel(`chat_msgs_${activeChannelId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'chat_messages' },
+        { event: '*', schema: 'public', table: 'chat_messages', filter: `channel_id=eq.${activeChannelId}` },
         async (payload) => {
           console.log("🔥 REALTIME WEBSOCKET TEXT PAYLOAD 🔥", payload);
           if (payload.event === 'INSERT') {
@@ -265,56 +265,39 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
             if (newMessage.sender_id === user?.id) return; 
 
             // Active channel UI append
-            if (newMessage.channel_id === activeChannelRef.current) {
-              const { data: userData } = await supabase
-                .from('user_profiles')
-                .select('full_name, role, avatar_url')
-                .eq('id', newMessage.sender_id)
-                .maybeSingle();
+            const { data: userData } = await supabase
+              .from('user_profiles')
+              .select('full_name, role, avatar_url')
+              .eq('id', newMessage.sender_id)
+              .maybeSingle();
 
-              if (userData) {
-                newMessage.sender = userData;
-              }
-
-              setMessages(prev => {
-                if (prev.some(m => m.id === newMessage.id)) return prev;
-                return [...prev, newMessage];
-              });
-              scrollToBottom();
-
-              // Mark as read immediately
-               supabase.from('channel_members').upsert({ 
-                 channel_id: activeChannelRef.current, 
-                 user_id: user.id,
-                 last_read_at: new Date().toISOString() 
-               }, { onConflict: 'channel_id,user_id' }).then();
-            } else {
-              // Not the active channel: Add unread badge if user is a member
-              const { data: memberCheck } = await supabase
-                .from('channel_members')
-                .select('id')
-                .eq('channel_id', newMessage.channel_id)
-                .eq('user_id', user.id)
-                .maybeSingle();
-              if (memberCheck) {
-                setUnreadCounts(prev => ({ ...prev, [newMessage.channel_id]: (prev[newMessage.channel_id] || 0) + 1 }));
-              }
+            if (userData) {
+              newMessage.sender = userData;
             }
+
+            setMessages(prev => {
+              if (prev.some(m => m.id === newMessage.id)) return prev;
+              return [...prev, newMessage];
+            });
+            scrollToBottom();
+
+            // Mark as read immediately
+             supabase.from('channel_members').upsert({ 
+               channel_id: activeChannelRef.current, 
+               user_id: user.id,
+               last_read_at: new Date().toISOString() 
+             }, { onConflict: 'channel_id,user_id' }).then();
             
           } else if (payload.event === 'UPDATE') {
-             if (payload.new.channel_id === activeChannelRef.current) {
-               setMessages(prev => prev.map(m => m.id === payload.new.id ? { ...m, ...payload.new } : m));
-             }
+             setMessages(prev => prev.map(m => m.id === payload.new.id ? { ...m, ...payload.new } : m));
           } else if (payload.event === 'DELETE') {
-             if (payload.old.channel_id === activeChannelRef.current) {
-               setMessages(prev => prev.filter(m => m.id !== payload.old.id));
-             }
+             setMessages(prev => prev.filter(m => m.id !== payload.old.id));
           }
         }
       )
       .subscribe();
 
-    const reactionsListener = supabase.channel(`chat_update_${activeChannelId}_reacts_${Date.now()}`)
+    const reactionsListener = supabase.channel(`chat_reacts_${activeChannelId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'chat_reactions' },
@@ -333,21 +316,19 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
       )
       .subscribe();
 
-    const membersListener = supabase.channel(`chat_update_${activeChannelId}_members_${Date.now()}`)
+    const membersListener = supabase.channel(`chat_members_${activeChannelId}`)
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'channel_members' },
-        async (payload) => {
-          if (payload.new.channel_id === activeChannelRef.current) {
-             const { data: memUser } = await supabase.from('user_profiles').select('full_name, avatar_url').eq('id', payload.new.user_id).single();
-             setChannelMembers(prev => {
-                const exists = prev.find(p => p.user_id === payload.new.user_id);
-                if (exists) {
-                  return prev.map(p => p.user_id === payload.new.user_id ? { ...p, last_read_at: payload.new.last_read_at } : p);
-                }
-                return [...prev, { ...payload.new, user: memUser }];
-             });
-          }
+        { event: 'UPDATE', schema: 'public', table: 'channel_members', filter: `channel_id=eq.${activeChannelId}` },
+        (payload) => {
+           setChannelMembers(prev => {
+              const exists = prev.find(p => p.user_id === payload.new.user_id);
+              if (exists) {
+                return prev.map(p => p.user_id === payload.new.user_id ? { ...p, last_read_at: payload.new.last_read_at } : p);
+              }
+              // If not cached, let the regular HTTP polling handle it or ignore
+              return prev;
+           });
         }
       )
       .subscribe();
@@ -656,8 +637,9 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
           });
        }
 
-       // --- GENERATE MENTION NOTIFICATIONS MVP ---
+       // --- GENERATE NOTIFICATIONS ---
        if (createNotification) {
+          // Notify mentioned users specifically
           allUsers.forEach(u => {
               if (u.id === user.id) return;
               if (newMsg.body.includes(`](${u.id})`)) {
@@ -670,6 +652,22 @@ export default function MessagesDrawer({ isOpen, onClose, forceChannel, onClearF
                       entityId: activeChannelId
                   });
               }
+          });
+
+          // Notify all channel members
+          channelMembers.forEach(mem => {
+              if (mem.user_id === user.id) return;
+              // Skip if already notified via mention
+              if (newMsg.body.includes(`](${mem.user_id})`)) return;
+
+              createNotification({
+                  userId: mem.user_id,
+                  type: 'chat_message',
+                  title: `New Message from ${user.full_name || 'Someone'}`,
+                  message: newMsg.body,
+                  entityType: 'chat_channel',
+                  entityId: activeChannelId
+              });
           });
        }
     }

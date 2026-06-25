@@ -11,43 +11,45 @@ export function CompanyCalendarEngine({ events, onEventClick, onDateRangeChange,
   const calendarRef = useRef(null);
 
   // Map our internal normalized event schema to FullCalendar's expected format
-  const fcEvents = events.map(ev => {
-    // Map Tailwind color keys to actual hex codes for FullCalendar
-    const colorMap = {
-      blue: '#3b82f6',
-      emerald: '#10b981',
-      amber: '#f59e0b',
-      purple: '#8b5cf6',
-      red: '#ef4444',
-      cyan: '#06b6d4',
-      fuchsia: '#d946ef',
-      slate: '#64748b'
-    };
+  const fcEvents = React.useMemo(() => {
+    return events.map(ev => {
+      // Map Tailwind color keys to actual hex codes for FullCalendar
+      const colorMap = {
+        blue: '#3b82f6',
+        emerald: '#10b981',
+        amber: '#f59e0b',
+        purple: '#8b5cf6',
+        red: '#ef4444',
+        cyan: '#06b6d4',
+        fuchsia: '#d946ef',
+        slate: '#64748b'
+      };
 
-    const baseEvent = {
-      id: ev.id,
-      title: ev.title,
-      backgroundColor: colorMap[ev.color_key] || colorMap.slate,
-      borderColor: colorMap[ev.color_key] || colorMap.slate,
-      extendedProps: {
-        ...ev // Keep our entire internal schema available in extendedProps
+      const baseEvent = {
+        id: ev.id,
+        title: ev.title,
+        backgroundColor: colorMap[ev.color_key] || colorMap.slate,
+        borderColor: colorMap[ev.color_key] || colorMap.slate,
+        extendedProps: {
+          ...ev // Keep our entire internal schema available in extendedProps
+        }
+      };
+
+      if (ev.metadata?.recurrence_rule) {
+        return {
+          ...baseEvent,
+          rrule: ev.metadata.recurrence_rule,
+          duration: ev.end_date ? (new Date(ev.end_date) - new Date(ev.start_date)) : undefined
+        };
       }
-    };
 
-    if (ev.metadata?.recurrence_rule) {
       return {
         ...baseEvent,
-        rrule: ev.metadata.recurrence_rule,
-        duration: ev.end_date ? (new Date(ev.end_date) - new Date(ev.start_date)) : undefined
+        start: ev.start_date,
+        end: ev.end_date || ev.start_date
       };
-    }
-
-    return {
-      ...baseEvent,
-      start: ev.start_date,
-      end: ev.end_date || ev.start_date
-    };
-  });
+    });
+  }, [events]);
 
   const handleEventClick = (info) => {
     // Pass our internal event schema back to the parent
