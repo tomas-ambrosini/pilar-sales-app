@@ -40,6 +40,7 @@ function CustomerList() {
     phone: '',
     address: '',
     city: '',
+    zip: '',
     tags: '',
     sameAsService: true,
     billingAddress: '',
@@ -56,7 +57,7 @@ function CustomerList() {
   const handleCloseModal = () => {
     setFormData({ 
       firstName: '', lastName: '', email: '', phone: '', 
-      address: '', city: '', tags: '', sameAsService: true, 
+      address: '', city: '', zip: '', tags: '', sameAsService: true, 
       billingAddress: '', billingCity: '', billingState: '', billingZip: '' 
     });
     setIsAddCustomerOpen(false);
@@ -76,7 +77,7 @@ function CustomerList() {
       address: formData.address,
       city: formData.city,
       state: 'FL',
-      zip: '',
+      zip: formData.zip,
       tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
       billing_address: formData.sameAsService ? formData.address : formData.billingAddress,
       billing_city: formData.sameAsService ? formData.city : formData.billingCity,
@@ -392,9 +393,15 @@ function CustomerList() {
             <label htmlFor="address">Address</label>
             <input type="text" id="address" placeholder="123 Main St" value={formData.address} onChange={handleInputChange} />
           </div>
-          <div className="form-group">
-            <label htmlFor="city">City</label>
-            <input type="text" id="city" placeholder="Miami" value={formData.city} onChange={handleInputChange} />
+          <div className="grid grid-cols-2 gap-3">
+              <div className="form-group">
+                <label htmlFor="city">City</label>
+                <input type="text" id="city" placeholder="Miami" value={formData.city} onChange={handleInputChange} />
+              </div>
+              <div className="form-group">
+                <label htmlFor="zip">Zip Code</label>
+                <input type="text" id="zip" placeholder="33101" value={formData.zip} onChange={handleInputChange} />
+              </div>
           </div>
           
           <div className="form-group bg-slate-50 p-4 rounded-xl border border-slate-200 mt-2 mb-2">

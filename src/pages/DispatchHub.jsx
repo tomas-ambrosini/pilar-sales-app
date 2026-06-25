@@ -36,6 +36,7 @@ export default function DispatchHub() {
       email: '',
       address: '',
       city: '',
+      zip: '',
       sameAsService: true,
       billingAddress: '',
       billingCity: '',
@@ -115,7 +116,7 @@ export default function DispatchHub() {
               address: customerForm.address,
               city: customerForm.city,
               state: 'FL',
-              zip: '',
+              zip: customerForm.zip,
               billing_address: customerForm.sameAsService ? customerForm.address : customerForm.billingAddress,
               billing_city: customerForm.sameAsService ? customerForm.city : customerForm.billingCity,
               billing_state: customerForm.sameAsService ? 'FL' : customerForm.billingState,
@@ -315,9 +316,15 @@ export default function DispatchHub() {
                                            <label className="text-xs font-bold text-slate-500">Street Address</label>
                                            <input required type="text" value={customerForm.address} onChange={e => setCustomerForm({...customerForm, address: e.target.value})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
                                        </div>
-                                       <div className="form-group mb-6">
-                                           <label className="text-xs font-bold text-slate-500">City</label>
-                                           <input required type="text" value={customerForm.city} onChange={e => setCustomerForm({...customerForm, city: e.target.value})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
+                                       <div className="grid grid-cols-2 gap-4 mb-6">
+                                           <div className="form-group">
+                                               <label className="text-xs font-bold text-slate-500">City</label>
+                                               <input required type="text" value={customerForm.city} onChange={e => setCustomerForm({...customerForm, city: e.target.value})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
+                                           </div>
+                                           <div className="form-group">
+                                               <label className="text-xs font-bold text-slate-500">Zip Code</label>
+                                               <input required type="text" value={customerForm.zip} onChange={e => setCustomerForm({...customerForm, zip: e.target.value})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
+                                           </div>
                                        </div>
 
                                        <div className="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200/60">
