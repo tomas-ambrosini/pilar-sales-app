@@ -276,7 +276,9 @@ export function CustomerProvider({ children }) {
                 const { data: addressData, error: addressError } = await supabase.from('addresses')
                     .insert({ 
                         street_address: customerData.address, 
-                        city: '', state: '', zip: '',
+                        city: customerData.city || '', 
+                        state: customerData.state || '', 
+                        zip: customerData.zip || '',
                         household_id: householdData.id,
                         property_details: {},
                         is_primary_residence: true
