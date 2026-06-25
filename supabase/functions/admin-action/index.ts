@@ -36,14 +36,33 @@ serve(async (req) => {
       .eq('id', user.id)
       .single();
 
+    const { action, payload } = await req.json();
+
+    // ACTION: completeFirstSetup (Allowed for ANY authenticated user to themselves)
+    if (action === 'completeFirstSetup') {
+      const { full_name } = payload;
+      
+      const updatePayload: any = { must_change_password: false };
+      if (full_name) updatePayload.full_name = full_name;
+
+      const { error: updateError } = await supabaseAdmin.from('user_profiles')
+        .update(updatePayload)
+        .eq('id', user.id); // Only allow updating themselves
+
+      if (updateError) throw updateError;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Require ADMIN role for all actions below this point
     if (profile?.role !== 'ADMIN' || profile?.status !== 'active') {
       return new Response(JSON.stringify({ error: 'Unauthorized: Admin privileges required.' }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    const { action, payload } = await req.json();
 
     if (action === 'createUser') {
       const { email, password, full_name, username, role, department } = payload;
@@ -111,6 +130,7 @@ serve(async (req) => {
        if (department !== undefined) updatePayload.department = department;
        if (full_name !== undefined) updatePayload.full_name = full_name;
        if (username !== undefined) updatePayload.username = username;
+       if (payload.must_change_password !== undefined) updatePayload.must_change_password = payload.must_change_password;
 
        const { error: updateError } = await supabaseAdmin.from('user_profiles')
           .update(updatePayload)

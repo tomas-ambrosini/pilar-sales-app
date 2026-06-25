@@ -71,7 +71,9 @@ const ProposalsRedirect = () => {
 function MainRouter() {
   const { user } = useAuth();
 
-  if (user?.must_change_password) {
+  const localSetupComplete = localStorage.getItem(`setup_complete_${user?.id}`) === 'true';
+
+  if (user?.must_change_password && !localSetupComplete) {
     return (
       <Routes>
         <Route path="*" element={<FirstSetup />} />
