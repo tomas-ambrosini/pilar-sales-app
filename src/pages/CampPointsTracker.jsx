@@ -44,7 +44,7 @@ export default function CampPointsTracker() {
             // Insert new
             for (let name of newNames) {
                 if (!existingNames.includes(name)) {
-                    await supabase.from('camp_teams').insert({ name, points: 0 });
+                    await supabase.from('camp_teams').insert({ name, points: 0, color_hex: TEAM_META[name]?.colorOverride || '#000000' });
                 }
             }
         };
