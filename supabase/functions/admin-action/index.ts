@@ -71,7 +71,7 @@ serve(async (req) => {
     }
 
     if (action === 'createUser') {
-      const { email, password, full_name, username, role, department, subcontractor_company } = payload;
+      const { email, password, full_name, username, role, department, subcontractor_company, phone } = payload;
       
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
@@ -87,6 +87,7 @@ serve(async (req) => {
         email,
         full_name,
         username: username || null,
+        phone: phone || null,
         role: role || 'SALES',
         department: department || 'SALES',
         subcontractor_company: subcontractor_company || null,
@@ -126,7 +127,7 @@ serve(async (req) => {
     ];
 
     if (action === 'updateUser') {
-       const { targetUserId, role, department, status, full_name, username } = payload;
+       const { targetUserId, role, department, status, full_name, username, phone } = payload;
 
        // Safeguard: Cannot deactivate self
        if (targetUserId === user.id && status === 'inactive') {
@@ -148,6 +149,7 @@ serve(async (req) => {
        if (department !== undefined) updatePayload.department = department;
        if (full_name !== undefined) updatePayload.full_name = full_name;
        if (username !== undefined) updatePayload.username = username;
+       if (phone !== undefined) updatePayload.phone = phone;
        if (payload.must_change_password !== undefined) updatePayload.must_change_password = payload.must_change_password;
        if (payload.subcontractor_company !== undefined) updatePayload.subcontractor_company = payload.subcontractor_company;
 

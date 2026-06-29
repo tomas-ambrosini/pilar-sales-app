@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import UserBadges from '../components/UserBadges';
 import { MANUAL_BADGE_KEYS, BADGE_REGISTRY } from '../utils/badges';
+import { formatPhoneNumber } from '../utils/formatters';
 
 export default function AccountManagement() {
   const { user } = useAuth();
@@ -195,6 +196,7 @@ export default function AccountManagement() {
                <thead className="bg-slate-50 text-[10px] uppercase font-black tracking-widest text-slate-500 border-b border-slate-200">
                   <tr>
                      <th className="px-6 py-5">Employee Details</th>
+                     <th className="px-6 py-5 text-center">Contact</th>
                      <th className="px-6 py-5 text-center">Authorization Level</th>
                      <th className="px-6 py-5 text-center">Network Status</th>
                      <th className="px-6 py-5 text-center">Security</th>
@@ -214,6 +216,7 @@ export default function AccountManagement() {
                              </div>
                            </div>
                          </td>
+                         <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-24 mx-auto"></div></td>
                          <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-32"></div></td>
                          <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-20"></div></td>
                          <td className="px-6 py-4"><div className="h-6 bg-slate-200 rounded-full w-20"></div></td>
@@ -252,7 +255,10 @@ export default function AccountManagement() {
                                   </div>
                                </div>
                             </td>
-                            <td className="px-6 py-5 text-center border-b border-slate-100">
+                            <td className="px-6 py-5 text-center border-b border-slate-100 font-mono text-xs text-slate-500">
+                                {u.phone || 'No phone'}
+                             </td>
+                             <td className="px-6 py-5 text-center border-b border-slate-100">
                                <div className="flex flex-col items-center gap-1.5">
                                   {u.role === 'ADMIN' ? (
                                      <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black tracking-widest uppercase rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm">
@@ -324,6 +330,10 @@ export default function AccountManagement() {
                   <div>
                      <label className="text-xs font-bold text-slate-500 uppercase">Username (Optional)</label>
                      <input type="text" name="username" className="w-full border rounded p-2 text-sm font-semibold" />
+                  </div>
+                  <div>
+                     <label className="text-xs font-bold text-slate-500 uppercase">Phone Number</label>
+                     <input type="tel" name="phone" onChange={(e) => e.target.value = formatPhoneNumber(e.target.value)} className="w-full border rounded p-2 text-sm font-semibold" placeholder="(555) 555-5555" />
                   </div>
                   <div className="flex gap-4">
                      <div className="flex-1">
@@ -411,6 +421,10 @@ export default function AccountManagement() {
                   <div>
                      <label className="text-xs font-bold text-slate-500 uppercase">Username (Optional)</label>
                      <input type="text" name="username" defaultValue={showEditModal.username || ''} className="w-full border rounded p-2 text-sm font-semibold" />
+                  </div>
+                  <div>
+                     <label className="text-xs font-bold text-slate-500 uppercase">Phone Number</label>
+                     <input type="tel" name="phone" defaultValue={showEditModal.phone || ''} onChange={(e) => e.target.value = formatPhoneNumber(e.target.value)} className="w-full border rounded p-2 text-sm font-semibold" placeholder="(555) 555-5555" />
                   </div>
                   <div className="flex gap-4">
                      <div className="flex-1">
