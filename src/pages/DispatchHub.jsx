@@ -3,11 +3,12 @@ import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Phone, User, MapPin, Search, Plus, AlertCircle, CalendarClock, Zap, CheckCircle2, UserCheck, Map } from 'lucide-react';
+import { Phone, User, MapPin, Search, Plus, AlertCircle, CalendarClock, Zap, CheckCircle2, UserCheck, Map, Wrench } from 'lucide-react';
 import { PIPELINE_STATES } from '../utils/pipelineControls';
 import toast from 'react-hot-toast';
 import DispatchCalendar from './DispatchCalendar';
 import DispatchMap from '../components/DispatchMap';
+import ServiceHub from './ServiceHub';
 
 export default function DispatchHub() {
    const { user } = useAuth();
@@ -231,6 +232,12 @@ export default function DispatchHub() {
                         className={`px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'map' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
                     >
                         <Map size={16}/> Live Map
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('service')} 
+                        className={`px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'service' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
+                    >
+                        <Wrench size={16}/> Service Board
                     </button>
                </div>
            </header>
@@ -534,6 +541,12 @@ export default function DispatchHub() {
                {activeTab === 'map' && (
                    <div className="flex-1 overflow-hidden relative h-full p-4 bg-slate-100">
                        <DispatchMap />
+                   </div>
+               )}
+
+               {activeTab === 'service' && (
+                   <div className="flex-1 overflow-hidden relative h-full">
+                       <ServiceHub isEmbedded={true} />
                    </div>
                )}
            </div>

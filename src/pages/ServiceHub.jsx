@@ -15,7 +15,7 @@ const STATUS_COLUMNS = [
     { id: 'Completed', title: 'Completed', color: 'border-cyan-300', bg: 'bg-cyan-100', text: 'text-cyan-700', icon: 'text-cyan-500' }
 ];
 
-export default function ServiceHub() {
+export default function ServiceHub({ isEmbedded = false }) {
     const { user } = useAuth();
     const { activeRole, ROLES } = useRole();
     const [viewMode, setViewMode] = useState('kanban'); // 'kanban' or 'table'
@@ -151,7 +151,7 @@ export default function ServiceHub() {
     };
 
     return (
-        <div className="p-4 md:p-8 flex flex-col gap-8 h-[calc(100vh-64px)] overflow-hidden bg-slate-50/50 relative">
+        <div className={`flex flex-col gap-8 overflow-hidden bg-slate-50/50 relative ${isEmbedded ? 'h-full p-2 md:p-4' : 'p-4 md:p-8 h-[calc(100vh-64px)]'}`}>
             {/* Subtle background decoration */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
                 <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-purple-100/40 blur-3xl"></div>
