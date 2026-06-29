@@ -100,6 +100,17 @@ serve(async (req) => {
          throw new Error(`Profile DB Error: ${upsertError.message}`);
       }
 
+      // If user is a SUBCONTRACTOR, automatically create a default crew for them
+      if (role === 'SUBCONTRACTOR') {
+          const defaultCrewName = subcontractor_company ? `${subcontractor_company} - Main` : `${full_name} - Main`;
+          await supabaseAdmin.from('crews').insert({
+              crew_name: defaultCrewName,
+              subcontractor_id: newUser.user.id,
+              color_code: '#64748b', // Default gray
+              is_active: true
+          });
+      }
+
       return new Response(JSON.stringify({ success: true, user: newUser.user }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

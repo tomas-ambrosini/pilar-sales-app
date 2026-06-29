@@ -10,6 +10,7 @@ import Login from './pages/Login';
 import FirstSetup from './pages/FirstSetup';
 import PromoCodes from './pages/PromoCodes';
 import AccountManagement from './pages/AccountManagement';
+import Subcontractors from './pages/Subcontractors';
 import TemplateDashboard from './pages/TemplateDashboard';
 import FinancialSettings from './pages/FinancialSettings';
 import FinanceDashboard from './pages/FinanceDashboard';
@@ -118,6 +119,7 @@ function MainRouter() {
           {/* SUPER ADMIN EXCLUSIVE DOMAINS */}
           <Route path="analytics" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><ExecutiveAnalytics /></RoleRoute>} />
           <Route path="account-management/*" element={<RoleRoute allowedRoles={['ADMIN']}><AccountManagement /></RoleRoute>} />
+          <Route path="subcontractors" element={<RoleRoute allowedRoles={['ADMIN']}><Subcontractors /></RoleRoute>} />
           <Route path="template-settings/*" element={<RoleRoute allowedRoles={['ADMIN']}><TemplateDashboard /></RoleRoute>} />
           <Route path="finance/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><FinanceDashboard /></RoleRoute>} />
           
