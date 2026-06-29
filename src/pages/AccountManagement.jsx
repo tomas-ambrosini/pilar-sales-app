@@ -343,6 +343,7 @@ export default function AccountManagement() {
                            <option value="SALES">SALES</option>
                            <option value="SERVICE">SERVICE</option>
                            <option value="INSTALL">INSTALL</option>
+                           <option value="SUBCONTRACTOR">SUBCONTRACTOR</option>
                         </select>
                      </div>
                   </div>
@@ -423,6 +424,7 @@ export default function AccountManagement() {
                            <option value="SALES">SALES</option>
                            <option value="SERVICE">SERVICE</option>
                            <option value="INSTALL">INSTALL</option>
+                           <option value="SUBCONTRACTOR">SUBCONTRACTOR</option>
                         </select>
                      </div>
                   </div>

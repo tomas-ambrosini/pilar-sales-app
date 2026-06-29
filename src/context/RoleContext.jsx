@@ -17,7 +17,8 @@ export const DEPARTMENTS = {
   FINANCE: 'FINANCE',
   SALES: 'SALES',
   SERVICE: 'SERVICE',
-  INSTALL: 'INSTALL'
+  INSTALL: 'INSTALL',
+  SUBCONTRACTOR: 'SUBCONTRACTOR'
 };
 
 export const RoleProvider = ({ children }) => {
