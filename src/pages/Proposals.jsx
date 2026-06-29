@@ -484,6 +484,12 @@ ${equipmentNotes}
                      const { data: clonedOpp, error: cloneError } = await supabase.from('opportunities').insert(clonedOppData).select().single();
                      if (clonedOpp) {
                          newOppId = clonedOpp.id;
+                         await supabase.from('activity_logs').insert({
+                             household_id: originalOpp.household_id,
+                             opportunity_id: newOppId,
+                             activity_type: 'Deal Cloned',
+                             description: `Deal split/extracted from ${formatQuoteId(proposal)} by ${user?.full_name || 'System'}.`
+                         });
                      } else if (cloneError) {
                          console.error("Failed to clone opportunity for extraction:", cloneError);
                      }

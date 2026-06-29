@@ -660,7 +660,7 @@ function CustomerDetail() {
      
      const primaryLoc = customer.locations?.find((loc) => loc.is_primary_residence) || customer.locations?.[0];
      
-     const { error } = await supabase.from('opportunities').insert({
+     const { data: oppData, error } = await supabase.from('opportunities').insert({
          household_id: customer.id,
          service_address_id: primaryLoc ? primaryLoc.id : null,
          assigned_salesperson_id: user?.id,
@@ -668,7 +668,16 @@ function CustomerDetail() {
          issue_description: dealForm.issue_description,
          proposal_data: { intaken_by: user?.full_name || 'System' },
          status: PIPELINE_STATES.NEW_LEAD
-     });
+     }).select().single();
+
+     if (!error) {
+         await supabase.from('activity_logs').insert({
+             household_id: customer.id,
+             opportunity_id: oppData.id,
+             activity_type: 'Lead Intaken',
+             description: `Lead intaken directly from Customer Profile by ${user?.full_name || 'System'}.`
+         });
+     }
      
      if (error) {
          alert("Database Error: " + error.message);

@@ -91,6 +91,13 @@ export default function QuickDealWizard({ isOpen, onClose }) {
 
             if (oppError) throw oppError;
 
+            await supabase.from('activity_logs').insert({
+                household_id: formData.customer_id,
+                opportunity_id: oppData.id,
+                activity_type: 'Deal Created',
+                description: `New deal initiated by ${user?.full_name || 'System'}.`
+            });
+
             // 2. Initialize the Draft using ProposalContext
             const newDraft = await createDraft({
                 customer: formData.customer_name,

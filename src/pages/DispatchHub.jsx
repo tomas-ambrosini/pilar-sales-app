@@ -156,7 +156,7 @@ export default function DispatchHub() {
        setLoading(true);
        try {
            if (oppForm.type === 'SALES') {
-               const { error } = await supabase.from('opportunities').insert({
+               const { data: oppData, error } = await supabase.from('opportunities').insert({
                    household_id: matchedCustomer.id,
                    urgency_level: oppForm.urgency,
                    issue_description: oppForm.issueDescription,
@@ -168,9 +168,16 @@ export default function DispatchHub() {
                        dispatcher: user?.full_name || 'System'
                    },
                    status: PIPELINE_STATES.NEW_LEAD
-               });
+               }).select().single();
 
                if (error) throw error;
+               
+               await supabase.from('activity_logs').insert({
+                   household_id: matchedCustomer.id,
+                   opportunity_id: oppData.id,
+                   activity_type: 'Lead Intaken',
+                   description: `Lead intaken by ${user?.full_name || 'System'}.`
+               });
                
                toast.success(`Sales lead successfully injected!`);
            } else {

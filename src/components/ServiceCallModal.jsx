@@ -103,6 +103,13 @@ ${callData.issue_description}`,
 
             if (oppError) throw oppError;
 
+            await supabase.from('activity_logs').insert({
+                household_id: callData.customer_id,
+                opportunity_id: newOpp.id,
+                activity_type: 'Converted from Service',
+                description: `Lead created from Service Call ${callData.id.slice(0,8)} by ${user?.full_name || 'System'}.`
+            });
+
             const updatedTags = [...(callData.tags || []), 'CONVERTED_TO_SALES'];
             const { error: svcError } = await supabase.from('service_calls').update({
                 tags: updatedTags,
