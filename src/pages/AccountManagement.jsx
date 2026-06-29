@@ -20,6 +20,8 @@ export default function AccountManagement() {
   const [successPayload, setSuccessPayload] = useState(null);
   const [userBadgesMap, setUserBadgesMap] = useState({}); // { userId: ['star_employee', ...] }
   const [editBadges, setEditBadges] = useState([]); // badge keys being edited
+  const [createRole, setCreateRole] = useState('SALES');
+  const [editRole, setEditRole] = useState('SALES');
 
   useEffect(() => {
     fetchUsers();
@@ -292,7 +294,7 @@ export default function AccountManagement() {
                                     <button onClick={(e) => handleClearSetup(e, u)} className="px-3 py-2 bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-200 font-bold text-xs rounded-lg shadow-sm transition-all" title="Manually mark as Secured">Clear Setup</button>
                                  )}
                                  <button onClick={(e) => { e.stopPropagation(); setShowResetModal(u); }} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="Force Password Reset"><Key size={16}/></button>
-                                 <button onClick={(e) => { e.stopPropagation(); setShowEditModal(u); setEditBadges(userBadgesMap[u.id] || []); }} className="px-4 py-2 bg-white border border-slate-200 hover:border-primary-300 hover:text-primary-700 text-slate-600 font-bold text-xs rounded-lg shadow-sm transition-all hover:shadow">Manage</button>
+                                 <button onClick={(e) => { e.stopPropagation(); setShowEditModal(u); setEditBadges(userBadgesMap[u.id] || []); setEditRole(u.role || 'SALES'); }} className="px-4 py-2 bg-white border border-slate-200 hover:border-primary-300 hover:text-primary-700 text-slate-600 font-bold text-xs rounded-lg shadow-sm transition-all hover:shadow">Manage</button>
                               </div>
                            </td>
                         </tr>
@@ -326,7 +328,7 @@ export default function AccountManagement() {
                   <div className="flex gap-4">
                      <div className="flex-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Role</label>
-                        <select name="role" defaultValue="SALES" className="w-full border rounded p-2 text-sm font-bold">
+                        <select name="role" value={createRole} onChange={(e) => setCreateRole(e.target.value)} className="w-full border rounded p-2 text-sm font-bold">
                            <option value="ADMIN">ADMIN</option>
                            <option value="MANAGER">MANAGER</option>
                            <option value="SALES">SALES</option>
@@ -347,6 +349,12 @@ export default function AccountManagement() {
                         </select>
                      </div>
                   </div>
+                  {createRole === 'SUBCONTRACTOR' && (
+                     <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Company Name</label>
+                        <input type="text" name="subcontractor_company" required className="w-full border rounded p-2 text-sm font-semibold" placeholder="e.g. AA Mechanical Group" />
+                     </div>
+                  )}
                   <div>
                      <label className="text-xs font-bold text-amber-600 flex items-center gap-2"><Lock size={14}/> Temporary Password</label>
                      <input type="text" name="password" required minLength="8" defaultValue="PilarTemp123!" className="w-full border rounded p-2 font-mono text-sm" />
@@ -407,7 +415,7 @@ export default function AccountManagement() {
                   <div className="flex gap-4">
                      <div className="flex-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Account Role</label>
-                        <select name="role" defaultValue={showEditModal.role || 'SALES'} className="w-full border rounded p-2 text-sm font-bold">
+                        <select name="role" value={editRole} onChange={(e) => setEditRole(e.target.value)} className="w-full border rounded p-2 text-sm font-bold">
                            <option value="ADMIN">ADMIN</option>
                            <option value="MANAGER">MANAGER</option>
                            <option value="SALES">SALES</option>
@@ -428,6 +436,12 @@ export default function AccountManagement() {
                         </select>
                      </div>
                   </div>
+                  {editRole === 'SUBCONTRACTOR' && (
+                     <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Company Name</label>
+                        <input type="text" name="subcontractor_company" defaultValue={showEditModal.subcontractor_company || ''} required className="w-full border rounded p-2 text-sm font-semibold" placeholder="e.g. AA Mechanical Group" />
+                     </div>
+                  )}
                   <div>
                      <label className="text-xs font-bold text-slate-500 uppercase">Network Access</label>
                      <select name="status" defaultValue={showEditModal.status} className="w-full border rounded p-2 text-sm font-bold">

@@ -71,7 +71,7 @@ serve(async (req) => {
     }
 
     if (action === 'createUser') {
-      const { email, password, full_name, username, role, department } = payload;
+      const { email, password, full_name, username, role, department, subcontractor_company } = payload;
       
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
@@ -89,6 +89,7 @@ serve(async (req) => {
         username: username || null,
         role: role || 'SALES',
         department: department || 'SALES',
+        subcontractor_company: subcontractor_company || null,
         status: 'active',
         must_change_password: true
       });
@@ -137,6 +138,7 @@ serve(async (req) => {
        if (full_name !== undefined) updatePayload.full_name = full_name;
        if (username !== undefined) updatePayload.username = username;
        if (payload.must_change_password !== undefined) updatePayload.must_change_password = payload.must_change_password;
+       if (payload.subcontractor_company !== undefined) updatePayload.subcontractor_company = payload.subcontractor_company;
 
        const { error: updateError } = await supabaseAdmin.from('user_profiles')
           .update(updatePayload)
