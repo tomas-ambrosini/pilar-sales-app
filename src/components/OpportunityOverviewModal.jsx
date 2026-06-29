@@ -368,7 +368,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                             </div>
                         </div>
 
-                        {job.proposal_data?.dispatcher && (job.assigned_salesperson_id || job.assigned_crew_id) && (
+                        {job.proposal_data?.dispatcher && job.status !== 'LEAD' && (job.assigned_salesperson_id || job.assigned_crew_id) && (
                             <div className="mb-4 flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
                                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dispatched By</div>
                                 <div className="text-sm font-black text-slate-800">{job.proposal_data.dispatcher}</div>
