@@ -96,8 +96,8 @@ export function CustomerProvider({ children }) {
                     const primaryAddress = locations.find(l => l.id === household.service_address_id) || locations[0] || {};
                     const billingAddressObj = locations.find(l => l.id === household.billing_address_id) || primaryAddress;
                     
-                    const addressString = primaryAddress.street_address ? `${primaryAddress.street_address} ${primaryAddress.city ? ', ' + primaryAddress.city : ''}`.trim() : 'No address provided';
-                    const billingAddressString = billingAddressObj.street_address ? `${billingAddressObj.street_address} ${billingAddressObj.city ? ', ' + billingAddressObj.city : ''}`.trim() : addressString;
+                    const addressString = primaryAddress.street_address ? `${primaryAddress.street_address}${primaryAddress.city ? ', ' + primaryAddress.city : ''}${primaryAddress.state ? ', ' + primaryAddress.state : ''}${primaryAddress.zip ? ' ' + primaryAddress.zip : ''}`.trim() : 'No address provided';
+                    const billingAddressString = billingAddressObj.street_address ? `${billingAddressObj.street_address}${billingAddressObj.city ? ', ' + billingAddressObj.city : ''}${billingAddressObj.state ? ', ' + billingAddressObj.state : ''}${billingAddressObj.zip ? ' ' + billingAddressObj.zip : ''}`.trim() : addressString;
                     
                     return {
                         id: household.id, // Primary key is the Household ID
@@ -190,7 +190,7 @@ export function CustomerProvider({ children }) {
                     const primaryContact = household.contacts && household.contacts.length > 0 ? household.contacts[0] : {};
                     const locations = household.addresses && household.addresses.length > 0 ? household.addresses : [];
                     const primaryAddress = locations[0] || {};
-                    const addressString = primaryAddress.street_address ? `${primaryAddress.street_address} ${primaryAddress.city ? ', ' + primaryAddress.city : ''}`.trim() : 'No address provided';
+                    const addressString = primaryAddress.street_address ? `${primaryAddress.street_address}${primaryAddress.city ? ', ' + primaryAddress.city : ''}${primaryAddress.state ? ', ' + primaryAddress.state : ''}${primaryAddress.zip ? ' ' + primaryAddress.zip : ''}`.trim() : 'No address provided';
                     
                     return {
                         id: household.id,

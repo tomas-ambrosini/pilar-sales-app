@@ -135,7 +135,8 @@ export default function DispatchHub() {
                email: customerForm.email,
                phone: customerForm.phone,
                address: customerForm.address,
-               city: customerForm.city
+               city: customerForm.city,
+               zip: customerForm.zip
            });
            setIsNewCustomer(false);
            toast.success('Customer profile created successfully!');
@@ -285,7 +286,7 @@ export default function DispatchHub() {
                                        <div className="absolute top-5 right-5 bg-primary-600 text-white p-1.5 rounded-full shadow-md"><CheckCircle2 size={20} /></div>
                                        <h3 className="font-black text-2xl text-slate-800 mb-2 tracking-tight">{matchedCustomer.name}</h3>
                                        <div className="flex items-center gap-2.5 text-slate-700 mb-2 font-medium"><Phone size={16} className="text-primary-600" /> {matchedCustomer.phone}</div>
-                                       <div className="flex items-start gap-2.5 text-slate-700 font-medium"><MapPin size={16} className="text-primary-600 mt-0.5" /> {matchedCustomer.address}, {matchedCustomer.city}</div>
+                                       <div className="flex items-start gap-2.5 text-slate-700 font-medium"><MapPin size={16} className="text-primary-600 mt-0.5" /> {matchedCustomer.address}, {matchedCustomer.city} {matchedCustomer.zip}</div>
                                        <button onClick={() => { setMatchedCustomer(null); setSearchQuery(''); }} className="mt-5 px-4 py-2 bg-white/80 hover:bg-white border border-primary-200 rounded-lg text-xs font-black text-primary-700 transition-all uppercase tracking-wider shadow-sm">Change Customer</button>
                                    </div>
                                )}
