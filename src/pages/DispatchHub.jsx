@@ -9,6 +9,9 @@ import toast from 'react-hot-toast';
 import DispatchCalendar from './DispatchCalendar';
 import DispatchMap from '../components/DispatchMap';
 import ServiceHub from './ServiceHub';
+import OpportunityOverviewModal from '../components/OpportunityOverviewModal';
+import ServiceCallModal from '../components/ServiceCallModal';
+import { formatPhoneNumber } from '../utils/formatters';
 
 export default function DispatchHub() {
    const { user } = useAuth();
@@ -320,7 +323,7 @@ export default function DispatchHub() {
                                        <div className="grid grid-cols-2 gap-4 mb-4">
                                            <div className="form-group">
                                                <label className="text-xs font-bold text-slate-500">Phone Number</label>
-                                               <input required type="tel" value={customerForm.phone} onChange={e => setCustomerForm({...customerForm, phone: e.target.value})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
+                                               <input required type="tel" value={customerForm.phone} onChange={e => setCustomerForm({...customerForm, phone: formatPhoneNumber(e.target.value)})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
                                            </div>
                                            <div className="form-group">
                                                <label className="text-xs font-bold text-slate-500">Email Address</label>

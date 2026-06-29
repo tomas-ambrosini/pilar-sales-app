@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { X, UploadCloud, UserCircle, Phone, AtSign, Loader2, Image as ImageIcon, Mail, Shield } from 'lucide-react';
+import { formatPhoneNumber } from '../utils/formatters';
 import toast from 'react-hot-toast';
 
 export default function ProfileSettingsModal({ onClose }) {
@@ -55,7 +56,8 @@ export default function ProfileSettingsModal({ onClose }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setProfile(prev => ({ ...prev, [name]: value }));
+    const finalValue = name === 'phone' ? formatPhoneNumber(value) : value;
+    setProfile(prev => ({ ...prev, [name]: finalValue }));
   };
 
   const triggerFileSelect = () => {

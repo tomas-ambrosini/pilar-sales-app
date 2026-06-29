@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { useRole } from '../context/RoleContext';
 import { supabase } from '../supabaseClient';
 import { PIPELINE_STATES } from '../utils/pipelineControls';
-import { formatQuoteId } from '../utils/formatters';
+import { formatQuoteId, formatPhoneNumber } from '../utils/formatters';
 
 function CustomerList() {
   const navigate = useNavigate();
@@ -528,7 +528,7 @@ function PropertyDetailsCard({ location, index }) {
                     </div>
                     <div className="form-group mb-0">
                        <label className="text-xs text-primary-600 font-bold">Tenant/Admin Phone</label>
-                       <input type="tel" className="w-full border border-primary-100 bg-primary-50 p-1 rounded mt-1" value={formData.tenant_phone} onChange={e => setFormData({...formData, tenant_phone: e.target.value})} placeholder="(555) 555-5555" />
+                       <input type="tel" className="w-full border border-primary-100 bg-primary-50 p-1 rounded mt-1" value={formData.tenant_phone} onChange={e => setFormData({...formData, tenant_phone: formatPhoneNumber(e.target.value)})} placeholder="(555) 555-5555" />
                     </div>
                   </>
                )}
@@ -633,7 +633,8 @@ function CustomerDetail() {
 
   const handleEditChange = (e) => {
     const { id, value } = e.target;
-    setEditFormData(prev => ({ ...prev, [id]: value }));
+    const finalValue = id === 'phone' ? formatPhoneNumber(value) : value;
+    setEditFormData(prev => ({ ...prev, [id]: finalValue }));
   };
 
   const handleEditSubmit = (e) => {

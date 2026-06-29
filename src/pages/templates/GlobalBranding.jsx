@@ -130,7 +130,7 @@ export default function GlobalBranding() {
                             <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 font-medium focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" value={address} onChange={e => setAddress(e.target.value)} />
                         </div>
                         <div>
-                            <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 font-medium focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" value={phone} onChange={e => setPhone(e.target.value)} />
+                            <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 font-medium focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" value={phone} onChange={e => setPhone(formatPhoneNumber(e.target.value))} />
                         </div>
                     </div>
                 </div>
