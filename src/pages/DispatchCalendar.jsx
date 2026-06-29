@@ -393,7 +393,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                                         {crews.map(crew => (
                                             <React.Fragment key={crew.id}>
                                                 <div className="sticky left-0 z-10 bg-white border-b border-r border-slate-200 flex items-center p-3 font-bold text-slate-800 gap-3 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
-                                                    <div className="w-1.5 h-8 rounded-full bg-slate-300"></div> 
+                                                    <div className="w-1.5 h-8 rounded-full" style={{ backgroundColor: crew.color_code || '#cbd5e1' }}></div> 
                                                     <div className="flex flex-col min-w-0">
                                                         <span className="text-sm truncate">{crew.crew_name}</span>
                                                     </div>
@@ -431,7 +431,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                                        {crews.map(crew => (
                                             <React.Fragment key={crew.id}>
                                                 <div className="sticky left-0 z-10 bg-white border-b border-r border-slate-200 flex items-center p-3 font-bold text-slate-800 gap-3 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
-                                                    <div className="w-1.5 h-8 rounded-full bg-slate-300"></div> 
+                                                    <div className="w-1.5 h-8 rounded-full" style={{ backgroundColor: crew.color_code || '#cbd5e1' }}></div> 
                                                     <div className="flex flex-col min-w-0">
                                                         <span className="text-sm truncate">{crew.crew_name}</span>
                                                     </div>
