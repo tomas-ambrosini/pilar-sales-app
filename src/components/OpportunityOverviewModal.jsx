@@ -41,6 +41,22 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                 .order('created_at', { ascending: false });
             
             if (!error && data) {
+                // Synthesize initial Deal Created event for older deals that don't have one
+                const hasCreationEvent = data.some(act => ['Lead Intaken', 'Deal Created', 'Converted from Service', 'Deal Cloned'].includes(act.activity_type));
+                
+                if (!hasCreationEvent && job) {
+                    const intakenBy = job.proposal_data?.intaken_by || job.proposal_data?.creator || 'System';
+                    let description = `Lead intaken by ${intakenBy}.`;
+                    if (job.issue_description?.startsWith('Auto-generated Digital Proposal') || job.issue_description?.startsWith('Split/Extracted')) {
+                         description = `Deal initiated by ${intakenBy}.`;
+                    }
+                    data.push({
+                        id: `synth-creation-${job.id}`,
+                        activity_type: 'Lead Intaken',
+                        description: description,
+                        created_at: job.created_at || new Date().toISOString()
+                    });
+                }
                 setActivities(data);
             }
         } catch (e) {
