@@ -114,16 +114,20 @@ function CustomerList() {
          c.active_maintenance_agreement ? '"VIP"' : '""'
      ]);
      
-     const csvContent = "data:text/csv;charset=utf-8," 
-         + [headers.join(','), ...rows.map(e => e.join(','))].join("\n");
-         
-     const encodedUri = encodeURI(csvContent);
+     const csvString = [headers.join(','), ...rows.map(e => e.join(','))].join("\n");
+     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+     const url = URL.createObjectURL(blob);
+     
      const link = document.createElement("a");
-     link.setAttribute("href", encodedUri);
+     link.setAttribute("href", url);
      link.setAttribute("download", `pilar_customers_export_${new Date().toISOString().split('T')[0]}.csv`);
      document.body.appendChild(link);
      link.click();
      document.body.removeChild(link);
+     
+     // Clean up
+     setTimeout(() => URL.revokeObjectURL(url), 100);
+     
      toast.success("Customer directory exported successfully.");
   };
 
