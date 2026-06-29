@@ -19,7 +19,7 @@ export default function DispatchHub() {
    const [isNewCustomer, setIsNewCustomer] = useState(false);
    const [loading, setLoading] = useState(false);
    const [searchParams, setSearchParams] = useSearchParams();
-   const [activeTab, setActiveTab] = useState('map');
+   const [activeTab, setActiveTab] = useState('calendar');
 
    React.useEffect(() => {
        const action = searchParams.get('action');
