@@ -177,7 +177,7 @@ export default function Subcontractors() {
 
       {/* Editing Drawer / Modal */}
       {editingSub && (
-         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/20 backdrop-blur-sm transition-all">
+         <div className="fixed inset-0 z-[100] flex justify-end bg-slate-900/20 backdrop-blur-sm transition-all">
             <div className="absolute inset-0" onClick={() => setEditingSub(null)}></div>
             <div className="relative w-full max-w-lg bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right-full duration-300">
                 <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
@@ -263,7 +263,7 @@ export default function Subcontractors() {
 
       {/* Add Tech Modal (Overlays everything) */}
       {showTechModal && (
-         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200 modal-layout-wrapper">
+         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-in fade-in duration-200 modal-layout-wrapper">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowTechModal(null)}></div>
             <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200">
                <h3 className="text-lg font-black text-slate-900 mb-5 border-b pb-2">New Dispatch Lane</h3>
