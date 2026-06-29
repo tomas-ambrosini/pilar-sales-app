@@ -1,0 +1,293 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
+import { useAuth } from '../context/AuthContext';
+import { Users, Truck, Plus, Check, Search, MapPin, Edit2, X, Trash2, Save, Building2, UserCircle, Mail } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+export default function Subcontractors() {
+  const { user } = useAuth();
+  const [subcontractors, setSubcontractors] = useState([]);
+  const [crews, setCrews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const [showTechModal, setShowTechModal] = useState(null); // holds subcontractor ID
+  const [editingSub, setEditingSub] = useState(null); // holds subcontractor object
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const { data: subsData, error: subsError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('role', 'SUBCONTRACTOR')
+        .order('full_name', { ascending: true });
+        
+      if (subsError) throw subsError;
+      setSubcontractors(subsData || []);
+
+      const { data: crewsData, error: crewsError } = await supabase
+        .from('crews')
+        .select('*')
+        .not('subcontractor_id', 'is', null);
+      if (crewsError) throw crewsError;
+      setCrews(crewsData || []);
+    } catch (err) {
+      toast.error('Failed to load subcontractors.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateSub = async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const updates = {
+          subcontractor_company: fd.get('company'),
+          full_name: fd.get('name')
+      };
+
+      try {
+          toast.loading('Saving details...', { id: 'save-sub' });
+          const { error } = await supabase.from('user_profiles').update(updates).eq('id', editingSub.id);
+          if (error) throw error;
+          
+          setSubcontractors(subs => subs.map(s => s.id === editingSub.id ? { ...s, ...updates } : s));
+          setEditingSub(prev => ({ ...prev, ...updates }));
+          toast.success('Details updated!', { id: 'save-sub' });
+      } catch (err) {
+          toast.error(err.message || 'Error saving details', { id: 'save-sub' });
+      }
+  };
+
+  const handleAddTech = async (e, subId) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const techName = fd.get('tech_name');
+    const colorCode = fd.get('color_code') || '#64748b';
+
+    try {
+      toast.loading('Adding tech...', { id: 'add-tech' });
+      const { data, error } = await supabase.from('crews').insert({
+        crew_name: techName,
+        subcontractor_id: subId,
+        color_code: colorCode,
+        is_active: true
+      }).select().single();
+
+      if (error) throw error;
+      setCrews([...crews, data]);
+      toast.success('Tech added to dispatch board!', { id: 'add-tech' });
+      setShowTechModal(null);
+    } catch (err) {
+      toast.error(err.message || 'Error adding tech', { id: 'add-tech' });
+    }
+  };
+
+  const toggleTechStatus = async (crewId, currentStatus) => {
+      try {
+          const { error } = await supabase.from('crews').update({ is_active: !currentStatus }).eq('id', crewId);
+          if (error) throw error;
+          setCrews(crews.map(c => c.id === crewId ? { ...c, is_active: !currentStatus } : c));
+          toast.success(currentStatus ? 'Tech deactivated.' : 'Tech activated.');
+      } catch (err) {
+          toast.error("Failed to update tech status.");
+      }
+  };
+
+  const filteredSubs = subcontractors.filter(s => {
+      const q = searchTerm.toLowerCase();
+      return (s.full_name?.toLowerCase().includes(q) || s.subcontractor_company?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q));
+  });
+
+  return (
+    <div className="p-6 space-y-6 relative h-full">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <div className="flex items-center gap-5">
+           <div className="w-14 h-14 bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl flex items-center justify-center border border-primary-200/50 shadow-inner shrink-0">
+             <Building2 className="text-primary-600 drop-shadow-sm" size={28} />
+           </div>
+           <div>
+             <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-1">Subcontractors Directory</h1>
+             <p className="text-sm text-slate-500 font-semibold">Click on a company to edit details and manage dispatchable technicians.</p>
+           </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[500px]">
+          <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+             <div className="relative w-full max-w-md">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16}/>
+                <input 
+                  type="text" 
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all font-semibold placeholder-slate-400 shadow-sm" 
+                  placeholder="Search by company or name..." 
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                />
+             </div>
+          </div>
+
+         <div className="p-6 overflow-y-auto flex-1 bg-slate-50/30">
+            {loading ? (
+                <div className="text-center text-slate-400 py-10 font-bold">Loading subcontractors...</div>
+            ) : filteredSubs.length === 0 ? (
+                <div className="text-center text-slate-400 py-10 font-bold">No subcontractors found. Go to Account Management to create one.</div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredSubs.map(sub => {
+                        const subCrews = crews.filter(c => c.subcontractor_id === sub.id);
+                        const activeCrews = subCrews.filter(c => c.is_active).length;
+                        return (
+                            <div key={sub.id} onClick={() => setEditingSub(sub)} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-primary-200 transition-all cursor-pointer flex flex-col group relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="bg-primary-50 text-primary-600 p-2 rounded-full">
+                                        <Edit2 size={14} />
+                                    </div>
+                                </div>
+                                <div className="flex justify-between items-start mb-4 pb-4 border-b border-slate-50">
+                                    <div className="pr-10">
+                                        <h3 className="text-lg font-black text-slate-900 group-hover:text-primary-700 transition-colors line-clamp-1">{sub.subcontractor_company || 'Unnamed Company'}</h3>
+                                        <p className="text-sm font-semibold text-slate-500 flex items-center gap-2 mt-1.5 truncate">
+                                            <UserCircle size={14} className="text-slate-400"/> {sub.full_name}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 flex flex-col justify-end">
+                                    <div className="flex items-center gap-2">
+                                        <Truck size={16} className={activeCrews > 0 ? "text-primary-500" : "text-slate-400"} />
+                                        <span className="text-sm font-bold text-slate-600">
+                                            {subCrews.length === 0 ? "No dispatch lanes" : `${activeCrews} active dispatch lane${activeCrews !== 1 ? 's' : ''}`}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+         </div>
+      </div>
+
+      {/* Editing Drawer / Modal */}
+      {editingSub && (
+         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/20 backdrop-blur-sm transition-all">
+            <div className="absolute inset-0" onClick={() => setEditingSub(null)}></div>
+            <div className="relative w-full max-w-lg bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right-full duration-300">
+                <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
+                    <div>
+                        <h2 className="text-xl font-black text-slate-900">{editingSub.subcontractor_company || 'Subcontractor Details'}</h2>
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{editingSub.id.split('-')[0]}</span>
+                    </div>
+                    <button onClick={() => setEditingSub(null)} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-full transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                    {/* Basic Info Form */}
+                    <form id="edit-sub-form" onSubmit={handleUpdateSub} className="space-y-4">
+                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest border-b pb-2">Profile Information</h3>
+                        
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5 mb-1.5"><Building2 size={12}/> Company Name</label>
+                            <input type="text" name="company" defaultValue={editingSub.subcontractor_company} className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold focus:ring-2 focus:ring-primary-500/20 outline-none" required />
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5 mb-1.5"><UserCircle size={12}/> Primary Contact</label>
+                                <input type="text" name="name" defaultValue={editingSub.full_name} className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold focus:ring-2 focus:ring-primary-500/20 outline-none" required />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5 mb-1.5"><Mail size={12}/> Login Email</label>
+                                <input type="email" defaultValue={editingSub.email} disabled className="w-full border border-slate-100 bg-slate-50 rounded-xl p-3 text-sm font-semibold text-slate-400 cursor-not-allowed" />
+                            </div>
+                        </div>
+
+                        <div className="pt-2">
+                            <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2">
+                                <Save size={16} /> Save Changes
+                            </button>
+                        </div>
+                    </form>
+
+                    {/* Dispatch Lanes Management */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between border-b pb-2">
+                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Dispatch Lanes (Techs)</h3>
+                            <button onClick={() => setShowTechModal(editingSub.id)} className="text-[10px] font-bold text-primary-600 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                                <Plus size={14}/> Add New
+                            </button>
+                        </div>
+
+                        {(() => {
+                            const subCrews = crews.filter(c => c.subcontractor_id === editingSub.id);
+                            if (subCrews.length === 0) {
+                                return (
+                                    <div className="text-center py-8 bg-slate-50 border border-dashed border-slate-200 rounded-xl">
+                                        <Truck size={24} className="mx-auto text-slate-300 mb-2" />
+                                        <p className="text-sm font-semibold text-slate-500">No dispatch lanes configured.</p>
+                                    </div>
+                                );
+                            }
+                            return (
+                                <div className="space-y-3">
+                                    {subCrews.map(crew => (
+                                        <div key={crew.id} className={`flex justify-between items-center p-3.5 border rounded-xl transition-all ${crew.is_active ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-4 h-4 rounded-full shadow-sm border border-black/10" style={{ backgroundColor: crew.color_code || '#cbd5e1' }}></div>
+                                                <span className={`text-sm font-bold ${!crew.is_active ? 'line-through text-slate-400' : 'text-slate-800'}`}>{crew.crew_name}</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => toggleTechStatus(crew.id, crew.is_active)} className="text-[11px] font-bold text-slate-500 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all bg-white">
+                                                    {crew.is_active ? 'Disable' : 'Enable'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
+                    </div>
+                </div>
+            </div>
+         </div>
+      )}
+
+      {/* Add Tech Modal (Overlays everything) */}
+      {showTechModal && (
+         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200 modal-layout-wrapper">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowTechModal(null)}></div>
+            <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200">
+               <h3 className="text-lg font-black text-slate-900 mb-5 border-b pb-2">New Dispatch Lane</h3>
+               <form onSubmit={(e) => handleAddTech(e, showTechModal)} className="space-y-4">
+                  <div>
+                     <label className="text-xs font-bold text-slate-500 uppercase">Lane Name</label>
+                     <input type="text" name="tech_name" required className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold focus:ring-2 focus:ring-primary-500/20 outline-none mt-1.5" placeholder="e.g. Truck 1" />
+                  </div>
+                  <div>
+                     <label className="text-xs font-bold text-slate-500 uppercase">Lane Color Marker</label>
+                     <div className="flex items-center gap-3 mt-1.5 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                        <input type="color" name="color_code" defaultValue="#3b82f6" className="w-10 h-10 border-0 rounded cursor-pointer bg-transparent" />
+                        <span className="text-xs font-semibold text-slate-500">Appears on Dispatch Board</span>
+                     </div>
+                  </div>
+                  
+                  <div className="flex justify-end gap-3 pt-4 mt-2">
+                     <button type="button" onClick={() => setShowTechModal(null)} className="px-4 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-colors">Cancel</button>
+                     <button type="submit" className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-bold shadow-sm transition-colors">Create Lane</button>
+                  </div>
+               </form>
+            </div>
+         </div>
+      )}
+    </div>
+  );
+}
