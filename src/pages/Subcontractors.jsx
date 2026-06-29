@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { Users, Truck, Plus, Check, Search, MapPin, Edit2, X, Trash2, Save, Building2, UserCircle, Mail } from 'lucide-react';
@@ -176,7 +177,7 @@ export default function Subcontractors() {
       </div>
 
       {/* Editing Drawer / Modal */}
-      {editingSub && (
+      {editingSub && createPortal(
          <div className="fixed inset-0 z-[100] flex justify-end bg-slate-900/20 backdrop-blur-sm transition-all">
             <div className="absolute inset-0" onClick={() => setEditingSub(null)}></div>
             <div className="relative w-full max-w-lg bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right-full duration-300">
@@ -259,10 +260,10 @@ export default function Subcontractors() {
                 </div>
             </div>
          </div>
-      )}
+      , document.body)}
 
       {/* Add Tech Modal (Overlays everything) */}
-      {showTechModal && (
+      {showTechModal && createPortal(
          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-in fade-in duration-200 modal-layout-wrapper">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowTechModal(null)}></div>
             <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200">
@@ -287,7 +288,7 @@ export default function Subcontractors() {
                </form>
             </div>
          </div>
-      )}
+      , document.body)}
     </div>
   );
 }
