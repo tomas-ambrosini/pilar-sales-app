@@ -33,6 +33,7 @@ export default function DispatchCalendar({ isSubView = false }) {
    const [loading, setLoading] = useState(true);
    const [baseDate, setBaseDate] = useState(getStartOfWeek());
    const [viewMode, setViewMode] = useState('day'); // 'week' | 'day'
+   const [timeFilter, setTimeFilter] = useState('all'); // 'all', 'working', 'morning', 'afternoon'
    const [unassignedQueue, setUnassignedQueue] = useState([]);
    const [scheduledJobs, setScheduledJobs] = useState([]);
    const [inspectingJob, setInspectingJob] = useState(null);
@@ -242,6 +243,16 @@ export default function DispatchCalendar({ isSubView = false }) {
       setBaseDate(d);
    };
 
+   const getFilteredTimeBlocks = () => {
+       switch (timeFilter) {
+           case 'working': return TIME_BLOCKS.filter(b => b.hour >= 7 && b.hour <= 18);
+           case 'morning': return TIME_BLOCKS.filter(b => b.hour >= 6 && b.hour <= 12);
+           case 'afternoon': return TIME_BLOCKS.filter(b => b.hour >= 12 && b.hour <= 18);
+           case 'all': default: return TIME_BLOCKS;
+       }
+   };
+   const currentBlocks = viewMode === 'day' ? getFilteredTimeBlocks() : TIME_BLOCKS;
+
    const JobCard = ({ job, index }) => {
       const isService = job.__type === 'SERVICE';
       const associatedProposal = proposals?.find(p => p.proposal_data?.associated_opportunity_id === job.id || p.associated_opportunity_id === job.id);
@@ -376,6 +387,18 @@ export default function DispatchCalendar({ isSubView = false }) {
                    </div>
 
                    <div className="flex shrink-0 items-center gap-2 bg-white rounded-xl p-1 border border-slate-200 shadow-sm">
+                       {viewMode === 'day' && (
+                           <select 
+                               value={timeFilter}
+                               onChange={(e) => setTimeFilter(e.target.value)}
+                               className="px-3 py-2 text-sm font-bold bg-transparent text-slate-500 hover:text-slate-800 outline-none cursor-pointer border-r border-slate-200 mr-1 pr-4"
+                           >
+                               <option value="all">All Hours</option>
+                               <option value="working">Working Hours</option>
+                               <option value="morning">Morning Only</option>
+                               <option value="afternoon">Afternoon Only</option>
+                           </select>
+                       )}
                        <button onClick={() => setViewMode('day')} className={`px-5 py-2 text-sm font-bold rounded-lg transition-all ${viewMode === 'day' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>Day View</button>
                        <button onClick={() => setViewMode('week')} className={`px-5 py-2 text-sm font-bold rounded-lg transition-all ${viewMode === 'week' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>Week View</button>
                    </div>
@@ -387,10 +410,10 @@ export default function DispatchCalendar({ isSubView = false }) {
                    <div className="flex-1 overflow-auto bg-white">
                                {viewMode === 'day' ? (
                                     // DAY VIEW (Time Blocks on X, Crews on Y)
-                                    <div className="min-w-max grid min-h-full" style={{ gridTemplateColumns: `220px repeat(${TIME_BLOCKS.length}, minmax(180px, 1fr))` }}>
+                                    <div className="min-w-max grid min-h-full" style={{ gridTemplateColumns: `220px repeat(${currentBlocks.length}, minmax(180px, 1fr))` }}>
                                         <div className="sticky top-0 left-0 z-30 bg-white border-b border-r border-slate-200 h-12"></div>
                                         
-                                        {TIME_BLOCKS.map(block => (
+                                        {currentBlocks.map(block => (
                                             <div key={block.value} className="sticky top-0 z-20 h-12 flex items-center justify-center bg-white border-b border-r border-slate-200">
                                                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{block.label}</span>
                                             </div>
@@ -404,7 +427,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                                                         <span className="text-sm truncate">{crew.crew_name}</span>
                                                     </div>
                                                 </div>
-                                                {TIME_BLOCKS.map((block, idx) => {
+                                                {currentBlocks.map((block, idx) => {
                                                     const dropId = `${crew.id}::${days[0].isoStr}::${block.value}`;
                                                     const cellJobs = scheduledJobs.filter(j => j.scheduled_date === days[0].isoStr && j.assigned_crew_id === crew.id && (j.scheduled_time_block === block.value || (!j.scheduled_time_block && block.value === '08:00') || (j.scheduled_time_block === 'MORNING' && block.value === '08:00') || (j.scheduled_time_block === 'AFTERNOON' && block.value === '12:00') || (j.scheduled_time_block === 'ALL_DAY' && block.value === '08:00')));
                                                     return (
