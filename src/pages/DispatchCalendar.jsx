@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import OpportunityOverviewModal from '../components/OpportunityOverviewModal';
 import ServiceCallModal from '../components/ServiceCallModal';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const getStartOfWeek = () => {
    const d = new Date();
@@ -26,6 +27,7 @@ const TIME_BLOCKS = Array.from({ length: 24 }).map((_, i) => {
 });
 
 export default function DispatchCalendar({ isSubView = false }) {
+   const { user } = useAuth();
    const { proposals } = useProposals();
    const [crews, setCrews] = useState([]);
    const [loading, setLoading] = useState(true);
@@ -198,12 +200,16 @@ export default function DispatchCalendar({ isSubView = false }) {
               }
           } else {
               // SERVICE LOGIC
+              const currentTags = targetJob.tags || [];
+              const updatedTags = [...currentTags.filter(t => !t.startsWith('SCHEDULED_BY:')), `SCHEDULED_BY:${user?.full_name || 'System'}`];
+
               if (newStatus === 'Scheduled') {
                   await supabase.from('service_calls').update({
                       status: 'Scheduled',
                       assigned_techs: [newCrewId],
                       scheduled_start: svcStartTime,
-                      scheduled_end: svcEndTime
+                      scheduled_end: svcEndTime,
+                      tags: updatedTags
                   }).eq('id', draggableId);
               } else {
                   await supabase.from('service_calls').update({

@@ -189,7 +189,7 @@ export default function DispatchHub() {
                    issue_description: `${oppForm.issueDescription}\n\nDispatch Notes: ${oppForm.dispatchNotes}`,
                    status: 'Pending',
                    call_type: oppForm.callType,
-                   tags: oppForm.tags
+                   tags: [...(oppForm.tags || []), `INTAKEN_BY:${user?.full_name || 'System'}`]
                });
 
                if (error) throw error;

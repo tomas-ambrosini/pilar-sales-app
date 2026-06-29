@@ -1,29 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { X, Wrench, Clock, MapPin, Phone, Save, Calendar as CalendarIcon, UserCheck, AlertCircle, Check, Mail, Navigation } from 'lucide-react';
+import { X, Wrench, Clock, MapPin, Phone, Save, Calendar as CalendarIcon, UserCheck, AlertCircle, Check, Mail, Navigation, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
+import { useAuth } from '../context/AuthContext';
 
 export default function ServiceCallModal({ callId, onClose, onUpdate }) {
+    const { user } = useAuth();
     const [callData, setCallData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [converting, setConverting] = useState(false);
     const navigate = useNavigate();
     
-    // Selectable lists
-    const [teamLoad, setTeamLoad] = useState([]);
+    const [assignedCrew, setAssignedCrew] = useState(null);
     
     useEffect(() => {
         if (callId) fetchCallDetails();
-        fetchTeam();
     }, [callId]);
-
-    const fetchTeam = async () => {
-        const { data } = await supabase.from('user_profiles').select('id, full_name, avatar_url');
-        setTeamLoad(data || []);
-    };
 
     const fetchCallDetails = async () => {
         setLoading(true);
@@ -50,8 +45,15 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                 scheduled_end: data.scheduled_end ? data.scheduled_end.slice(0, 16) : '',
                 arrival_window_start: data.arrival_window_start ? data.arrival_window_start.slice(0, 16) : '',
                 arrival_window_end: data.arrival_window_end ? data.arrival_window_end.slice(0, 16) : '',
-                assigned_techs: data.assigned_techs || []
+                assigned_techs: data.assigned_techs || [],
+                tags: data.tags || []
             });
+
+            // Fetch the assigned crew if any
+            if (data.assigned_techs && data.assigned_techs.length > 0) {
+                const { data: crewData } = await supabase.from('crews').select('crew_name, color_code').eq('id', data.assigned_techs[0]).single();
+                if (crewData) setAssignedCrew(crewData);
+            }
         }
         setLoading(false);
     };
@@ -64,12 +66,9 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
             urgency: callData.urgency,
             call_type: callData.call_type,
             issue_description: callData.issue_description,
-            assigned_techs: callData.assigned_techs,
-            scheduled_start: callData.scheduled_start || null,
-            scheduled_end: callData.scheduled_end || null,
-            arrival_window_start: callData.arrival_window_start || null,
-            arrival_window_end: callData.arrival_window_end || null,
             updated_at: new Date().toISOString()
+            // Note: assigned_techs, scheduled_start, scheduled_end are intentionally NOT updated from the form.
+            // They are driven by the Dispatch Calendar dragging.
         };
 
         const { error } = await supabase
@@ -94,9 +93,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
             const { data: newOpp, error: oppError } = await supabase.from('opportunities').insert({
                 household_id: callData.customer_id,
                 urgency_level: callData.urgency === 'EMERGENCY' ? 'High' : 'Medium',
-                issue_description: `[CONVERTED FROM SERVICE CALL ${callData.id.slice(0,8)}]
-
-${callData.issue_description}`,
+                issue_description: `[CONVERTED FROM SERVICE CALL ${callData.id.slice(0,8)}]\n\n${callData.issue_description}`,
                 status: 'Lead',
                 proposal_data: { type: 'SALES', intaken_by: user?.full_name || 'System' }
             }).select().single();
@@ -113,9 +110,7 @@ ${callData.issue_description}`,
             const updatedTags = [...(callData.tags || []), 'CONVERTED_TO_SALES'];
             const { error: svcError } = await supabase.from('service_calls').update({
                 tags: updatedTags,
-                issue_description: callData.issue_description + `
-
-[Converted to Sales Lead]`
+                issue_description: callData.issue_description + `\n\n[Converted to Sales Lead]`
             }).eq('id', callId);
 
             if (svcError) throw svcError;
@@ -137,35 +132,40 @@ ${callData.issue_description}`,
     const city = callData.households?.addresses?.[0]?.city || 'No city provided';
     const displayId = `SVC-${callData.id.slice(0, 8).toUpperCase()}`;
 
+    // Extract Metadata from tags
+    const intakenByTag = callData.tags?.find(t => t.startsWith('INTAKEN_BY:'));
+    const intakenBy = intakenByTag ? intakenByTag.replace('INTAKEN_BY:', '') : 'System';
+
+    const scheduledByTag = callData.tags?.find(t => t.startsWith('SCHEDULED_BY:'));
+    const scheduledBy = scheduledByTag ? scheduledByTag.replace('SCHEDULED_BY:', '') : 'Pending Assignment';
+
     let primaryActionText = '';
     let primaryActionColor = '';
     let nextStatus = null;
 
     switch(callData.status) {
         case 'Pending':
-            primaryActionText = 'Schedule Job';
-            nextStatus = 'Scheduled';
-            primaryActionColor = 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20';
+            primaryActionText = null; // Enforce scheduling via calendar drag-drop
             break;
         case 'Scheduled':
             primaryActionText = 'Dispatch Tech';
             nextStatus = 'Dispatched';
-            primaryActionColor = 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20';
+            primaryActionColor = 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20';
             break;
         case 'Dispatched':
-            primaryActionText = 'Tech En Route';
+            primaryActionText = 'Mark En Route';
             nextStatus = 'En Route';
-            primaryActionColor = 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20';
+            primaryActionColor = 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20';
             break;
         case 'En Route':
-            primaryActionText = 'Start Work';
+            primaryActionText = 'Arrived / Start Work';
             nextStatus = 'Working';
-            primaryActionColor = 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20';
+            primaryActionColor = 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20';
             break;
         case 'Working':
             primaryActionText = 'Complete Job';
             nextStatus = 'Completed';
-            primaryActionColor = 'bg-cyan-600 hover:bg-cyan-700 shadow-cyan-600/20';
+            primaryActionColor = 'bg-cyan-600 hover:bg-cyan-700 text-white shadow-cyan-600/20';
             break;
         case 'Completed':
             primaryActionText = null;
@@ -194,13 +194,14 @@ ${callData.issue_description}`,
             width="max-w-6xl" 
             bodyClassName="p-0 h-[80vh] min-h-[650px] flex flex-col bg-slate-50"
         >
-            {/* Progress Stepper */}
+            {/* Progress Stepper - Full 6 Steps */}
             <div className="w-full bg-white border-b border-slate-200 p-4 shrink-0 shadow-sm z-10">
                 <div className="flex items-center justify-between max-w-4xl mx-auto">
                     {[
                         { label: 'Pending', match: ['Pending', 'Scheduled', 'Dispatched', 'En Route', 'Working', 'Completed'] },
                         { label: 'Scheduled', match: ['Scheduled', 'Dispatched', 'En Route', 'Working', 'Completed'] },
                         { label: 'Dispatched', match: ['Dispatched', 'En Route', 'Working', 'Completed'] },
+                        { label: 'En Route', match: ['En Route', 'Working', 'Completed'] },
                         { label: 'Working', match: ['Working', 'Completed'] },
                         { label: 'Complete', match: ['Completed'] }
                     ].map((step, idx, arr) => {
@@ -225,8 +226,9 @@ ${callData.issue_description}`,
 
             <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
                 {/* Left Panel: Context & Logistics */}
-                <div className="w-full lg:w-[50%] xl:w-[45%] bg-slate-50/50 lg:border-r border-slate-200 p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
-                    {/* Customer Profile (Deal Hub clone) */}
+                <div className="w-full lg:w-[45%] bg-slate-50/50 lg:border-r border-slate-200 p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
+                    
+                    {/* Customer Profile */}
                     <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm transition-shadow hover:shadow-md">
                         <div className="flex items-center gap-4 mb-4">
                             <div className="w-14 h-14 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center font-black text-slate-500 text-lg shrink-0 shadow-inner">
@@ -237,7 +239,6 @@ ${callData.issue_description}`,
                                 <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">Customer Profile</div>
                             </div>
                         </div>
-                        
                         <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-slate-100">
                             <div className="flex items-start gap-3 text-sm text-slate-600 font-medium">
                                 <MapPin size={16} className="text-slate-400 mt-0.5 shrink-0" /> 
@@ -254,12 +255,12 @@ ${callData.issue_description}`,
                         </div>
                     </div>
 
-                    {/* Logistics Card */}
+                    {/* Metadata & Audit Trail */}
                     <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm transition-shadow hover:shadow-md">
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <Wrench size={14} /> Service Logistics
+                            <Info size={14} /> Call Metadata
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Status</label>
                                 <div className="w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded-xl text-sm font-bold text-slate-600 flex items-center justify-between shadow-inner">
@@ -280,72 +281,71 @@ ${callData.issue_description}`,
                                     <option value="EMERGENCY">Emergency</option>
                                 </select>
                             </div>
-                            <div className="md:col-span-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block flex items-center gap-1.5"><UserCheck size={12}/> Assigned Tech</label>
-                                <select 
-                                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/15 focus:bg-white hover:border-slate-300 p-2.5 rounded-xl text-sm font-bold text-slate-800 transition-all shadow-sm outline-none cursor-pointer"
-                                    value={callData.assigned_techs[0] || ''}
-                                    onChange={e => setCallData({...callData, assigned_techs: e.target.value ? [e.target.value] : []})}
-                                >
-                                    <option value="">Unassigned</option>
-                                    {teamLoad.map(user => (
-                                        <option key={user.id} value={user.id}>{user.full_name}</option>
-                                    ))}
-                                </select>
+                            <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block flex items-center gap-1.5">Intaken By</label>
+                                <div className="text-sm font-semibold text-slate-700 p-1">{intakenBy}</div>
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block flex items-center gap-1.5">Created At</label>
+                                <div className="text-sm font-semibold text-slate-700 p-1">{new Date(callData.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Scheduling Card */}
+                    {/* Logistics Card (Read-Only) */}
                     <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm transition-shadow hover:shadow-md">
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <Clock size={14} /> Scheduling Windows
+                            <Clock size={14} /> Dispatch Routing
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Sched. Start</label>
-                                <input 
-                                    type="datetime-local" 
-                                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/15 focus:bg-white hover:border-slate-300 p-2.5 rounded-xl text-[13px] font-medium text-slate-800 transition-all shadow-sm outline-none"
-                                    value={callData.scheduled_start}
-                                    onChange={e => setCallData({...callData, scheduled_start: e.target.value})}
-                                />
+                        {callData.status === 'Pending' ? (
+                            <div className="text-center py-6 bg-amber-50 rounded-xl border border-dashed border-amber-200">
+                                <AlertCircle size={24} className="mx-auto text-amber-400 mb-2" />
+                                <p className="text-sm font-bold text-amber-700 px-4">This call is Pending Assignment.</p>
+                                <p className="text-xs font-medium text-amber-600 mt-1 px-4">To schedule and assign a crew, please drag and drop this card on the Crew Routing Calendar.</p>
                             </div>
-                            <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Sched. End</label>
-                                <input 
-                                    type="datetime-local" 
-                                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/15 focus:bg-white hover:border-slate-300 p-2.5 rounded-xl text-[13px] font-medium text-slate-800 transition-all shadow-sm outline-none"
-                                    value={callData.scheduled_end}
-                                    onChange={e => setCallData({...callData, scheduled_end: e.target.value})}
-                                />
+                        ) : (
+                            <div className="grid grid-cols-1 gap-4">
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block flex items-center gap-1.5"><UserCheck size={12}/> Assigned Crew (Lane)</label>
+                                    <div className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm font-bold text-slate-800 shadow-inner flex items-center gap-3">
+                                        {assignedCrew ? (
+                                            <>
+                                                <div className="w-4 h-4 rounded-full shadow-sm" style={{ backgroundColor: assignedCrew.color_code || '#cbd5e1' }}></div>
+                                                {assignedCrew.crew_name}
+                                            </>
+                                        ) : (
+                                            <span className="text-slate-400 italic">No Active Crew Found</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Scheduled Start</label>
+                                        <div className="text-sm font-semibold text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                            {callData.scheduled_start ? new Date(callData.scheduled_start).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Scheduled End</label>
+                                        <div className="text-sm font-semibold text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                            {callData.scheduled_end ? new Date(callData.scheduled_end).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block flex items-center justify-between">
+                                        <span>Scheduled By</span>
+                                        <span className="text-slate-600">{scheduledBy}</span>
+                                    </label>
+                                </div>
                             </div>
-                            <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Arrival Start</label>
-                                <input 
-                                    type="datetime-local" 
-                                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/15 focus:bg-white hover:border-slate-300 p-2.5 rounded-xl text-[13px] font-medium text-slate-800 transition-all shadow-sm outline-none"
-                                    value={callData.arrival_window_start}
-                                    onChange={e => setCallData({...callData, arrival_window_start: e.target.value})}
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Arrival End</label>
-                                <input 
-                                    type="datetime-local" 
-                                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/15 focus:bg-white hover:border-slate-300 p-2.5 rounded-xl text-[13px] font-medium text-slate-800 transition-all shadow-sm outline-none"
-                                    value={callData.arrival_window_end}
-                                    onChange={e => setCallData({...callData, arrival_window_end: e.target.value})}
-                                />
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Right Panel: Notes & Actions */}
-                <div className="w-full lg:w-[50%] xl:w-[55%] bg-slate-50 flex flex-col relative border-t lg:border-t-0 border-slate-200">
+                <div className="w-full lg:w-[55%] bg-slate-50 flex flex-col relative border-t lg:border-t-0 border-slate-200">
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-6 flex flex-col relative z-0">
-                        
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
                                 <AlertCircle size={16} className="text-purple-600" /> Issue & Dispatch Notes
@@ -365,6 +365,7 @@ ${callData.issue_description}`,
                         />
                     </div>
 
+                    {/* Footer Actions - Strict State Machine Driven */}
                     <div className="p-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0 relative z-10">
                         <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-2">
                             {['Dispatched', 'En Route', 'Working'].includes(callData.status) && (
@@ -392,23 +393,19 @@ ${callData.issue_description}`,
                                 disabled={saving}
                                 className="w-full sm:w-auto justify-center px-6 py-2.5 text-sm font-black text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm rounded-xl transition-all flex items-center gap-2"
                             >
-                                <Save size={16} /> Save
+                                <Save size={16} /> Save Notes
                             </button>
+                            
+                            {/* Primary Action Button pushes the state forward logically */}
                             {primaryActionText && (
                                 <button 
                                     onClick={async () => {
-                                        if (nextStatus === 'Scheduled') {
-                                            toast.success('Navigating to Dispatch Hub to schedule job...');
-                                            await handleSave(nextStatus);
-                                            navigate('/dispatch');
-                                        } else {
-                                            handleSave(nextStatus);
-                                        }
-                                    }} 
+                                        await handleSave(nextStatus);
+                                    }}
                                     disabled={saving}
-                                    className={`w-full sm:w-auto justify-center px-8 py-2.5 text-sm font-black text-white shadow-lg rounded-xl transition-all hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2 ${primaryActionColor}`}
+                                    className={`w-full sm:w-auto justify-center px-8 py-2.5 text-sm font-black shadow-sm rounded-xl transition-all flex items-center gap-2 ${primaryActionColor}`}
                                 >
-                                    {saving ? 'Processing...' : primaryActionText}
+                                    {primaryActionText}
                                 </button>
                             )}
                         </div>
