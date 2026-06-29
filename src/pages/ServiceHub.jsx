@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { useRole } from '../context/RoleContext';
-import { Wrench, Search, LayoutGrid, List, Clock, Calendar, CheckCircle2, MoreVertical, ShieldAlert, AlertCircle } from 'lucide-react';
+import { Wrench, Search, LayoutGrid, List, Clock, Calendar, CheckCircle2, MoreVertical, ShieldAlert, AlertCircle, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ServiceCallModal from '../components/ServiceCallModal';
 
@@ -78,6 +78,20 @@ export default function ServiceHub() {
         }
     };
 
+    const handleDeleteCall = async (e, callId) => {
+        e.stopPropagation();
+        if (!window.confirm("Are you sure you want to permanently delete this service call?")) return;
+
+        try {
+            const { error } = await supabase.from('service_calls').delete().eq('id', callId);
+            if (error) throw error;
+            toast.success("Service call deleted");
+            setCalls(prev => prev.filter(c => c.id !== callId));
+        } catch (err) {
+            toast.error("Failed to delete call: " + err.message);
+        }
+    };
+
     const filteredCalls = calls.filter(c => {
         const query = searchQuery.toLowerCase();
         return (
@@ -110,8 +124,17 @@ export default function ServiceHub() {
                             <span className="font-mono uppercase tracking-widest text-slate-400 whitespace-nowrap">{displayId}</span>
                         </span>
                     </div>
-                    <div className="shrink-0 pt-0.5">
+                    <div className="shrink-0 pt-0.5 flex flex-col items-end gap-2">
                         {renderUrgencyBadge(call.urgency)}
+                        {activeRole === ROLES.ADMIN && (
+                            <button 
+                                onClick={(e) => handleDeleteCall(e, call.id)} 
+                                className="text-slate-300 hover:text-red-500 transition-colors p-1 opacity-0 group-hover:opacity-100"
+                                title="Delete Call"
+                            >
+                                <Trash2 size={14} />
+                            </button>
+                        )}
                     </div>
                 </div>
 
