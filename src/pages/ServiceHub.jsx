@@ -77,7 +77,7 @@ export default function ServiceHub({ isEmbedded = false }) {
                     c.households.addresses = [targetAddress];
                 }
                 
-                return { ...c, assigned_techs: techs, tags: Array.isArray(parsedTags) ? parsedTags : [] };
+                return { ...c, assigned_techs: techs, tags: Array.isArray(tags) ? tags : [] };
             });
             
             // Enforce RBAC rules
