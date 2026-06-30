@@ -11,12 +11,10 @@ import ServiceCallModal from '../components/ServiceCallModal';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const getStartOfWeek = () => {
+const getToday = () => {
    const d = new Date();
    d.setHours(0,0,0,0);
-   const day = d.getDay();
-   const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-   return new Date(d.setDate(diff));
+   return d;
 };
 
 const TIME_BLOCKS = Array.from({ length: 24 }).map((_, i) => {
@@ -31,7 +29,7 @@ export default function DispatchCalendar({ isSubView = false }) {
    const { proposals } = useProposals();
    const [crews, setCrews] = useState([]);
    const [loading, setLoading] = useState(true);
-   const [baseDate, setBaseDate] = useState(getStartOfWeek());
+   const [baseDate, setBaseDate] = useState(getToday());
    const [viewMode, setViewMode] = useState('day'); // 'week' | 'day'
    const [timeFilter, setTimeFilter] = useState('all'); // 'all', 'working', 'morning', 'afternoon'
    const [unassignedQueue, setUnassignedQueue] = useState([]);
@@ -70,7 +68,7 @@ export default function DispatchCalendar({ isSubView = false }) {
          // Fetch Service Calls (Service)
          const { data: svc } = await supabase.from('service_calls').select(`
              id, created_at, status, urgency, call_type, tags, issue_description, customer_id, assigned_techs, scheduled_start, scheduled_end,
-             households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( street_address, city ) )
+             households ( household_name, contacts ( primary_phone, email ), addresses!households_service_address_id_fkey ( street_address, city ) )
          `).in('status', ['Pending', 'Scheduled']);
 
          const normalizedOpps = (opps || []).map(o => ({ ...o, __type: 'SALES' }));
@@ -232,8 +230,15 @@ export default function DispatchCalendar({ isSubView = false }) {
    // Generators
    const days = Array.from({length: 7}).map((_, i) => {
       const d = new Date(baseDate);
-      d.setDate(d.getDate() + i);
-      const isoStr = d.toISOString().split('T')[0];
+      if (viewMode === 'week') {
+          const day = d.getDay();
+          const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+          d.setDate(diff + i);
+      } else {
+          d.setDate(d.getDate() + i);
+      }
+      // Use local timezone instead of UTC offset shift which can cause off-by-one errors
+      const isoStr = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
       return { obj: d, isoStr };
    });
 
@@ -290,6 +295,9 @@ export default function DispatchCalendar({ isSubView = false }) {
           }
       }
 
+      const addressObj = Array.isArray(job.households?.addresses) ? job.households.addresses[0] : job.households?.addresses;
+      const city = addressObj?.city || 'No City';
+
       return (
       <Draggable draggableId={job.id} index={index}>
          {(provided, snapshot) => (
@@ -327,7 +335,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                        <span className={`text-[9px] font-black uppercase tracking-widest border px-1.5 py-0.5 rounded truncate max-w-[65%] ${tagColor}`}>
                            {systemSummary}
                        </span>
-                       <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1 truncate"><MapPin size={10} className="shrink-0 text-slate-400"/> {job.households?.addresses?.city || 'No City'}</span>
+                       <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1 truncate"><MapPin size={10} className="shrink-0 text-slate-400"/> {city}</span>
                    </div>
                    {job.scheduled_time_block && (
                       <div className="flex mt-1">
