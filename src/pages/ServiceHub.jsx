@@ -59,7 +59,23 @@ export default function ServiceHub({ isEmbedded = false }) {
                         techs = match || [];
                     }
                 }
-                return { ...c, assigned_techs: techs };
+                let parsedTags = c.tags;
+                if (typeof parsedTags === 'string') {
+                    try { parsedTags = JSON.parse(parsedTags); }
+                    catch(e) {
+                        const m = parsedTags.match(/^{?(.*?)}?$/);
+                        if (m && m[1]) {
+                            parsedTags = m[1].split(',').map(s => {
+                                let clean = s.trim();
+                                if (clean.startsWith('"') && clean.endsWith('"')) clean = clean.slice(1, -1);
+                                return clean;
+                            }).filter(Boolean);
+                        } else {
+                            parsedTags = [];
+                        }
+                    }
+                }
+                return { ...c, assigned_techs: techs, tags: Array.isArray(parsedTags) ? parsedTags : [] };
             });
             
             // Enforce RBAC rules

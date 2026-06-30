@@ -49,6 +49,24 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                     techs = match || [];
                 }
             }
+            let parsedTags = data.tags;
+            if (typeof parsedTags === 'string') {
+                try { parsedTags = JSON.parse(parsedTags); }
+                catch(e) {
+                    // Extract items from Postgres format "{item1,item2}"
+                    const m = parsedTags.match(/^{?(.*?)}?$/);
+                    if (m && m[1]) {
+                        // Split by comma, but respect quotes if any. For simplicity, just simple split
+                        parsedTags = m[1].split(',').map(s => {
+                            let clean = s.trim();
+                            if (clean.startsWith('"') && clean.endsWith('"')) clean = clean.slice(1, -1);
+                            return clean;
+                        }).filter(Boolean);
+                    } else {
+                        parsedTags = [];
+                    }
+                }
+            }
 
             setCallData({
                 ...data,
@@ -57,7 +75,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                 arrival_window_start: data.arrival_window_start ? data.arrival_window_start.slice(0, 16) : '',
                 arrival_window_end: data.arrival_window_end ? data.arrival_window_end.slice(0, 16) : '',
                 assigned_techs: techs || [],
-                tags: data.tags || []
+                tags: Array.isArray(parsedTags) ? parsedTags : []
             });
 
             // Fetch the assigned crew if any

@@ -92,7 +92,23 @@ export default function DispatchCalendar({ isSubView = false }) {
                      techs = match || []; 
                  }
              }
-             
+             let parsedTags = s.tags;
+             if (typeof parsedTags === 'string') {
+                 try { parsedTags = JSON.parse(parsedTags); }
+                 catch(e) {
+                     const m = parsedTags.match(/^{?(.*?)}?$/);
+                     if (m && m[1]) {
+                         parsedTags = m[1].split(',').map(s => {
+                             let clean = s.trim();
+                             if (clean.startsWith('"') && clean.endsWith('"')) clean = clean.slice(1, -1);
+                             return clean;
+                         }).filter(Boolean);
+                     } else {
+                         parsedTags = [];
+                     }
+                 }
+             }
+
              return {
                  __type: 'SERVICE',
                  id: s.id,
@@ -100,7 +116,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                  status: s.status,
                  urgency_level: s.urgency,
                  call_type: s.call_type,
-                 tags: s.tags,
+                 tags: Array.isArray(parsedTags) ? parsedTags : [],
                  issue_description: s.issue_description,
                  household_id: s.customer_id,
                  households: s.households,
