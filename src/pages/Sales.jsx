@@ -21,7 +21,7 @@ const PIPELINE_COLUMNS = [
   { id: PIPELINE_STATES.LOST, title: 'Lost Deal', color: 'border-red-300', bg: 'bg-red-100', text: 'text-red-700' }
 ];
 
-export default function Sales() {
+export default function Sales({ isEmbedded = false, isViewOnly = false }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { activeRole, ROLES, canViewFinancials } = useRole();
@@ -168,6 +168,7 @@ export default function Sales() {
         </div>
         
         {/* Header Block */}
+        {!isEmbedded && (
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0 z-10">
             <div>
                 <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3 mb-1">
@@ -197,6 +198,8 @@ export default function Sales() {
                 </div>
             )}
         </div>
+
+        )}
 
         {activeTab === 'proposals' ? (
             <div className="flex-1 overflow-hidden relative z-10 pb-4">
@@ -295,7 +298,15 @@ export default function Sales() {
                                     const canActOnDeal = !isDispatcherViewingOther;
 
                                     return (
-                                        <div key={job.id} onClick={() => setInspectingJob(job)} className={`group relative cursor-pointer bg-white rounded-2xl shadow-sm border p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}>
+                                        <Draggable key={job.id} draggableId={job.id} index={index} isDragDisabled={isViewOnly}>
+                                          {(provided) => (
+                                            <div 
+                                                ref={provided.innerRef}
+                                                {...provided.draggableProps}
+                                                {...provided.dragHandleProps}
+                                                onClick={() => setInspectingJob(job)} 
+                                                className={`group relative cursor-pointer bg-white rounded-2xl shadow-sm border p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}
+                                            >
                                             
                                             {isSLA_Violated && (
                                                 <div className="absolute -top-3 -right-3 bg-gradient-to-br from-red-500 to-rose-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 uppercase tracking-wider animate-in zoom-in">
@@ -408,6 +419,7 @@ export default function Sales() {
                                             </div>
 
                                             {/* Action Buttons */}
+                                            {!isViewOnly && (
                                             <div className="flex justify-end mt-3">
                                                 {col.id === PIPELINE_STATES.NEW_LEAD && canActOnDeal && (
                                                     <button onClick={async (e) => {
@@ -473,6 +485,7 @@ export default function Sales() {
                                                     </button>
                                                 )}
                                             </div>
+                                            )}
                                         </div>
                                     );
                                 })}

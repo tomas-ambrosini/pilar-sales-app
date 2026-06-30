@@ -3,12 +3,13 @@ import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Phone, User, MapPin, Search, Plus, AlertCircle, CalendarClock, Zap, CheckCircle2, UserCheck, Map, Wrench } from 'lucide-react';
+import { Phone, User, MapPin, Search, Plus, AlertCircle, CalendarClock, Zap, CheckCircle2, UserCheck, Map, Wrench, ClipboardList } from 'lucide-react';
 import { PIPELINE_STATES } from '../utils/pipelineControls';
 import toast from 'react-hot-toast';
 import DispatchCalendar from './DispatchCalendar';
 import DispatchMap from '../components/DispatchMap';
 import ServiceHub from './ServiceHub';
+import Sales from './Sales';
 import OpportunityOverviewModal from '../components/OpportunityOverviewModal';
 import ServiceCallModal from '../components/ServiceCallModal';
 import { formatPhoneNumber } from '../utils/formatters';
@@ -249,6 +250,12 @@ export default function DispatchHub() {
                         className={`px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'service' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
                     >
                         <Wrench size={16}/> Service Board
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('sales')} 
+                        className={`px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'sales' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
+                    >
+                        <ClipboardList size={16}/> Sales Pipeline
                     </button>
                </div>
            </header>
@@ -581,6 +588,12 @@ export default function DispatchHub() {
                {activeTab === 'service' && (
                    <div className="flex-1 overflow-hidden relative h-full">
                        <ServiceHub isEmbedded={true} />
+                   </div>
+               )}
+
+               {activeTab === 'sales' && (
+                   <div className="flex-1 overflow-hidden relative h-full">
+                       <Sales isEmbedded={true} isViewOnly={true} />
                    </div>
                )}
            </div>

@@ -111,7 +111,7 @@ function MainRouter() {
           
           {/* MANAGER DOMAINS */}
           <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><Catalog /></RoleRoute>} />
-          <Route path="sales/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><Sales /></RoleRoute>} />
+          <Route path="sales/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Sales /></RoleRoute>} />
           <Route path="dispatch" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'DISPATCHER']}><DispatchHub /></RoleRoute>} />
 
           {/* SUPER ADMIN EXCLUSIVE DOMAINS */}
