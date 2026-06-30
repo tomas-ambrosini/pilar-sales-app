@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { PIPELINE_STATES, PipelineController } from '../utils/pipelineControls';
-import { AlertTriangle, Clock, ArrowRight, DollarSign, Calendar, Zap, AlertCircle, MapPin, UserCircle2, X } from 'lucide-react';
+import { AlertTriangle, Clock, ArrowRight, DollarSign, Calendar, Zap, AlertCircle, MapPin, UserCircle2, X, Wrench } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import OpportunityOverviewModal from '../components/OpportunityOverviewModal';
@@ -309,8 +309,13 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                             >
                                             
                                             {isSLA_Violated && (
-                                                <div className="absolute -top-3 -right-3 bg-gradient-to-br from-red-500 to-rose-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 uppercase tracking-wider animate-in zoom-in">
+                                                <div className="absolute -top-3 -right-3 bg-gradient-to-br from-red-500 to-rose-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 uppercase tracking-wider animate-in zoom-in z-20">
                                                     <AlertTriangle size={12} strokeWidth={3} /> {Math.floor(hoursInStage)}h Overdue
+                                                </div>
+                                            )}
+                                            {job.proposal_data?.type === 'MAINTENANCE' && (
+                                                <div className="absolute -top-3 left-4 bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1.5 uppercase tracking-wider z-10">
+                                                    <Wrench size={10} strokeWidth={3} /> Maintenance
                                                 </div>
                                             )}
 
@@ -424,6 +429,10 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                                 {col.id === PIPELINE_STATES.NEW_LEAD && canActOnDeal && (
                                                     <button onClick={async (e) => {
                                                         e.stopPropagation();
+                                                        if (job.proposal_data?.type === 'MAINTENANCE') {
+                                                            navigate(`/maintenance-wizard?opp_id=${job.id}`);
+                                                            return;
+                                                        }
                                                         try {
                                                             await PipelineController.startProposal(job.id, job.status);
                                                             
@@ -466,7 +475,11 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                                 {col.id === PIPELINE_STATES.QUOTING && canActOnDeal && (
                                                     <button onClick={(e) => { 
                                                         e.stopPropagation(); 
-                                                        navigate(`/proposals?action=resume_opp&opp_id=${job.id}`); 
+                                                        if (job.proposal_data?.type === 'MAINTENANCE') {
+                                                            navigate(`/maintenance-wizard?opp_id=${job.id}`);
+                                                        } else {
+                                                            navigate(`/proposals?action=resume_opp&opp_id=${job.id}`); 
+                                                        }
                                                     }} className="text-[10px] font-black text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-all border border-slate-200/50 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
                                                         Resume <ArrowRight size={12} strokeWidth={3} />
                                                     </button>

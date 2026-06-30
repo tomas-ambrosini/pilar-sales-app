@@ -52,6 +52,7 @@ export default function DispatchHub() {
    // Opportunity / Service Form
    const [oppForm, setOppForm] = useState({
       type: 'SALES', // 'SALES' or 'SERVICE'
+      salesCallType: 'INSTALL', // 'INSTALL' or 'MAINTENANCE'
       urgency: 'Medium',
       callType: 'REPAIR', // 'REPAIR', 'CALLBACK', 'WARRANTY'
       tags: [],
@@ -170,7 +171,7 @@ export default function DispatchHub() {
                     dispatch_notes: oppForm.dispatchNotes,
                     assigned_salesperson_id: oppForm.assignedSalespersonId,
                     proposal_data: { 
-                        type: oppForm.type, 
+                        type: oppForm.salesCallType || 'INSTALL', 
                         intaken_by: user?.full_name || 'System',
                         dispatcher: user?.full_name || 'System',
                         service_address_id: oppForm.selectedLocationId || null
@@ -211,7 +212,7 @@ export default function DispatchHub() {
            // Reset forms
            setSearchQuery('');
            setMatchedCustomer(null);
-           setOppForm({ type: 'SALES', urgency: 'Medium', callType: 'REPAIR', tags: [], issueDescription: '', dispatchNotes: '', assignedSalespersonId: '', selectedLocationId: '' });
+           setOppForm({ type: 'SALES', salesCallType: 'INSTALL', urgency: 'Medium', callType: 'REPAIR', tags: [], issueDescription: '', dispatchNotes: '', assignedSalespersonId: '', selectedLocationId: '' });
        } catch (err) {
            toast.error(err.message);
        }
@@ -452,10 +453,27 @@ export default function DispatchHub() {
                                               Service Call
                                            </button>
                                        </div>
-                                       <p className="text-[10px] text-slate-400 mt-2 font-medium">
-                                           {oppForm.type === 'SALES' ? 'Will be routed directly to the Sales Proposals queue.' : 'Will be routed strictly to the Service Board.'}
+                                        <p className="text-[10px] text-slate-400 mt-2 font-medium">
+                                            {oppForm.type === 'SALES' ? 'Will be routed directly to the Sales Proposals queue.' : 'Will be routed strictly to the Service Board.'}
                                         </p>
                                     </div>
+
+                                    {oppForm.type === 'SALES' && (
+                                        <div className="form-group mb-6 col-span-2">
+                                            <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider">Sales Call Type</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {['INSTALL', 'MAINTENANCE'].map(ctype => (
+                                                    <button
+                                                        key={ctype}
+                                                        onClick={() => setOppForm({...oppForm, salesCallType: ctype})}
+                                                        className={`px-4 py-2 rounded-lg text-sm font-bold border transition-all ${oppForm.salesCallType === ctype ? 'bg-primary-50 border-primary-200 text-primary-700 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                                                    >
+                                                        {ctype === 'INSTALL' ? 'Equipment Install' : 'Maintenance Plan'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {oppForm.type === 'SERVICE' && (
                                         <div className="form-group mb-6 col-span-2">
