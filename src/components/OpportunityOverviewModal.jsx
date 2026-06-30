@@ -186,6 +186,19 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
         actionColor = 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm';
     }
 
+
+    const extractNameFromAction = (desc) => {
+        if (!desc) return null;
+        const match = desc.match(/\(Action taken by:\s*(.*?)\)/);
+        return match ? match[1] : null;
+    };
+    
+    const proposedEvent = activities.find(a => a.activity_type === 'Deal Proposed');
+    const scheduledEvent = activities.find(a => a.activity_type === 'Job Scheduled');
+    
+    const proposalDoneBy = proposedEvent ? extractNameFromAction(proposedEvent.description) : null;
+    const dispatchedBy = (scheduledEvent ? extractNameFromAction(scheduledEvent.description) : null) || job.proposal_data?.dispatcher;
+
     return (
         <>
         <Modal 
@@ -384,10 +397,17 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                             </div>
                         </div>
 
-                        {job.proposal_data?.dispatcher && job.status !== 'NEW_LEAD' && (job.assigned_salesperson_id || job.assigned_crew_id) && (
+                        {proposalDoneBy && (
+                            <div className="mb-4 flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Proposal Done By</div>
+                                <div className="text-sm font-black text-slate-800">{proposalDoneBy}</div>
+                            </div>
+                        )}
+
+                        {dispatchedBy && job.status !== 'NEW_LEAD' && (
                             <div className="mb-4 flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
                                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dispatched By</div>
-                                <div className="text-sm font-black text-slate-800">{job.proposal_data.dispatcher}</div>
+                                <div className="text-sm font-black text-slate-800">{dispatchedBy}</div>
                             </div>
                         )}
 
