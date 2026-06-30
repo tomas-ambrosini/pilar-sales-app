@@ -462,7 +462,8 @@ function CustomerList() {
 }
 
 function PropertyDetailsCard({ location, index }) {
-   const { updatePropertyDetails } = useCustomers();
+   const { updatePropertyDetails, deleteProperty } = useCustomers();
+   const { activeRole, ROLES } = useRole();
    const { id } = useParams();
    const navigate = useNavigate();
    const [isEditing, setIsEditing] = useState(false);
@@ -478,6 +479,14 @@ function PropertyDetailsCard({ location, index }) {
    const handleSave = () => {
        updatePropertyDetails(location.id, formData);
        setIsEditing(false);
+   };
+
+   const handleDeleteProperty = async () => {
+       if (window.confirm("Are you sure you want to permanently delete this property? All associated units will also be removed.")) {
+           const { success, error } = await deleteProperty(location.id);
+           if (!success) toast.error(error || "Failed to delete property");
+           else toast.success("Property deleted successfully");
+       }
    };
 
    return (
@@ -497,6 +506,11 @@ function PropertyDetailsCard({ location, index }) {
                    <button className="text-xs font-bold text-slate-400 hover:text-primary-500 flex items-center gap-1" onClick={() => setIsEditing(true)}>
                       <Edit2 size={12}/> Edit Specs
                    </button>
+                   {activeRole === ROLES.ADMIN && !location.is_primary_residence && (
+                       <button className="text-xs font-bold text-slate-400 hover:text-red-500 flex items-center gap-1" onClick={handleDeleteProperty}>
+                          <Trash2 size={12}/> Delete
+                       </button>
+                   )}
                 </div>
              )}
           </div>

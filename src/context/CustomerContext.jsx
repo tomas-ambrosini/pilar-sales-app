@@ -446,6 +446,18 @@ export function CustomerProvider({ children }) {
         }
     };
 
+    const deleteProperty = async (addressId) => {
+        try {
+            const { error } = await supabase.from('addresses').delete().eq('id', addressId);
+            if (error) throw error;
+            fetchCustomers();
+            return { success: true };
+        } catch (error) {
+            console.error('Failed to delete property:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
     const addUnitToAddress = async (householdId, addressId, unitData) => {
         try {
             const customer = customers.find(c => c.id === householdId);
@@ -705,7 +717,7 @@ export function CustomerProvider({ children }) {
         }
     };
 
-    const contextValue = useMemo(() => ({ customers, archivedCustomers, addCustomer, updateCustomer, deleteCustomer, restoreCustomer, forceDeleteCustomer, fetchArchivedCustomers, updatePropertyDetails, addPropertyToCustomer, addUnitToAddress, updateUnit, deleteUnit, mergeUnits, undoMerge, addHistoryToUnit, loading }), [customers, archivedCustomers, loading]);
+    const contextValue = useMemo(() => ({ customers, archivedCustomers, addCustomer, updateCustomer, deleteCustomer, restoreCustomer, forceDeleteCustomer, fetchArchivedCustomers, updatePropertyDetails, addPropertyToCustomer, deleteProperty, addUnitToAddress, updateUnit, deleteUnit, mergeUnits, undoMerge, addHistoryToUnit, loading }), [customers, archivedCustomers, loading]);
 
     return (
         <CustomerContext.Provider value={contextValue}>
