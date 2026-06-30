@@ -189,6 +189,20 @@ serve(async (req) => {
       });
     }
 
+    if (action === 'deleteServiceCall') {
+       const { callId } = payload;
+       if (!callId) throw new Error('Call ID required');
+
+       // Delete the service call (cascading deletes will handle relations if set up, otherwise we just delete the call)
+       const { error } = await supabaseAdmin.from('service_calls').delete().eq('id', callId);
+       
+       if (error) throw error;
+
+       return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     return new Response(JSON.stringify({ error: 'Unknown action' }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

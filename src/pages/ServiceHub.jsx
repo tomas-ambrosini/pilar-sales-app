@@ -83,7 +83,8 @@ export default function ServiceHub({ isEmbedded = false }) {
         if (!window.confirm("Are you sure you want to permanently delete this service call?")) return;
 
         try {
-            const { error } = await supabase.from('service_calls').delete().eq('id', callId);
+            const { data, error: invokeErr } = await supabase.functions.invoke('admin-action', { body: { action: 'deleteServiceCall', payload: { callId } } });
+            const error = invokeErr || (data?.error ? new Error(data.error) : null);
             if (error) throw error;
             toast.success("Service call deleted");
             setCalls(prev => prev.filter(c => c.id !== callId));
