@@ -486,7 +486,9 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                                 )}
                                             </div>
                                             )}
-                                        </div>
+                                            </div>
+                                          )}
+                                        </Draggable>
                                     );
                                 })}
                             </div>
