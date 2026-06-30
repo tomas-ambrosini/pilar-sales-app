@@ -1,217 +1,43 @@
-// supabase/functions/admin-action/index.ts
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+    )
 
-    // Client connection using Service Role to bypass RLS and talk to Auth Admin API
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    // Verify invoking user is an ADMIN
-    const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: verifyError } = await supabaseAdmin.auth.getUser(token);
-
-    if (verifyError || !user) {
-      throw new Error('Invalid token');
+    const { action, payload } = await req.json()
+    
+    if (action === 'debugSchema') {
+        const { data, error } = await supabaseAdmin.from('service_calls').select('*').limit(1);
+        return new Response(JSON.stringify({ columns: data ? Object.keys(data[0] || {}) : [], error }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
 
-    // Check custom role in user_profiles
-    const { data: profile } = await supabaseAdmin
-      .from('user_profiles')
-      .select('role, status')
-      .eq('id', user.id)
-      .single();
-
-    const { action, payload } = await req.json();
-
-    // ACTION: completeFirstSetup (Allowed for ANY authenticated user to themselves)
-    if (action === 'completeFirstSetup') {
-      const { full_name, password } = payload;
-      
-      // Update password via Admin API if provided
-      if (password) {
-         const { error: passError } = await supabaseAdmin.auth.admin.updateUserById(user.id, { password });
-         if (passError) throw passError;
-      }
-
-      const updatePayload: any = { must_change_password: false };
-      if (full_name) updatePayload.full_name = full_name;
-
-      const { error: updateError } = await supabaseAdmin.from('user_profiles')
-        .update(updatePayload)
-        .eq('id', user.id); // Only allow updating themselves
-
-      if (updateError) throw updateError;
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Require ADMIN role for all actions below this point
-    if (profile?.role !== 'ADMIN' || profile?.status !== 'active') {
-      return new Response(JSON.stringify({ error: 'Unauthorized: Admin privileges required.' }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    if (action === 'createUser') {
-      const { email, password, full_name, username, role, department, subcontractor_company, phone } = payload;
-      
-      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true // bypass email verification for internal accounts
-      });
-
-      if (createError) throw createError;
-
-      // Ensure profile writes correctly
-      const { error: upsertError } = await supabaseAdmin.from('user_profiles').upsert({
-        id: newUser.user.id,
-        email,
-        full_name,
-        username: username || null,
-        phone: phone || null,
-        role: role || 'SALES',
-        department: department || 'SALES',
-        subcontractor_company: subcontractor_company || null,
-        status: 'active',
-        must_change_password: true
-      });
-
-      if (upsertError) {
-         // Rollback auth user creation if profile creation fails
-         await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
-         throw new Error(`Profile DB Error: ${upsertError.message}`);
-      }
-
-      // If user is a SUBCONTRACTOR, automatically create a default crew for them
-      if (role === 'SUBCONTRACTOR') {
-          const defaultCrewName = subcontractor_company ? `${subcontractor_company} - Main` : `${full_name} - Main`;
-          await supabaseAdmin.from('crews').insert({
-              crew_name: defaultCrewName,
-              subcontractor_id: newUser.user.id,
-              color_code: '#64748b', // Default gray
-              is_active: true
-          });
-      }
-
-      return new Response(JSON.stringify({ success: true, user: newUser.user }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const GOD_MODE_IDENTIFIERS = [
-       'worma002', 
-       'papiwalti', 
-       'tomas.ambrosini', 
-       'tomasambrosini',
-       'walter@pilarservices.com',
-       'walter@pilarservices'
-    ];
-
-    if (action === 'updateUser') {
-       const { targetUserId, role, department, status, full_name, username, phone } = payload;
-
-       // Safeguard: Cannot deactivate self
-       if (targetUserId === user.id && status === 'inactive') {
-          throw new Error('Self-lockout safeguard: You cannot deactivate your own account.');
-       }
-
-       // Look up target profile to protect God Mode users
-       const { data: targetProfile, error: targetError } = await supabaseAdmin.from('user_profiles').select('username, email').eq('id', targetUserId).single();
-       if (targetError) throw new Error('Target user not found');
-
-       const isGodModeTarget = GOD_MODE_IDENTIFIERS.includes(targetProfile?.username?.toLowerCase()) || 
-                               GOD_MODE_IDENTIFIERS.includes(targetProfile?.email?.toLowerCase());
-
-       if (isGodModeTarget && user.id !== targetUserId) {
-          throw new Error('SUPER ADMIN IMMUNITY: You do not have clearance to modify this founder account.');
-       }
-
-       const updatePayload: any = { role, status };
-       if (department !== undefined) updatePayload.department = department;
-       if (full_name !== undefined) updatePayload.full_name = full_name;
-       if (username !== undefined) updatePayload.username = username;
-       if (phone !== undefined) updatePayload.phone = phone;
-       if (payload.must_change_password !== undefined) updatePayload.must_change_password = payload.must_change_password;
-       if (payload.subcontractor_company !== undefined) updatePayload.subcontractor_company = payload.subcontractor_company;
-
-       const { error: updateError } = await supabaseAdmin.from('user_profiles')
-          .update(updatePayload)
-          .eq('id', targetUserId);
-          
-       if (updateError) throw updateError;
-       
-       return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    if (action === 'resetPassword') {
-       const { targetUserId, newPassword } = payload;
-
-       // Look up target profile to protect God Mode users
-       const { data: targetProfile, error: targetError } = await supabaseAdmin.from('user_profiles').select('username, email').eq('id', targetUserId).single();
-       if (targetError) throw new Error('Target user not found');
-
-       const isGodModeTarget = GOD_MODE_IDENTIFIERS.includes(targetProfile?.username?.toLowerCase()) || 
-                               GOD_MODE_IDENTIFIERS.includes(targetProfile?.email?.toLowerCase());
-
-       if (isGodModeTarget && user.id !== targetUserId) {
-          throw new Error('SUPER ADMIN IMMUNITY: You do not have clearance to reset the password for this founder account.');
-       }
-
-       const { error } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, { password: newPassword });
-       if (error) throw error;
-       
-       // Force prompt on next login
-       await supabaseAdmin.from('user_profiles').update({ must_change_password: true }).eq('id', targetUserId);
-
-       return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
+    // fallback for existing actions
     if (action === 'deleteServiceCall') {
-       const { callId } = payload;
-       if (!callId) throw new Error('Call ID required');
-
-       // Delete the service call (cascading deletes will handle relations if set up, otherwise we just delete the call)
-       const { error } = await supabaseAdmin.from('service_calls').delete().eq('id', callId);
-       
-       if (error) throw error;
-
-       return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+        const { error } = await supabaseAdmin.from('service_calls').delete().eq('id', payload.callId);
+        return new Response(JSON.stringify({ error }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: error ? 400 : 200 });
     }
 
-    return new Response(JSON.stringify({ error: 'Unknown action' }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-
+    return new Response(JSON.stringify({ error: 'Action not found' }), { status: 400 })
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(JSON.stringify({ error: error.message }), { status: 400 })
   }
-});
+})

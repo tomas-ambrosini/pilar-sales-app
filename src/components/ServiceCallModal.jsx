@@ -39,19 +39,32 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
             toast.error("Failed to load service call");
             onClose();
         } else {
+            // Handle case where Postgres returns assigned_techs as a string
+            let techs = data.assigned_techs;
+            if (typeof techs === 'string') {
+                try {
+                    techs = JSON.parse(techs);
+                } catch (e) {
+                    techs = [];
+                }
+            }
+
             setCallData({
                 ...data,
                 scheduled_start: data.scheduled_start ? data.scheduled_start.slice(0, 16) : '',
                 scheduled_end: data.scheduled_end ? data.scheduled_end.slice(0, 16) : '',
                 arrival_window_start: data.arrival_window_start ? data.arrival_window_start.slice(0, 16) : '',
                 arrival_window_end: data.arrival_window_end ? data.arrival_window_end.slice(0, 16) : '',
-                assigned_techs: data.assigned_techs || [],
+                assigned_techs: techs || [],
                 tags: data.tags || []
             });
 
             // Fetch the assigned crew if any
-            if (data.assigned_techs && data.assigned_techs.length > 0) {
-                const { data: crewData } = await supabase.from('crews').select('crew_name, color_code').eq('id', data.assigned_techs[0]).single();
+            if (techs && techs.length > 0) {
+                let crewId = techs[0];
+                if (typeof crewId === 'object' && crewId !== null && crewId.id) crewId = crewId.id;
+                
+                const { data: crewData } = await supabase.from('crews').select('crew_name, color_code').eq('id', crewId).single();
                 if (crewData) setAssignedCrew(crewData);
             }
         }

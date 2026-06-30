@@ -83,6 +83,11 @@ export default function DispatchCalendar({ isSubView = false }) {
                  // Get YYYY-MM-DD in local time
                  localDateStr = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
              }
+             let techs = s.assigned_techs;
+             if (typeof techs === 'string') {
+                 try { techs = JSON.parse(techs); } catch (e) { techs = []; }
+             }
+             
              return {
                  __type: 'SERVICE',
                  id: s.id,
@@ -94,7 +99,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                  issue_description: s.issue_description,
                  household_id: s.customer_id,
                  households: s.households,
-                 assigned_crew_id: s.assigned_techs && s.assigned_techs.length > 0 ? s.assigned_techs[0] : null,
+                 assigned_crew_id: techs && techs.length > 0 ? techs[0] : null,
                  scheduled_date: localDateStr,
                  scheduled_time_block: timeBlock,
                  scheduled_start: s.scheduled_start,
@@ -208,15 +213,16 @@ export default function DispatchCalendar({ isSubView = false }) {
               const updatedTags = [...currentTags.filter(t => !t.startsWith('SCHEDULED_BY:')), `SCHEDULED_BY:${user?.full_name || 'System'}`];
 
               if (newStatus === 'Scheduled') {
-                  await supabase.from('service_calls').update({
+                  const { error } = await supabase.from('service_calls').update({
                       status: 'Scheduled',
                       assigned_techs: [newCrewId],
                       scheduled_start: svcStartTime,
                       scheduled_end: svcEndTime,
                       tags: updatedTags
                   }).eq('id', draggableId);
+                  if (error) throw error;
               } else {
-                  await supabase.from('service_calls').update({
+                  const { error } = await supabase.from('service_calls').update({
                       status: 'Pending',
                       assigned_techs: [],
                       scheduled_start: null,
@@ -224,6 +230,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                       arrival_window_start: null,
                       arrival_window_end: null
                   }).eq('id', draggableId);
+                  if (error) throw error;
               }
           }
       } catch (err) {

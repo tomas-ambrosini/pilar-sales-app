@@ -49,7 +49,14 @@ export default function ServiceHub({ isEmbedded = false }) {
             console.error("Supabase Error fetching service calls:", error);
             toast.error("Failed to load service calls: " + error.message);
         } else {
-            let finalCalls = data || [];
+            let finalCalls = (data || []).map(c => {
+                let techs = c.assigned_techs;
+                if (typeof techs === 'string') {
+                    try { techs = JSON.parse(techs); } catch(e) { techs = []; }
+                }
+                return { ...c, assigned_techs: techs };
+            });
+            
             // Enforce RBAC rules
             if (activeRole === ROLES.TECHNICIAN || activeRole === ROLES.SUBCONTRACTOR) {
                 const crewId = localStorage.getItem('technician_crew_id');
