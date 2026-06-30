@@ -695,13 +695,8 @@ export default function CatalogEditor() {
                       <div className="flex-1 border border-slate-100 bg-emerald-50/50 rounded-xl p-4 w-full h-full flex flex-col justify-center">
                          {(() => {
                            const rawCost = parseFloat(activeLabor.cost || 0);
-                           const taxRate = margins?.sales_tax || 0.07;
-                           const reserve = margins?.service_reserve || 0.05;
                            const margin = margins?.good_margin || 0.35;
-                           
-                           const isTaxExempt = ['Labor', 'Install', 'Subcontract', 'Permit'].includes(activeLabor.category);
-                           const appliedTax = isTaxExempt ? 0 : taxRate;
-                           const projectedRetail = (rawCost * (1 + appliedTax) * (1 + reserve)) / (1 - margin);
+                           const projectedRetail = rawCost / (1 - margin);
                            
                            return (
                               <div className="text-center">
