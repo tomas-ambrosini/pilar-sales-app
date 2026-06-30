@@ -565,7 +565,7 @@ export default function DispatchHub() {
                                   className={`w-full py-4 rounded-xl font-black text-lg shadow-lg flex items-center justify-center gap-2 transition-all ${oppForm.type === 'SALES' ? 'bg-primary-600 hover:bg-primary-700 text-white' : 'bg-purple-600 hover:bg-purple-700 text-white'}`}
                                >
                                    <Zap size={20} /> 
-                                   Inject {oppForm.type === 'SALES' ? 'Sales Lead' : 'Service Lead'}
+                                   Inject {oppForm.type === 'SALES' ? 'Sales Lead' : 'Service Call'}
                                </button>
                             </div>
                         </div>
