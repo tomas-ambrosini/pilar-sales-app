@@ -298,15 +298,9 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                     const canActOnDeal = !isDispatcherViewingOther;
 
                                     return (
-                                        <Draggable key={job.id} draggableId={job.id} index={index} isDragDisabled={isViewOnly}>
-                                          {(provided) => (
-                                            <div 
-                                                ref={provided.innerRef}
-                                                {...provided.draggableProps}
-                                                {...provided.dragHandleProps}
-                                                onClick={() => setInspectingJob(job)} 
-                                                className={`group relative cursor-pointer bg-white rounded-2xl shadow-sm border p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}
-                                            >
+                                        <div key={job.id} onClick={() => setInspectingJob(job)} 
+                                            className={`group relative cursor-pointer bg-white rounded-2xl shadow-sm border p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}
+                                        >
                                             
                                             {isSLA_Violated && (
                                                 <div className="absolute -top-3 -right-3 bg-gradient-to-br from-red-500 to-rose-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 uppercase tracking-wider animate-in zoom-in z-20">
@@ -500,8 +494,6 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                             </div>
                                             )}
                                             </div>
-                                          )}
-                                        </Draggable>
                                     );
                                 })}
                             </div>
