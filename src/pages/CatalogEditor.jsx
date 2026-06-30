@@ -701,7 +701,7 @@ export default function CatalogEditor() {
                            
                            const isTaxExempt = ['Labor', 'Install', 'Subcontract', 'Permit'].includes(activeLabor.category);
                            const appliedTax = isTaxExempt ? 0 : taxRate;
-                           const projectedRetail = (rawCost * (1 + appliedTax) * (1 + reserve)) * (1 + margin);
+                           const projectedRetail = (rawCost * (1 + appliedTax) * (1 + reserve)) / (1 - margin);
                            
                            return (
                               <div className="text-center">
