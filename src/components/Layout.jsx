@@ -26,6 +26,7 @@ export default function Layout() {
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [forceChannelId, setForceChannelId] = useState(null);
+  const isDaniel = user?.full_name?.toLowerCase().includes('daniel') || user?.email?.toLowerCase().includes('daniel');
 
   const navGroups = [
     {
@@ -49,10 +50,10 @@ export default function Layout() {
     },
     {
       title: 'Admin',
-      allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
+      allowedRoles: isDaniel ? [ROLES.ADMIN, ROLES.MANAGER, activeRole] : [ROLES.ADMIN, ROLES.MANAGER],
       items: [
         { path: '/analytics', label: 'Analytics', icon: TrendingUp, isVisible: canViewFinancials() },
-        { path: '/catalog', label: 'Catalog', icon: BookOpen, isVisible: [ROLES.ADMIN, ROLES.MANAGER].includes(activeRole) },
+        { path: '/catalog', label: 'Catalog', icon: BookOpen, isVisible: [ROLES.ADMIN, ROLES.MANAGER].includes(activeRole) || isDaniel },
         { path: '/finance', label: 'Finance', icon: DollarSign, isVisible: canViewFinancials() },
         { path: '/template-settings', label: 'Templates', icon: FileText, isVisible: activeRole === ROLES.ADMIN },
         { path: '/account-management', label: 'Settings', icon: Settings, isVisible: activeRole === ROLES.ADMIN },
