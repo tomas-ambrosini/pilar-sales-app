@@ -569,15 +569,7 @@ export default function CatalogEditor() {
                         <Calculator size={14} className="text-emerald-500" />
                         <h4 className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Pricing Strategy Array</h4>
                      </div>
-                     <button type="button" onClick={() => {
-                        const cost = parseFloat(activeEquip.system_cost || 0);
-                        const reserve = margins?.service_reserve || 0.05;
-                        const margin = margins?.good_margin || 0.35;
-                        const projectedRetail = (cost * (1 + reserve)) / (1 - margin);
-                        setActiveEquip({...activeEquip, retail_price: projectedRetail.toFixed(2)});
-                     }} className="text-[9px] font-bold bg-primary-100 text-primary-700 px-3 py-1.5 rounded-lg shadow-sm hover:bg-primary-200 transition-colors uppercase tracking-wider focus:ring-2 ring-primary-500 active:scale-95">
-                        Execute Target Script
-                     </button>
+                     <span className="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Auto-Sync</span>
                   </div>
                   
                   <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-100">
@@ -585,7 +577,14 @@ export default function CatalogEditor() {
                         <label className="text-[10px] font-black text-red-500/80 uppercase tracking-widest block mb-2">Raw Base Cost ($)</label>
                         <div className="relative">
                            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-xl">$</span>
-                           <input type="number" step="0.01" className="w-full bg-red-50/50 border border-red-100 rounded-lg pl-10 pr-4 py-4 font-mono font-black text-xl text-red-700 focus:ring-2 ring-red-500 outline-none shadow-inner placeholder:text-red-300" value={activeEquip.system_cost || ''} onChange={e => setActiveEquip({...activeEquip, system_cost: e.target.value})} required placeholder="0.00"/>
+                           <input type="number" step="0.01" className="w-full bg-red-50/50 border border-red-100 rounded-lg pl-10 pr-4 py-4 font-mono font-black text-xl text-red-700 focus:ring-2 ring-red-500 outline-none shadow-inner placeholder:text-red-300" value={activeEquip.system_cost || ''} onChange={e => {
+                              const costVal = e.target.value;
+                              const cost = parseFloat(costVal || 0);
+                              const reserve = margins?.service_reserve || 0.05;
+                              const margin = margins?.good_margin || 0.35;
+                              const projectedRetail = (cost * (1 + reserve)) / (1 - margin);
+                              setActiveEquip({...activeEquip, system_cost: costVal, retail_price: projectedRetail.toFixed(2)});
+                           }} required placeholder="0.00"/>
                         </div>
                      </div>
                      <div className="p-5 flex-1 relative bg-emerald-50/20">
