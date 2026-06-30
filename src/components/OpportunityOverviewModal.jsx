@@ -104,8 +104,9 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
     if (!job) return null;
 
     const customerName = (job.households?.household_name || 'Unknown Customer').replace(/ Account$/i, '').trim();
-    const address = job.households?.addresses?.street_address || 'No address provided';
-    const city = job.households?.addresses?.city || 'No city provided';
+    const addressObj = Array.isArray(job.households?.addresses) ? job.households.addresses[0] : job.households?.addresses;
+    const address = addressObj?.street_address || 'No address provided';
+    const city = addressObj?.city || 'No city provided';
     
     // Calculate display ID
     const associatedProposal = proposals?.find(p => p.proposal_data?.associated_opportunity_id === job.id || p.associated_opportunity_id === job.id);
@@ -159,6 +160,16 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
     const getDepositAmount = () => {
         const pData = job.proposal_data || associatedProposal?.proposal_data || {};
         if (pData.deposit_amount > 0) return pData.deposit_amount;
+        
+        // Try to extract from timeline events
+        const depositEvent = activities.find(a => a.activity_type?.includes('Deposit'));
+        if (depositEvent && depositEvent.description) {
+            const match = depositEvent.description.match(/\$([0-9,]+(\.[0-9]{2})?)/);
+            if (match) {
+                return parseFloat(match[1].replace(/,/g, ''));
+            }
+        }
+        
         return displayAmount * ((pData.deposit_percentage || 0) / 100);
     };
     const displayDeposit = getDepositAmount();
@@ -308,15 +319,17 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                     )}
 
                     {/* Equipment Details */}
-                    {associatedProposal && (
+                    {associatedProposal && (() => {
+                        const displaySystemsList = associatedProposal.proposal_data?.accepted_tier_data?.systemsList || associatedProposal.proposal_data?.systemTiers;
+                        return (
                         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm transition-shadow hover:shadow-md">
                             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                 <Package size={14} /> Equipment Details
                             </h3>
-                            {associatedProposal.proposal_data?.systemTiers && associatedProposal.proposal_data.systemTiers.length > 0 ? (
+                            {displaySystemsList && displaySystemsList.length > 0 ? (
                                 <div className="flex flex-col gap-3">
-                                    {associatedProposal.proposal_data.systemTiers.map((sys, idx) => {
-                                        const td = sys.tiers?.[matchedTierName.toLowerCase()] || {};
+                                    {displaySystemsList.map((sys, idx) => {
+                                        const td = sys.selectedTierData || sys.tiers?.[matchedTierName.toLowerCase()] || {};
                                         return (
                                             <div key={idx} className="bg-slate-50 border border-slate-100 p-3 rounded-xl flex flex-col gap-3">
                                                 <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
@@ -370,7 +383,8 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                                 </div>
                             )}
                         </div>
-                    )}
+                        );
+                    })()}
 
                     {/* Dispatch Context */}
                     <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm transition-shadow hover:shadow-md">
