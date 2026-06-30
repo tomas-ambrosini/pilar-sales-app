@@ -31,7 +31,7 @@ export default function DispatchCalendar({ isSubView = false }) {
    const [loading, setLoading] = useState(true);
    const [baseDate, setBaseDate] = useState(getToday());
    const [viewMode, setViewMode] = useState('day'); // 'week' | 'day'
-   const [timeFilter, setTimeFilter] = useState('all'); // 'all', 'working', 'morning', 'afternoon'
+   const [timeFilter, setTimeFilter] = useState('all'); // 'all', 'working', 'morning', 'afternoon', 'after_hours'
    const [unassignedQueue, setUnassignedQueue] = useState([]);
    const [scheduledJobs, setScheduledJobs] = useState([]);
    const [inspectingJob, setInspectingJob] = useState(null);
@@ -302,6 +302,7 @@ export default function DispatchCalendar({ isSubView = false }) {
            case 'working': return TIME_BLOCKS.filter(b => b.hour >= 7 && b.hour <= 18);
            case 'morning': return TIME_BLOCKS.filter(b => b.hour >= 6 && b.hour <= 12);
            case 'afternoon': return TIME_BLOCKS.filter(b => b.hour >= 12 && b.hour <= 18);
+           case 'after_hours': return TIME_BLOCKS.filter(b => b.hour < 7 || b.hour > 18);
            case 'all': default: return TIME_BLOCKS;
        }
    };
@@ -454,6 +455,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                                <option value="working">Working Hours</option>
                                <option value="morning">Morning Only</option>
                                <option value="afternoon">Afternoon Only</option>
+                               <option value="after_hours">After Hours</option>
                            </select>
                        )}
                        <button onClick={() => setViewMode('day')} className={`px-5 py-2 text-sm font-bold rounded-lg transition-all ${viewMode === 'day' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>Day View</button>
