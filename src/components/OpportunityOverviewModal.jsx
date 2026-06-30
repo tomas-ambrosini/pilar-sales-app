@@ -453,7 +453,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                                     <ShieldCheck size={14} className="text-slate-400" /> Contract
                                 </button>
                             )}
-                            {['COMPLETED', 'CLOSED_WON'].includes(job.status) && (
+                            {['NEEDS_SCHEDULING', 'SCHEDULED', 'APPROVED', 'COMPLETED', 'CLOSED_WON', 'Working', 'En Route'].includes(job.status) && (
                                 <button disabled={loadingInvoice} onClick={async () => {
                                     if (!associatedProposal) return toast.error("No associated proposal found.");
                                     setLoadingInvoice(true);
