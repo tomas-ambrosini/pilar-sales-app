@@ -29,7 +29,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                 households ( 
                     household_name,
                     contacts ( primary_phone, email ),
-                    addresses!addresses_household_id_fkey ( street_address, city )
+                    addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence )
                 )
             `)
             .eq('id', callId)
@@ -160,16 +160,33 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
     if (loading || !callData) return null;
 
     const customerName = (callData.households?.household_name || 'Unknown Customer').replace(/ Account$/i, '').trim();
-    const address = callData.households?.addresses?.[0]?.street_address || 'No address provided';
-    const city = callData.households?.addresses?.[0]?.city || 'No city provided';
-    const displayId = `SVC-${callData.id.slice(0, 8).toUpperCase()}`;
-
+    
     // Extract Metadata from tags
     const intakenByTag = callData.tags?.find(t => t.startsWith('INTAKEN_BY:'));
     const intakenBy = intakenByTag ? intakenByTag.replace('INTAKEN_BY:', '') : 'Unknown Employee';
 
     const scheduledByTag = callData.tags?.find(t => t.startsWith('SCHEDULED_BY:'));
     const scheduledBy = scheduledByTag ? scheduledByTag.replace('SCHEDULED_BY:', '') : 'Pending Assignment';
+    
+    const propertyTag = callData.tags?.find(t => t.startsWith('PROPERTY:'));
+    const propertyId = propertyTag ? propertyTag.replace('PROPERTY:', '') : null;
+    
+    // Match specific property if found, else fallback to primary or first available
+    let targetAddress = null;
+    if (callData.households?.addresses && callData.households.addresses.length > 0) {
+        if (propertyId) {
+            targetAddress = callData.households.addresses.find(a => a.id === propertyId);
+        }
+        if (!targetAddress) {
+            targetAddress = callData.households.addresses.find(a => a.is_primary_residence) || callData.households.addresses[0];
+        }
+    }
+
+    const address = targetAddress?.street_address || 'No address provided';
+    const city = targetAddress?.city || 'No city provided';
+    const displayId = `SVC-${callData.id.slice(0, 8).toUpperCase()}`;
+
+    // Extracted above
 
     let primaryActionText = '';
     let primaryActionColor = '';

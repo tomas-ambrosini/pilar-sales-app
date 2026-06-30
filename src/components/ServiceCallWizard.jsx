@@ -20,7 +20,7 @@ export default function ServiceCallWizard({ isOpen, onClose }) {
     const [formData, setFormData] = useState({
         customer_id: '',
         customer_name: '',
-        call_type: 'MAINTENANCE',
+        call_type: 'CALLBACK',
         urgency: 'NORMAL',
         issue_description: ''
     });
@@ -34,7 +34,7 @@ export default function ServiceCallWizard({ isOpen, onClose }) {
             setFormData({
                 customer_id: '',
                 customer_name: '',
-                call_type: 'MAINTENANCE',
+                call_type: 'CALLBACK',
                 urgency: 'NORMAL',
                 issue_description: ''
             });
@@ -227,7 +227,7 @@ export default function ServiceCallWizard({ isOpen, onClose }) {
                                             value={formData.call_type}
                                             onChange={e => setFormData({...formData, call_type: e.target.value})}
                                         >
-                                            <option value="MAINTENANCE">Maintenance</option>
+                                            <option value="CALLBACK">Callback</option>
                                             <option value="REPAIR">Repair</option>
                                             <option value="WARRANTY">Warranty</option>
                                             <option value="DIAGNOSTIC">Diagnostic</option>

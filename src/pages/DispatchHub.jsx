@@ -52,11 +52,12 @@ export default function DispatchHub() {
    const [oppForm, setOppForm] = useState({
       type: 'SALES', // 'SALES' or 'SERVICE'
       urgency: 'Medium',
-      callType: 'REPAIR', // 'REPAIR', 'MAINTENANCE', 'WARRANTY'
+      callType: 'REPAIR', // 'REPAIR', 'CALLBACK', 'WARRANTY'
       tags: [],
       issueDescription: '',
       dispatchNotes: '',
-      assignedSalespersonId: ''
+      assignedSalespersonId: '',
+      selectedLocationId: ''
    });
 
    // Sales Team Load
@@ -160,17 +161,19 @@ export default function DispatchHub() {
        setLoading(true);
        try {
            if (oppForm.type === 'SALES') {
-               const { data: oppData, error } = await supabase.from('opportunities').insert({
-                   household_id: matchedCustomer.id,
-                   urgency_level: oppForm.urgency,
-                   issue_description: oppForm.issueDescription,
-                   dispatch_notes: oppForm.dispatchNotes,
-                   assigned_salesperson_id: oppForm.assignedSalespersonId,
-                   proposal_data: { 
-                       type: oppForm.type, 
-                       intaken_by: user?.full_name || 'System',
-                       dispatcher: user?.full_name || 'System'
-                   },
+                const { data: oppData, error } = await supabase.from('opportunities').insert({
+                    household_id: matchedCustomer.id,
+                    service_address_id: oppForm.selectedLocationId || null,
+                    urgency_level: oppForm.urgency,
+                    issue_description: oppForm.issueDescription,
+                    dispatch_notes: oppForm.dispatchNotes,
+                    assigned_salesperson_id: oppForm.assignedSalespersonId,
+                    proposal_data: { 
+                        type: oppForm.type, 
+                        intaken_by: user?.full_name || 'System',
+                        dispatcher: user?.full_name || 'System',
+                        service_address_id: oppForm.selectedLocationId || null
+                    },
                    status: PIPELINE_STATES.NEW_LEAD
                }).select().single();
 
@@ -185,15 +188,20 @@ export default function DispatchHub() {
                
                toast.success(`Sales lead successfully injected!`);
            } else {
-               // Service Routing
-               const { error } = await supabase.from('service_calls').insert({
-                   customer_id: matchedCustomer.id,
-                   urgency: oppForm.urgency.toUpperCase(), // 'LOW', 'MEDIUM' -> 'NORMAL', 'HIGH' -> 'EMERGENCY'
-                   issue_description: `${oppForm.issueDescription}\n\nDispatch Notes: ${oppForm.dispatchNotes}`,
-                   status: 'Pending',
-                   call_type: oppForm.callType,
-                   tags: [...(oppForm.tags || []), `INTAKEN_BY:${user?.full_name || 'System'}`]
-               });
+                // Service Routing
+                const serviceTags = [...(oppForm.tags || []), `INTAKEN_BY:${user?.full_name || 'System'}`];
+                if (oppForm.selectedLocationId) {
+                    serviceTags.push(`PROPERTY:${oppForm.selectedLocationId}`);
+                }
+                
+                const { error } = await supabase.from('service_calls').insert({
+                    customer_id: matchedCustomer.id,
+                    urgency: oppForm.urgency.toUpperCase(), // 'LOW', 'MEDIUM' -> 'NORMAL', 'HIGH' -> 'EMERGENCY'
+                    issue_description: `${oppForm.issueDescription}\n\nDispatch Notes: ${oppForm.dispatchNotes}`,
+                    status: 'Pending',
+                    call_type: oppForm.callType,
+                    tags: serviceTags
+                });
 
                if (error) throw error;
                toast.success(`Service call successfully routed to Service Hub!`);
@@ -202,7 +210,7 @@ export default function DispatchHub() {
            // Reset forms
            setSearchQuery('');
            setMatchedCustomer(null);
-           setOppForm({ type: 'SALES', urgency: 'Medium', callType: 'REPAIR', tags: [], issueDescription: '', dispatchNotes: '', assignedSalespersonId: '' });
+           setOppForm({ type: 'SALES', urgency: 'Medium', callType: 'REPAIR', tags: [], issueDescription: '', dispatchNotes: '', assignedSalespersonId: '', selectedLocationId: '' });
        } catch (err) {
            toast.error(err.message);
        }
@@ -273,7 +281,12 @@ export default function DispatchHub() {
                                                    {searchResults.map(c => (
                                                        <div 
                                                           key={c.id} 
-                                                          onClick={() => { setMatchedCustomer(c); setSearchResults([]); setSearchQuery(''); }}
+                                                          onClick={() => { 
+                                                              setMatchedCustomer(c); 
+                                                              setSearchResults([]); 
+                                                              setSearchQuery(''); 
+                                                              setOppForm(prev => ({...prev, selectedLocationId: c.primary_address_obj?.id || c.locations?.[0]?.id || ''}));
+                                                          }}
                                                           className="p-4 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
                                                        >
                                                            <div className="font-bold text-slate-800">{c.name || 'Unknown Customer'}</div>
@@ -301,9 +314,27 @@ export default function DispatchHub() {
                                    <div className="bg-gradient-to-br from-primary-50 to-primary-100/50 border-2 border-primary-200 rounded-2xl p-6 relative overflow-hidden shadow-sm">
                                        <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary-200/50 rounded-full blur-2xl pointer-events-none"></div>
                                        <div className="absolute top-5 right-5 bg-primary-600 text-white p-1.5 rounded-full shadow-md"><CheckCircle2 size={20} /></div>
-                                       <h3 className="font-black text-2xl text-slate-800 mb-2 tracking-tight">{matchedCustomer.name}</h3>
-                                       <div className="flex items-center gap-2.5 text-slate-700 mb-2 font-medium"><Phone size={16} className="text-primary-600" /> {matchedCustomer.phone}</div>
-                                       <div className="flex items-start gap-2.5 text-slate-700 font-medium"><MapPin size={16} className="text-primary-600 mt-0.5" /> {matchedCustomer.address}, {matchedCustomer.city} {matchedCustomer.zip}</div>
+                                        <h3 className="font-black text-2xl text-slate-800 mb-2 tracking-tight">{matchedCustomer.name}</h3>
+                                        <div className="flex items-center gap-2.5 text-slate-700 mb-2 font-medium"><Phone size={16} className="text-primary-600" /> {matchedCustomer.phone}</div>
+                                        
+                                        {matchedCustomer.locations?.length > 1 ? (
+                                            <div className="mt-4 form-group relative z-10">
+                                                <label className="text-xs font-bold text-primary-700 mb-1 block uppercase tracking-wider">Service Property</label>
+                                                <select 
+                                                    value={oppForm.selectedLocationId} 
+                                                    onChange={(e) => setOppForm({...oppForm, selectedLocationId: e.target.value})}
+                                                    className="w-full border border-primary-200 bg-white p-2 rounded-lg text-sm font-semibold text-slate-800 shadow-sm"
+                                                >
+                                                    {matchedCustomer.locations.map(loc => (
+                                                        <option key={loc.id} value={loc.id}>
+                                                            {loc.street_address}{loc.city ? `, ${loc.city}` : ''} {loc.is_primary_residence ? '(Primary)' : ''}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-start gap-2.5 text-slate-700 font-medium"><MapPin size={16} className="text-primary-600 mt-0.5" /> {matchedCustomer.address}, {matchedCustomer.city} {matchedCustomer.zip}</div>
+                                        )}
                                        <button onClick={() => { setMatchedCustomer(null); setSearchQuery(''); }} className="mt-5 px-4 py-2 bg-white/80 hover:bg-white border border-primary-200 rounded-lg text-xs font-black text-primary-700 transition-all uppercase tracking-wider shadow-sm">Change Customer</button>
                                    </div>
                                )}
@@ -423,7 +454,7 @@ export default function DispatchHub() {
                                         <div className="form-group mb-6 col-span-2">
                                             <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider">Service Call Type</label>
                                             <div className="flex flex-wrap gap-2">
-                                                {['REPAIR', 'MAINTENANCE', 'WARRANTY', 'PROPOSAL_FOLLOWUP'].map(ctype => (
+                                                {['REPAIR', 'CALLBACK', 'WARRANTY', 'PROPOSAL_FOLLOWUP'].map(ctype => (
                                                     <button
                                                         key={ctype}
                                                         onClick={() => setOppForm({...oppForm, callType: ctype})}

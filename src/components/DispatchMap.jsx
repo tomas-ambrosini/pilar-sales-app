@@ -141,29 +141,46 @@ export default function DispatchMap() {
             // Fetch Opportunities (Sales)
             const { data: opps } = await supabase.from('opportunities').select(`
                 id, created_at, status, urgency_level, scheduled_date, scheduled_time_block, assigned_crew_id, issue_description, household_id, proposal_data,
-                households ( household_name, contacts ( primary_phone, email ), addresses!households_service_address_id_fkey ( id, street_address, city ) )
+                households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
             `).in('status', [PIPELINE_STATES.SCHEDULED, 'En Route', 'Working', 'Completed', 'Complete']).eq('is_active', true);
 
             // Fetch Service Calls (Service)
             const { data: svc } = await supabase.from('service_calls').select(`
                 id, created_at, status, urgency, call_type, tags, issue_description, customer_id, assigned_techs, scheduled_start, scheduled_end,
-                households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( street_address, city ) )
+                households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
             `).in('status', ['Scheduled', 'En Route', 'Working', 'Completed', 'Complete']);
 
-            const normalizedOpps = (opps || []).map(o => ({
-                ...o, 
+            const normalizedOpps = (opps || []).map(o => {
+            let targetAddress = null;
+            if (Array.isArray(o.households?.addresses) && o.households.addresses.length > 0) {
+                if (o.service_address_id) targetAddress = o.households.addresses.find(a => a.id === o.service_address_id);
+                if (!targetAddress) targetAddress = o.households.addresses.find(a => a.is_primary_residence) || o.households.addresses[0];
+            }
+            return {
+                ...o,
                 __type: 'SALES',
-                address: o.households?.addresses || {},
+                address: targetAddress || {},
                 customerName: o.households?.household_name || 'Unknown'
-            }));
+            };
+        });
             
-            const normalizedSvc = (svc || []).map(s => ({
-                ...s,
-                __type: 'SERVICE',
-                urgency_level: s.urgency,
-                address: (Array.isArray(s.households?.addresses) ? s.households.addresses[0] : s.households?.addresses) || {},
-                customerName: s.households?.household_name || 'Unknown'
-            }));
+            const normalizedSvc = (svc || []).map(s => {
+                const propertyTag = s.tags?.find(t => t.startsWith('PROPERTY:'));
+                const propertyId = propertyTag ? propertyTag.replace('PROPERTY:', '') : null;
+                let targetAddress = null;
+                if (Array.isArray(s.households?.addresses) && s.households.addresses.length > 0) {
+                    if (propertyId) targetAddress = s.households.addresses.find(a => a.id === propertyId);
+                    if (!targetAddress) targetAddress = s.households.addresses.find(a => a.is_primary_residence) || s.households.addresses[0];
+                }
+                
+                return {
+                    ...s,
+                    __type: 'SERVICE',
+                    urgency_level: s.urgency,
+                    address: targetAddress || {},
+                    customerName: s.households?.household_name || 'Unknown'
+                };
+            });
 
             const allJobs = [...normalizedOpps, ...normalizedSvc];
             

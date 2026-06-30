@@ -41,7 +41,7 @@ export default function ServiceHub({ isEmbedded = false }) {
                     households ( 
                         household_name,
                         contacts ( primary_phone ),
-                        addresses!addresses_household_id_fkey ( street_address, city )
+                        addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence )
                     )
                 `)
                 .eq('is_active', true)
@@ -59,29 +59,24 @@ export default function ServiceHub({ isEmbedded = false }) {
             let finalCalls = (data || []).map(c => {
                 let techs = c.assigned_techs;
                 if (typeof techs === 'string') {
-                    try { 
-                        techs = JSON.parse(techs); 
-                    } catch(e) { 
-                        const match = techs.match(/([a-f0-9-]{36})/gi);
-                        techs = match || [];
-                    }
+                    try { techs = JSON.parse(techs); } 
+                    catch (e) { techs = techs.match(/([a-f0-9-]{36})/gi) || []; }
                 }
-                let parsedTags = c.tags;
-                if (typeof parsedTags === 'string') {
-                    try { parsedTags = JSON.parse(parsedTags); }
-                    catch(e) {
-                        const m = parsedTags.match(/^{?(.*?)}?$/);
-                        if (m && m[1]) {
-                            parsedTags = m[1].split(',').map(s => {
-                                let clean = s.trim();
-                                if (clean.startsWith('"') && clean.endsWith('"')) clean = clean.slice(1, -1);
-                                return clean;
-                            }).filter(Boolean);
-                        } else {
-                            parsedTags = [];
-                        }
-                    }
+                let tags = c.tags;
+                if (typeof tags === 'string') {
+                    try { tags = JSON.parse(tags); } 
+                    catch (e) { tags = []; }
                 }
+                
+                const propertyTag = tags?.find(t => typeof t === 'string' && t.startsWith('PROPERTY:'));
+                const propertyId = propertyTag ? propertyTag.replace('PROPERTY:', '') : null;
+                let targetAddress = null;
+                if (Array.isArray(c.households?.addresses) && c.households.addresses.length > 0) {
+                    if (propertyId) targetAddress = c.households.addresses.find(a => a.id === propertyId);
+                    if (!targetAddress) targetAddress = c.households.addresses.find(a => a.is_primary_residence) || c.households.addresses[0];
+                    c.households.addresses = [targetAddress];
+                }
+                
                 return { ...c, assigned_techs: techs, tags: Array.isArray(parsedTags) ? parsedTags : [] };
             });
             

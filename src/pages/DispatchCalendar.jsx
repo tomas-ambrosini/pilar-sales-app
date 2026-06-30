@@ -62,17 +62,33 @@ export default function DispatchCalendar({ isSubView = false }) {
          // Fetch Opportunities (Sales)
          const { data: opps } = await supabase.from('opportunities').select(`
              id, created_at, status, urgency_level, scheduled_date, scheduled_time_block, assigned_crew_id, issue_description, household_id, proposal_data,
-             households ( household_name, contacts ( primary_phone, email ), addresses!households_service_address_id_fkey ( id, street_address, city ) )
+             households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
          `).in('status', [PIPELINE_STATES.NEEDS_SCHEDULING, PIPELINE_STATES.SCHEDULED, PIPELINE_STATES.COMPLETED]).eq('is_active', true);
 
          // Fetch Service Calls (Service)
          const { data: svc } = await supabase.from('service_calls').select(`
              id, created_at, status, urgency, call_type, tags, issue_description, customer_id, assigned_techs, scheduled_start, scheduled_end,
-             households ( household_name, contacts ( primary_phone, email ), addresses!households_service_address_id_fkey ( street_address, city ) )
+             households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
          `).in('status', ['Pending', 'Scheduled', 'Dispatched', 'In Progress', 'Completed']);
 
-         const normalizedOpps = (opps || []).map(o => ({ ...o, __type: 'SALES' }));
+         const normalizedOpps = (opps || []).map(o => {
+             let targetAddress = null;
+             if (o.households?.addresses && o.households.addresses.length > 0) {
+                 if (o.service_address_id) targetAddress = o.households.addresses.find(a => a.id === o.service_address_id);
+                 if (!targetAddress) targetAddress = o.households.addresses.find(a => a.is_primary_residence) || o.households.addresses[0];
+                 o.households.addresses = [targetAddress]; // simplify for downstream components
+             }
+             return { ...o, __type: 'SALES' };
+         });
          const normalizedSvc = (svc || []).map(s => {
+             const propertyTag = s.tags?.find(t => typeof t === 'string' && t.startsWith('PROPERTY:'));
+             const propertyId = propertyTag ? propertyTag.replace('PROPERTY:', '') : null;
+             let targetAddress = null;
+             if (s.households?.addresses && s.households.addresses.length > 0) {
+                 if (propertyId) targetAddress = s.households.addresses.find(a => a.id === propertyId);
+                 if (!targetAddress) targetAddress = s.households.addresses.find(a => a.is_primary_residence) || s.households.addresses[0];
+                 s.households.addresses = [targetAddress]; // simplify for downstream components
+             }
              let timeBlock = null;
              let localDateStr = null;
              if (s.scheduled_start) {

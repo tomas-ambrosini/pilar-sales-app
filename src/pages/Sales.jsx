@@ -67,7 +67,7 @@ export default function Sales() {
         .select(`
           id, status, urgency_level, issue_description, created_at, updated_at, scheduled_date, scheduled_time_block,
           proposal_data, household_id, assigned_salesperson_id,
-          households ( household_name, contacts ( primary_phone, email ), addresses!households_service_address_id_fkey ( id, street_address, city ) )
+          households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
         `)
         .eq('is_active', true);
         
@@ -78,6 +78,13 @@ export default function Sales() {
       data?.forEach(opp => {
         // Exclude service calls from the sales pipeline
         if (opp.proposal_data?.type === 'SERVICE') return;
+        
+        let targetAddress = null;
+        if (Array.isArray(opp.households?.addresses) && opp.households.addresses.length > 0) {
+            if (opp.service_address_id) targetAddress = opp.households.addresses.find(a => a.id === opp.service_address_id);
+            if (!targetAddress) targetAddress = opp.households.addresses.find(a => a.is_primary_residence) || opp.households.addresses[0];
+            opp.households.addresses = [targetAddress];
+        }
 
         // Apply Filters
         const isManager = [ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER].includes(activeRole);

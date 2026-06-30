@@ -39,13 +39,13 @@ export default function TechnicianMyDay() {
             // Fetch Service Calls assigned to this crew today
             const { data: svcData } = await supabase.from('service_calls').select(`
                 id, status, urgency, call_type, issue_description, scheduled_start,
-                households ( household_name, contacts ( primary_phone ), addresses!households_service_address_id_fkey ( street_address, city ) )
+                households ( household_name, contacts ( primary_phone ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
             `).contains('assigned_techs', [selectedCrewId]).gte('scheduled_start', `${today}T00:00:00`).lte('scheduled_start', `${today}T23:59:59`);
 
             // Fetch Installs/Opportunities assigned to this crew today
             const { data: oppData } = await supabase.from('opportunities').select(`
                 id, status, urgency_level, issue_description, scheduled_date, scheduled_time_block, proposal_data,
-                households ( household_name, contacts ( primary_phone ), addresses!households_service_address_id_fkey ( street_address, city ) )
+                households ( household_name, contacts ( primary_phone ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
             `).eq('assigned_crew_id', selectedCrewId).eq('scheduled_date', today);
 
             const combined = [
