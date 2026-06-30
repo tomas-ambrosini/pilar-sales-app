@@ -489,13 +489,8 @@ export default function CatalogEditor() {
                            <td className="p-4 text-right">
                               {(() => {
                                   const rawCost = parseFloat(labor.cost || 0);
-                                  const taxRate = margins?.sales_tax || 0.07;
-                                  const reserve = margins?.service_reserve || 0.05;
                                   const margin = margins?.good_margin || 0.35;
-                                  
-                                  const isTaxExempt = ['Labor', 'Install', 'Subcontract', 'Permit'].includes(labor.category);
-                                  const appliedTax = isTaxExempt ? 0 : taxRate;
-                                  const projectedRetail = (rawCost * (1 + appliedTax) * (1 + reserve)) * (1 + margin);
+                                  const projectedRetail = rawCost / (1 - margin);
 
                                   return (
                                       <span className="font-black text-white bg-emerald-600 shadow-sm px-3.5 py-1.5 rounded-full inline-block text-[13px] tracking-wide border border-emerald-500">
