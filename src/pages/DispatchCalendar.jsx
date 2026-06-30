@@ -74,10 +74,14 @@ export default function DispatchCalendar({ isSubView = false }) {
          const normalizedOpps = (opps || []).map(o => ({ ...o, __type: 'SALES' }));
          const normalizedSvc = (svc || []).map(s => {
              let timeBlock = null;
+             let localDateStr = null;
              if (s.scheduled_start) {
-                 const startHour = new Date(s.scheduled_start).getHours();
+                 const d = new Date(s.scheduled_start);
+                 const startHour = d.getHours();
                  const block = TIME_BLOCKS.find(b => b.hour === startHour);
                  timeBlock = block ? block.value : '08:00';
+                 // Get YYYY-MM-DD in local time
+                 localDateStr = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
              }
              return {
                  __type: 'SERVICE',
@@ -91,7 +95,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                  household_id: s.customer_id,
                  households: s.households,
                  assigned_crew_id: s.assigned_techs && s.assigned_techs.length > 0 ? s.assigned_techs[0] : null,
-                 scheduled_date: s.scheduled_start ? s.scheduled_start.split('T')[0] : null,
+                 scheduled_date: localDateStr,
                  scheduled_time_block: timeBlock,
                  scheduled_start: s.scheduled_start,
                  scheduled_end: s.scheduled_end
@@ -144,8 +148,9 @@ export default function DispatchCalendar({ isSubView = false }) {
                  const startH = parseInt(hourStr, 10);
                  const endH = startH + 2; // Default 2 hr duration
                  
-                 svcStartTime = `${newDateStr}T${hourStr.padStart(2, '0')}:00:00`;
-                 svcEndTime = `${newDateStr}T${endH.toString().padStart(2, '0')}:00:00`;
+                 // Parse as local time then convert to ISO for DB
+                 svcStartTime = new Date(`${newDateStr}T${hourStr.padStart(2, '0')}:00:00`).toISOString();
+                 svcEndTime = new Date(`${newDateStr}T${endH.toString().padStart(2, '0')}:00:00`).toISOString();
              }
          }
       }
