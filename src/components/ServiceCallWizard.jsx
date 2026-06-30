@@ -5,9 +5,11 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCustomerName } from '../utils/formatters';
 import { useCustomers } from '../context/CustomerContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function ServiceCallWizard({ isOpen, onClose }) {
     const { customers } = useCustomers();
+    const { user } = useAuth();
     const [step, setStep] = useState(1);
     const [saving, setSaving] = useState(false);
     
@@ -86,7 +88,8 @@ export default function ServiceCallWizard({ isOpen, onClose }) {
                 call_type: formData.call_type,
                 urgency: formData.urgency,
                 issue_description: formData.issue_description,
-                status: 'Pending'
+                status: 'Pending',
+                tags: [`INTAKEN_BY:${user?.full_name || 'System'}`]
             }]);
 
             if (error) throw error;

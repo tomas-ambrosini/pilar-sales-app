@@ -85,7 +85,12 @@ export default function DispatchCalendar({ isSubView = false }) {
              }
              let techs = s.assigned_techs;
              if (typeof techs === 'string') {
-                 try { techs = JSON.parse(techs); } catch (e) { techs = []; }
+                 try { 
+                     techs = JSON.parse(techs); 
+                 } catch (e) { 
+                     const match = techs.match(/([a-f0-9-]{36})/gi);
+                     techs = match || []; 
+                 }
              }
              
              return {

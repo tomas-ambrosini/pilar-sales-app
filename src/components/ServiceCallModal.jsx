@@ -45,7 +45,8 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                 try {
                     techs = JSON.parse(techs);
                 } catch (e) {
-                    techs = [];
+                    const match = techs.match(/([a-f0-9-]{36})/gi);
+                    techs = match || [];
                 }
             }
 
@@ -348,8 +349,8 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block flex items-center justify-between">
                                         <span>Scheduled By</span>
-                                        <span className="text-slate-600">{scheduledBy}</span>
                                     </label>
+                                    <div className="text-sm font-semibold text-slate-700 mt-1">{scheduledBy}</div>
                                 </div>
                             </div>
                         )}

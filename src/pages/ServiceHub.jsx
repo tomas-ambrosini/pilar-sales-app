@@ -52,7 +52,12 @@ export default function ServiceHub({ isEmbedded = false }) {
             let finalCalls = (data || []).map(c => {
                 let techs = c.assigned_techs;
                 if (typeof techs === 'string') {
-                    try { techs = JSON.parse(techs); } catch(e) { techs = []; }
+                    try { 
+                        techs = JSON.parse(techs); 
+                    } catch(e) { 
+                        const match = techs.match(/([a-f0-9-]{36})/gi);
+                        techs = match || [];
+                    }
                 }
                 return { ...c, assigned_techs: techs };
             });
