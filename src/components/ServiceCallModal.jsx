@@ -166,7 +166,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
 
     // Extract Metadata from tags
     const intakenByTag = callData.tags?.find(t => t.startsWith('INTAKEN_BY:'));
-    const intakenBy = intakenByTag ? intakenByTag.replace('INTAKEN_BY:', '') : 'System';
+    const intakenBy = intakenByTag ? intakenByTag.replace('INTAKEN_BY:', '') : 'Unknown Employee';
 
     const scheduledByTag = callData.tags?.find(t => t.startsWith('SCHEDULED_BY:'));
     const scheduledBy = scheduledByTag ? scheduledByTag.replace('SCHEDULED_BY:', '') : 'Pending Assignment';

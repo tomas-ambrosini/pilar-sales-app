@@ -130,8 +130,8 @@ export default function DispatchCalendar({ isSubView = false }) {
 
          const allJobs = [...normalizedOpps, ...normalizedSvc];
 
-         setUnassignedQueue(allJobs.filter(j => j.status === PIPELINE_STATES.NEEDS_SCHEDULING || j.status === 'Pending'));
-         setScheduledJobs(allJobs.filter(j => j.status !== PIPELINE_STATES.NEEDS_SCHEDULING && j.status !== 'Pending'));
+         setUnassignedQueue(allJobs.filter(j => !j.assigned_crew_id));
+         setScheduledJobs(allJobs.filter(j => !!j.assigned_crew_id));
 
       } catch (e) {
          toast.error("Failed to load calendar data.");
