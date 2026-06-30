@@ -63,13 +63,13 @@ export default function DispatchCalendar({ isSubView = false }) {
          const { data: opps } = await supabase.from('opportunities').select(`
              id, created_at, status, urgency_level, scheduled_date, scheduled_time_block, assigned_crew_id, issue_description, household_id, proposal_data,
              households ( household_name, contacts ( primary_phone, email ), addresses!households_service_address_id_fkey ( id, street_address, city ) )
-         `).in('status', [PIPELINE_STATES.NEEDS_SCHEDULING, PIPELINE_STATES.SCHEDULED]).eq('is_active', true);
+         `).in('status', [PIPELINE_STATES.NEEDS_SCHEDULING, PIPELINE_STATES.SCHEDULED, PIPELINE_STATES.COMPLETED]).eq('is_active', true);
 
          // Fetch Service Calls (Service)
          const { data: svc } = await supabase.from('service_calls').select(`
              id, created_at, status, urgency, call_type, tags, issue_description, customer_id, assigned_techs, scheduled_start, scheduled_end,
              households ( household_name, contacts ( primary_phone, email ), addresses!households_service_address_id_fkey ( street_address, city ) )
-         `).in('status', ['Pending', 'Scheduled']);
+         `).in('status', ['Pending', 'Scheduled', 'Dispatched', 'In Progress', 'Completed']);
 
          const normalizedOpps = (opps || []).map(o => ({ ...o, __type: 'SALES' }));
          const normalizedSvc = (svc || []).map(s => {
@@ -105,7 +105,7 @@ export default function DispatchCalendar({ isSubView = false }) {
          const allJobs = [...normalizedOpps, ...normalizedSvc];
 
          setUnassignedQueue(allJobs.filter(j => j.status === PIPELINE_STATES.NEEDS_SCHEDULING || j.status === 'Pending'));
-         setScheduledJobs(allJobs.filter(j => j.status === PIPELINE_STATES.SCHEDULED || j.status === 'Scheduled'));
+         setScheduledJobs(allJobs.filter(j => j.status !== PIPELINE_STATES.NEEDS_SCHEDULING && j.status !== 'Pending'));
 
       } catch (e) {
          toast.error("Failed to load calendar data.");
