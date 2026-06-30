@@ -572,6 +572,26 @@ export default function CatalogEditor() {
                      <span className="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Auto-Sync</span>
                   </div>
                   
+                  <div className="p-5 border-b border-slate-100">
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">System Tier Classification</label>
+                     <select 
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 font-bold text-sm text-slate-700 focus:ring-2 ring-primary-500 outline-none shadow-sm cursor-pointer" 
+                        value={activeEquip.tier || 'Good'} 
+                        onChange={e => {
+                           const newTier = e.target.value;
+                           const cost = parseFloat(activeEquip.system_cost || 0);
+                           const reserve = margins?.service_reserve || 0.05;
+                           const targetMargin = newTier === 'Best' ? margins?.best_margin : newTier === 'Better' ? margins?.better_margin : margins?.good_margin || 0.35;
+                           const projectedRetail = (cost * (1 + reserve)) / (1 - targetMargin);
+                           setActiveEquip({...activeEquip, tier: newTier, retail_price: projectedRetail.toFixed(2)});
+                        }}
+                     >
+                        <option value="Good">Good ({(margins?.good_margin * 100 || 35).toFixed(0)}% Margin)</option>
+                        <option value="Better">Better ({(margins?.better_margin * 100 || 35).toFixed(0)}% Margin)</option>
+                        <option value="Best">Best ({(margins?.best_margin * 100 || 35).toFixed(0)}% Margin)</option>
+                     </select>
+                  </div>
+
                   <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-100">
                      <div className="p-5 flex-1 relative">
                         <label className="text-[10px] font-black text-red-500/80 uppercase tracking-widest block mb-2">Raw Base Cost ($)</label>
@@ -581,8 +601,9 @@ export default function CatalogEditor() {
                               const costVal = e.target.value;
                               const cost = parseFloat(costVal || 0);
                               const reserve = margins?.service_reserve || 0.05;
-                              const margin = margins?.good_margin || 0.35;
-                              const projectedRetail = (cost * (1 + reserve)) / (1 - margin);
+                              const currentTier = activeEquip.tier || 'Good';
+                              const targetMargin = currentTier === 'Best' ? margins?.best_margin : currentTier === 'Better' ? margins?.better_margin : margins?.good_margin || 0.35;
+                              const projectedRetail = (cost * (1 + reserve)) / (1 - targetMargin);
                               setActiveEquip({...activeEquip, system_cost: costVal, retail_price: projectedRetail.toFixed(2)});
                            }} required placeholder="0.00"/>
                         </div>
@@ -599,7 +620,9 @@ export default function CatalogEditor() {
                   <div className="bg-slate-50 border-t border-slate-100 px-5 py-4">
                      <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Mathematical Formula</label>
                      <div className="bg-white border border-slate-200 rounded-lg px-3 py-2 flex items-center shadow-inner">
-                         <span className="font-mono text-[10px] text-slate-400 flex-1">(cost * (1 + overhead)) / (1 - target_margin)</span>
+                         <span className="font-mono text-[10px] text-slate-400 flex-1">
+                            (cost * (1 + {margins?.service_reserve || 0.05})) / (1 - {(activeEquip.tier === 'Best' ? margins?.best_margin : activeEquip.tier === 'Better' ? margins?.better_margin : margins?.good_margin) || 0.35})
+                         </span>
                      </div>
                   </div>
                </div>
