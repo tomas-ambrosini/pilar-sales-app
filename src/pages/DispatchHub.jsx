@@ -155,7 +155,8 @@ export default function DispatchHub() {
 
    const handleInjectOpportunity = async () => {
        if (!matchedCustomer) return toast.error("Please select or create a customer first.");
-       if (!oppForm.issueDescription) return toast.error("Issue description is required.");
+       const isMaintenance = oppForm.type === 'SALES' && oppForm.salesCallType === 'MAINTENANCE';
+       if (!oppForm.issueDescription && !isMaintenance) return toast.error("Issue description is required.");
        if (oppForm.type === 'SALES' && !oppForm.assignedSalespersonId) {
            return toast.error("A salesperson must be assigned to this lead.");
        }
@@ -492,8 +493,9 @@ export default function DispatchHub() {
                                         </div>
                                     )}
                                     
-                                    <div className="form-group">
-                                        <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider">Response Urgency</label>
+                                    {!(oppForm.type === 'SALES' && oppForm.salesCallType === 'MAINTENANCE') && (
+                                        <div className="form-group">
+                                            <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider">Response Urgency</label>
                                        <select 
                                           value={oppForm.urgency}
                                           onChange={(e) => setOppForm({...oppForm, urgency: e.target.value})}
@@ -504,15 +506,19 @@ export default function DispatchHub() {
                                            <option value="High">Emergency - System Down!</option>
                                        </select>
                                    </div>
+                                   )}
                                </div>
 
                                <div className="form-group mb-6">
-                                   <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider">Customer Issue Description <span className="text-red-500">*</span></label>
+                                   <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider">
+                                       {oppForm.type === 'SALES' && oppForm.salesCallType === 'MAINTENANCE' ? 'Maintenance Request Notes' : 'Customer Issue Description'} 
+                                       {!(oppForm.type === 'SALES' && oppForm.salesCallType === 'MAINTENANCE') && <span className="text-red-500"> *</span>}
+                                   </label>
                                    <textarea 
                                       value={oppForm.issueDescription}
                                       onChange={(e) => setOppForm({...oppForm, issueDescription: e.target.value})}
                                       className="w-full border border-slate-200 p-4 rounded-xl h-24 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 resize-none text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none font-medium shadow-inner"
-                                      placeholder="What is the customer reporting?"
+                                      placeholder={oppForm.type === 'SALES' && oppForm.salesCallType === 'MAINTENANCE' ? "Any specific details about the systems to be maintained?" : "What is the customer reporting?"}
                                    />
                                </div>
 
