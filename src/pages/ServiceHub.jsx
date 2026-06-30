@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { useRole } from '../context/RoleContext';
-import { Wrench, Search, LayoutGrid, List, Clock, Calendar, CheckCircle2, MoreVertical, ShieldAlert, AlertCircle, Trash2 } from 'lucide-react';
+import { Wrench, Search, LayoutGrid, List, Clock, Calendar, CheckCircle2, MoreVertical, ShieldAlert, AlertCircle, Trash2, MapPin, ArrowRight, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ServiceCallModal from '../components/ServiceCallModal';
 
@@ -20,6 +20,7 @@ export default function ServiceHub({ isEmbedded = false }) {
     const { activeRole, ROLES } = useRole();
     const [viewMode, setViewMode] = useState('kanban'); // 'kanban' or 'table'
     const [calls, setCalls] = useState([]);
+    const [crews, setCrews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [inspectingCallId, setInspectingCallId] = useState(null);
@@ -32,18 +33,24 @@ export default function ServiceHub({ isEmbedded = false }) {
 
     const fetchCalls = async () => {
         setLoading(true);
-        const { data, error } = await supabase
-            .from('service_calls')
-            .select(`
-                *,
-                households ( 
-                    household_name,
-                    contacts ( primary_phone ),
-                    addresses!addresses_household_id_fkey ( street_address, city )
-                )
-            `)
-            .eq('is_active', true)
-            .order('created_at', { ascending: false });
+        const [callsRes, crewsRes] = await Promise.all([
+            supabase
+                .from('service_calls')
+                .select(`
+                    *,
+                    households ( 
+                        household_name,
+                        contacts ( primary_phone ),
+                        addresses!addresses_household_id_fkey ( street_address, city )
+                    )
+                `)
+                .eq('is_active', true)
+                .order('created_at', { ascending: false }),
+            supabase.from('crews').select('*').eq('is_active', true)
+        ]);
+
+        if (crewsRes.data) setCrews(crewsRes.data);
+        const { data, error } = callsRes;
 
         if (error) {
             console.error("Supabase Error fetching service calls:", error);
@@ -130,6 +137,13 @@ export default function ServiceHub({ isEmbedded = false }) {
         );
     });
 
+    const calculateHoursInStage = (dateString) => {
+        if (!dateString) return 0;
+        const then = new Date(dateString);
+        const now = new Date();
+        return Math.max(0, (now - then) / (1000 * 60 * 60));
+    };
+
     const renderUrgencyBadge = (urgency) => {
         switch (urgency) {
             case 'EMERGENCY': return <span className="bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded-full font-black flex items-center gap-1 shadow-sm"><ShieldAlert size={10} /> EMERGENCY</span>;
@@ -142,8 +156,23 @@ export default function ServiceHub({ isEmbedded = false }) {
 
     const renderCallCard = (call) => {
         const displayId = `SVC-${call.id.substring(0, 4).toUpperCase()}`;
+        const hoursInStage = calculateHoursInStage(call.updated_at || call.created_at);
+        const isSLA_Violated = call.status === 'Pending' && hoursInStage > 24;
+
+        let assignedCrew = null;
+        if (call.assigned_techs && call.assigned_techs.length > 0) {
+            assignedCrew = crews.find(c => c.id === call.assigned_techs[0]);
+        }
+        
         return (
-            <div key={call.id} onClick={() => setInspectingCallId(call.id)} className="group relative cursor-pointer bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-slate-300">
+            <div key={call.id} onClick={() => setInspectingCallId(call.id)} className={`group relative cursor-pointer bg-white rounded-2xl shadow-sm border p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}>
+                
+                {isSLA_Violated && (
+                    <div className="absolute -top-3 -right-3 bg-gradient-to-br from-red-500 to-rose-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 uppercase tracking-wider animate-in zoom-in">
+                        <AlertTriangle size={12} strokeWidth={3} /> {Math.floor(hoursInStage)}h Overdue
+                    </div>
+                )}
+
                 <div className="flex justify-between items-start mb-3">
                     <div className="flex flex-col pr-4">
                         <h4 className="font-black text-slate-800 text-base leading-tight truncate">{(call.households?.household_name || 'Unknown Client').replace(/ Account$/i, '').trim()}</h4>
@@ -167,13 +196,50 @@ export default function ServiceHub({ isEmbedded = false }) {
                     </div>
                 </div>
 
-                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 flex flex-col gap-2 mb-3">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-purple-700 bg-purple-100/50 border border-purple-200/50 px-2 py-1 rounded w-fit">
-                        {call.call_type || 'REPAIR'}
-                    </span>
-                    <p className="text-xs text-slate-600 font-medium line-clamp-2">
-                        {call.issue_description}
-                    </p>
+                <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-100/80 flex flex-col gap-2 mb-4">
+                    <div className="flex items-center gap-2 text-[11px] font-medium text-slate-600">
+                        <MapPin size={12} className="text-slate-400"/> 
+                        <span className="truncate">{call.households?.addresses?.city || (Array.isArray(call.households?.addresses) ? call.households.addresses[0]?.city : null) || 'No city provided'}</span>
+                    </div>
+                    
+                    <div className="mt-1 pl-3 border-l-2 border-primary-300">
+                        <span className="text-[11px] font-bold text-slate-700 line-clamp-2">{call.issue_description}</span>
+                    </div>
+                    
+                    {call.scheduled_start && (
+                        <div className="flex items-center gap-1.5 mt-2 bg-emerald-100/50 text-emerald-700 px-2 py-1.5 rounded-lg w-fit border border-emerald-200/50">
+                            <Calendar size={12} strokeWidth={2.5}/> 
+                            <span className="text-[10px] font-black uppercase tracking-wider">{new Date(call.scheduled_start).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'})}</span>
+                            <span className="text-[10px] font-black bg-white/60 px-1.5 rounded ml-1">{new Date(call.scheduled_start).toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex justify-between items-center pt-3 border-t border-slate-100 gap-2">
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest min-w-0 truncate">
+                        <Clock size={12} className="shrink-0" /> <span className="truncate">{Math.floor(hoursInStage)}h in stage</span>
+                    </div>
+
+                    <div className="relative">
+                        <div className={`flex items-center gap-1 ${assignedCrew ? 'bg-slate-50 border-slate-200' : 'bg-white border-dashed border-slate-300'} border px-1.5 py-1 rounded-full text-[10px] font-bold text-slate-700 shadow-sm shrink-0 transition-colors`}>
+                            {assignedCrew ? (
+                                <>
+                                    <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{backgroundColor: assignedCrew.color_code || '#64748b', color: '#fff'}}>
+                                        <Wrench size={10} strokeWidth={3}/>
+                                    </div>
+                                    <span className="px-1 max-w-[80px] truncate">{assignedCrew.crew_name}</span>
+                                </>
+                            ) : (
+                                <span className="px-2 py-0.5 text-slate-400">Unassigned</span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex justify-end mt-3">
+                    <button onClick={(e) => { e.stopPropagation(); setInspectingCallId(call.id); }} className="text-[10px] font-black text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-lg transition-all border border-emerald-200/50 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
+                        View Call <ArrowRight size={12} strokeWidth={3} />
+                    </button>
                 </div>
             </div>
         );
