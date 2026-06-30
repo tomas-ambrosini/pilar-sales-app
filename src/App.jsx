@@ -18,7 +18,6 @@ import Sales from './pages/Sales';
 import DispatchHub from './pages/DispatchHub';
 import Tasks from './pages/Tasks';
 import CompanyCalendar from './pages/CompanyCalendar';
-import ServiceHub from './pages/ServiceHub';
 import TechnicianMyDay from './pages/TechnicianMyDay';
 import CustomerTracker from './pages/CustomerTracker';
 import ExecutiveAnalytics from './pages/ExecutiveAnalytics';
@@ -108,7 +107,6 @@ function MainRouter() {
           <Route path="customers/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><Customers /></RoleRoute>} />
           <Route path="tasks/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><Tasks /></RoleRoute>} />
           <Route path="calendar/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><CompanyCalendar /></RoleRoute>} />
-          <Route path="service/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'DISPATCHER']}><ServiceHub /></RoleRoute>} />
           <Route path="my-day" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><TechnicianMyDay /></RoleRoute>} />
           
           {/* MANAGER DOMAINS */}

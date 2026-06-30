@@ -36,7 +36,6 @@ export default function Layout() {
         { path: '/customers', label: 'Customers', icon: Users, isVisible: !isSubcontractor() },
         { path: '/sales', label: 'Sales Hub', icon: ClipboardList, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.DISPATCHER].includes(activeRole) },
         { path: '/dispatch', label: 'Dispatch Board', icon: Truck, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER].includes(activeRole) },
-        { path: '/service', label: 'Service Hub', icon: Wrench, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER, ROLES.TECHNICIAN].includes(activeRole) },
         { path: '/my-day', label: 'My Route', icon: Navigation, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER, ROLES.TECHNICIAN, ROLES.SUBCONTRACTOR].includes(activeRole) }
       ]
     },
