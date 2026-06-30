@@ -166,7 +166,6 @@ export default function DispatchHub() {
            if (oppForm.type === 'SALES') {
                 const { data: oppData, error } = await supabase.from('opportunities').insert({
                     household_id: matchedCustomer.id,
-                    service_address_id: oppForm.selectedLocationId || null,
                     urgency_level: oppForm.urgency,
                     issue_description: oppForm.issueDescription,
                     dispatch_notes: oppForm.dispatchNotes,
