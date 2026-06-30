@@ -82,7 +82,7 @@ export default function Subcontractors() {
 
       if (error) throw error;
       setCrews([...crews, data]);
-      toast.success('Tech added to dispatch board!', { id: 'add-tech' });
+      toast.success('Tech added to dispatch hub!', { id: 'add-tech' });
       setShowTechModal(null);
     } catch (err) {
       toast.error(err.message || 'Error adding tech', { id: 'add-tech' });
@@ -277,7 +277,7 @@ export default function Subcontractors() {
                      <label className="text-xs font-bold text-slate-500 uppercase">Lane Color Marker</label>
                      <div className="flex items-center gap-3 mt-1.5 bg-slate-50 p-2 rounded-xl border border-slate-100">
                         <input type="color" name="color_code" defaultValue="#3b82f6" className="w-10 h-10 border-0 rounded cursor-pointer bg-transparent" />
-                        <span className="text-xs font-semibold text-slate-500">Appears on Dispatch Board</span>
+                        <span className="text-xs font-semibold text-slate-500">Appears on Dispatch Hub</span>
                      </div>
                   </div>
                   

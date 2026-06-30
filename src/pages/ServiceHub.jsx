@@ -175,7 +175,7 @@ export default function ServiceHub({ isEmbedded = false }) {
                         </div>
                         Service Operations
                     </h1>
-                    <p className="text-slate-500 font-medium ml-1">Dispatch board, technician routing, and service call tracking.</p>
+                    <p className="text-slate-500 font-medium ml-1">Dispatch Hub, technician routing, and service call tracking.</p>
                 </div>
                 
                 <div className="flex items-center gap-3">

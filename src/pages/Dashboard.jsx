@@ -166,7 +166,7 @@ export default function Dashboard() {
                <ArrowUpRight size={20} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
             </div>
             <div>
-               <div className="text-lg font-bold mb-1 text-slate-900">Dispatch Board</div>
+               <div className="text-lg font-bold mb-1 text-slate-900">Dispatch Hub</div>
                <div className="text-xs font-medium text-slate-500">Route active jobs & crews</div>
             </div>
          </button>
