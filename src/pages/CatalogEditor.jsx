@@ -583,11 +583,7 @@ export default function CatalogEditor() {
                         value={activeEquip.tier || 'Good'} 
                         onChange={e => {
                            const newTier = e.target.value;
-                           const cost = parseFloat(activeEquip.system_cost || 0);
-                           const reserve = margins?.service_reserve ?? 0.05;
-                           const targetMargin = newTier === 'Best' ? (margins?.best_margin ?? 0.35) : newTier === 'Better' ? (margins?.better_margin ?? 0.35) : (margins?.good_margin ?? 0.35);
-                           const projectedRetail = (cost * (1 + reserve)) / (1 - targetMargin);
-                           setActiveEquip({...activeEquip, tier: newTier, retail_price: projectedRetail.toFixed(2)});
+                           setActiveEquip({...activeEquip, tier: newTier});
                         }}
                      >
                         <option value="Good">Good ({((margins?.good_margin ?? 0.35) * 100).toFixed(0)}% Margin)</option>
@@ -602,22 +598,28 @@ export default function CatalogEditor() {
                         <div className="relative">
                            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-xl">$</span>
                            <input type="number" step="0.01" className="w-full bg-red-50/50 border border-red-100 rounded-lg pl-10 pr-4 py-4 font-mono font-black text-xl text-red-700 focus:ring-2 ring-red-500 outline-none shadow-inner placeholder:text-red-300" value={activeEquip.system_cost || ''} onChange={e => {
-                              const costVal = e.target.value;
-                              const cost = parseFloat(costVal || 0);
-                              const reserve = margins?.service_reserve ?? 0.05;
-                              const currentTier = activeEquip.tier || 'Good';
-                              const targetMargin = currentTier === 'Best' ? (margins?.best_margin ?? 0.35) : currentTier === 'Better' ? (margins?.better_margin ?? 0.35) : (margins?.good_margin ?? 0.35);
-                              const projectedRetail = (cost * (1 + reserve)) / (1 - targetMargin);
-                              setActiveEquip({...activeEquip, system_cost: costVal, retail_price: projectedRetail.toFixed(2)});
-                           }} required placeholder="0.00"/>
+                           const costVal = e.target.value;
+                           setActiveEquip({...activeEquip, system_cost: costVal});
+                        }} required placeholder="0.00"/>
                         </div>
                      </div>
                      <div className="p-5 flex-1 relative bg-emerald-50/20">
-                        <label className="text-[10px] font-black text-emerald-600/80 uppercase tracking-widest block mb-2">Target Retail Configuration ($)</label>
-                        <div className="relative">
-                           <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-emerald-500/50 text-xl z-10">$</span>
-                           <input type="text" readOnly title="Minimum Retail Baseline" className="w-full bg-emerald-500 border border-emerald-400 rounded-lg pl-10 pr-4 py-4 font-mono font-black text-xl text-white focus:ring-2 ring-emerald-500 outline-none shadow-lg placeholder:text-emerald-300 cursor-default" value={activeEquip.retail_price ? Number(activeEquip.retail_price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : ''} />
-                        </div>
+                        {(() => {
+                           const cost = parseFloat(activeEquip.system_cost || 0);
+                           const reserve = margins?.service_reserve ?? 0.05;
+                           const currentTier = activeEquip.tier || 'Good';
+                           const targetMargin = currentTier === 'Best' ? (margins?.best_margin ?? 0.35) : currentTier === 'Better' ? (margins?.better_margin ?? 0.35) : (margins?.good_margin ?? 0.35);
+                           const projectedRetail = (cost * (1 + reserve)) / (1 - targetMargin);
+                           return (
+                              <>
+                                 <label className="text-[10px] font-black text-emerald-600/80 uppercase tracking-widest block mb-2">Target Retail Configuration ($)</label>
+                                 <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-emerald-500/50 text-xl z-10">$</span>
+                                    <input type="text" readOnly title="Minimum Retail Baseline" className="w-full bg-emerald-500 border border-emerald-400 rounded-lg pl-10 pr-4 py-4 font-mono font-black text-xl text-white outline-none shadow-lg placeholder:text-emerald-300 cursor-default" value={projectedRetail ? projectedRetail.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : ''} />
+                                 </div>
+                              </>
+                           );
+                        })()}
                      </div>
                   </div>
                   
