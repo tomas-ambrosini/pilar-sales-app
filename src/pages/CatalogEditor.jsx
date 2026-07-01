@@ -142,8 +142,8 @@ export default function CatalogEditor() {
      if (!activeEquip.system_cost || !margins) return;
      try {
        const cost = parseFloat(activeEquip.system_cost);
-       const margin = margins.good_margin || 0.35; // Default formula to Good Tier Target
-       const reserve = margins.service_reserve;
+       const margin = margins.good_margin ?? 0.35; // Default formula to Good Tier Target
+       const reserve = margins.service_reserve ?? 0;
        // Execute arbitrary formula string securely
        const evaluateMath = new Function('cost', 'margin', 'reserve', `return ${formulaStr}`);
        const finalPrice = evaluateMath(cost, margin, reserve);
@@ -393,9 +393,9 @@ export default function CatalogEditor() {
                            <td className="p-4 text-right">
                               {(() => {
                                  const rawCost = parseFloat(item.system_cost || 0);
-                                 const taxRate = margins?.sales_tax || 0.07;
-                                 const reserve = margins?.service_reserve || 0.05;
-                                 const margin = margins?.good_margin || 0.35;
+                                 const taxRate = margins?.sales_tax ?? 0.07;
+                                 const reserve = margins?.service_reserve ?? 0.05;
+                                 const margin = margins?.good_margin ?? 0.35;
                                  
                                  // Additive logic matching the wizard fix
                                  const equipWithTax = rawCost * (1 + taxRate);
@@ -489,7 +489,7 @@ export default function CatalogEditor() {
                            <td className="p-4 text-right">
                               {(() => {
                                   const rawCost = parseFloat(labor.cost || 0);
-                                  const margin = margins?.good_margin || 0.35;
+                                  const margin = margins?.good_margin ?? 0.35;
                                   const projectedRetail = rawCost / (1 - margin);
 
                                   return (
@@ -575,15 +575,15 @@ export default function CatalogEditor() {
                         onChange={e => {
                            const newTier = e.target.value;
                            const cost = parseFloat(activeEquip.system_cost || 0);
-                           const reserve = margins?.service_reserve || 0.05;
-                           const targetMargin = newTier === 'Best' ? margins?.best_margin : newTier === 'Better' ? margins?.better_margin : margins?.good_margin || 0.35;
+                           const reserve = margins?.service_reserve ?? 0.05;
+                           const targetMargin = newTier === 'Best' ? (margins?.best_margin ?? 0.35) : newTier === 'Better' ? (margins?.better_margin ?? 0.35) : (margins?.good_margin ?? 0.35);
                            const projectedRetail = (cost * (1 + reserve)) / (1 - targetMargin);
                            setActiveEquip({...activeEquip, tier: newTier, retail_price: projectedRetail.toFixed(2)});
                         }}
                      >
-                        <option value="Good">Good ({(margins?.good_margin * 100 || 35).toFixed(0)}% Margin)</option>
-                        <option value="Better">Better ({(margins?.better_margin * 100 || 35).toFixed(0)}% Margin)</option>
-                        <option value="Best">Best ({(margins?.best_margin * 100 || 35).toFixed(0)}% Margin)</option>
+                        <option value="Good">Good ({((margins?.good_margin ?? 0.35) * 100).toFixed(0)}% Margin)</option>
+                        <option value="Better">Better ({((margins?.better_margin ?? 0.35) * 100).toFixed(0)}% Margin)</option>
+                        <option value="Best">Best ({((margins?.best_margin ?? 0.35) * 100).toFixed(0)}% Margin)</option>
                      </select>
                   </div>
 
@@ -595,9 +595,9 @@ export default function CatalogEditor() {
                            <input type="number" step="0.01" className="w-full bg-red-50/50 border border-red-100 rounded-lg pl-10 pr-4 py-4 font-mono font-black text-xl text-red-700 focus:ring-2 ring-red-500 outline-none shadow-inner placeholder:text-red-300" value={activeEquip.system_cost || ''} onChange={e => {
                               const costVal = e.target.value;
                               const cost = parseFloat(costVal || 0);
-                              const reserve = margins?.service_reserve || 0.05;
+                              const reserve = margins?.service_reserve ?? 0.05;
                               const currentTier = activeEquip.tier || 'Good';
-                              const targetMargin = currentTier === 'Best' ? margins?.best_margin : currentTier === 'Better' ? margins?.better_margin : margins?.good_margin || 0.35;
+                              const targetMargin = currentTier === 'Best' ? (margins?.best_margin ?? 0.35) : currentTier === 'Better' ? (margins?.better_margin ?? 0.35) : (margins?.good_margin ?? 0.35);
                               const projectedRetail = (cost * (1 + reserve)) / (1 - targetMargin);
                               setActiveEquip({...activeEquip, system_cost: costVal, retail_price: projectedRetail.toFixed(2)});
                            }} required placeholder="0.00"/>
@@ -616,7 +616,7 @@ export default function CatalogEditor() {
                      <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Mathematical Formula</label>
                      <div className="bg-white border border-slate-200 rounded-lg px-3 py-2 flex items-center shadow-inner">
                          <span className="font-mono text-[10px] text-slate-400 flex-1">
-                            (cost * (1 + {margins?.service_reserve || 0.05})) / (1 - {(activeEquip.tier === 'Best' ? margins?.best_margin : activeEquip.tier === 'Better' ? margins?.better_margin : margins?.good_margin) || 0.35})
+                            (cost * (1 + {margins?.service_reserve ?? 0.05})) / (1 - {(activeEquip.tier === 'Best' ? margins?.best_margin : activeEquip.tier === 'Better' ? margins?.better_margin : margins?.good_margin) ?? 0.35})
                          </span>
                      </div>
                   </div>
@@ -690,7 +690,7 @@ export default function CatalogEditor() {
                       <div className="flex-1 border border-slate-100 bg-emerald-50/50 rounded-xl p-4 w-full h-full flex flex-col justify-center">
                          {(() => {
                            const rawCost = parseFloat(activeLabor.cost || 0);
-                           const margin = margins?.good_margin || 0.35;
+                           const margin = margins?.good_margin ?? 0.35;
                            const projectedRetail = rawCost / (1 - margin);
                            
                            return (
