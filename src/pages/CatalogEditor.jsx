@@ -402,18 +402,15 @@ export default function CatalogEditor() {
                            <td className="p-4 text-right">
                               {(() => {
                                  const rawCost = parseFloat(item.system_cost || 0);
-                                 const taxRate = margins?.sales_tax ?? 0.07;
                                  const reserve = margins?.service_reserve ?? 0.05;
-                                 const margin = margins?.good_margin ?? 0.35;
+                                 const currentTier = item.tier || 'Good';
+                                 const targetMargin = currentTier === 'Best' ? (margins?.best_margin ?? 0.35) : currentTier === 'Better' ? (margins?.better_margin ?? 0.35) : (margins?.good_margin ?? 0.35);
                                  
-                                 // Additive logic matching the wizard fix
-                                 const equipWithTax = rawCost * (1 + taxRate);
-                                 const equipWithReserve = equipWithTax * (1 + reserve);
-                                 const projectedRetail = equipWithReserve * (1 + margin);
+                                 const projectedRetail = (rawCost * (1 + reserve)) / (1 - targetMargin);
 
                                  return (
                                     <span className="font-black text-white bg-emerald-600 shadow-sm px-3.5 py-1.5 rounded-full inline-block text-[13px] tracking-wide border border-emerald-500">
-                                       ${projectedRetail.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                       ${projectedRetail.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                  );
                               })()}
