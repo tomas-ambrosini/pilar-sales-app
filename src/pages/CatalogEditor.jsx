@@ -63,6 +63,14 @@ export default function CatalogEditor() {
   // --- Equipment Handlers ---
   const handleSaveEquip = async (e) => {
     e.preventDefault();
+    
+    // Enforce strict auto-calculation on save
+    const cost = parseFloat(activeEquip.system_cost || 0);
+    const reserve = margins?.service_reserve ?? 0.05;
+    const currentTier = activeEquip.tier || 'Good';
+    const targetMargin = currentTier === 'Best' ? (margins?.best_margin ?? 0.35) : currentTier === 'Better' ? (margins?.better_margin ?? 0.35) : (margins?.good_margin ?? 0.35);
+    const calculatedRetail = (cost * (1 + reserve)) / (1 - targetMargin);
+
     const payload = {
       brand: activeEquip.brand,
       series: activeEquip.series,
@@ -70,8 +78,9 @@ export default function CatalogEditor() {
       seer: parseFloat(activeEquip.seer),
       condenser_model: activeEquip.condenser_model,
       ahu_model: activeEquip.ahu_model,
-      system_cost: parseFloat(activeEquip.system_cost),
-      retail_price: parseFloat(activeEquip.retail_price || 0),
+      system_cost: cost,
+      tier: currentTier, // Persist the selected tier to the DB
+      retail_price: parseFloat(calculatedRetail.toFixed(2)),
       image_url: activeEquip.image_url
     };
 
@@ -607,7 +616,7 @@ export default function CatalogEditor() {
                         <label className="text-[10px] font-black text-emerald-600/80 uppercase tracking-widest block mb-2">Target Retail Configuration ($)</label>
                         <div className="relative">
                            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-emerald-500/50 text-xl z-10">$</span>
-                           <input type="number" step="0.01" title="Minimum Retail Baseline" className="w-full bg-emerald-500 border border-emerald-400 rounded-lg pl-10 pr-4 py-4 font-mono font-black text-xl text-white focus:ring-2 ring-emerald-500 outline-none shadow-lg placeholder:text-emerald-300 transform scale-[1.02] transition-transform focus:scale-[1.03]" value={activeEquip.retail_price ? Number(activeEquip.retail_price) : ''} onChange={e => setActiveEquip({...activeEquip, retail_price: e.target.value})}/>
+                           <input type="text" readOnly title="Minimum Retail Baseline" className="w-full bg-emerald-500 border border-emerald-400 rounded-lg pl-10 pr-4 py-4 font-mono font-black text-xl text-white focus:ring-2 ring-emerald-500 outline-none shadow-lg placeholder:text-emerald-300 cursor-default" value={activeEquip.retail_price ? Number(activeEquip.retail_price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : ''} />
                         </div>
                      </div>
                   </div>
