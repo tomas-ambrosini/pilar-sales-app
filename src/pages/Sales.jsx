@@ -34,18 +34,29 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
   const [inspectingJob, setInspectingJob] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => {
-     return searchParams.get('tab') || (searchParams.get('action') ? 'proposals' : 'pipeline');
+     return searchParams.get('tab') || (searchParams.get('action') === 'view_sale' ? 'pipeline' : searchParams.get('action') ? 'proposals' : 'pipeline');
   });
 
   useEffect(() => {
      const tab = searchParams.get('tab');
      const action = searchParams.get('action');
-     if (tab === 'proposals' || action) {
+     if (tab === 'proposals' || (action && action !== 'view_sale')) {
          setActiveTab('proposals');
-     } else if (tab === 'pipeline') {
+     } else if (tab === 'pipeline' || action === 'view_sale') {
          setActiveTab('pipeline');
      }
-  }, [searchParams]);
+     const dealId = searchParams.get('id');
+     
+     if (action === 'view_sale' && dealId && Object.keys(pipeline).length > 0) {
+        for (const col of Object.values(pipeline)) {
+           const job = col.find(j => j.id === dealId);
+           if (job) {
+              setInspectingJob(job);
+              break;
+           }
+        }
+     }
+  }, [searchParams, pipeline]);
 
   useEffect(() => {
     if (activeTab === 'pipeline') {

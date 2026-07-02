@@ -15,7 +15,7 @@ const STATUS_COLUMNS = [
     { id: 'Completed', title: 'Completed', color: 'border-cyan-300', bg: 'bg-cyan-100', text: 'text-cyan-700', icon: 'text-cyan-500' }
 ];
 
-export default function ServiceHub({ isEmbedded = false }) {
+export default function ServiceHub({ isEmbedded = false, initialCallId = null }) {
     const { user } = useAuth();
     const { activeRole, ROLES } = useRole();
     const [viewMode, setViewMode] = useState('kanban'); // 'kanban' or 'table'
@@ -23,7 +23,13 @@ export default function ServiceHub({ isEmbedded = false }) {
     const [crews, setCrews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [inspectingCallId, setInspectingCallId] = useState(null);
+    const [inspectingCallId, setInspectingCallId] = useState(initialCallId);
+
+    useEffect(() => {
+        if (initialCallId) {
+            setInspectingCallId(initialCallId);
+        }
+    }, [initialCallId]);
 
     useEffect(() => {
         if (user && activeRole) {

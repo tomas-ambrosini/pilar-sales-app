@@ -30,6 +30,8 @@ export default function DispatchHub() {
        if (action === 'new_call') {
            setActiveTab('intake');
            setOppForm(prev => ({ ...prev, type: 'SERVICE' }));
+       } else if (action === 'view_service') {
+           setActiveTab('service');
        }
    }, [searchParams]);
 
@@ -610,7 +612,7 @@ export default function DispatchHub() {
 
                {activeTab === 'service' && (
                    <div className="flex-1 overflow-hidden relative h-full">
-                       <ServiceHub isEmbedded={true} />
+                       <ServiceHub isEmbedded={true} initialCallId={searchParams.get('action') === 'view_service' ? searchParams.get('id') : null} />
                    </div>
                )}
 
