@@ -9,22 +9,29 @@ import { useRole, ROLES } from '../context/RoleContext';
 import { supabase } from '../supabaseClient';
 
 const STATIC_COMMANDS = [
-  { id: 'dash', name: 'Go to Home', icon: LayoutDashboard, route: '/', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
-  { id: 'calendar', name: 'Company Calendar', icon: CalendarClock, route: '/calendar', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
-  { id: 'cust', name: 'View Customers', icon: Users, route: '/customers', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
-  { id: 'addcust', name: 'Add New Customer', icon: Users, route: '/customers?action=new', section: 'Actions', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
+  { id: 'dash', name: 'Go to Home', icon: LayoutDashboard, route: '/', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.DISPATCHER] },
+  { id: 'my_day', name: 'My Day (Technician View)', icon: ClipboardList, route: '/my-day', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.DISPATCHER] },
+  { id: 'calendar', name: 'Company Calendar', icon: CalendarClock, route: '/calendar', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.DISPATCHER] },
+  { id: 'cust', name: 'View Customers', icon: Users, route: '/customers', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.DISPATCHER] },
+  { id: 'addcust', name: 'Add New Customer', icon: Users, route: '/customers?action=new', section: 'Actions', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.DISPATCHER] },
   { id: 'prop_list', name: 'View Proposals', icon: FileCheck, route: '/proposals', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
   { id: 'prop', name: 'Create New Proposal', icon: FileCheck, route: '/proposals?action=new', section: 'Actions', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
-  { id: 'tasks', name: 'Tasks', icon: CheckSquare, route: '/tasks', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
+  { id: 'tasks', name: 'Tasks', icon: CheckSquare, route: '/tasks', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.DISPATCHER] },
+  
   { id: 'cat', name: 'Equipment Catalog', icon: BookOpen, route: '/catalog', section: 'Navigation', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+  { id: 'sales', name: 'Sales Pipeline', icon: ClipboardList, route: '/sales', section: 'Operations', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES] },
+  { id: 'dispatch', name: 'Dispatch Hub', icon: Truck, route: '/dispatch', section: 'Operations', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER] },
+  { id: 'service', name: 'Service Board', icon: Wrench, route: '/dispatch?action=view_service', section: 'Operations', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER] },
+
+  { id: 'analytics', name: 'Executive Analytics', icon: LayoutDashboard, route: '/analytics', section: 'Reporting', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+  
   { id: 'finance_promos', name: 'Promo Campaigns', icon: DollarSign, route: '/finance?tab=promos', section: 'Finance', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
   { id: 'finance_margins', name: 'Global Margins & Taxes', icon: DollarSign, route: '/finance?tab=margins', section: 'Finance', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
   { id: 'finance_invoices', name: 'Deposits & Invoices', icon: DollarSign, route: '/finance?tab=invoices', section: 'Finance', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
+  
+  { id: 'subcontractors', name: 'Subcontractors', icon: Users, route: '/subcontractors', section: 'System', allowedRoles: [ROLES.ADMIN] },
   { id: 'template_settings', name: 'Template Settings', icon: Settings, route: '/template-settings', section: 'System', allowedRoles: [ROLES.ADMIN] },
   { id: 'settings', name: 'Account Management', icon: Settings, route: '/account-management', section: 'System', allowedRoles: [ROLES.ADMIN] },
-  { id: 'pipe', name: 'Pipeline Ops', icon: ClipboardList, route: '/pipeline', section: 'Operations', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
-  { id: 'dispatch', name: 'Dispatch Hub', icon: Truck, route: '/dispatch', section: 'Operations', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
-  { id: 'service', name: 'Service Board', icon: Wrench, route: '/service', section: 'Operations', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
 ];
 
 export default function CommandMenu({ isOpen, setIsOpen }) {
@@ -238,7 +245,7 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
                            <Command.Item
                               key={`svc_${svc.id}`}
                               value={`svc_${svc.id}`}
-                              onSelect={() => handleSelect({ route: `/service` })}
+                              onSelect={() => handleSelect({ route: `/dispatch?action=view_service&id=${svc.id}` })}
                               className="flex items-center gap-3 px-3 py-3 text-sm rounded-lg cursor-pointer data-[selected=true]:bg-blue-50 data-[selected=true]:text-blue-900 text-slate-700 hover:bg-slate-50 transition-colors my-0.5 font-semibold group"
                            >
                               <div className="p-1.5 rounded-md bg-slate-100/80 text-slate-500 group-data-[selected=true]:bg-blue-100 group-data-[selected=true]:text-blue-600 transition-colors">
@@ -262,7 +269,7 @@ export default function CommandMenu({ isOpen, setIsOpen }) {
                            <Command.Item
                               key={`opp_${opp.id}`}
                               value={`opp_${opp.id}`}
-                              onSelect={() => handleSelect({ route: opp.households?.id ? `/customers/${opp.households.id}` : `/pipeline` })}
+                              onSelect={() => handleSelect({ route: `/sales?action=view_sale&id=${opp.id}` })}
                               className="flex items-center gap-3 px-3 py-3 text-sm rounded-lg cursor-pointer data-[selected=true]:bg-amber-50 data-[selected=true]:text-amber-900 text-slate-700 hover:bg-slate-50 transition-colors my-0.5 font-semibold group"
                            >
                               <div className="p-1.5 rounded-md bg-slate-100/80 text-slate-500 group-data-[selected=true]:bg-amber-100 group-data-[selected=true]:text-amber-600 transition-colors">
