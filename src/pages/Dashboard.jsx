@@ -295,7 +295,7 @@ export default function Dashboard() {
                        return (
                           <tr 
                              key={item.id} 
-                             onClick={() => isService ? navigate('/service') : navigate('/proposals')}
+                             onClick={() => isService ? navigate('/dispatch') : navigate('/proposals')}
                              className="hover:bg-slate-50 transition-colors cursor-pointer group"
                           >
                              <td className="p-4 px-6">
