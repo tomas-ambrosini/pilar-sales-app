@@ -202,10 +202,11 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
         }
 
         // Apply Filters
-        const isManager = [ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER].includes(activeRole);
-        const currentFilter = isManager ? pipelineFilter : 'My Deals';
+        const filters = activeFiltersRef.current;
+        const isManager = [filters.ROLES.ADMIN, filters.ROLES.MANAGER, filters.ROLES.DISPATCHER].includes(filters.activeRole);
+        const currentFilter = isManager ? filters.pipelineFilter : 'My Deals';
 
-        if (currentFilter === 'My Deals' && opp.assigned_salesperson_id !== user?.id) return;
+        if (currentFilter === 'My Deals' && opp.assigned_salesperson_id !== filters.user?.id) return;
 
         // Normalize Technician Field Statuses back to Sales Pipeline Columns
         let normalizedStatus = opp.status;
@@ -306,7 +307,7 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                         <button 
                             onClick={() => setActiveTab('proposals')} 
                             className={`flex-1 sm:flex-none px-5 py-2 sm:py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'proposals' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-                            Proposals
+                            Proposals {pipelineFilter === 'My Deals' && <span className="text-red-500 text-[10px]">DEBUG: userId={user?.id}</span>}
                         </button>
                     </div>
                     
