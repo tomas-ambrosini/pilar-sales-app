@@ -38,30 +38,22 @@ import { RoleProvider, useRole, ROLES } from './context/RoleContext';
 import { NotificationsProvider } from './context/NotificationsContext';
 import { supabase } from './supabaseClient';
 
-const TomasOnlyRoute = ({ children }) => {
-  const { user } = useAuth();
-  if (!user || (!user.email?.toLowerCase().includes('tomas') && !user.email?.toLowerCase().includes('admin'))) {
-    return <Navigate to="/" replace />;
-  }
-  return children;
-};
+import Unauthorized from './pages/Unauthorized';
 
-const RoleRoute = ({ children, allowedRoles }) => {
+const RoleRoute = ({ children, allowedRoles, allowedDepartments }) => {
   const { user } = useAuth();
-  const { activeRole } = useRole();
+  const { activeRole, activeDepartment, ROLES } = useRole();
   
   if (!user) return <Navigate to="/" replace />;
   
-  const roleCode = activeRole;
+  if (activeRole === ROLES.SUPER_ADMIN) return children;
   
-  const isDaniel = user.full_name?.toLowerCase().includes('daniel') || user.email?.toLowerCase().includes('daniel');
-  if (isDaniel && allowedRoles.includes('MANAGER')) {
-      return children;
+  if (allowedRoles && !allowedRoles.includes(activeRole)) {
+    return <Navigate to="/unauthorized" replace />;
   }
-  
-  if (!allowedRoles.includes(roleCode)) {
-    // Hard rejection fallback matrices 
-    return <Navigate to="/" replace />;
+
+  if (allowedDepartments && !allowedDepartments.includes(activeDepartment)) {
+    return <Navigate to="/unauthorized" replace />;
   }
   
   return children;
@@ -99,38 +91,36 @@ function MainRouter() {
         <Route path="about" element={<AboutMock />} />
         <Route path="contact" element={<ContactMock />} />
       </Route>
-      <Route path="/camp-points" element={
-        <TomasOnlyRoute>
-          <CampPointsTracker />
-        </TomasOnlyRoute>
-      } />
+
       
       {!user ? (
         <Route path="*" element={<Login />} />
       ) : (
         <Route path="/" element={<Layout />}>
           {/* SALES DOMAINS */}
-          <Route path="customers/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><Customers /></RoleRoute>} />
-          <Route path="tasks/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><Tasks /></RoleRoute>} />
-          <Route path="calendar/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><CompanyCalendar /></RoleRoute>} />
-          <Route path="my-day" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><TechnicianMyDay /></RoleRoute>} />
+          <Route path="customers/*" element={<RoleRoute><Customers /></RoleRoute>} />
+          <Route path="tasks/*" element={<RoleRoute><Tasks /></RoleRoute>} />
+          <Route path="calendar/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'COORDINATOR']}><CompanyCalendar /></RoleRoute>} />
+          <Route path="my-day" element={<RoleRoute allowedRoles={['FIELD_WORKER', 'SUPER_ADMIN']}><TechnicianMyDay /></RoleRoute>} />
           
           {/* MANAGER DOMAINS */}
-          <Route path="catalog/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><Catalog /></RoleRoute>} />
-          <Route path="sales/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><Sales /></RoleRoute>} />
-          <Route path="dispatch" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'DISPATCHER']}><DispatchHub /></RoleRoute>} />
+          <Route path="catalog/*" element={<RoleRoute><Catalog /></RoleRoute>} />
+          <Route path="sales/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'COORDINATOR']} allowedDepartments={['SALES', 'EXECUTIVE', 'INSIDE_SALES']}><Sales /></RoleRoute>} />
+          <Route path="dispatch" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'COORDINATOR']} allowedDepartments={['DISPATCH', 'SERVICE', 'INSTALL']}><DispatchHub /></RoleRoute>} />
 
           {/* SUPER ADMIN EXCLUSIVE DOMAINS */}
-          <Route path="analytics" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><ExecutiveAnalytics /></RoleRoute>} />
-          <Route path="account-management/*" element={<RoleRoute allowedRoles={['ADMIN']}><AccountManagement /></RoleRoute>} />
-          <Route path="subcontractors" element={<RoleRoute allowedRoles={['ADMIN']}><Subcontractors /></RoleRoute>} />
-          <Route path="template-settings/*" element={<RoleRoute allowedRoles={['ADMIN']}><TemplateDashboard /></RoleRoute>} />
-          <Route path="finance/*" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']}><FinanceDashboard /></RoleRoute>} />
+          <Route path="camp-points" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR']}><CampPointsTracker /></RoleRoute>} />
+          <Route path="analytics" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR']} allowedDepartments={['EXECUTIVE', 'FINANCE']}><ExecutiveAnalytics /></RoleRoute>} />
+          <Route path="account-management/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><AccountManagement /></RoleRoute>} />
+          <Route path="subcontractors" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR', 'MANAGER']} allowedDepartments={['ADMINISTRATION', 'INSTALL']}><Subcontractors /></RoleRoute>} />
+          <Route path="template-settings/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR']} allowedDepartments={['ADMINISTRATION', 'MARKETING']}><TemplateDashboard /></RoleRoute>} />
+          <Route path="finance/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR', 'MANAGER']} allowedDepartments={['FINANCE', 'EXECUTIVE']}><FinanceDashboard /></RoleRoute>} />
           
           {/* WILDCARDS / DEFAULTS */}
-          <Route path="maintenance-wizard" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><MaintenanceWizard /></RoleRoute>} />
+          <Route path="maintenance-wizard" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'COORDINATOR']} allowedDepartments={['DISPATCH', 'SERVICE', 'SALES']}><MaintenanceWizard /></RoleRoute>} />
           <Route path="proposals/*" element={<ProposalsRedirect />} />
-          <Route index element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES', 'DISPATCHER']}><Dashboard /></RoleRoute>} />
+          <Route path="unauthorized" element={<Unauthorized />} />
+          <Route index element={<RoleRoute><Dashboard /></RoleRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       )}
@@ -141,37 +131,49 @@ function MainRouter() {
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
+const AuthenticatedProviders = ({ children }) => {
+  const { user } = useAuth();
+  
+  if (!user) return children;
+
+  return (
+    <CustomerProvider>
+      <CatalogProvider>
+        <ProposalProvider>
+          <NotificationsProvider>
+            {children}
+          </NotificationsProvider>
+        </ProposalProvider>
+      </CatalogProvider>
+    </CustomerProvider>
+  );
+};
+
 function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-      <CustomerProvider>
-        <CatalogProvider>
-          <ProposalProvider>
-              <RoleProvider>
-                <NotificationsProvider>
-                  <BrowserRouter>
-                    <MainRouter />
-                    <Toaster 
-                      position="top-right" 
-                      toastOptions={{
-                        duration: 5000,
-                        style: {
-                          background: '#334155',
-                          color: '#fff',
-                          borderRadius: '8px',
-                          fontSize: '0.9rem',
-                          fontWeight: '500',
-                          boxShadow: '0 10px 25px rgba(15, 23, 42, 0.2)'
-                        }
-                      }} 
-                    />
-                  </BrowserRouter>
-                </NotificationsProvider>
-              </RoleProvider>
-          </ProposalProvider>
-        </CatalogProvider>
-      </CustomerProvider>
+        <RoleProvider>
+          <BrowserRouter>
+            <AuthenticatedProviders>
+              <MainRouter />
+            </AuthenticatedProviders>
+            <Toaster 
+              position="top-right" 
+              toastOptions={{
+                duration: 5000,
+                style: {
+                  background: '#334155',
+                  color: '#fff',
+                  borderRadius: '8px',
+                  fontSize: '0.9rem',
+                  fontWeight: '500',
+                  boxShadow: '0 10px 25px rgba(15, 23, 42, 0.2)'
+                }
+              }} 
+            />
+          </BrowserRouter>
+        </RoleProvider>
       </AuthProvider>
     </ErrorBoundary>
   );

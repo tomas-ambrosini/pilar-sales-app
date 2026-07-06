@@ -21,8 +21,10 @@ export default function AccountManagement() {
   const [successPayload, setSuccessPayload] = useState(null);
   const [userBadgesMap, setUserBadgesMap] = useState({}); // { userId: ['star_employee', ...] }
   const [editBadges, setEditBadges] = useState([]); // badge keys being edited
-  const [createRole, setCreateRole] = useState('SALES');
-  const [editRole, setEditRole] = useState('SALES');
+  const [createRole, setCreateRole] = useState('FIELD_WORKER');
+  const [createDepartment, setCreateDepartment] = useState('SERVICE');
+  const [editRole, setEditRole] = useState('FIELD_WORKER');
+  const [editDepartment, setEditDepartment] = useState('SERVICE');
 
   useEffect(() => {
     fetchUsers();
@@ -300,7 +302,7 @@ export default function AccountManagement() {
                                     <button onClick={(e) => handleClearSetup(e, u)} className="px-3 py-2 bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-200 font-bold text-xs rounded-lg shadow-sm transition-all" title="Manually mark as Secured">Clear Setup</button>
                                  )}
                                  <button onClick={(e) => { e.stopPropagation(); setShowResetModal(u); }} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="Force Password Reset"><Key size={16}/></button>
-                                 <button onClick={(e) => { e.stopPropagation(); setShowEditModal(u); setEditBadges(userBadgesMap[u.id] || []); setEditRole(u.role || 'SALES'); }} className="px-4 py-2 bg-white border border-slate-200 hover:border-primary-300 hover:text-primary-700 text-slate-600 font-bold text-xs rounded-lg shadow-sm transition-all hover:shadow">Manage</button>
+                                 <button onClick={(e) => { e.stopPropagation(); setShowEditModal(u); setEditBadges(userBadgesMap[u.id] || []); setEditRole(u.role || 'FIELD_WORKER'); setEditDepartment(u.department || 'SERVICE'); }} className="px-4 py-2 bg-white border border-slate-200 hover:border-primary-300 hover:text-primary-700 text-slate-600 font-bold text-xs rounded-lg shadow-sm transition-all hover:shadow">Manage</button>
                               </div>
                            </td>
                         </tr>
@@ -319,47 +321,53 @@ export default function AccountManagement() {
             <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
                <h3 className="text-xl font-black text-slate-800 mb-6 border-b pb-2">Provision Employee</h3>
                <form onSubmit={handleCreateUser} className="space-y-4">
-                  <div>
-                     <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
-                     <input type="text" name="full_name" required className="w-full border rounded p-2 text-sm font-semibold" />
+                  <div className="flex gap-4">
+                     <div className="flex-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
+                        <input type="text" name="full_name" required className="w-full border rounded p-2 text-sm font-semibold" />
+                     </div>
+                     <div className="flex-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Login Email (Required by Auth)</label>
+                        <input type="email" name="email" required className="w-full border rounded p-2 text-sm font-semibold" />
+                     </div>
                   </div>
-                  <div>
-                     <label className="text-xs font-bold text-slate-500 uppercase">Login Email (Required by Auth)</label>
-                     <input type="email" name="email" required className="w-full border rounded p-2 text-sm font-semibold" />
-                  </div>
-                  <div>
-                     <label className="text-xs font-bold text-slate-500 uppercase">Username (Optional)</label>
-                     <input type="text" name="username" className="w-full border rounded p-2 text-sm font-semibold" />
-                  </div>
-                  <div>
-                     <label className="text-xs font-bold text-slate-500 uppercase">Phone Number</label>
-                     <input type="tel" name="phone" onChange={(e) => e.target.value = formatPhoneNumber(e.target.value)} className="w-full border rounded p-2 text-sm font-semibold" placeholder="(555) 555-5555" />
+                  <div className="flex gap-4">
+                     <div className="flex-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Username (Optional)</label>
+                        <input type="text" name="username" className="w-full border rounded p-2 text-sm font-semibold" />
+                     </div>
+                     <div className="flex-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Phone Number</label>
+                        <input type="tel" name="phone" onChange={(e) => e.target.value = formatPhoneNumber(e.target.value)} className="w-full border rounded p-2 text-sm font-semibold" placeholder="(555) 555-5555" />
+                     </div>
                   </div>
                   <div className="flex gap-4">
                      <div className="flex-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Role</label>
                         <select name="role" value={createRole} onChange={(e) => setCreateRole(e.target.value)} className="w-full border rounded p-2 text-sm font-bold">
-                           <option value="ADMIN">ADMIN</option>
-                           <option value="MANAGER">MANAGER</option>
-                           <option value="SALES">SALES</option>
-                           <option value="DISPATCHER">DISPATCHER</option>
-                           <option value="TECHNICIAN">TECHNICIAN</option>
-                           <option value="SUBCONTRACTOR">SUBCONTRACTOR</option>
+                           <option value="SUPER_ADMIN">SUPER_ADMIN (Root Access)</option>
+                           <option value="DIRECTOR">DIRECTOR (Dept Head)</option>
+                           <option value="MANAGER">MANAGER (Team Lead)</option>
+                           <option value="COORDINATOR">COORDINATOR (Desk Worker)</option>
+                           <option value="FIELD_WORKER">FIELD_WORKER (Tech/Install)</option>
                         </select>
                      </div>
                      <div className="flex-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Department</label>
-                        <select name="department" defaultValue="SALES" className="w-full border rounded p-2 text-sm font-bold">
+                        <select name="department" value={createDepartment} onChange={(e) => setCreateDepartment(e.target.value)} className="w-full border rounded p-2 text-sm font-bold">
+                           <option value="EXECUTIVE">EXECUTIVE</option>
                            <option value="ADMINISTRATION">ADMINISTRATION</option>
                            <option value="FINANCE">FINANCE</option>
                            <option value="SALES">SALES</option>
+                           <option value="INSIDE_SALES">INSIDE_SALES</option>
+                           <option value="DISPATCH">DISPATCH</option>
                            <option value="SERVICE">SERVICE</option>
                            <option value="INSTALL">INSTALL</option>
                            <option value="SUBCONTRACTOR">SUBCONTRACTOR</option>
                         </select>
                      </div>
                   </div>
-                  {createRole === 'SUBCONTRACTOR' && (
+                  {createDepartment === 'SUBCONTRACTOR' && (
                      <div className="animate-in fade-in slide-in-from-top-2 duration-200">
                         <label className="text-xs font-bold text-slate-500 uppercase">Company Name</label>
                         <input type="text" name="subcontractor_company" required className="w-full border rounded p-2 text-sm font-semibold" placeholder="e.g. AA Mechanical Group" />
@@ -367,8 +375,8 @@ export default function AccountManagement() {
                   )}
                   <div>
                      <label className="text-xs font-bold text-amber-600 flex items-center gap-2"><Lock size={14}/> Temporary Password</label>
-                     <input type="text" name="password" required minLength="8" defaultValue="PilarTemp123!" className="w-full border rounded p-2 font-mono text-sm" />
-                     <p className="text-[10px] text-slate-400 mt-1">User will be forced to change this immediately upon their first login.</p>
+                     <input type="text" name="password" required defaultValue="PilarTemp123!" className="w-full border rounded p-2 text-sm font-bold bg-amber-50" />
+                     <p className="text-[10px] text-slate-400 mt-1">User will be forced to change this upon their first login.</p>
                   </div>
                   
                   <div className="flex justify-end gap-3 pt-4 border-t">
@@ -410,47 +418,56 @@ export default function AccountManagement() {
                      console.error('Badge sync error:', err);
                   }
                }} className="space-y-4">
-                  <div>
-                     <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
-                     <input type="text" name="full_name" defaultValue={showEditModal.full_name} required className="w-full border rounded p-2 text-sm font-semibold" />
+                  <div className="flex gap-4">
+                     <div className="flex-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
+                        <input type="text" name="full_name" defaultValue={showEditModal.full_name} required className="w-full border rounded p-2 text-sm font-semibold" />
+                     </div>
+                     <div className="flex-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Email</label>
+                        <input type="text" readOnly value={showEditModal.email || 'No email bound'} className="w-full border rounded p-2 text-sm font-semibold bg-slate-50 text-slate-500 cursor-not-allowed" />
+                     </div>
                   </div>
-                  <div>
-                     <label className="text-xs font-bold text-slate-500 uppercase">Email</label>
-                     <input type="text" readOnly value={showEditModal.email || 'No email bound'} className="w-full border rounded p-2 text-sm font-semibold bg-slate-50 text-slate-500 cursor-not-allowed" />
-                  </div>
-                  <div>
-                     <label className="text-xs font-bold text-slate-500 uppercase">Username (Optional)</label>
-                     <input type="text" name="username" defaultValue={showEditModal.username || ''} className="w-full border rounded p-2 text-sm font-semibold" />
-                  </div>
-                  <div>
-                     <label className="text-xs font-bold text-slate-500 uppercase">Phone Number</label>
-                     <input type="tel" name="phone" defaultValue={showEditModal.phone || ''} onChange={(e) => e.target.value = formatPhoneNumber(e.target.value)} className="w-full border rounded p-2 text-sm font-semibold" placeholder="(555) 555-5555" />
+                  <div className="flex gap-4">
+                     <div className="flex-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Username (Optional)</label>
+                        <input type="text" name="username" defaultValue={showEditModal.username || ''} className="w-full border rounded p-2 text-sm font-semibold" />
+                     </div>
+                     <div className="flex-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Phone Number</label>
+                        <input type="tel" name="phone" defaultValue={showEditModal.phone || ''} onChange={(e) => e.target.value = formatPhoneNumber(e.target.value)} className="w-full border rounded p-2 text-sm font-semibold" placeholder="(555) 555-5555" />
+                     </div>
                   </div>
                   <div className="flex gap-4">
                      <div className="flex-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Account Role</label>
                         <select name="role" value={editRole} onChange={(e) => setEditRole(e.target.value)} className="w-full border rounded p-2 text-sm font-bold">
-                           <option value="ADMIN">ADMIN</option>
-                           <option value="MANAGER">MANAGER</option>
-                           <option value="SALES">SALES</option>
-                           <option value="DISPATCHER">DISPATCHER</option>
-                           <option value="TECHNICIAN">TECHNICIAN</option>
-                           <option value="SUBCONTRACTOR">SUBCONTRACTOR</option>
+                           <option value="SUPER_ADMIN">SUPER_ADMIN (Root Access)</option>
+                           <option value="DIRECTOR">DIRECTOR (Dept Head)</option>
+                           <option value="MANAGER">MANAGER (Team Lead)</option>
+                           <option value="COORDINATOR">COORDINATOR (Desk Worker)</option>
+                           <option value="FIELD_WORKER">FIELD_WORKER (Tech/Install)</option>
+                           {!['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'COORDINATOR', 'FIELD_WORKER'].includes(editRole) && (
+                               <option value={editRole}>{editRole}</option>
+                           )}
                         </select>
                      </div>
                      <div className="flex-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Department</label>
-                        <select name="department" defaultValue={showEditModal.department || 'SALES'} className="w-full border rounded p-2 text-sm font-bold">
+                        <select name="department" value={editDepartment} onChange={(e) => setEditDepartment(e.target.value)} className="w-full border rounded p-2 text-sm font-bold">
+                           <option value="EXECUTIVE">EXECUTIVE</option>
                            <option value="ADMINISTRATION">ADMINISTRATION</option>
                            <option value="FINANCE">FINANCE</option>
                            <option value="SALES">SALES</option>
+                           <option value="INSIDE_SALES">INSIDE_SALES</option>
+                           <option value="DISPATCH">DISPATCH</option>
                            <option value="SERVICE">SERVICE</option>
                            <option value="INSTALL">INSTALL</option>
                            <option value="SUBCONTRACTOR">SUBCONTRACTOR</option>
                         </select>
                      </div>
                   </div>
-                  {editRole === 'SUBCONTRACTOR' && (
+                  {editDepartment === 'SUBCONTRACTOR' && (
                      <div className="animate-in fade-in slide-in-from-top-2 duration-200">
                         <label className="text-xs font-bold text-slate-500 uppercase">Company Name</label>
                         <input type="text" name="subcontractor_company" defaultValue={showEditModal.subcontractor_company || ''} required className="w-full border rounded p-2 text-sm font-semibold" placeholder="e.g. AA Mechanical Group" />

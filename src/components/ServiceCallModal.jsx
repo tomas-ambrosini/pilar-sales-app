@@ -183,7 +183,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
     }
 
     const address = targetAddress?.street_address || 'No address provided';
-    const city = targetAddress?.city || 'No city provided';
+    const city = targetAddress?.city;
     const displayId = `SVC-${callData.id.slice(0, 8).toUpperCase()}`;
 
     // Extracted above
@@ -291,7 +291,12 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                         <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-slate-100">
                             <div className="flex items-start gap-3 text-sm text-slate-600 font-medium">
                                 <MapPin size={16} className="text-slate-400 mt-0.5 shrink-0" /> 
-                                <span>{address}<br/>{city}</span>
+                                <span>
+                                    {address}
+                                    {city && !address.toLowerCase().includes(city.toLowerCase()) && (
+                                        <><br/>{city}</>
+                                    )}
+                                </span>
                             </div>
                             <div className="flex items-center gap-3 text-sm text-slate-600 font-medium">
                                 <Phone size={16} className="text-slate-400 shrink-0" /> 

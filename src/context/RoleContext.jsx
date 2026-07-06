@@ -1,21 +1,30 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 
 const RoleContext = createContext();
 
 export const ROLES = {
-  ADMIN: 'ADMIN',
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  DIRECTOR: 'DIRECTOR',
   MANAGER: 'MANAGER',
-  SALES: 'SALES',
-  DISPATCHER: 'DISPATCHER',
-  TECHNICIAN: 'TECHNICIAN',
-  SUBCONTRACTOR: 'SUBCONTRACTOR'
+  COORDINATOR: 'COORDINATOR',
+  FIELD_WORKER: 'FIELD_WORKER',
+  
+  // Legacy mappings for safe transition
+  ADMIN: 'SUPER_ADMIN',
+  SALES: 'COORDINATOR',
+  DISPATCHER: 'COORDINATOR',
+  TECHNICIAN: 'FIELD_WORKER',
+  SUBCONTRACTOR: 'FIELD_WORKER'
 };
 
 export const DEPARTMENTS = {
+  EXECUTIVE: 'EXECUTIVE',
   ADMINISTRATION: 'ADMINISTRATION',
   FINANCE: 'FINANCE',
   SALES: 'SALES',
+  INSIDE_SALES: 'INSIDE_SALES',
+  DISPATCH: 'DISPATCH',
   SERVICE: 'SERVICE',
   INSTALL: 'INSTALL',
   SUBCONTRACTOR: 'SUBCONTRACTOR'
@@ -24,22 +33,42 @@ export const DEPARTMENTS = {
 export const RoleProvider = ({ children }) => {
   const { user } = useAuth();
   
-  // Map user role (fallback to SALES if none provided for legacy users)
-  let mappedRole = user?.role || ROLES.SALES;
-  if (mappedRole === 'SUPER_ADMIN') mappedRole = ROLES.ADMIN;
+  let mappedRole = user?.role || ROLES.FIELD_WORKER;
   
+  // Safe mapping for legacy roles in DB
+  if (mappedRole === 'ADMIN') mappedRole = ROLES.SUPER_ADMIN;
+  if (mappedRole === 'SALES' || mappedRole === 'DISPATCHER') mappedRole = ROLES.MANAGER; // Elevated for early startup phase
+  if (mappedRole === 'TECHNICIAN' || mappedRole === 'SUBCONTRACTOR') mappedRole = ROLES.FIELD_WORKER;
+
   const activeRole = mappedRole;
-  const activeDepartment = user?.department || DEPARTMENTS.SALES;
+  const activeDepartment = user?.department || DEPARTMENTS.SERVICE;
 
   // Access Control Helpers
+  const canEditSystemSettings = () => activeRole === ROLES.SUPER_ADMIN;
+  
   const canViewFinancials = () => {
-    return !(activeRole === ROLES.TECHNICIAN || activeRole === ROLES.SUBCONTRACTOR);
+    return activeRole === ROLES.SUPER_ADMIN || 
+           activeDepartment === DEPARTMENTS.FINANCE || 
+           activeDepartment === DEPARTMENTS.EXECUTIVE ||
+           activeRole === ROLES.DIRECTOR;
   };
 
-  const isSubcontractor = () => activeRole === ROLES.SUBCONTRACTOR;
-  const isTechnician = () => activeRole === ROLES.TECHNICIAN;
+  const isFieldWorker = () => activeRole === ROLES.FIELD_WORKER;
+  const isManagerOrAbove = () => [ROLES.SUPER_ADMIN, ROLES.DIRECTOR, ROLES.MANAGER].includes(activeRole);
+  const isDirectorOrAbove = () => [ROLES.SUPER_ADMIN, ROLES.DIRECTOR].includes(activeRole);
   
-  const canEditSystemSettings = () => activeRole === ROLES.ADMIN;
+  const canEditPricing = () => {
+      return activeRole === ROLES.SUPER_ADMIN || 
+             (activeRole === ROLES.DIRECTOR && [DEPARTMENTS.FINANCE, DEPARTMENTS.SALES].includes(activeDepartment));
+  };
+  
+  const canApproveProposals = () => {
+      return activeRole === ROLES.SUPER_ADMIN || isManagerOrAbove();
+  };
+  
+  // Legacy helpers for gradual refactor
+  const isSubcontractor = () => activeDepartment === DEPARTMENTS.SUBCONTRACTOR || user?.role === 'SUBCONTRACTOR';
+  const isTechnician = () => activeDepartment === DEPARTMENTS.SERVICE && isFieldWorker();
 
   const value = useMemo(() => ({
     activeRole,
@@ -47,9 +76,14 @@ export const RoleProvider = ({ children }) => {
     ROLES,
     DEPARTMENTS,
     canViewFinancials,
+    isFieldWorker,
+    isManagerOrAbove,
+    isDirectorOrAbove,
+    canEditSystemSettings,
+    canEditPricing,
+    canApproveProposals,
     isSubcontractor,
-    isTechnician,
-    canEditSystemSettings
+    isTechnician
   }), [activeRole, activeDepartment]);
 
   return (
@@ -59,6 +93,4 @@ export const RoleProvider = ({ children }) => {
   );
 };
 
-export const useRole = () => {
-  return useContext(RoleContext);
-};
+export const useRole = () => useContext(RoleContext);

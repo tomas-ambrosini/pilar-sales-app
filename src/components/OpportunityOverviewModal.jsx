@@ -106,7 +106,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
     const customerName = (job.households?.household_name || 'Unknown Customer').replace(/ Account$/i, '').trim();
     const addressObj = Array.isArray(job.households?.addresses) ? job.households.addresses[0] : job.households?.addresses;
     const address = addressObj?.street_address || 'No address provided';
-    const city = addressObj?.city || 'No city provided';
+    const city = addressObj?.city;
     
     // Calculate display ID
     const associatedProposal = proposals?.find(p => p.proposal_data?.associated_opportunity_id === job.id || p.associated_opportunity_id === job.id);
@@ -282,7 +282,12 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                         <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-slate-100">
                             <div className="flex items-start gap-3 text-sm text-slate-600 font-medium">
                                 <MapPin size={16} className="text-slate-400 mt-0.5 shrink-0" /> 
-                                <span>{address}<br/>{city}</span>
+                                <span>
+                                    {address}
+                                    {city && !address.toLowerCase().includes(city.toLowerCase()) && (
+                                        <><br/>{city}</>
+                                    )}
+                                </span>
                             </div>
                             <div className="flex items-center gap-3 text-sm text-slate-600 font-medium">
                                 <Phone size={16} className="text-slate-400 shrink-0" /> 

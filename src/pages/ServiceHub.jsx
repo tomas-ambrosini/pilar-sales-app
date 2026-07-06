@@ -200,7 +200,13 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                 <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-100/80 flex flex-col gap-2 mb-4">
                     <div className="flex items-center gap-2 text-[11px] font-medium text-slate-600">
                         <MapPin size={12} className="text-slate-400"/> 
-                        <span className="truncate">{call.households?.addresses?.city || (Array.isArray(call.households?.addresses) ? call.households.addresses[0]?.city : null) || 'No city provided'}</span>
+                        <span className="truncate">
+                            {call.households?.addresses?.city || 
+                             (Array.isArray(call.households?.addresses) ? call.households.addresses[0]?.city : null) || 
+                             call.households?.addresses?.street_address || 
+                             (Array.isArray(call.households?.addresses) ? call.households.addresses[0]?.street_address : null) || 
+                             'Unknown Location'}
+                        </span>
                     </div>
                     
                     <div className="mt-1 pl-3 border-l-2 border-primary-300">

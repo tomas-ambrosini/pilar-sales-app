@@ -347,7 +347,13 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                             <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-100/80 flex flex-col gap-2 mb-4">
                                                 <div className="flex items-center gap-2 text-[11px] font-medium text-slate-600">
                                                     <MapPin size={12} className="text-slate-400"/> 
-                                                    <span className="truncate">{job.households?.addresses?.city || (Array.isArray(job.households?.addresses) ? job.households.addresses[0]?.city : null) || 'No city provided'}</span>
+                                                    <span className="truncate">
+                                                        {job.households?.addresses?.city || 
+                                                         (Array.isArray(job.households?.addresses) ? job.households.addresses[0]?.city : null) || 
+                                                         job.households?.addresses?.street_address || 
+                                                         (Array.isArray(job.households?.addresses) ? job.households.addresses[0]?.street_address : null) || 
+                                                         'Unknown Location'}
+                                                    </span>
                                                 </div>
                                                 
                                                 {col.id === PIPELINE_STATES.NEW_LEAD && (
