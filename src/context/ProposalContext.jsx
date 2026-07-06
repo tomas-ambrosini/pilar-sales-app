@@ -49,6 +49,38 @@ export function ProposalProvider({ children }) {
 
             let allData = data || [];
             
+            // ONE-TIME FIX for Orphaned Proposals that don't have an Opportunity
+            if (user?.role === 'SUPER_ADMIN') {
+                const orphaned = allData.filter(p => !p.associated_opportunity_id && ['Lead', 'Draft'].includes(p.status) && p.proposal_data?.wizard_state?.selectedCustomerId);
+                if (orphaned.length > 0) {
+                    console.log(`Auto-fixing ${orphaned.length} orphaned proposals...`);
+                    for (const prop of orphaned) {
+                        const householdId = prop.proposal_data.wizard_state.selectedCustomerId;
+                        const { data: newOpp } = await supabase.from('opportunities').insert([{
+                            household_id: householdId,
+                            status: PIPELINE_STATES.QUOTING,
+                            urgency_level: 'Low',
+                            issue_description: 'Auto-generated Opportunity for legacy drafted Proposal',
+                            assigned_salesperson_id: prop.created_by || user.id,
+                            proposal_data: { type: 'SALES' },
+                            is_active: true
+                        }]).select('id').single();
+                        
+                        if (newOpp) {
+                            const updatedData = { ...prop.proposal_data, associated_opportunity_id: newOpp.id };
+                            if (updatedData.wizard_state) updatedData.wizard_state.associated_opportunity_id = newOpp.id;
+                            await supabase.from('proposals').update({
+                                associated_opportunity_id: newOpp.id,
+                                proposal_data: updatedData
+                            }).eq('id', prop.id);
+                            
+                            prop.associated_opportunity_id = newOpp.id;
+                            prop.proposal_data = updatedData;
+                        }
+                    }
+                }
+            }
+            
             if (leadData) {
                 const mappedLeads = leadData
                     .filter(opp => opp.proposal_data?.type !== 'SERVICE')
@@ -102,12 +134,38 @@ export function ProposalProvider({ children }) {
     // Creates a draft natively in the DB without optimistic UI flooding
     const createDraft = async (draftData) => {
         const newId = crypto.randomUUID();
+        let finalOppId = draftData.associated_opportunity_id || null;
+
+        if (!finalOppId && draftData.proposal_data?.wizard_state?.selectedCustomerId) {
+            const { data: newOpp, error: oppErr } = await supabase.from('opportunities').insert([{
+                household_id: draftData.proposal_data.wizard_state.selectedCustomerId,
+                service_address_id: draftData.proposal_data.wizard_state.selectedLocationId || null,
+                status: PIPELINE_STATES.QUOTING,
+                urgency_level: 'Low',
+                issue_description: 'Auto-generated Opportunity from Proposal Wizard',
+                assigned_salesperson_id: user?.id,
+                proposal_data: { type: 'SALES' },
+                is_active: true
+            }]).select('id').single();
+            
+            if (newOpp && !oppErr) {
+                finalOppId = newOpp.id;
+                
+                // Update the draftData payload so the proposal links to this new opp
+                if (!draftData.proposal_data) draftData.proposal_data = {};
+                draftData.proposal_data.associated_opportunity_id = finalOppId;
+                if (draftData.proposal_data.wizard_state) {
+                    draftData.proposal_data.wizard_state.associated_opportunity_id = finalOppId;
+                }
+            }
+        }
+
         const newDraft = {
             id: newId,
             status: draftData.status || 'Draft',
             customer: draftData.customer || 'Unknown Customer',
             amount: draftData.amount || 0,
-            associated_opportunity_id: draftData.associated_opportunity_id || null,
+            associated_opportunity_id: finalOppId,
             proposal_data: draftData.proposal_data || null,
             created_by: user?.id,
             updated_at: new Date().toISOString()
