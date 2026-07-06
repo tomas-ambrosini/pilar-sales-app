@@ -21,7 +21,7 @@ export function ProposalProvider({ children }) {
         try {
             let query = supabase
                 .from('proposals')
-                .select('*, user_profiles(full_name)')
+                .select('*')
                 .order('created_at', { ascending: false });
 
             if (user.role === 'SALES') {
