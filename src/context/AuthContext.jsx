@@ -4,8 +4,8 @@ import { supabase } from '../supabaseClient';
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState({ id: 'test-agent', role: 'SUPER_ADMIN', department: 'SALES', full_name: 'Test Agent' });
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
