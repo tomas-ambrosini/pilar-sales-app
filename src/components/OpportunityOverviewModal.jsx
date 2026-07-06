@@ -6,6 +6,7 @@ import { History, MessageSquare, Send, MapPin, AlertTriangle, User, Calendar, Cl
 import toast from 'react-hot-toast';
 import { formatQuoteId } from '../utils/formatters';
 import { useProposals } from '../context/ProposalContext';
+import { useAuth } from '../context/AuthContext';
 import ProposalViewerModal from './ProposalViewerModal';
 import ContractDocumentModal from './ContractDocumentModal';
 import InvoiceDocument from './InvoiceDocument';
@@ -22,6 +23,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
     const [loadingInvoice, setLoadingInvoice] = useState(false);
     const navigate = useNavigate();
     const { proposals } = useProposals();
+    const { user } = useAuth();
 
     useEffect(() => {
         if (isOpen && job?.household_id) {
@@ -68,10 +70,11 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
     const handleAddNote = async () => {
         if (!newNote.trim()) return;
         try {
+            const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
             const { error } = await supabase.from('activity_logs').insert({
                 household_id: job.household_id,
                 opportunity_id: job.id,
-                activity_type: 'Sales Note',
+                activity_type: `Sales Note by ${userName}`,
                 description: newNote
             });
             if (error) throw error;
