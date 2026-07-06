@@ -197,6 +197,7 @@
   overflow: hidden;
   position: relative;
   background-color: var(--bg-app);
+  min-width: 0;
 }
 
 /* Top App Bar */
