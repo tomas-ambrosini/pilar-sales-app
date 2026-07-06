@@ -490,17 +490,19 @@ export default function DispatchCalendar({ isSubView = false }) {
                                                     const dropId = `${crew.id}::${days[0].isoStr}::${block.value}`;
                                                     const cellJobs = scheduledJobs.filter(j => j.scheduled_date === days[0].isoStr && j.assigned_crew_id === crew.id && (j.scheduled_time_block === block.value || (!j.scheduled_time_block && block.value === '08:00') || (j.scheduled_time_block === 'MORNING' && block.value === '08:00') || (j.scheduled_time_block === 'AFTERNOON' && block.value === '12:00') || (j.scheduled_time_block === 'ALL_DAY' && block.value === '08:00')));
                                                     return (
-                                                        <Droppable key={dropId} droppableId={dropId}>
-                                                            {(provided, snapshot) => (
-                                                                <div ref={provided.innerRef} {...provided.droppableProps} 
-                                                                    className={`min-h-0 h-full overflow-y-auto p-2 flex flex-col gap-2 transition-colors border-b border-r border-slate-200
-                                                                    ${snapshot.isDraggingOver ? 'bg-primary-50 ring-inset ring-2 ring-primary-200' : 'bg-transparent hover:bg-slate-50/50'}
-                                                                    `}>
-                                                                    {cellJobs.map((j, i) => <JobCard key={j.id} job={j} index={i} />)}
-                                                                    {provided.placeholder}
-                                                                </div>
-                                                            )}
-                                                        </Droppable>
+                                                        <div key={dropId} className="relative border-b border-r border-slate-200 min-h-0">
+                                                            <Droppable droppableId={dropId}>
+                                                                {(provided, snapshot) => (
+                                                                    <div ref={provided.innerRef} {...provided.droppableProps} 
+                                                                        className={`absolute inset-0 overflow-y-auto p-2 flex flex-col gap-2 transition-colors
+                                                                        ${snapshot.isDraggingOver ? 'bg-primary-50 ring-inset ring-2 ring-primary-200' : 'bg-transparent hover:bg-slate-50/50'}
+                                                                        `}>
+                                                                        {cellJobs.map((j, i) => <JobCard key={j.id} job={j} index={i} />)}
+                                                                        {provided.placeholder}
+                                                                    </div>
+                                                                )}
+                                                            </Droppable>
+                                                        </div>
                                                     );
                                                 })}
                                             </React.Fragment>
@@ -527,19 +529,21 @@ export default function DispatchCalendar({ isSubView = false }) {
                                                {days.map((d, idx) => {
                                                    const dropId = `${crew.id}::${d.isoStr}::ANY`;
                                                    const cellJobs = scheduledJobs.filter(j => j.scheduled_date === d.isoStr && j.assigned_crew_id === crew.id);
-                                                   return (
-                                                       <Droppable key={dropId} droppableId={dropId}>
-                                                           {(provided, snapshot) => (
-                                                               <div ref={provided.innerRef} {...provided.droppableProps} 
-                                                                   className={`min-h-[140px] p-2 flex flex-col gap-2 transition-colors border-b border-r border-slate-200
+                                                    return (
+                                                        <div key={dropId} className="relative border-b border-r border-slate-200 min-h-0">
+                                                            <Droppable droppableId={dropId}>
+                                                                {(provided, snapshot) => (
+                                                                    <div ref={provided.innerRef} {...provided.droppableProps} 
+                                                                        className={`absolute inset-0 overflow-y-auto p-2 flex flex-col gap-2 transition-colors
                                                                    ${snapshot.isDraggingOver ? 'bg-primary-50 ring-inset ring-2 ring-primary-200' : 'bg-transparent hover:bg-slate-50/50'}
                                                                    `}>
                                                                    {cellJobs.map((j, i) => <JobCard key={j.id} job={j} index={i} />)}
                                                                    {provided.placeholder}
-                                                               </div>
-                                                           )}
-                                                       </Droppable>
-                                                   );
+                                                                </div>
+                                                            )}
+                                                        </Droppable>
+                                                    </div>
+                                                    );
                                                })}
                                            </React.Fragment>
                                        ))}
