@@ -117,12 +117,20 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
         .from('opportunities')
         .select(`
           id, status, urgency_level, issue_description, created_at, updated_at, scheduled_date, scheduled_time_block,
-          proposal_data, household_id, assigned_salesperson_id,
+          proposal_data, household_id, assigned_salesperson_id, is_active,
           households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
         `)
         .eq('id', id).single();
         
-      if (error || !data) return;
+      if (error || !data || data.is_active === false) {
+          // If deleted or deactivated, remove it from the pipeline
+          setPipeline(prev => {
+              const next = { ...prev };
+              Object.keys(next).forEach(col => { next[col] = next[col].filter(j => j.id !== id); });
+              return next;
+          });
+          return;
+      }
       
       setPipeline(prev => {
           const filters = activeFiltersRef.current;

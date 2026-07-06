@@ -412,7 +412,8 @@ export function ProposalProvider({ children }) {
                 await supabase.from('work_orders').delete().eq('opportunity_id', oppId);
                 const { error: oppError } = await supabase.from('opportunities').delete().eq('id', oppId);
                 if (oppError) {
-                    console.log('Opportunity cleanup deferred:', oppError.message);
+                    console.log('Opportunity cleanup deferred, attempting soft-delete:', oppError.message);
+                    await supabase.from('opportunities').update({ is_active: false, status: 'Voided' }).eq('id', oppId);
                 }
             }
         } catch (err) {
