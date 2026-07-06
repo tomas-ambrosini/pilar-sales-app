@@ -950,7 +950,7 @@ ${equipmentNotes}
                    </table>
                  ) : (
                  <>
-                 <div className="hidden lg:block w-full">
+                 <div className="hidden md:block w-full">
                  <table className="w-full text-left border-collapse min-w-[600px]">
                    <thead>
                      <tr className="bg-slate-50/50 border-b border-slate-200 text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -1154,7 +1154,7 @@ ${equipmentNotes}
                  </div>
 
                  {/* EPIC MOBILE CARD VIEW */}
-                 <div className="flex flex-col lg:hidden gap-3 p-3 bg-slate-50/30">
+                 <div className="flex flex-col md:hidden gap-3 p-3 bg-slate-50/30">
                      {filteredProposals.map(proposal => {
                         let badgeColors = 'bg-slate-100 text-slate-600 border-slate-200';
                         if (proposal.status === 'Lead') {
