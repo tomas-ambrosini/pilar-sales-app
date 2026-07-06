@@ -272,7 +272,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
             <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden min-h-0">
                 
                 {/* Left Panel: Dispatch & Opportunity Context */}
-                <div className="w-full lg:w-[50%] xl:w-[45%] bg-slate-50/50 lg:border-r border-slate-200 p-6 lg:overflow-y-auto custom-scrollbar flex flex-col gap-6 min-w-0">
+                <div className="w-full lg:w-[50%] xl:w-[45%] bg-slate-50/50 lg:border-r border-slate-200 p-6 lg:overflow-y-auto custom-scrollbar flex flex-col gap-6 min-w-0 min-h-0">
                     
                     {/* Customer Profile */}
                     <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm transition-shadow hover:shadow-md">
@@ -549,7 +549,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                 </div>
 
                 {/* Right Panel: Unified Timeline */}
-                <div className="w-full lg:w-[50%] xl:w-[55%] flex flex-col h-auto lg:h-full bg-white relative min-w-0">
+                <div className="w-full lg:w-[50%] xl:w-[55%] flex flex-col h-auto lg:h-full bg-white relative min-w-0 min-h-0">
                     <div className="p-4 border-b border-slate-100 bg-white z-10 shadow-sm flex items-center justify-between">
                         <h3 className="font-black text-slate-800 flex items-center gap-2 tracking-tight">
                             <History size={18} className="text-primary-600" /> Unified Timeline
