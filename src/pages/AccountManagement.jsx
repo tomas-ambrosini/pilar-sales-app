@@ -258,7 +258,7 @@ export default function AccountManagement() {
                                </div>
                             </td>
                             <td className="px-6 py-5 text-center border-b border-slate-100 font-mono text-xs text-slate-500">
-                                {u.phone || 'No phone'}
+                                {u.phone ? formatPhoneNumber(u.phone) : 'No phone'}
                              </td>
                              <td className="px-6 py-5 text-center border-b border-slate-100">
                                <div className="flex flex-col items-center gap-1.5">
