@@ -307,7 +307,7 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                         <button 
                             onClick={() => setActiveTab('proposals')} 
                             className={`flex-1 sm:flex-none px-5 py-2 sm:py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'proposals' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-                            Proposals {pipelineFilter === 'My Deals' && <span className="text-red-500 text-[10px]">DEBUG: userId={user?.id}</span>}
+                            Proposals
                         </button>
                     </div>
                     

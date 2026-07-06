@@ -48,6 +48,10 @@ export function ProposalProvider({ children }) {
             if (usersData) usersData.forEach(u => userMap[u.id] = u);
 
             let allData = data || [];
+            allData = allData.map(p => ({
+                ...p,
+                user_profiles: userMap[p.created_by] || null
+            }));
             
             // ONE-TIME FIX for Orphaned Proposals that don't have an Opportunity
             if (user?.role === 'SUPER_ADMIN') {
@@ -173,7 +177,7 @@ export function ProposalProvider({ children }) {
         
         const { data, error } = await supabase.from('proposals')
             .insert([newDraft])
-            .select('*, user_profiles(full_name)')
+            .select('*')
             .single();
             
         if (error) {
@@ -191,6 +195,9 @@ export function ProposalProvider({ children }) {
         }
 
         // Push secretly into local memory without triggering major UI snapping
+        if (data) {
+            data.user_profiles = { full_name: user?.full_name || user?.user_metadata?.full_name || user?.email || 'Unknown' };
+        }
         setProposals(prev => {
             const filtered = prev.filter(p => !(p.is_lead && p.associated_opportunity_id === draftData.associated_opportunity_id));
             return [data, ...filtered];
@@ -217,7 +224,7 @@ export function ProposalProvider({ children }) {
         // Insert to live Supabase database and retrieve joined profile data
         const { data, error } = await supabase.from('proposals')
             .insert([newProposal])
-            .select('*, user_profiles(full_name)')
+            .select('*')
             .single();
         
         if (error) {
@@ -226,7 +233,10 @@ export function ProposalProvider({ children }) {
             fetchProposals();
             return null;
         } else {
-            // Update local UI state with the exact database response (so user_profiles is included)
+            // Update local UI state with the exact database response
+            if (data) {
+                data.user_profiles = { full_name: user?.full_name || user?.user_metadata?.full_name || user?.email || 'Unknown' };
+            }
             setProposals(prev => {
                 const filtered = prev.filter(p => !(p.is_lead && p.associated_opportunity_id === proposalData.associated_opportunity_id));
                 return [data, ...filtered];
