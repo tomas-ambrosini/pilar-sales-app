@@ -3,7 +3,7 @@
 .layout {
   display: flex;
   height: 100dvh;
-  width: 100vw;
+  width: 100%;
   overflow: hidden;
   background-color: var(--bg-app);
 }
