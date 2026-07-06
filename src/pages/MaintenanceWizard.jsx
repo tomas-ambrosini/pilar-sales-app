@@ -24,7 +24,7 @@ export default function MaintenanceWizard() {
             try {
                 const { data, error } = await supabase
                     .from('opportunities')
-                    .select('*, households(*, addresses(*))')
+                    .select('*, households(*, addresses!addresses_household_id_fkey(*))')
                     .eq('id', oppId)
                     .single();
                 
