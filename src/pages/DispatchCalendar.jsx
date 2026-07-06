@@ -466,10 +466,10 @@ export default function DispatchCalendar({ isSubView = false }) {
 
            <DragDropContext onDragEnd={handleDragEnd}>
                <div className="flex-1 flex flex-col min-h-0">
-                   <div className="flex-1 overflow-auto bg-white flex flex-col">
+                    <div className="flex-1 min-h-0 min-w-0 bg-white relative">
                                {viewMode === 'day' ? (
                                     // DAY VIEW (Time Blocks on X, Crews on Y)
-                                    <div className="min-w-max flex-1 grid [--crew-col:120px] md:[--crew-col:220px] [--time-col:140px] md:[--time-col:180px]" style={{ gridTemplateColumns: `var(--crew-col) repeat(${currentBlocks.length}, minmax(var(--time-col), 1fr))`, gridTemplateRows: `48px repeat(${crews.length}, minmax(75px, 1fr))` }}>
+                                    <div className="w-full h-full overflow-auto grid [--crew-col:120px] md:[--crew-col:220px] [--time-col:140px] md:[--time-col:180px]" style={{ gridTemplateColumns: `var(--crew-col) repeat(${currentBlocks.length}, minmax(var(--time-col), 1fr))`, gridTemplateRows: `48px repeat(${crews.length}, minmax(110px, 1fr))` }}>
                                         <div className="sticky top-0 left-0 z-30 bg-white border-b border-r border-slate-200 h-12"></div>
                                         
                                         {currentBlocks.map(block => (
@@ -508,7 +508,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                                     </div>
                                ) : (
                                    // WEEK VIEW (Days on X, Crews on Y)
-                                   <div className="min-w-max flex-1 grid [--crew-col:120px] md:[--crew-col:220px] [--time-col:200px] md:[--time-col:260px]" style={{ gridTemplateColumns: `var(--crew-col) repeat(7, minmax(var(--time-col), 1fr))`, gridTemplateRows: `48px repeat(${crews.length}, minmax(75px, 1fr))` }}>
+                                   <div className="w-full h-full overflow-auto grid [--crew-col:120px] md:[--crew-col:220px] [--time-col:200px] md:[--time-col:260px]" style={{ gridTemplateColumns: `var(--crew-col) repeat(7, minmax(var(--time-col), 1fr))`, gridTemplateRows: `48px repeat(${crews.length}, minmax(110px, 1fr))` }}>
                                        <div className="sticky top-0 left-0 z-30 bg-white border-b border-r border-slate-200 h-12"></div>
                                        {days.map(d => (
                                            <div key={d.isoStr} className="sticky top-0 z-20 h-12 flex flex-col items-center justify-center bg-white border-b border-r border-slate-200">
