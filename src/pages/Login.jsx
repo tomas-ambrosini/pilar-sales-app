@@ -37,13 +37,13 @@ export default function Login() {
 
 
           <div className="input-group">
-            <label htmlFor="email">Email Address or Username</label>
+            <label htmlFor="email">Email Address</label>
             <div className="input-wrapper">
               <Mail size={18} className="input-icon" />
               <input 
                 id="email"
                 type="text" 
-                placeholder="name@company.com or username"
+                placeholder="name@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
