@@ -469,7 +469,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                    <div className="flex-1 overflow-auto bg-white">
                                {viewMode === 'day' ? (
                                     // DAY VIEW (Time Blocks on X, Crews on Y)
-                                    <div className="min-w-max grid min-h-full [--crew-col:120px] md:[--crew-col:220px] [--time-col:140px] md:[--time-col:180px]" style={{ gridTemplateColumns: `var(--crew-col) repeat(${currentBlocks.length}, minmax(var(--time-col), 1fr))` }}>
+                                    <div className="min-w-max grid h-full [--crew-col:120px] md:[--crew-col:220px] [--time-col:140px] md:[--time-col:180px]" style={{ gridTemplateColumns: `var(--crew-col) repeat(${currentBlocks.length}, minmax(var(--time-col), 1fr))`, gridTemplateRows: `48px repeat(${crews.length}, minmax(0, 1fr))` }}>
                                         <div className="sticky top-0 left-0 z-30 bg-white border-b border-r border-slate-200 h-12"></div>
                                         
                                         {currentBlocks.map(block => (
@@ -493,7 +493,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                                                         <Droppable key={dropId} droppableId={dropId}>
                                                             {(provided, snapshot) => (
                                                                 <div ref={provided.innerRef} {...provided.droppableProps} 
-                                                                    className={`min-h-[140px] p-2 flex flex-col gap-2 transition-colors border-b border-r border-slate-200
+                                                                    className={`min-h-0 h-full overflow-y-auto p-2 flex flex-col gap-2 transition-colors border-b border-r border-slate-200
                                                                     ${snapshot.isDraggingOver ? 'bg-primary-50 ring-inset ring-2 ring-primary-200' : 'bg-transparent hover:bg-slate-50/50'}
                                                                     `}>
                                                                     {cellJobs.map((j, i) => <JobCard key={j.id} job={j} index={i} />)}
@@ -508,7 +508,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                                     </div>
                                ) : (
                                    // WEEK VIEW (Days on X, Crews on Y)
-                                   <div className="min-w-max grid min-h-full [--crew-col:120px] md:[--crew-col:220px] [--time-col:200px] md:[--time-col:260px]" style={{ gridTemplateColumns: `var(--crew-col) repeat(7, minmax(var(--time-col), 1fr))` }}>
+                                   <div className="min-w-max grid h-full [--crew-col:120px] md:[--crew-col:220px] [--time-col:200px] md:[--time-col:260px]" style={{ gridTemplateColumns: `var(--crew-col) repeat(7, minmax(var(--time-col), 1fr))`, gridTemplateRows: `48px repeat(${crews.length}, minmax(0, 1fr))` }}>
                                        <div className="sticky top-0 left-0 z-30 bg-white border-b border-r border-slate-200 h-12"></div>
                                        {days.map(d => (
                                            <div key={d.isoStr} className="sticky top-0 z-20 h-12 flex flex-col items-center justify-center bg-white border-b border-r border-slate-200">
