@@ -681,12 +681,12 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
       )}
       </AnimatePresence>
       <div className="glass-panel p-4 md:p-8 max-w-[1000px] mx-auto w-full">
-        <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-100 pb-4">
           <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
              <Calculator className="text-primary-600"/> 
              {isEditing ? `Editing Proposal: ${editingId}` : 'Estimate & Proposal Generator'}
           </h2>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
             {step > 0 && (
               <button 
                 className={`text-[11px] font-bold px-4 py-2.5 rounded-lg border shadow-sm transition-all flex items-center gap-2 ${
@@ -1110,7 +1110,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                 />
              </div>
 
-             <div className="bg-slate-50 p-4 md:p-6 rounded-2xl border border-slate-200 max-h-[450px] overflow-y-auto custom-scrollbar shadow-inner relative">
+             <div className="bg-slate-50 p-4 md:p-6 rounded-2xl border border-slate-200 custom-scrollbar shadow-inner relative">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
                   {laborRates
                     .filter(labor => 

@@ -308,7 +308,7 @@ function JobCard({ job, index, onUpdate, crewId }) {
                     >
                         <div className="p-4 space-y-5">
                             {/* Action Buttons: Maps & Call */}
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <a href={`maps://?q=${address?.street_address}, ${address?.city}`} className="group relative flex flex-col items-center gap-1.5 bg-white hover:bg-slate-50 p-3 rounded-xl border border-slate-200 active:scale-95 transition-all shadow-sm">
                                     <MapPin size={18} className="text-blue-500" />
                                     <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Navigate</span>
@@ -334,7 +334,7 @@ function JobCard({ job, index, onUpdate, crewId }) {
                             {/* Add Field Note */}
                             <div className="bg-white border border-slate-200 rounded-xl p-1.5 shadow-sm focus-within:border-purple-400 focus-within:ring-4 focus-within:ring-purple-500/10 transition-all flex items-end gap-2">
                                 <textarea 
-                                    className="flex-1 bg-transparent p-2 text-sm font-medium text-slate-900 outline-none resize-none h-[50px] placeholder:text-slate-400"
+                                    className="flex-1 bg-transparent p-2 text-sm font-medium text-slate-900 outline-none resize-none min-h-[50px] placeholder:text-slate-400"
                                     placeholder="Add field notes..."
                                     value={note}
                                     onChange={e => setNote(e.target.value)}
@@ -342,7 +342,7 @@ function JobCard({ job, index, onUpdate, crewId }) {
                                 <button 
                                     onClick={saveNote}
                                     disabled={updating || !note.trim()}
-                                    className="h-[50px] w-[50px] bg-slate-900 hover:bg-slate-800 text-white rounded-lg flex items-center justify-center disabled:opacity-50 transition-colors shadow-sm active:scale-95 shrink-0"
+                                    className="min-h-[50px] w-[50px] bg-slate-900 hover:bg-slate-800 text-white rounded-lg flex items-center justify-center disabled:opacity-50 transition-colors shadow-sm active:scale-95 shrink-0"
                                 >
                                     <CheckCircle size={18} />
                                 </button>
@@ -408,7 +408,7 @@ function JobCard({ job, index, onUpdate, crewId }) {
                                 ) : (
                                     <>
                                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 mt-2">Update Job Status</h4>
-                                        <div className="grid grid-cols-3 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                             <button 
                                                 onClick={() => updateStatus('En Route')}
                                                 disabled={updating}
@@ -492,7 +492,7 @@ function SignatureModal({ isOpen, onClose, onSubmit, amount }) {
                             <SignatureCanvas 
                                 ref={sigCanvas}
                                 penColor="#0f172a"
-                                canvasProps={{className: "w-full h-48 cursor-crosshair"}}
+                                canvasProps={{className: "w-full h-40 sm:h-48 cursor-crosshair"}}
                             />
                         </div>
                     </div>

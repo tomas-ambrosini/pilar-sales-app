@@ -301,13 +301,13 @@ export default function PromoCodes() {
               </div>
 
               {/* Limits and Status */}
-              <div className="flex items-center justify-between gap-4 bg-white border border-slate-200 shadow-sm rounded-2xl p-5">
-                <div className="flex-1">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border border-slate-200 shadow-sm rounded-2xl p-5">
+                <div className="flex-1 w-full">
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Total Usage Limit</label>
-                  <input type="number" min="1" step="1" className="w-full max-w-[200px] bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder:text-slate-400 placeholder:font-normal" value={formData.usage_limit} onChange={e => setFormData({...formData, usage_limit: e.target.value})} placeholder="∞ Unlimited" />
+                  <input type="number" min="1" step="1" className="w-full sm:max-w-[200px] bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder:text-slate-400 placeholder:font-normal" value={formData.usage_limit} onChange={e => setFormData({...formData, usage_limit: e.target.value})} placeholder="∞ Unlimited" />
                 </div>
                 
-                <div className="flex-1 flex justify-end">
+                <div className="flex-1 flex w-full justify-start sm:justify-end">
                   <label className="relative inline-flex items-center cursor-pointer group">
                     <input type="checkbox" className="sr-only peer" checked={formData.is_active} onChange={e => setFormData({...formData, is_active: e.target.checked})} />
                     <div className="w-14 h-7 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-500 group-hover:shadow-md"></div>

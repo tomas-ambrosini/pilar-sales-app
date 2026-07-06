@@ -351,7 +351,7 @@ export default function DispatchHub() {
 
                                {isNewCustomer && (
                                    <form onSubmit={handleCreateCustomer} className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                                       <div className="grid grid-cols-2 gap-4 mb-4">
+                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                            <div className="form-group">
                                                <label className="text-xs font-bold text-slate-500">First Name</label>
                                                <input required type="text" value={customerForm.firstName} onChange={e => setCustomerForm({...customerForm, firstName: e.target.value})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
@@ -361,7 +361,7 @@ export default function DispatchHub() {
                                                <input required type="text" value={customerForm.lastName} onChange={e => setCustomerForm({...customerForm, lastName: e.target.value})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
                                            </div>
                                        </div>
-                                       <div className="grid grid-cols-2 gap-4 mb-4">
+                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                            <div className="form-group">
                                                <label className="text-xs font-bold text-slate-500">Phone Number</label>
                                                <input required type="tel" value={customerForm.phone} onChange={e => setCustomerForm({...customerForm, phone: formatPhoneNumber(e.target.value)})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
@@ -375,7 +375,7 @@ export default function DispatchHub() {
                                            <label className="text-xs font-bold text-slate-500">Street Address</label>
                                            <input required type="text" value={customerForm.address} onChange={e => setCustomerForm({...customerForm, address: e.target.value})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
                                        </div>
-                                       <div className="grid grid-cols-2 gap-4 mb-6">
+                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                            <div className="form-group">
                                                <label className="text-xs font-bold text-slate-500">City</label>
                                                <input required type="text" value={customerForm.city} onChange={e => setCustomerForm({...customerForm, city: e.target.value})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
@@ -403,7 +403,7 @@ export default function DispatchHub() {
                                                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Billing Street</label>
                                                         <input required={!customerForm.sameAsService} type="text" value={customerForm.billingAddress} onChange={e => setCustomerForm({...customerForm, billingAddress: e.target.value})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
                                                     </div>
-                                                    <div className="grid grid-cols-3 gap-3">
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                                         <div className="form-group col-span-1">
                                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">City</label>
                                                             <input required={!customerForm.sameAsService} type="text" value={customerForm.billingCity} onChange={e => setCustomerForm({...customerForm, billingCity: e.target.value})} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
@@ -438,7 +438,7 @@ export default function DispatchHub() {
                            </div>
                            
                            <div className="p-6">
-                               <div className="grid grid-cols-2 gap-6 mb-6">
+                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                    <div className="form-group">
                                        <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider">Opportunity Type</label>
                                        <div className="flex bg-slate-100/80 p-1.5 rounded-xl border border-slate-200 shadow-inner">
@@ -528,7 +528,8 @@ export default function DispatchHub() {
                                        <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider flex items-center gap-2">
                                            <UserCheck size={14} className="text-primary-500" /> Sales Team Load Board
                                        </label>
-                                       <div className="bg-slate-50 border border-slate-200 rounded-xl p-2 space-y-1">
+                                       <div className="bg-slate-50 border border-slate-200 rounded-xl p-2 space-y-1 overflow-x-auto">
+                                           <div className="min-w-[300px]">
                                            <div className="flex items-center gap-2 px-3 py-1 mb-1">
                                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex-1">Representative</span>
                                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 w-16 text-center">Active</span>
@@ -567,6 +568,7 @@ export default function DispatchHub() {
                                                    </button>
                                                );
                                            })}
+                                           </div>
                                            {teamLoad.length === 0 && (
                                               <div className="text-center py-4 text-xs font-medium text-slate-400 italic">No sales team members found.</div>
                                            )}

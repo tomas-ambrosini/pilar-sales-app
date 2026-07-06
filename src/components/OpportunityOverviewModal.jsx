@@ -238,7 +238,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                 </div>
             } 
             width="max-w-6xl" 
-            bodyClassName="p-0 h-[80vh] min-h-[650px] flex flex-col bg-slate-50"
+            bodyClassName="p-0 max-h-[90vh] h-full min-h-0 flex flex-col bg-slate-50"
         >
             {/* Progress Stepper */}
             <div className="w-full bg-white border-b border-slate-200 p-4 shrink-0 shadow-sm z-10">
@@ -258,7 +258,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-[11px] transition-all duration-300 ${isCurrent ? 'bg-primary-600 text-white ring-4 ring-primary-100 shadow-md scale-110' : isCompleted ? 'bg-primary-100 text-primary-700' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
                                         {isCompleted && !isCurrent ? <Check size={14} strokeWidth={3} /> : idx + 1}
                                     </div>
-                                    <span className={`text-[10px] font-black uppercase tracking-widest ${isCurrent ? 'text-primary-700' : isCompleted ? 'text-slate-600' : 'text-slate-400'}`}>{step.label}</span>
+                                    <span className={`text-[10px] hidden sm:block font-black uppercase tracking-widest ${isCurrent ? 'text-primary-700' : isCompleted ? 'text-slate-600' : 'text-slate-400'}`}>{step.label}</span>
                                 </div>
                                 {idx < arr.length - 1 && (
                                     <div className={`absolute left-[50%] right-[-50%] top-4 h-0.5 -mt-px transition-colors duration-300 ${arr[idx+1].match.includes(job.status) ? 'bg-primary-400' : 'bg-slate-200'}`}></div>
@@ -269,7 +269,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                 </div>
             </div>
 
-            <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+            <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden min-h-0">
                 
                 {/* Left Panel: Dispatch & Opportunity Context */}
                 <div className="w-full lg:w-[50%] xl:w-[45%] bg-slate-50/50 lg:border-r border-slate-200 p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
@@ -300,7 +300,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                                 <Phone size={16} className="text-slate-400 shrink-0" /> 
                                 <span>{job.households?.contacts?.[0]?.primary_phone || 'No phone provided'}</span>
                             </div>
-                            <div className="flex items-center gap-3 text-sm text-slate-600 font-medium">
+                            <div className="flex items-center gap-3 text-sm text-slate-600 font-medium min-w-0">
                                 <Mail size={16} className="text-slate-400 shrink-0" /> 
                                 <span className="truncate">{job.households?.contacts?.[0]?.email || 'No email provided'}</span>
                             </div>
@@ -313,7 +313,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                 <DollarSign size={14} /> Financial Snapshot
                             </h3>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Value</div>
                                     <div className="text-lg font-black text-slate-800">${displayAmount.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})}</div>
@@ -348,7 +348,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                                                     <Package size={14} className="text-slate-400" />
                                                     <span className="text-[11px] font-black text-slate-700 uppercase tracking-widest">{sys.name || `System ${idx+1}`}</span>
                                                 </div>
-                                                <div className="grid grid-cols-2 gap-2">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                     <div className="bg-white p-2 rounded-lg border border-slate-100 flex flex-col items-center justify-center text-center">
                                                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Brand</span>
                                                         <span className="text-xs font-black text-slate-700 uppercase">{td.brand || 'N/A'}</span>
@@ -371,7 +371,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                                     })}
                                 </div>
                             ) : associatedProposal.proposal_data?.accepted_tier_data ? (
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <div className="bg-slate-50 p-2 rounded-lg border border-slate-100 flex flex-col items-center justify-center text-center">
                                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Brand</span>
                                         <span className="text-xs font-black text-slate-700 uppercase">{associatedProposal.proposal_data.accepted_tier_data.brand || 'N/A'}</span>
@@ -549,7 +549,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                 </div>
 
                 {/* Right Panel: Unified Timeline */}
-                <div className="w-full lg:w-[50%] xl:w-[55%] flex flex-col h-full bg-white relative">
+                <div className="w-full lg:w-[50%] xl:w-[55%] flex flex-col h-full lg:h-full bg-white relative shrink-0">
                     <div className="p-4 border-b border-slate-100 bg-white z-10 shadow-sm flex items-center justify-between">
                         <h3 className="font-black text-slate-800 flex items-center gap-2 tracking-tight">
                             <History size={18} className="text-primary-600" /> Unified Timeline

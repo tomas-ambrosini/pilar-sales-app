@@ -281,7 +281,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
        <div className="relative bg-white rounded-2xl shadow-2xl w-[98vw] sm:w-[95vw] lg:w-[90vw] xl:w-[1100px] max-w-[100%] max-h-[95vh] flex flex-col overflow-hidden transform transition-transform duration-300">
           
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 border-b border-slate-100 bg-slate-50">
              <div>
                 <p className="text-xs font-bold text-primary-600 uppercase tracking-wider mb-1" title={proposal.proposal_number ? `Legacy ID: ${proposal.id}` : ''}>Interactive Digital Proposal • {formatQuoteId(proposal)}</p>
                 <h2 className="text-2xl font-black text-slate-800">{proposal.customer}</h2>
@@ -292,7 +292,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                    )}
                 </div>
              </div>
-             <div className="flex items-center gap-2">
+             <div className="flex flex-wrap items-center gap-2">
                 <button onClick={handlePrint} className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 transition-colors shadow-sm print-hidden" title="Download PDF">
                    <Printer size={16} />
                    <span>Export PDF</span>
@@ -527,7 +527,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                         <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded mr-auto">
                             <AlertTriangle size={14}/> Preview Only Mode
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap justify-end gap-2">
                            {onBack && <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2" onClick={onBack}><ArrowLeft size={16}/> Back to Details</button>}
                            <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors" onClick={onClose}>Close Viewer</button>
                         </div>
@@ -536,7 +536,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
              }
 
              return (
-                 <div className="border-t border-slate-200/80 bg-slate-50/95 backdrop-blur-xl sticky bottom-0 z-50 px-8 py-5 flex items-center w-full rounded-b-2xl print-hidden">
+                 <div className="border-t border-slate-200/80 bg-slate-50/95 backdrop-blur-xl sticky bottom-0 z-50 px-4 sm:px-8 py-5 flex flex-wrap gap-4 items-center w-full rounded-b-2xl print-hidden">
                      <div className="flex-1 flex items-center gap-4">
                          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-slate-200 font-black text-slate-800 shadow-sm">
                              {Object.keys(localSelections).length}
@@ -545,7 +545,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                              / {proposal_data.systemTiers.length} Systems Configured
                          </span>
                      </div>
-                     <div className="flex-none flex items-center gap-4">
+                     <div className="flex-none flex flex-wrap items-center gap-4 w-full sm:w-auto justify-end">
                          <button onClick={onClose} className="py-2.5 px-6 rounded-lg font-bold text-slate-500 hover:text-slate-800 hover:bg-white transition-colors bg-transparent border border-transparent hover:border-slate-200 hover:shadow-sm text-sm">Close Planner</button>
                          <button 
                             disabled={!isCartComplete} 
@@ -568,7 +568,7 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                         <AlertTriangle size={14}/> Preview Only Mode
                     </div>
                 )}
-                <div className="flex gap-2">
+                <div className="flex flex-wrap justify-end gap-2">
                    {onBack && <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2" onClick={onBack}><ArrowLeft size={16}/> Back to Details</button>}
                    <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors" onClick={onClose}>Close Viewer</button>
                 </div>

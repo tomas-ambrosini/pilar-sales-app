@@ -265,7 +265,7 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
 
 
   return (
-    <div className="p-4 md:p-8 flex flex-col gap-8 h-[calc(100vh-64px)] overflow-hidden bg-slate-50/50 relative">
+    <div className="p-4 md:p-8 flex flex-col gap-8 h-[calc(100dvh-64px)] md:h-[calc(100vh-64px)] overflow-hidden bg-slate-50/50 relative">
         {/* Subtle background decoration */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
             <div className="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-primary-100/40 blur-3xl"></div>

@@ -397,7 +397,7 @@ function CustomerList() {
             <label htmlFor="address">Address</label>
             <input type="text" id="address" placeholder="123 Main St" value={formData.address} onChange={handleInputChange} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="form-group">
                 <label htmlFor="city">City</label>
                 <input type="text" id="city" placeholder="Miami" value={formData.city} onChange={handleInputChange} />
@@ -426,7 +426,7 @@ function CustomerList() {
                          <label htmlFor="billingAddress">Billing Street</label>
                          <input required={!formData.sameAsService} type="text" id="billingAddress" value={formData.billingAddress} onChange={handleInputChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
                      </div>
-                     <div className="grid grid-cols-3 gap-3">
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                          <div className="col-span-1">
                              <label htmlFor="billingCity">City</label>
                              <input required={!formData.sameAsService} type="text" id="billingCity" value={formData.billingCity} onChange={handleInputChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-white" />
@@ -1716,7 +1716,7 @@ function UnitDetail() {
 
         <Modal isOpen={isAddEventOpen} onClose={() => setIsAddEventOpen(false)} title="Log New Activity">
            <form className="modal-form" onSubmit={handleAddEvent}>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="form-group">
                      <label>Activity Type</label>
                      <select value={eventForm.type} onChange={e => setEventForm({...eventForm, type: e.target.value})} className="w-full border border-slate-200 rounded-lg p-2.5 text-sm bg-white font-bold text-slate-700 outline-none focus:border-primary-500 transition-colors">
@@ -1736,7 +1736,7 @@ function UnitDetail() {
                      </select>
                   </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div className="form-group">
                      <label>Technician(s) Name</label>
                      <input type="text" value={eventForm.technician} onChange={e => setEventForm({...eventForm, technician: e.target.value})} placeholder="e.g. John Doe, Jane Smith" />
@@ -1754,7 +1754,7 @@ function UnitDetail() {
               
               <div className="mt-6 mb-4">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2">Diagnostic Data (Optional)</h4>
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
                       <div className="form-group">
                           <label className="text-[10px]">High Pressure</label>
                           <input type="text" className="text-xs p-2" value={eventForm.diagnostic_data.high_pressure} onChange={e => setEventForm({...eventForm, diagnostic_data: {...eventForm.diagnostic_data, high_pressure: e.target.value}})} placeholder="psig" />
@@ -1824,7 +1824,7 @@ function UnitDetail() {
         
         <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit Unit Specs">
            <form className="modal-form" onSubmit={handleEditUnit}>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="form-group">
                      <label>Unit Name / Number</label>
                      <input type="text" value={editForm.unit_number} onChange={e => setEditForm({...editForm, unit_number: e.target.value})} required placeholder="e.g. 1A" />
@@ -1834,7 +1834,7 @@ function UnitDetail() {
                      <input type="text" value={editForm.system_type} onChange={e => setEditForm({...editForm, system_type: e.target.value})} required placeholder="e.g. Split System" />
                   </div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="form-group">
                      <label>Brand</label>
                      <input type="text" value={editForm.brand} onChange={e => setEditForm({...editForm, brand: e.target.value})} placeholder="e.g. Daikin" />
@@ -1848,7 +1848,7 @@ function UnitDetail() {
                      <input type="text" value={editForm.seer} onChange={e => setEditForm({...editForm, seer: e.target.value})} placeholder="e.g. 16 SEER" />
                   </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div className="form-group">
                      <label>Serial Number</label>
                      <input type="text" value={editForm.serial_number} onChange={e => setEditForm({...editForm, serial_number: e.target.value})} placeholder="e.g. WX8482029" />
@@ -1858,7 +1858,7 @@ function UnitDetail() {
                      <input type="text" value={editForm.model_number} onChange={e => setEditForm({...editForm, model_number: e.target.value})} placeholder="e.g. GSX160361" />
                   </div>
               </div>
-              <div className="grid grid-cols-3 gap-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <div className="form-group">
                      <label>Filter Size</label>
                      <input type="text" value={editForm.filter_size} onChange={e => setEditForm({...editForm, filter_size: e.target.value})} placeholder="e.g. 20x25x1" />
@@ -1870,8 +1870,8 @@ function UnitDetail() {
                   <div className="form-group">
                      <label>Warranty (Yrs)</label>
                      <div className="flex gap-2">
-                        <input type="number" min="0" value={editForm.parts_warranty_years} onChange={e => setEditForm({...editForm, parts_warranty_years: e.target.value})} placeholder="Parts" className="w-1/2" />
-                        <input type="number" min="0" value={editForm.labor_warranty_years} onChange={e => setEditForm({...editForm, labor_warranty_years: e.target.value})} placeholder="Labor" className="w-1/2" />
+                        <input type="number" min="0" value={editForm.parts_warranty_years} onChange={e => setEditForm({...editForm, parts_warranty_years: e.target.value})} placeholder="Parts" className="w-full sm:w-1/2" />
+                        <input type="number" min="0" value={editForm.labor_warranty_years} onChange={e => setEditForm({...editForm, labor_warranty_years: e.target.value})} placeholder="Labor" className="w-full sm:w-1/2" />
                      </div>
                   </div>
               </div>
@@ -1947,7 +1947,7 @@ function UnitDetail() {
                     {selectedEvent.diagnostic_data && Object.values(selectedEvent.diagnostic_data).some(v => v) && (
                         <div>
                             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1"><Activity size={14}/> Diagnostic Data</h4>
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 {selectedEvent.diagnostic_data.high_pressure && (
                                     <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
                                         <div className="text-[10px] font-bold text-slate-400 uppercase">High Pressure</div>
@@ -1991,7 +1991,7 @@ function UnitDetail() {
                     {selectedEvent.photos && selectedEvent.photos.length > 0 && (
                         <div>
                             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1"><Tag size={14}/> Media Gallery</h4>
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 {selectedEvent.photos.map((url, i) => (
                                     <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block relative group overflow-hidden rounded-xl border border-slate-200 shadow-sm aspect-square bg-slate-100">
                                         <img src={url} alt={`Media ${i}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />

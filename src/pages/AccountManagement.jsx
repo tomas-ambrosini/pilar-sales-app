@@ -193,7 +193,7 @@ export default function AccountManagement() {
              </div>
           </div>
 
-         <div className="overflow-x-auto">
+         <div className="overflow-x-auto w-full">
             <table className="w-full text-left text-sm text-slate-600">
                <thead className="bg-slate-50 text-[10px] uppercase font-black tracking-widest text-slate-500 border-b border-slate-200">
                   <tr>
@@ -321,7 +321,7 @@ export default function AccountManagement() {
             <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
                <h3 className="text-xl font-black text-slate-800 mb-6 border-b pb-2">Provision Employee</h3>
                <form onSubmit={handleCreateUser} className="space-y-4">
-                  <div className="flex gap-4">
+                  <div className="flex flex-col md:flex-row gap-4">
                      <div className="flex-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
                         <input type="text" name="full_name" required className="w-full border rounded p-2 text-sm font-semibold" />
@@ -331,7 +331,7 @@ export default function AccountManagement() {
                         <input type="email" name="email" required className="w-full border rounded p-2 text-sm font-semibold" />
                      </div>
                   </div>
-                  <div className="flex gap-4">
+                  <div className="flex flex-col md:flex-row gap-4">
                      <div className="flex-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Username (Optional)</label>
                         <input type="text" name="username" className="w-full border rounded p-2 text-sm font-semibold" />
@@ -341,7 +341,7 @@ export default function AccountManagement() {
                         <input type="tel" name="phone" onChange={(e) => e.target.value = formatPhoneNumber(e.target.value)} className="w-full border rounded p-2 text-sm font-semibold" placeholder="(555) 555-5555" />
                      </div>
                   </div>
-                  <div className="flex gap-4">
+                  <div className="flex flex-col md:flex-row gap-4">
                      <div className="flex-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Role</label>
                         <select name="role" value={createRole} onChange={(e) => setCreateRole(e.target.value)} className="w-full border rounded p-2 text-sm font-bold">
@@ -418,7 +418,7 @@ export default function AccountManagement() {
                      console.error('Badge sync error:', err);
                   }
                }} className="space-y-4">
-                  <div className="flex gap-4">
+                  <div className="flex flex-col md:flex-row gap-4">
                      <div className="flex-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
                         <input type="text" name="full_name" defaultValue={showEditModal.full_name} required className="w-full border rounded p-2 text-sm font-semibold" />
@@ -428,7 +428,7 @@ export default function AccountManagement() {
                         <input type="text" readOnly value={showEditModal.email || 'No email bound'} className="w-full border rounded p-2 text-sm font-semibold bg-slate-50 text-slate-500 cursor-not-allowed" />
                      </div>
                   </div>
-                  <div className="flex gap-4">
+                  <div className="flex flex-col md:flex-row gap-4">
                      <div className="flex-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Username (Optional)</label>
                         <input type="text" name="username" defaultValue={showEditModal.username || ''} className="w-full border rounded p-2 text-sm font-semibold" />
@@ -438,7 +438,7 @@ export default function AccountManagement() {
                         <input type="tel" name="phone" defaultValue={showEditModal.phone || ''} onChange={(e) => e.target.value = formatPhoneNumber(e.target.value)} className="w-full border rounded p-2 text-sm font-semibold" placeholder="(555) 555-5555" />
                      </div>
                   </div>
-                  <div className="flex gap-4">
+                  <div className="flex flex-col md:flex-row gap-4">
                      <div className="flex-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Account Role</label>
                         <select name="role" value={editRole} onChange={(e) => setEditRole(e.target.value)} className="w-full border rounded p-2 text-sm font-bold">

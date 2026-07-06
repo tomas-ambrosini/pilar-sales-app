@@ -80,7 +80,7 @@ export default function CompanyCalendar() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-slate-50 relative">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] overflow-hidden bg-slate-50 relative">
       
       {/* Background Blobs for aesthetics */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">

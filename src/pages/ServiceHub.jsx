@@ -304,7 +304,7 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                 {loading ? (
                     <div className="flex gap-6 overflow-x-auto pb-4 hide-scrollbar h-full px-1">
                         {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="flex flex-col flex-1 min-w-[300px] max-w-[340px] shrink-0 bg-white/40 rounded-[24px] border border-white shadow-sm overflow-hidden opacity-70">
+                            <div key={i} className="flex flex-col flex-1 w-[85vw] sm:w-auto min-w-[85vw] sm:min-w-[300px] max-w-[85vw] sm:max-w-[340px] shrink-0 bg-white/40 rounded-[24px] border border-white shadow-sm overflow-hidden opacity-70">
                                 <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center animate-pulse">
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 rounded-full bg-slate-200"></div>
@@ -346,7 +346,7 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                                     if (col.id === 'Completed') headerTheme = { bg: 'bg-cyan-50/80', border: 'border-cyan-200', text: 'text-cyan-800', icon: 'text-cyan-500' };
 
                                     return (
-                                        <div key={col.id} className="flex flex-col flex-1 min-w-[300px] max-w-[340px] shrink-0 bg-white/60  rounded-[24px] border border-white/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
+                                        <div key={col.id} className="flex flex-col flex-1 w-[85vw] sm:w-auto min-w-[85vw] sm:min-w-[300px] max-w-[85vw] sm:max-w-[340px] shrink-0 bg-white/60  rounded-[24px] border border-white/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
                                             <div className={`p-4 border-b ${headerTheme.border} ${headerTheme.bg} flex justify-between items-center `}>
                                                 <div className="flex items-center gap-2">
                                                     <div className={`w-2 h-2 rounded-full ${headerTheme.text.replace('text', 'bg')}`}></div>
@@ -372,7 +372,7 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
+                                <table className="w-full min-w-[800px] text-left border-collapse">
                                     <thead>
                                             <tr className="bg-slate-50/50 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                                 <th className="p-4 px-6 font-medium text-left">Customer / ID</th>

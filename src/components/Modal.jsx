@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './Modal.css';
 
-export default function Modal({ isOpen, onClose, title, children, width = "max-w-lg", bodyClassName = "p-5 max-h-[80vh] overflow-y-auto" }) {
+export default function Modal({ isOpen, onClose, title, children, width = "max-w-lg", bodyClassName = "p-5 max-h-[85vh] overflow-y-auto" }) {
   return createPortal(
     <AnimatePresence>
       {isOpen && (

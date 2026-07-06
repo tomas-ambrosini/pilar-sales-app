@@ -48,7 +48,7 @@ export function CalendarFilterSidebar({ filters, setFilters }) {
   };
 
   return (
-    <div className="w-[280px] bg-white/80 backdrop-blur-xl border-r border-slate-200/60 p-4 h-full flex flex-col gap-6 overflow-y-auto shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-10">
+    <div className="w-full md:w-[280px] bg-white/80 backdrop-blur-xl border-b md:border-b-0 border-r md:border-r-slate-200/60 p-4 md:h-full flex flex-col gap-6 overflow-y-auto shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-10 max-h-[35vh] md:max-h-full">
       
       {/* Header */}
       <div>
@@ -66,7 +66,7 @@ export function CalendarFilterSidebar({ filters, setFilters }) {
             <LayoutGrid size={14} /> Departments
           </h3>
         </div>
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-row flex-wrap md:flex-col gap-2 md:gap-1.5">
           <button 
             onClick={() => setDepartmentFilter('ALL')}
             className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold transition-all ${(!filters.department_id || filters.department_id === 'ALL') ? 'bg-slate-800 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'}`}
@@ -97,7 +97,7 @@ export function CalendarFilterSidebar({ filters, setFilters }) {
             <Filter size={14} /> Event Types
           </h3>
         </div>
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-row flex-wrap md:flex-col gap-2 md:gap-1.5">
           {eventTypes.map(type => {
             const isActive = filters.event_types?.includes(type.code);
             return (

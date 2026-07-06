@@ -446,7 +446,7 @@ export default function Tasks() {
              const colTasks = filteredAndSortedTasks.filter(t => (t.status || 'To Do').toLowerCase() === status.toLowerCase());
              const statusConfig = getStatusConfig(status);
              return (
-               <div key={status} className="flex flex-col w-[320px] shrink-0 rounded-[24px] flex-1 max-w-[360px] bg-slate-50/40 ring-1 ring-slate-200/50">
+               <div key={status} className="flex flex-col w-[85vw] sm:w-[320px] shrink-0 rounded-[24px] flex-1 max-w-[85vw] sm:max-w-[360px] bg-slate-50/40 ring-1 ring-slate-200/50">
                  <div className="px-5 py-4 flex items-center justify-between">
                    <div className="flex items-center gap-2 font-extrabold text-slate-800 text-[12px] uppercase tracking-wider">
                      {statusConfig.icon} {status} 
@@ -565,7 +565,7 @@ export default function Tasks() {
     };
 
     return (
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl min-h-[700px] fc-premium-theme animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl min-h-[500px] md:min-h-[700px] fc-premium-theme animate-in fade-in slide-in-from-bottom-4 duration-500">
         <FullCalendar
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
@@ -717,7 +717,7 @@ export default function Tasks() {
 
         <div className="flex flex-col gap-3 items-end">
           {/* View Toggle */}
-          <div className="flex items-center bg-slate-100/50 p-1 rounded-[14px] shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] border border-slate-200/40">
+          <div className="flex flex-wrap items-center bg-slate-100/50 p-1 rounded-[14px] shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] border border-slate-200/40">
             {[
               { id: 'list', icon: <ListIcon size={16} />, label: 'List' },
               { id: 'board', icon: <KanbanSquare size={16} />, label: 'Board' },
@@ -847,7 +847,7 @@ export default function Tasks() {
                        <p className="text-slate-400 text-[13px] font-bold">No tasks here</p>
                      </div>
                    ) : (
-                     <div className="bg-white border border-slate-200/60 rounded-2xl shadow-sm ring-1 ring-slate-900/5 overflow-visible">
+                     <div className="bg-white border border-slate-200/60 rounded-2xl shadow-sm ring-1 ring-slate-900/5 overflow-x-auto min-w-full"><div className="min-w-[800px]">
                        {groupTasks.map(task => {
                           const isDone = task.status?.toLowerCase() === 'done';
                           const prioConfig = getPriorityConfig(task.priority);
@@ -983,7 +983,7 @@ export default function Tasks() {
                             </div>
                           );
                        })}
-                     </div>
+                     </div></div>
                    )}
                  </div>
                );

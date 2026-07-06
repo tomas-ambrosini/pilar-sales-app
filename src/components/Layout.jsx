@@ -98,6 +98,21 @@ export default function Layout() {
     }
   }, [isSidebarCollapsed]);
 
+  // Auto-collapse sidebar on tablet screens to save horizontal space
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024 && window.innerWidth >= 768) {
+        setIsSidebarCollapsed(true);
+      }
+    };
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', handleResize);
+      handleResize(); // Call initially
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
+
   useEffect(() => {
     isMessagesOpenRef.current = isMessagesOpen;
   }, [isMessagesOpen]);

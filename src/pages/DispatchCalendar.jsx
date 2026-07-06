@@ -562,7 +562,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                                        </div>
                                    )}
                                    {unassignedQueue.map((j, i) => (
-                                       <div key={j.id} className="w-[260px] shrink-0">
+                                       <div key={j.id} className="w-[85vw] sm:w-[260px] shrink-0">
                                           <JobCard job={j} index={i} />
                                        </div>
                                    ))}

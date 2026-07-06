@@ -205,7 +205,7 @@ export default function ExecutiveAnalytics() {
                 {/* Main Revenue Chart */}
                 <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
                     <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2"><TrendingUp size={18} className="text-slate-400"/> Revenue Trajectory (Trailing 6 Mos)</h3>
-                    <div className="h-[300px]">
+                    <div className="w-full h-64 sm:h-80">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={historicalData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                 <defs>
@@ -230,7 +230,7 @@ export default function ExecutiveAnalytics() {
                 {/* Job Distribution Pie Chart */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col">
                     <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2"><Wrench size={18} className="text-slate-400"/> Job Category Breakdown</h3>
-                    <div className="flex-1 min-h-[250px]">
+                    <div className="flex-1 w-full h-64 sm:h-80">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
