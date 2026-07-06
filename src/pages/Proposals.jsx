@@ -645,8 +645,8 @@ ${equipmentNotes}
       )}
       <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
           
-          <div className="shrink-0 p-4 border-b border-slate-100 flex justify-between gap-2 overflow-x-auto bg-slate-50 custom-scrollbar">
-             <div className="flex gap-2">
+          <div className="shrink-0 p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between gap-4 md:gap-2 overflow-x-auto bg-slate-50 custom-scrollbar hide-scrollbar-on-mobile">
+             <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1 md:pb-0 min-w-max">
                 {['All', 'Lead', 'Draft', 'Sent', 'Approved', 'Pending Void', 'Voided', 'Lost'].map(mode => (
                     <button 
                        key={mode} 
@@ -657,7 +657,7 @@ ${equipmentNotes}
                     </button>
                 ))}
              </div>
-             <div className="flex gap-2 shrink-0 items-center">
+             <div className="flex gap-2 shrink-0 items-center overflow-x-auto hide-scrollbar pb-1 md:pb-0">
                  {embedded && (
                      <button 
                          onClick={() => { setWizardConfig(null); setShowWizard(true); }}
@@ -906,20 +906,20 @@ ${equipmentNotes}
                     ) : (
                     <div className="overflow-x-auto">
                  {loading ? (
-                   <table className="w-full text-left border-collapse">
+                   <table className="w-full text-left border-collapse min-w-[600px]">
                      <thead>
-                       <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                         <th className="p-4 px-6 font-medium text-left">Customer / ID</th>
-                         <th className="p-4 px-6 font-medium text-center">Status</th>
-                         <th className="p-4 px-6 font-medium text-left">Est. Value</th>
-                         <th className="p-4 px-6 font-medium text-center hidden lg:table-cell">Rep Owner</th>
-                         <th className="p-4 px-6 font-medium text-right">Actions</th>
+                       <tr className="bg-slate-50/50 border-b border-slate-200 text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider">
+                         <th className="p-3 px-4 md:p-4 md:px-6 font-medium text-left">Customer / ID</th>
+                         <th className="p-3 px-4 md:p-4 md:px-6 font-medium text-center">Status</th>
+                         <th className="p-3 px-4 md:p-4 md:px-6 font-medium text-left">Est. Value</th>
+                         <th className="p-3 px-4 md:p-4 md:px-6 font-medium text-center hidden lg:table-cell">Rep Owner</th>
+                         <th className="p-3 px-4 md:p-4 md:px-6 font-medium text-right">Actions</th>
                        </tr>
                      </thead>
                      <tbody className="divide-y divide-slate-100">
                        {[1, 2, 3, 4, 5].map((i) => (
                          <tr key={i} className="animate-pulse">
-                           <td className="p-4 px-6">
+                           <td className="p-3 px-4 md:p-4 md:px-6">
                              <div className="flex items-center gap-4">
                                <div className="w-10 h-10 rounded-full bg-slate-200 shrink-0"></div>
                                <div className="flex flex-col">
@@ -928,10 +928,10 @@ ${equipmentNotes}
                                </div>
                              </div>
                            </td>
-                           <td className="p-4 px-6">
+                           <td className="p-3 px-4 md:p-4 md:px-6">
                              <div className="h-6 bg-slate-200 rounded-md w-20"></div>
                            </td>
-                           <td className="p-4 px-6">
+                           <td className="p-3 px-4 md:p-4 md:px-6">
                              <div className="h-4 bg-slate-200 rounded w-24 mb-1.5"></div>
                              <div className="h-3 bg-slate-200 rounded w-16"></div>
                            </td>
@@ -949,14 +949,14 @@ ${equipmentNotes}
                      </tbody>
                    </table>
                  ) : (
-                 <table className="w-full text-left border-collapse">
+                 <table className="w-full text-left border-collapse min-w-[600px]">
                    <thead>
-                     <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                       <th className="p-4 px-6 font-medium text-left">Customer / ID</th>
-                       <th className="p-4 px-6 font-medium text-center">Status</th>
-                       <th className="p-4 px-6 font-medium text-left">Est. Value</th>
-                       <th className="p-4 px-6 font-medium text-center hidden lg:table-cell">Rep Owner</th>
-                       <th className="p-4 px-6 font-medium text-right">Actions</th>
+                     <tr className="bg-slate-50/50 border-b border-slate-200 text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider">
+                       <th className="p-3 px-4 md:p-4 md:px-6 font-medium text-left">Customer / ID</th>
+                       <th className="p-3 px-4 md:p-4 md:px-6 font-medium text-center">Status</th>
+                       <th className="p-3 px-4 md:p-4 md:px-6 font-medium text-left">Est. Value</th>
+                       <th className="p-3 px-4 md:p-4 md:px-6 font-medium text-center hidden lg:table-cell">Rep Owner</th>
+                       <th className="p-3 px-4 md:p-4 md:px-6 font-medium text-right">Actions</th>
                      </tr>
                    </thead>
                    <tbody className="divide-y divide-slate-100">
@@ -980,7 +980,7 @@ ${equipmentNotes}
                           <React.Fragment key={proposal.id}>
                           <tr className="group bg-white hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleRowClick(proposal)}>
                             {/* COL 1: Customer & Date */}
-                            <td className="p-4 px-6">
+                            <td className="p-3 px-4 md:p-4 md:px-6">
                               <div className="flex items-center gap-4 min-w-[250px]">
                                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-slate-600 bg-slate-100 shrink-0">
                                     {proposal.customer?.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'C'}

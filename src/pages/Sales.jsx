@@ -275,35 +275,36 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
         {/* Header Block */}
         {!isEmbedded && (
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0 z-10">
-            <div>
-                <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3 mb-1">
+            <div className="w-full md:w-auto">
+                <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3 mb-3 md:mb-1">
                     <div className="bg-emerald-100 text-emerald-600 p-2.5 rounded-2xl shadow-inner border border-emerald-200">
                         <Zap size={24} strokeWidth={2.5}/>
                     </div>
                     Sales Hub
                 </h1>
-                <div className="flex bg-slate-200/50 p-1 rounded-xl w-fit ml-1 mt-2 border border-slate-200/80">
-                    <button 
-                        onClick={() => setActiveTab('pipeline')} 
-                        className={`px-5 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'pipeline' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-                        Pipeline
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('proposals')} 
-                        className={`px-5 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'proposals' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-                        Proposals
-                    </button>
+                <div className="flex flex-col sm:flex-row gap-2 w-full">
+                    <div className="flex bg-slate-200/50 p-1 rounded-xl w-full sm:w-fit border border-slate-200/80">
+                        <button 
+                            onClick={() => setActiveTab('pipeline')} 
+                            className={`flex-1 sm:flex-none px-5 py-2 sm:py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'pipeline' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                            Pipeline
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('proposals')} 
+                            className={`flex-1 sm:flex-none px-5 py-2 sm:py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'proposals' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                            Proposals
+                        </button>
+                    </div>
+                    
+                    {[ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER].includes(activeRole) && (
+                        <div className="flex bg-white/80 p-1 rounded-xl border border-slate-200/60 shadow-sm w-full sm:w-fit">
+                           <button onClick={() => setPipelineFilter('All Deals')} className={`flex-1 sm:flex-none px-4 py-2 sm:py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'All Deals' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>All Deals</button>
+                           <button onClick={() => setPipelineFilter('My Deals')} className={`flex-1 sm:flex-none px-4 py-2 sm:py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'My Deals' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-500 hover:text-primary-600 hover:bg-primary-50'}`}>My Deals</button>
+                        </div>
+                    )}
                 </div>
             </div>
-            
-            {[ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER].includes(activeRole) && (
-                <div className="flex items-center gap-2 bg-white/80  p-1.5 rounded-2xl border border-slate-200/60 shadow-sm">
-                   <button onClick={() => setPipelineFilter('All Deals')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'All Deals' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>All Deals</button>
-                   <button onClick={() => setPipelineFilter('My Deals')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${pipelineFilter === 'My Deals' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-500 hover:text-primary-600 hover:bg-primary-50'}`}>My Deals</button>
-                </div>
-            )}
         </div>
-
         )}
 
         {activeTab === 'proposals' ? (
