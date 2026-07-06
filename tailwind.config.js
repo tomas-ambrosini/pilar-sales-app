@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  safelist: ['lg:hidden', 'lg:block'],
   theme: {
     extend: {
        colors: {
