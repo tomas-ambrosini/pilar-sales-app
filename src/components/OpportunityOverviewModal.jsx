@@ -549,7 +549,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                 </div>
 
                 {/* Right Panel: Unified Timeline */}
-                <div className="w-full lg:w-[50%] xl:w-[55%] flex flex-col h-full lg:h-full bg-white relative shrink-0">
+                <div className="w-full lg:w-[50%] xl:w-[55%] flex flex-col min-h-[500px] lg:min-h-0 lg:h-full bg-white relative shrink-0">
                     <div className="p-4 border-b border-slate-100 bg-white z-10 shadow-sm flex items-center justify-between">
                         <h3 className="font-black text-slate-800 flex items-center gap-2 tracking-tight">
                             <History size={18} className="text-primary-600" /> Unified Timeline
