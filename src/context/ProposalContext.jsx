@@ -48,10 +48,20 @@ export function ProposalProvider({ children }) {
             if (usersData) usersData.forEach(u => userMap[u.id] = u);
 
             let allData = data || [];
-            allData = allData.map(p => ({
-                ...p,
-                user_profiles: userMap[p.created_by] || null
-            }));
+            
+            if (!error && data) {
+                const enriched = data.map(p => {
+                    let profile = userMap[p.created_by];
+                    if (!profile && p.created_by === user?.id) {
+                        profile = { full_name: user?.user_metadata?.full_name || 'Me (Current User)' };
+                    }
+                    return {
+                        ...p,
+                        user_profiles: profile || { full_name: 'Unassigned' }
+                    };
+                });
+                allData = enriched;
+            }
             
             // ONE-TIME FIX for Orphaned Proposals that don't have an Opportunity
             if (user?.role === 'SUPER_ADMIN') {
