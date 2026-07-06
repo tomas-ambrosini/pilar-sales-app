@@ -308,7 +308,7 @@ export default function DispatchCalendar({ isSubView = false }) {
    };
    const currentBlocks = viewMode === 'day' ? getFilteredTimeBlocks() : TIME_BLOCKS;
 
-   const JobCard = ({ job, index }) => {
+   const JobCard = ({ job, index, compact }) => {
       const isService = job.__type === 'SERVICE';
       const associatedProposal = proposals?.find(p => p.proposal_data?.associated_opportunity_id === job.id || p.associated_opportunity_id === job.id);
       
@@ -356,7 +356,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                {...provided.draggableProps}
                {...provided.dragHandleProps}
                onClick={() => setInspectingJob(job)}
-               className={`w-full min-w-0 p-3.5 shrink-0 rounded-[16px] flex flex-col transition-all duration-300 group select-none cursor-pointer overflow-hidden bg-white
+               className={`w-full min-w-0 ${compact ? 'p-2' : 'p-3.5'} shrink-0 rounded-[16px] flex flex-col transition-all duration-300 group select-none cursor-pointer overflow-hidden bg-white
                   ${snapshot.isDragging ? 'shadow-2xl z-50 ring-2 ring-primary-400 scale-[1.02]' : 'hover:shadow-lg hover:-translate-y-0.5 hover:ring-slate-300 shadow-sm ring-1 ring-slate-200/60'}
                `}
                style={
@@ -365,11 +365,13 @@ export default function DispatchCalendar({ isSubView = false }) {
                    : {}
                }
             >
-               <div className="flex justify-between items-start mb-3 gap-3">
+               <div className={`flex justify-between items-start gap-3 ${compact ? '' : 'mb-3'}`}>
                   <div className="flex items-center gap-2.5 w-full min-w-0">
-                      <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 font-black text-[10px] shrink-0 shadow-inner">
-                         {initials}
-                      </div>
+                      {!compact && (
+                          <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 font-black text-[10px] shrink-0 shadow-inner">
+                             {initials}
+                          </div>
+                      )}
                       <div className="flex flex-col min-w-0 flex-1">
                          <span className="font-black text-slate-800 text-[13px] leading-tight truncate">{clientName}</span>
                          <span className="text-[9px] font-bold text-slate-400 mt-0.5 flex items-center gap-1.5 w-full min-w-0 truncate">
@@ -380,22 +382,24 @@ export default function DispatchCalendar({ isSubView = false }) {
                   <div className={`w-2 h-2 mt-1.5 rounded-full shrink-0 shadow-sm border border-white ring-2 ${job.urgency_level === 'High' ? 'bg-red-500 ring-red-100' : job.urgency_level === 'Medium' ? 'bg-amber-500 ring-amber-100' : 'bg-slate-300 ring-slate-100'}`}></div>
                </div>
                
-               <div className="bg-slate-50/80 rounded-xl p-2.5 border border-slate-100/80 flex flex-col gap-2 mt-auto">
-                   <div className="flex justify-between items-center w-full">
-                       <span className={`text-[9px] font-black uppercase tracking-widest border px-1.5 py-0.5 rounded truncate max-w-[65%] ${tagColor}`}>
-                           {systemSummary}
-                       </span>
-                       <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1 truncate"><MapPin size={10} className="shrink-0 text-slate-400"/> {city}</span>
+               {!compact && (
+                   <div className="bg-slate-50/80 rounded-xl p-2.5 border border-slate-100/80 flex flex-col gap-2 mt-auto">
+                       <div className="flex justify-between items-center w-full">
+                           <span className={`text-[9px] font-black uppercase tracking-widest border px-1.5 py-0.5 rounded truncate max-w-[65%] ${tagColor}`}>
+                               {systemSummary}
+                           </span>
+                           <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1 truncate"><MapPin size={10} className="shrink-0 text-slate-400"/> {city}</span>
+                       </div>
+                       {job.scheduled_time_block && (
+                          <div className="flex mt-1">
+                              <span className="w-full text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-100/50 border border-emerald-200/50 px-2 py-1.5 rounded-lg flex items-center justify-center gap-1.5">
+                                  <Clock size={12} strokeWidth={2.5}/>
+                                  {job.scheduled_time_block}
+                              </span>
+                          </div>
+                       )}
                    </div>
-                   {job.scheduled_time_block && (
-                      <div className="flex mt-1">
-                          <span className="w-full text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-100/50 border border-emerald-200/50 px-2 py-1.5 rounded-lg flex items-center justify-center gap-1.5">
-                              <Clock size={12} strokeWidth={2.5}/>
-                              {job.scheduled_time_block}
-                          </span>
-                      </div>
-                   )}
-               </div>
+               )}
             </div>
          )}
       </Draggable>
@@ -469,7 +473,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                     <div className="flex-1 min-h-0 min-w-0 bg-white relative">
                                {viewMode === 'day' ? (
                                     // DAY VIEW (Time Blocks on X, Crews on Y)
-                                    <div className="w-full h-full overflow-auto grid [--crew-col:120px] md:[--crew-col:220px] [--time-col:140px] md:[--time-col:180px]" style={{ gridTemplateColumns: `var(--crew-col) repeat(${currentBlocks.length}, minmax(var(--time-col), 1fr))`, gridTemplateRows: `48px repeat(${crews.length}, minmax(150px, 1fr))` }}>
+                                    <div className="w-full h-full overflow-auto grid [--crew-col:120px] md:[--crew-col:220px] [--time-col:140px] md:[--time-col:180px]" style={{ gridTemplateColumns: `var(--crew-col) repeat(${currentBlocks.length}, minmax(var(--time-col), 1fr))`, gridTemplateRows: `48px repeat(${crews.length}, minmax(110px, 1fr))` }}>
                                         <div className="sticky top-0 left-0 z-30 bg-white border-b border-r border-slate-200 h-12"></div>
                                         
                                         {currentBlocks.map(block => (
@@ -494,10 +498,10 @@ export default function DispatchCalendar({ isSubView = false }) {
                                                             <Droppable droppableId={dropId}>
                                                                 {(provided, snapshot) => (
                                                                     <div ref={provided.innerRef} {...provided.droppableProps} 
-                                                                        className={`absolute inset-0 overflow-y-auto p-2 flex flex-col gap-2 transition-colors
+                                                                        className={`absolute inset-0 overflow-hidden p-2 flex flex-col gap-2 transition-colors
                                                                         ${snapshot.isDraggingOver ? 'bg-primary-50 ring-inset ring-2 ring-primary-200' : 'bg-transparent hover:bg-slate-50/50'}
                                                                         `}>
-                                                                        {cellJobs.map((j, i) => <JobCard key={j.id} job={j} index={i} />)}
+                                                                        {cellJobs.map((j, i) => <JobCard key={j.id} job={j} index={i} compact={true} />)}
                                                                         {provided.placeholder}
                                                                     </div>
                                                                 )}
@@ -510,7 +514,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                                     </div>
                                ) : (
                                    // WEEK VIEW (Days on X, Crews on Y)
-                                   <div className="w-full h-full overflow-auto grid [--crew-col:120px] md:[--crew-col:220px] [--time-col:200px] md:[--time-col:260px]" style={{ gridTemplateColumns: `var(--crew-col) repeat(7, minmax(var(--time-col), 1fr))`, gridTemplateRows: `48px repeat(${crews.length}, minmax(150px, 1fr))` }}>
+                                   <div className="w-full h-full overflow-auto grid [--crew-col:120px] md:[--crew-col:220px] [--time-col:200px] md:[--time-col:260px]" style={{ gridTemplateColumns: `var(--crew-col) repeat(7, minmax(var(--time-col), 1fr))`, gridTemplateRows: `48px repeat(${crews.length}, minmax(110px, 1fr))` }}>
                                        <div className="sticky top-0 left-0 z-30 bg-white border-b border-r border-slate-200 h-12"></div>
                                        {days.map(d => (
                                            <div key={d.isoStr} className="sticky top-0 z-20 h-12 flex flex-col items-center justify-center bg-white border-b border-r border-slate-200">
