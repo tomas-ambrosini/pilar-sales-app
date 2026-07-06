@@ -656,7 +656,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const uniqueAltBrands = uniquePrimaryBrands;
 
   return (
-    <div className="page-container fade-in flex flex-col pt-6">
+    <div className="page-container fade-in flex flex-col pt-2 md:pt-6 pb-6 overflow-x-hidden w-full max-w-[100vw]">
       <AnimatePresence>
       {showRestoreBanner && (
         <motion.div 
@@ -680,13 +680,13 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
         </motion.div>
       )}
       </AnimatePresence>
-      <div className="glass-panel p-4 md:p-8 max-w-[1000px] mx-auto w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-100 pb-4">
-          <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-             <Calculator className="text-primary-600"/> 
-             {isEditing ? `Editing Proposal: ${editingId}` : 'Estimate & Proposal Generator'}
+      <div className="glass-panel p-4 md:p-8 max-w-[1000px] mx-auto w-full md:w-[95%] lg:w-full min-w-0 overflow-hidden shadow-sm md:shadow-glass">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-slate-100 pb-4">
+          <h2 className="text-lg md:text-xl font-black text-slate-800 tracking-tight flex items-center gap-2 truncate">
+             <Calculator className="text-primary-600 shrink-0"/> 
+             <span className="truncate">{isEditing ? `Editing Proposal: ${editingId}` : 'Estimate & Proposal Generator'}</span>
           </h2>
-          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 w-full md:w-auto">
             {step > 0 && (
               <button 
                 className={`text-[11px] font-bold px-4 py-2.5 rounded-lg border shadow-sm transition-all flex items-center gap-2 ${
@@ -704,7 +704,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                 {manualSaveStatus === 'saving' ? 'Saving...' : manualSaveStatus === 'error' ? 'Save Failed! Try Again' : 'Save Draft & Exit'}
               </button>
             )}
-            <div className="flex gap-1.5">
+            <div className="flex flex-wrap justify-between sm:justify-start gap-1.5 sm:gap-2 w-full sm:w-auto">
              {[1,2,3,4,5,6].map(num => (
                 <button 
                   key={num} 
@@ -791,12 +791,12 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
         {step === 1 && (
           <div>
             <h3 className="font-bold mb-4 text-slate-700">1. Select or Create Customer Profile</h3>
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
-                <div className="flex justify-between items-end mb-2">
-                   <label className="text-xs font-bold text-slate-500 uppercase">Search Existing Clients</label>
-                   <a href="/customers" className="text-xs font-bold text-primary-600 hover:text-primary-700 underline">+ Form New Customer</a>
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 md:p-6 min-w-0">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-end mb-2 gap-1 sm:gap-0">
+                   <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase">Search Existing Clients</label>
+                   <a href="/customers" className="text-[10px] md:text-xs font-bold text-primary-600 hover:text-primary-700 underline">+ Form New Customer</a>
                 </div>
-                <select className="w-full border border-slate-300 rounded p-3 bg-white font-semibold text-slate-700 mb-6" value={selectedCustomerId} onChange={e => { setSelectedCustomerId(e.target.value); setSelectedLocationId(''); }}>
+                <select className="w-full max-w-full border border-slate-300 rounded p-3 bg-white font-semibold text-slate-700 mb-6 text-sm overflow-hidden text-ellipsis" value={selectedCustomerId} onChange={e => { setSelectedCustomerId(e.target.value); setSelectedLocationId(''); }}>
                   <option value="">-- Choose a Customer Profile --</option>
                   {customers.map(c => <option key={c.id} value={c.id}>{c.name} - {c.address}</option>)}
                 </select>
