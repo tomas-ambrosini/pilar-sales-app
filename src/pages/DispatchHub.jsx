@@ -229,34 +229,34 @@ export default function DispatchHub() {
                    <p className="page-subtitle text-slate-500">Intake calls, log leads, and manage crew routing schedules.</p>
                </div>
                
-               <div className="mt-6 flex gap-2 p-1.5 bg-slate-100/80 backdrop-blur-sm rounded-xl w-fit">
+               <div className="mt-6 flex gap-2 p-1.5 bg-slate-100/80 backdrop-blur-sm rounded-xl max-w-full overflow-x-auto hide-scrollbar">
                     <button 
                         onClick={() => setActiveTab('intake')} 
-                        className={`px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'intake' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
+                        className={`shrink-0 whitespace-nowrap px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'intake' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
                     >
                         <Plus size={16}/> Intake & Logging
                     </button>
                     <button 
                         onClick={() => setActiveTab('calendar')} 
-                        className={`px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'calendar' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
+                        className={`shrink-0 whitespace-nowrap px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'calendar' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
                     >
                         <CalendarClock size={16}/> Crew Routing
                     </button>
                     <button 
                         onClick={() => setActiveTab('map')} 
-                        className={`px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'map' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
+                        className={`shrink-0 whitespace-nowrap px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'map' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
                     >
                         <Map size={16}/> Live Map
                     </button>
                     <button 
                         onClick={() => setActiveTab('service')} 
-                        className={`px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'service' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
+                        className={`shrink-0 whitespace-nowrap px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'service' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
                     >
                         <Wrench size={16}/> Service Board
                     </button>
                     <button 
                         onClick={() => setActiveTab('sales')} 
-                        className={`px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'sales' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
+                        className={`shrink-0 whitespace-nowrap px-5 py-2.5 font-black text-sm rounded-lg transition-all flex items-center gap-2 ${activeTab === 'sales' ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'}`}
                     >
                         <ClipboardList size={16}/> Sales Pipeline
                     </button>
