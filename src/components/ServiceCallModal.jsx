@@ -273,9 +273,9 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                 </div>
             </div>
 
-            <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+            <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden min-h-0">
                 {/* Left Panel: Context & Logistics */}
-                <div className="w-full lg:w-[45%] bg-slate-50/50 lg:border-r border-slate-200 p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
+                <div className="w-full lg:w-[45%] bg-slate-50/50 lg:border-r border-slate-200 p-6 lg:overflow-y-auto custom-scrollbar flex flex-col gap-6 min-w-0 lg:min-h-0 shrink-0 lg:shrink">
                     
                     {/* Customer Profile */}
                     <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm transition-shadow hover:shadow-md">
@@ -398,8 +398,8 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                 </div>
 
                 {/* Right Panel: Notes & Actions */}
-                <div className="w-full lg:w-[55%] bg-slate-50 flex flex-col relative border-t lg:border-t-0 border-slate-200">
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-6 flex flex-col relative z-0">
+                <div className="w-full lg:w-[55%] bg-slate-50 flex flex-col h-auto lg:h-full relative border-t lg:border-t-0 border-slate-200 min-w-0 lg:min-h-0 shrink-0 lg:shrink">
+                    <div className="flex-1 lg:overflow-y-auto lg:min-h-0 custom-scrollbar p-6 flex flex-col relative z-0">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
                                 <AlertCircle size={16} className="text-purple-600" /> Issue & Dispatch Notes
