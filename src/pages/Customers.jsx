@@ -491,16 +491,16 @@ function PropertyDetailsCard({ location, index }) {
 
    return (
         <section className="detail-card glass-panel" style={{ marginBottom: '1rem' }}>
-          <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
-             <h2 className="card-title mb-0 flex items-center gap-2"><MapPin size={16} className="text-primary-500"/> Property {index}: <span className="text-slate-600 text-sm font-normal truncate">{location.street_address} {location.city && `, ${location.city}`}</span></h2>
+          <div className="flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4 mb-4 border-b border-slate-100 pb-2">
+             <h2 className="card-title mb-0 flex items-center gap-2 w-full"><MapPin size={16} className="text-primary-500 shrink-0"/> Property {index}: <span className="text-slate-600 text-sm font-normal truncate">{location.street_address} {location.city && `, ${location.city}`}</span></h2>
              {isEditing ? (
                  <div className="flex gap-2">
                     <button className="text-xs font-bold text-slate-500 hover:text-slate-700" onClick={() => setIsEditing(false)}>Cancel</button>
                     <button className="text-xs font-bold text-primary-600 hover:text-primary-700 bg-primary-50 px-2 py-1 rounded" onClick={handleSave}>Save Specs</button>
                  </div>
              ) : (
-                <div className="flex gap-2">
-                   <button className="text-xs font-bold text-white hover:bg-primary-700 bg-primary-600 px-3 py-1.5 rounded flex items-center gap-1 transition-all shadow-sm" onClick={() => navigate(`/customers/${id}/address/${location.id}`)}>
+                <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                   <button className="text-xs font-bold text-white hover:bg-primary-700 bg-primary-600 px-3 py-1.5 rounded flex items-center justify-center gap-1 transition-all shadow-sm flex-1 md:flex-none min-w-[180px]" onClick={() => navigate(`/customers/${id}/address/${location.id}`)}>
                        View Lifecycle & Equipment <ChevronRight size={14}/>
                    </button>
                    <button className="text-xs font-bold text-slate-400 hover:text-primary-500 flex items-center gap-1" onClick={() => setIsEditing(true)}>
@@ -587,12 +587,12 @@ function PropertyDetailsCard({ location, index }) {
                   </div>
                )}
                 
-                <div className="mt-4 pt-3 border-t border-slate-100 flex gap-4">
+                <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row gap-3 sm:gap-4">
                    <div className="flex flex-col">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Installed Units</span>
                       <span className="text-sm font-black text-slate-700">{location.property_details?.units?.length || 0} Assets</span>
                    </div>
-                   <div className="flex flex-col border-l border-slate-200 pl-4">
+                   <div className="flex flex-col sm:border-l border-slate-200 sm:pl-4">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Lifecycle</span>
                       <span className="text-sm font-black text-primary-600">Click View to see Proposals & Work Orders</span>
                    </div>
@@ -725,7 +725,7 @@ function CustomerDetail() {
                      {customer.name.charAt(0)}
                   </div>
                   <div>
-                     <div className="flex items-center gap-4 mb-2">
+                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-3">
                          <h1 className="text-3xl font-black text-white tracking-tight">{customer.name}</h1>
                          <button 
                              onClick={() => updateCustomer(customer.id, { active_maintenance_agreement: !customer.active_maintenance_agreement })}
@@ -743,7 +743,7 @@ function CustomerDetail() {
                      )}
                   </div>
                </div>
-               <div className="flex gap-3">
+               <div className="flex flex-wrap gap-2 sm:gap-3 w-full md:w-auto">
                   <button onClick={() => {
                       setEditFormData({
                           name: customer?.name || '',
@@ -755,8 +755,8 @@ function CustomerDetail() {
                       setIsEditModalOpen(true);
                   }} className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center gap-2 font-bold" title="Edit Customer"><Edit2 size={16} /></button>
                   <a href={`tel:${customer.phone}`} className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center gap-2 font-bold" title="Call Customer"><Phone size={16} /></a>
-                  <a href={`mailto:${customer.email}`} className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center gap-2 font-bold" title="Email Customer"><Mail size={16} /></a>
-                  <button className="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center gap-2 font-bold" onClick={() => setIsDeleteModalOpen(true)} title="Archive Customer"><Trash2 size={16} /></button>
+                  <a href={`mailto:${customer.email}`} className="flex-1 md:flex-none justify-center bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center gap-2 font-bold" title="Email Customer"><Mail size={16} /></a>
+                  <button className="flex-1 md:flex-none justify-center bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center gap-2 font-bold" onClick={() => setIsDeleteModalOpen(true)} title="Archive Customer"><Trash2 size={16} /></button>
                </div>
             </div>
          </div>
