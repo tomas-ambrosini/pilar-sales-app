@@ -138,8 +138,12 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
           }
 
           let normalizedStatus = data.status;
-          if (normalizedStatus === 'Working' || normalizedStatus === 'En Route') normalizedStatus = PIPELINE_STATES.SCHEDULED;
-          else if (normalizedStatus === 'Completed') normalizedStatus = PIPELINE_STATES.COMPLETED;
+          if (typeof normalizedStatus === 'string') {
+              normalizedStatus = normalizedStatus.toUpperCase();
+              if (normalizedStatus === 'LEAD' || normalizedStatus === 'NEW LEAD') normalizedStatus = PIPELINE_STATES.NEW_LEAD;
+          }
+          if (normalizedStatus === 'WORKING' || normalizedStatus === 'EN ROUTE') normalizedStatus = PIPELINE_STATES.SCHEDULED;
+          else if (normalizedStatus === 'COMPLETED') normalizedStatus = PIPELINE_STATES.COMPLETED;
           
           if (!PIPELINE_COLUMNS.find(c => c.id === normalizedStatus)) {
               if (normalizedStatus !== PIPELINE_STATES.VOIDED && normalizedStatus !== PIPELINE_STATES.PENDING_VOID) {
@@ -199,9 +203,13 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
 
         // Normalize Technician Field Statuses back to Sales Pipeline Columns
         let normalizedStatus = opp.status;
-        if (normalizedStatus === 'Working' || normalizedStatus === 'En Route') {
+        if (typeof normalizedStatus === 'string') {
+            normalizedStatus = normalizedStatus.toUpperCase();
+            if (normalizedStatus === 'LEAD' || normalizedStatus === 'NEW LEAD') normalizedStatus = PIPELINE_STATES.NEW_LEAD;
+        }
+        if (normalizedStatus === 'WORKING' || normalizedStatus === 'EN ROUTE') {
             normalizedStatus = PIPELINE_STATES.SCHEDULED;
-        } else if (normalizedStatus === 'Completed') {
+        } else if (normalizedStatus === 'COMPLETED') {
             normalizedStatus = PIPELINE_STATES.COMPLETED;
         }
 
