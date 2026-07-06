@@ -63,15 +63,23 @@ body, html {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow: hidden;
   width: 100%;
-  position: relative;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
 #root {
-  overflow-x: hidden;
+  overflow: hidden;
   width: 100%;
-  position: relative;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 a {
