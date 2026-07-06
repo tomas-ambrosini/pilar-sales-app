@@ -37,6 +37,17 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
      return searchParams.get('tab') || (searchParams.get('action') === 'view_sale' ? 'pipeline' : searchParams.get('action') ? 'proposals' : 'pipeline');
   });
 
+  const proposalsMap = React.useMemo(() => {
+      const map = {};
+      if (Array.isArray(proposals)) {
+          proposals.forEach(p => {
+              const oppId = p.associated_opportunity_id || p.proposal_data?.associated_opportunity_id;
+              if (oppId) map[oppId] = p;
+          });
+      }
+      return map;
+  }, [proposals]);
+
   useEffect(() => {
      const tab = searchParams.get('tab');
      const action = searchParams.get('action');
@@ -58,21 +69,104 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
      }
   }, [searchParams, pipeline]);
 
+  // Reference to hold active filters to prevent stale closures in realtime events
+  const activeFiltersRef = React.useRef({ activeRole, user, pipelineFilter, ROLES });
+  useEffect(() => {
+      activeFiltersRef.current = { activeRole, user, pipelineFilter, ROLES };
+  }, [activeRole, user, pipelineFilter, ROLES]);
+
+  useEffect(() => {
+     // Decouple user profiles to only fetch once
+     const loadUsers = async () => {
+         const { data: usersData } = await supabase.from('user_profiles').select('id, full_name, avatar_url');
+         if (usersData) setTeamMembers(usersData);
+     };
+     loadUsers();
+  }, []);
+
   useEffect(() => {
     if (activeTab === 'pipeline') {
         fetchOpportunities();
     }
     const channel = supabase.channel('realtime_pipeline')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'opportunities' }, () => fetchOpportunities())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'opportunities' }, (payload) => {
+          if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+              fetchSingleOpportunity(payload.new.id);
+          } else if (payload.eventType === 'DELETE') {
+              setPipeline(prev => {
+                  const next = { ...prev };
+                  Object.keys(next).forEach(col => {
+                      next[col] = next[col].filter(j => j.id !== payload.old.id);
+                  });
+                  return next;
+              });
+          }
+      })
       .subscribe();
     return () => supabase.removeChannel(channel);
-  }, [pipelineFilter, activeTab]);
+  }, [activeTab]);
+
+  const fetchSingleOpportunity = async (id) => {
+      const { data, error } = await supabase
+        .from('opportunities')
+        .select(`
+          id, status, urgency_level, issue_description, created_at, updated_at, scheduled_date, scheduled_time_block,
+          proposal_data, household_id, assigned_salesperson_id,
+          households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
+        `)
+        .eq('id', id).single();
+        
+      if (error || !data) return;
+      
+      setPipeline(prev => {
+          const filters = activeFiltersRef.current;
+          const isManager = [filters.ROLES.ADMIN, filters.ROLES.MANAGER, filters.ROLES.DISPATCHER].includes(filters.activeRole);
+          const currentFilter = isManager ? filters.pipelineFilter : 'My Deals';
+
+          if (currentFilter === 'My Deals' && data.assigned_salesperson_id !== filters.user?.id) {
+              const next = { ...prev };
+              Object.keys(next).forEach(col => { next[col] = next[col].filter(j => j.id !== id); });
+              return next;
+          }
+          if (data.proposal_data?.type === 'SERVICE') return prev;
+          
+          let targetAddress = null;
+          if (Array.isArray(data.households?.addresses) && data.households.addresses.length > 0) {
+              if (data.service_address_id) targetAddress = data.households.addresses.find(a => a.id === data.service_address_id);
+              if (!targetAddress) targetAddress = data.households.addresses.find(a => a.is_primary_residence) || data.households.addresses[0];
+              data.households.addresses = [targetAddress];
+          }
+
+          let normalizedStatus = data.status;
+          if (normalizedStatus === 'Working' || normalizedStatus === 'En Route') normalizedStatus = PIPELINE_STATES.SCHEDULED;
+          else if (normalizedStatus === 'Completed') normalizedStatus = PIPELINE_STATES.COMPLETED;
+          
+          if (!PIPELINE_COLUMNS.find(c => c.id === normalizedStatus)) {
+              if (normalizedStatus !== PIPELINE_STATES.VOIDED && normalizedStatus !== PIPELINE_STATES.PENDING_VOID) {
+                  normalizedStatus = PIPELINE_STATES.NEW_LEAD;
+              } else {
+                  // Voided, just remove from view
+                  const next = { ...prev };
+                  Object.keys(next).forEach(col => { next[col] = next[col].filter(j => j.id !== id); });
+                  return next;
+              }
+          }
+
+          const next = { ...prev };
+          Object.keys(next).forEach(col => {
+              next[col] = (next[col] || []).filter(j => j.id !== id);
+          });
+          
+          next[normalizedStatus] = next[normalizedStatus] || [];
+          next[normalizedStatus].push(data);
+          next[normalizedStatus].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          
+          return next;
+      });
+  };
 
   const fetchOpportunities = async () => {
     try {
-      const { data: usersData } = await supabase.from('user_profiles').select('id, full_name, avatar_url');
-      if (usersData) setTeamMembers(usersData);
-
       const { data, error } = await supabase
         .from('opportunities')
         .select(`
@@ -296,7 +390,7 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                     
                                     const estValue = getEstValue(job.proposal_data);
                                     
-                                    const associatedProposal = proposals.find(p => p.associated_opportunity_id === job.id || p.proposal_data?.associated_opportunity_id === job.id);
+                                    const associatedProposal = proposalsMap[job.id];
                                     const displayId = associatedProposal ? formatQuoteId(associatedProposal) : formatQuoteId(job);
                                     // Fallback to current user if their profile isn't in teamMembers yet (e.g. legacy dev environment)
                                     let assignedRep = job.assigned_salesperson_id ? teamMembers.find(m => m.id === job.assigned_salesperson_id) : null;
