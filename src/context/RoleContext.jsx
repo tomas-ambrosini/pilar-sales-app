@@ -33,7 +33,7 @@ export const DEPARTMENTS = {
 export const RoleProvider = ({ children }) => {
   const { user } = useAuth();
   
-  let mappedRole = user?.role || ROLES.FIELD_WORKER;
+  let mappedRole = typeof user?.role === 'string' ? user.role.trim().toUpperCase() : (user?.role || ROLES.FIELD_WORKER);
   
   // Safe mapping for legacy roles in DB
   if (mappedRole === 'ADMIN') mappedRole = ROLES.SUPER_ADMIN;
@@ -41,7 +41,7 @@ export const RoleProvider = ({ children }) => {
   if (mappedRole === 'TECHNICIAN' || mappedRole === 'SUBCONTRACTOR') mappedRole = ROLES.FIELD_WORKER;
 
   const activeRole = mappedRole;
-  const activeDepartment = user?.department || DEPARTMENTS.SERVICE;
+  const activeDepartment = typeof user?.department === 'string' ? user.department.trim().toUpperCase() : (user?.department || DEPARTMENTS.SERVICE);
 
   // Access Control Helpers
   const canEditSystemSettings = () => activeRole === ROLES.SUPER_ADMIN;
