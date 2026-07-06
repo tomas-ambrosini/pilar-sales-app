@@ -106,6 +106,12 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
     return () => supabase.removeChannel(channel);
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab === 'pipeline') {
+        fetchOpportunities();
+    }
+  }, [pipelineFilter]);
+
   const fetchSingleOpportunity = async (id) => {
       const { data, error } = await supabase
         .from('opportunities')
