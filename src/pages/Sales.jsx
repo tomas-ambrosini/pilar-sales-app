@@ -445,8 +445,6 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                                             return;
                                                         }
                                                         try {
-                                                            await PipelineController.startProposal(job.id, job.status);
-                                                            
                                                             const newDraft = await createDraft({
                                                                 customer: formatCustomerName(job.households?.household_name, 'Unknown Client'),
                                                                 amount: 0,
@@ -462,12 +460,14 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                                             });
 
                                                             if (newDraft && newDraft.id) {
+                                                                // Only advance pipeline state if the draft actually successfully created
+                                                                await PipelineController.startProposal(job.id, job.status);
                                                                 navigate(`/proposals?action=resume&id=${newDraft.id}`);
                                                             } else {
-                                                                toast.error('Failed to create draft.');
+                                                                toast.error('Failed to create draft. Pipeline state was not changed.');
                                                             }
                                                         } catch (err) {
-                                                            toast.error('Failed to transition lead.');
+                                                            toast.error('Failed to create draft and transition lead.');
                                                         }
                                                     }} className="text-[10px] font-black text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg transition-all shadow-sm shadow-primary-600/20 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
                                                         Start Quote <ArrowRight size={12} strokeWidth={3} />
@@ -528,8 +528,6 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
           onAction={async (job) => {
               if (job.status === 'NEW_LEAD') {
                   try {
-                      await PipelineController.startProposal(job.id, job.status);
-                      
                       const newDraft = await createDraft({
                           customer: job.households?.household_name || 'Unknown Client',
                           amount: 0,
@@ -545,6 +543,7 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                       });
 
                       if (newDraft && newDraft.id) {
+                          await PipelineController.startProposal(job.id, job.status);
                           navigate(`/proposals?action=resume&id=${newDraft.id}`);
                       } else {
                           toast.error('Failed to create draft.');

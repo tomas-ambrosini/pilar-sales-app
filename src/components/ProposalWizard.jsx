@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { computeCommission, getRetailFromBest, getFloorPrice } from '../utils/pricing';
+import { computeCommission, getRetailFromBest, getFloorPrice, calculateTierPrice } from '../utils/pricing';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useCustomers } from '../context/CustomerContext';
@@ -386,26 +386,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     const nontaxableLabor = activeAddons
        .filter(l => ['Labor', 'Install', 'Subcontract', 'Permit'].some(c => l.category?.toLowerCase()?.includes(c.toLowerCase())))
        .reduce((s, i) => s + (parseFloat(i.cost) || 0), 0);
-    
-    const taxRate = parseFloat(margins?.sales_tax) || 0.07;
-    // Fix logical OR bugs when margins are exactly 0
-    let targetMargin = margins?.good_margin !== undefined ? parseFloat(margins.good_margin) : 0.35;
-    if (tierType.toLowerCase() === 'better') targetMargin = margins?.better_margin !== undefined ? parseFloat(margins.better_margin) : 0.40;
-    if (tierType.toLowerCase() === 'best') targetMargin = margins?.best_margin !== undefined ? parseFloat(margins.best_margin) : 0.45;
-
-    const rawMaterialsTotal = parsedEquipCost + taxableMaterials;
-    // Labor is NOT subjected to sales tax in most jurisdictions
-    const taxAmount = rawMaterialsTotal * taxRate;
-    
-    // Core systemic change: Stop marking up labor! 
-    // Subcontractors/Labor should be flat pass-through to prevent $10k+ single-node blowouts
-    const serviceReserve = margins?.service_reserve !== undefined ? parseFloat(margins.service_reserve) : 0.05;
-    const markupMultiplier = 1.0 + targetMargin + serviceReserve;
-    
-    const markedUpMaterials = rawMaterialsTotal * markupMultiplier;
-    const grandTotal = markedUpMaterials + taxAmount + nontaxableLabor;
-    
-    return Math.max(Math.round(grandTotal), 0);
+       
+    return calculateTierPrice(parsedEquipCost, tierType, margins, taxableMaterials, nontaxableLabor);
   };
 
   const getSystemHardCostOnly = (sys, rawEquipCost) => {
@@ -1237,7 +1219,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                                
                                            const absoluteTotalFloor = floorCost * (1 + (margins.service_reserve || 0.05));
                                
-                                           const baselineCommBase = calculateSystemBaselineRetail(sys, track.tiers.best?.system_cost || raw, 'Best');
+                                           const baselineCommBase = calculateSystemBaselineRetail(sys, raw, tier.k.charAt(0).toUpperCase() + tier.k.slice(1));
                                            const baseComm = computeCommission(baselineRetail, getRetailFromBest(baselineCommBase));
                                            
                                            const finalPrice = baselineRetail;

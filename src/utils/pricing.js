@@ -40,8 +40,9 @@ export const computeCommission = (price, retail) => {
   if (discount >= 0.825) return price * 0.04; // 82.5% tier
   if (discount >= 0.80) return price * 0.03; // 80% tier
   if (discount >= 0.775) return price * 0.02; // 77.5% tier
-  // Floor at 75% – 1% commission
-  return price * 0.01;
+  if (discount >= 0.75) return price * 0.01; // Floor at 75%
+  // Anything below the 75% floor pays no commission
+  return 0;
 };
 
 /**
@@ -49,23 +50,29 @@ export const computeCommission = (price, retail) => {
  * This mirrors the existing calculateSalesPrice logic but is kept here for
  * centralisation. It can be imported wherever pricing is needed.
  */
-export const calculateTierPrice = (rawEquipCost, tierType, margins) => {
-  const taxableMaterials = 0; // placeholder – actual addons handled elsewhere
-  const nontaxableLabor = 0; // placeholder – actual addons handled elsewhere
-  
+export const calculateTierPrice = (rawEquipCost, tierType, margins, taxableAddonsCost = 0, nontaxableCost = 0) => {
   const taxRate = parseFloat(margins?.sales_tax) || 0.07;
-  // UI controls the markup multiplier dynamically.
+  const serviceReserve = parseFloat(margins?.service_reserve) || 0.05;
+  
+  // UI controls the margin dynamically
   let targetMargin = parseFloat(margins?.good_margin) || 0.30;
   if (tierType === 'Better') targetMargin = parseFloat(margins?.better_margin) || 0.30;
   if (tierType === 'Best') targetMargin = parseFloat(margins?.best_margin) || 0.30;
   
-  const rawMaterialsTotal = rawEquipCost + taxableMaterials;
-  const serviceReserve = parseFloat(margins?.service_reserve) || 0.05;
-  const markupMultiplier = 1.0 + targetMargin + serviceReserve;
+  // TRUE GROSS MARGIN MATH
+  // Retail = Cost / (1 - (Margin + Reserve))
+  const denominator = 1.0 - (targetMargin + serviceReserve);
+  // Failsafe in case margin is set > 100%
+  const safeDenominator = denominator > 0 ? denominator : 0.01; 
   
-  const markedUpMaterials = rawMaterialsTotal * markupMultiplier;
-  const taxAmount = markedUpMaterials * taxRate;
-  const grandTotal = markedUpMaterials + taxAmount + nontaxableLabor;
+  // Apply margin to both pools separately
+  const taxableRetail = (rawEquipCost + taxableAddonsCost) / safeDenominator;
+  const nontaxableRetail = nontaxableCost / safeDenominator;
+  
+  // Apply sales tax ONLY to the taxable pool
+  const taxAmount = taxableRetail * taxRate;
+  
+  const grandTotal = taxableRetail + nontaxableRetail + taxAmount;
   
   return Math.round(grandTotal);
 };

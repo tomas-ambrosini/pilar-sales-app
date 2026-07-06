@@ -555,7 +555,12 @@ ${equipmentNotes}
      }
 
      const discountMultiplier = appliedPromo ? (1 - (appliedPromo.discount_percent / 100)) : 1;
-     const finalAmount = tierData.salesPrice * discountMultiplier;
+     
+     const rawSalesPrice = isMulti 
+       ? systemsPayload.reduce((sum, sys) => sum + (parseFloat(sys.selectedTierData?.salesPrice) || 0), 0)
+       : (parseFloat(tierData?.salesPrice) || 0);
+       
+     const finalAmount = rawSalesPrice * discountMultiplier;
 
      const finalDbObj = { 
          status: 'Approved',

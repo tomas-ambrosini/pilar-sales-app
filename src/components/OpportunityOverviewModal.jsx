@@ -85,8 +85,12 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
 
     const handleSaveDispatchNotes = async () => {
         try {
+            // Mitigate JSONB overwrite race condition by fetching latest first
+            const { data: latest } = await supabase.from('opportunities').select('proposal_data').eq('id', job.id).single();
+            if (!latest) throw new Error("Could not find active job record.");
+
             const updatedProposalData = {
-                ...(job.proposal_data || {}),
+                ...(latest.proposal_data || {}),
                 dispatch_notes: editNotesText
             };
             const { error } = await supabase.from('opportunities').update({

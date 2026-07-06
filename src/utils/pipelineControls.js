@@ -69,64 +69,8 @@ async function executeTransition(jobId, currentState, targetState, additionalPay
           activityType = 'Job Completed';
           description = 'The installation/service team has marked this job as successfully completed.';
           
-          // --- AUTOMATIC UNIT CREATION ---
-          try {
-             const { data: prop } = await supabase.from('proposals').select('id, proposal_data, amount').eq('associated_opportunity_id', jobId).single();
-             const svcAddrId = opp.proposal_data?.service_address_id || opp.site_survey_data?.property_id || opp.site_survey_data?.service_address_id;
-             if (prop && (prop.proposal_data?.accepted_tier_data || prop.proposal_data?.systemTiers) && svcAddrId) {
-                 // Try to get tier data directly, or extract from first system tier
-                 let tierData = prop.proposal_data.accepted_tier_data;
-                 let systemName = "New System";
-                 if (!tierData && prop.proposal_data.systemTiers && prop.proposal_data.systemTiers.length > 0) {
-                     const sys = prop.proposal_data.systemTiers[0];
-                     systemName = sys.systemName || sys.name || systemName;
-                     const acceptedName = prop.proposal_data.accepted_tier_name || 'good';
-                     tierData = sys.tiers?.[acceptedName.toLowerCase()] || {};
-                 }
-                 
-                 if (tierData) {
-                     const { data: addrData } = await supabase.from('addresses').select('property_details').eq('id', svcAddrId).single();
-                     
-                     if (addrData) {
-                         const pd = addrData.property_details || {};
-                         const units = pd.units || [];
-                         const newUnitId = crypto.randomUUID();
-                         
-                         const specsText = [tierData.brand, tierData.tons ? tierData.tons + ' Ton' : null, tierData.seer ? tierData.seer + ' SEER' : null, tierData.series].filter(Boolean).join(' ');
-                         
-                         const installationDesc = `Installed new equipment per Proposal #${prop.id}.`;
-                         
-                         const isDuplicate = units.some(u => 
-                             u.history && u.history.some(h => h.description === installationDesc)
-                         );
-                         
-                         if (!isDuplicate) {
-                             units.push({
-                                 id: newUnitId,
-                                 unit_number: systemName,
-                                 system_type: tierData.type || "Split System",
-                                 description: specsText || "Specs not provided",
-                                 history: [{
-                                     id: crypto.randomUUID(),
-                                     date: new Date().toISOString(),
-                                     type: 'Installation',
-                                     description: installationDesc,
-                                     cost: prop.amount || 0,
-                                     technician: 'Operations Team'
-                                 }]
-                             });
-                             
-                             await supabase.from('addresses').update({ property_details: { ...pd, units } }).eq('id', svcAddrId);
-                             description += ` Successfully registered new unit '${systemName}' to the property records.`;
-                         } else {
-                             description += ` Unit '${systemName}' was already registered to the property (skipped duplication).`;
-                         }
-                     }
-                 }
-             }
-          } catch(err) {
-             console.error("Failed to auto-create unit from proposal:", err);
-          }
+          // --- AUTOMATIC UNIT CREATION REMOVED ---
+          // Per Phase 3 directive, Operations team must manually register units to ensure accuracy.
       } else if (targetState === PIPELINE_STATES.SENT && currentState === PIPELINE_STATES.PENDING_VOID) {
           activityType = 'Pipeline Reverted';
           description = 'Deal was moved back to the Active Proposals board.';
@@ -149,12 +93,22 @@ async function executeTransition(jobId, currentState, targetState, additionalPay
               console.error("Failed to append user name to audit log:", e);
           }
 
-          await supabase.from('activity_logs').insert({
+          const { error: logError } = await supabase.from('activity_logs').insert({
               household_id: opp.household_id,
               opportunity_id: jobId,
               activity_type: activityType,
               description: description
           });
+          
+          // ROLLBACK if the transaction fails partially
+          if (logError) {
+              console.error("Failed to insert activity log. Rolling back status to", currentState);
+              await supabase.from('opportunities').update({ 
+                  status: currentState,
+                  ...Object.fromEntries(Object.keys(additionalPayload).map(k => [k, opp[k] || null])) // Very simple pseudo-rollback for payload
+              }).eq('id', jobId);
+              throw new Error("Failed to log activity. Pipeline transition rolled back.");
+          }
       }
   }
   

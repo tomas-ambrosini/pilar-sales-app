@@ -6,11 +6,11 @@ import Modal from '../components/Modal';
 
 export default function FinancialSettings() {
     const [settings, setSettings] = useState({
-        good_margin: 0,
-        better_margin: 0,
-        best_margin: 0,
-        service_reserve: 0,
-        sales_tax: 0
+        good_margin: "0",
+        better_margin: "0",
+        best_margin: "0",
+        service_reserve: "0",
+        sales_tax: "0"
     });
     const [initialSettings, setInitialSettings] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -27,8 +27,15 @@ export default function FinancialSettings() {
             const { data, error } = await supabase.from('margin_settings').select('*').eq('id', 1).single();
             if (error) throw error;
             if (data) {
-                setSettings(data);
-                setInitialSettings(data);
+                const uiData = {
+                    good_margin: (data.good_margin * 100).toString(),
+                    better_margin: (data.better_margin * 100).toString(),
+                    best_margin: (data.best_margin * 100).toString(),
+                    service_reserve: (data.service_reserve * 100).toString(),
+                    sales_tax: (data.sales_tax * 100).toString()
+                };
+                setSettings(uiData);
+                setInitialSettings(uiData);
             }
         } catch (err) {
             console.error("Failed to load global financial policies:", err);
@@ -40,17 +47,9 @@ export default function FinancialSettings() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        // Parse raw integer/float and divide by 100 on save, but allow users to enter percentages normally!
-        // Actually, the database currently stores them as decimals (e.g. 0.35, 0.07).
-        // Best UX: Users type "35" into the box, we convert to 0.35 in state.
-        
-        let numericValue = parseFloat(value);
-        if (isNaN(numericValue) || numericValue < 0) numericValue = 0;
-        
-        // Map UI 100% scale back to 1.0 DB decimal Scale
         setSettings(prev => ({
             ...prev,
-            [name]: numericValue / 100
+            [name]: value
         }));
     };
 
@@ -58,10 +57,14 @@ export default function FinancialSettings() {
         e.preventDefault();
         
         // Validation Checks
-        if (settings.good_margin < 0 || settings.better_margin < 0 || settings.best_margin < 0) {
+        const gm = parseFloat(settings.good_margin);
+        const btm = parseFloat(settings.better_margin);
+        const bsm = parseFloat(settings.best_margin);
+        
+        if (gm < 0 || btm < 0 || bsm < 0) {
             return toast.error("Margins cannot be negative.");
         }
-        if (settings.best_margin >= 1 || settings.better_margin >= 1 || settings.good_margin >= 1) {
+        if (bsm >= 100 || btm >= 100 || gm >= 100) {
             return toast.error("Margins must be below 100%.");
         }
         
@@ -74,11 +77,11 @@ export default function FinancialSettings() {
         setIsSaving(true);
         try {
             const payload = {
-                good_margin: settings.good_margin,
-                better_margin: settings.better_margin,
-                best_margin: settings.best_margin,
-                service_reserve: settings.service_reserve,
-                sales_tax: settings.sales_tax
+                good_margin: parseFloat(settings.good_margin) / 100,
+                better_margin: parseFloat(settings.better_margin) / 100,
+                best_margin: parseFloat(settings.best_margin) / 100,
+                service_reserve: parseFloat(settings.service_reserve) / 100,
+                sales_tax: parseFloat(settings.sales_tax) / 100
             };
             
             const { error } = await supabase.from('margin_settings').update(payload).eq('id', 1);
@@ -152,7 +155,7 @@ export default function FinancialSettings() {
                                                 type="number"
                                                 name="best_margin"
                                                 step="0.01"
-                                                value={(settings.best_margin * 100).toFixed(2).replace(/\.00$/, '')}
+                                                value={settings.best_margin}
                                                 onChange={handleChange}
                                                 required
                                                 className="w-full bg-white border border-slate-200 rounded-lg pr-12 pl-4 py-3 font-mono font-bold text-2xl text-slate-900 outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm"
@@ -171,7 +174,7 @@ export default function FinancialSettings() {
                                                 type="number"
                                                 name="better_margin"
                                                 step="0.01"
-                                                value={(settings.better_margin * 100).toFixed(2).replace(/\.00$/, '')}
+                                                value={settings.better_margin}
                                                 onChange={handleChange}
                                                 required
                                                 className="w-full bg-white border border-slate-200 rounded-lg pr-12 pl-4 py-3 font-mono font-bold text-2xl text-slate-900 outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm"
@@ -190,7 +193,7 @@ export default function FinancialSettings() {
                                                 type="number"
                                                 name="good_margin"
                                                 step="0.01"
-                                                value={(settings.good_margin * 100).toFixed(2).replace(/\.00$/, '')}
+                                                value={settings.good_margin}
                                                 onChange={handleChange}
                                                 required
                                                 className="w-full bg-white border border-slate-200 rounded-lg pr-12 pl-4 py-3 font-mono font-bold text-2xl text-slate-900 outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm"
@@ -222,7 +225,7 @@ export default function FinancialSettings() {
                                                 type="number"
                                                 name="service_reserve"
                                                 step="0.01"
-                                                value={(settings.service_reserve * 100).toFixed(2).replace(/\.00$/, '')}
+                                                value={settings.service_reserve}
                                                 onChange={handleChange}
                                                 required
                                                 className="w-full bg-slate-50 border border-slate-200 rounded-lg pr-12 pl-4 py-3 font-mono font-bold text-2xl text-slate-900 outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all shadow-sm"
@@ -252,7 +255,7 @@ export default function FinancialSettings() {
                                                 type="number"
                                                 name="sales_tax"
                                                 step="0.01"
-                                                value={(settings.sales_tax * 100).toFixed(2).replace(/\.00$/, '')}
+                                                value={settings.sales_tax}
                                                 onChange={handleChange}
                                                 required
                                                 className="w-full bg-slate-50 border border-slate-200 rounded-lg pr-12 pl-4 py-3 font-mono font-bold text-2xl text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
