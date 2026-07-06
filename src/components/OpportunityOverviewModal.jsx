@@ -468,7 +468,10 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                             <FileText size={14} /> Document Vault
                         </h3>
                         <div className="flex flex-wrap gap-2">
-                            {job.status !== 'NEW_LEAD' && job.status !== 'QUOTING' && (
+                            {!associatedProposal && (
+                                <p className="text-xs text-slate-400 italic w-full text-center py-2">No documents available yet.</p>
+                            )}
+                            {!!associatedProposal && job.status !== 'NEW_LEAD' && job.status !== 'QUOTING' && (
                                 <button onClick={() => { 
                                     if (associatedProposal) {
                                         setViewingProposal(['Approved', 'Lost', 'Voided'].includes(associatedProposal.status) ? { ...associatedProposal, isReadOnly: true } : associatedProposal);
@@ -479,7 +482,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                                     <FileText size={14} className="text-slate-400" /> Proposal
                                 </button>
                             )}
-                            {['NEEDS_SCHEDULING', 'SCHEDULED', 'APPROVED', 'COMPLETED', 'CLOSED_WON', 'Working', 'En Route'].includes(job.status) && (
+                            {!!associatedProposal && ['NEEDS_SCHEDULING', 'SCHEDULED', 'APPROVED', 'COMPLETED', 'CLOSED_WON', 'Working', 'En Route'].includes(job.status) && (
                                 <button onClick={() => { 
                                     if (associatedProposal) {
                                         const matchedTierData = associatedProposal.proposal_data?.accepted_tier_data || associatedProposal.proposal_data?.tiers?.[matchedTierName];
@@ -496,7 +499,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                                     <ShieldCheck size={14} className="text-slate-400" /> Contract
                                 </button>
                             )}
-                            {['NEEDS_SCHEDULING', 'SCHEDULED', 'APPROVED', 'COMPLETED', 'CLOSED_WON', 'Working', 'En Route'].includes(job.status) && (
+                            {!!associatedProposal && ['NEEDS_SCHEDULING', 'SCHEDULED', 'APPROVED', 'COMPLETED', 'CLOSED_WON', 'Working', 'En Route'].includes(job.status) && (
                                 <button disabled={loadingInvoice} onClick={async () => {
                                     if (!associatedProposal) return toast.error("No associated proposal found.");
                                     setLoadingInvoice(true);
