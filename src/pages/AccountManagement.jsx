@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { Users, Shield, UserX, UserCheck, Key, Plus, Lock, Search, Copy, Check } from 'lucide-react';
+import { useRole } from '../context/RoleContext';
+import { Users, Shield, UserX, UserCheck, Key, Plus, Lock, Search, Copy, Check, CheckCircle2, Clock, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import UserBadges from '../components/UserBadges';
@@ -10,8 +11,12 @@ import { formatPhoneNumber } from '../utils/formatters';
 
 export default function AccountManagement() {
   const { user } = useAuth();
+  const { canEditSystemSettings } = useRole();
+  const isAdmin = canEditSystemSettings();
   const [users, setUsers] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingRequests, setLoadingRequests] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
   // Modals / Overlays
@@ -27,9 +32,35 @@ export default function AccountManagement() {
   const [editDepartment, setEditDepartment] = useState('SERVICE');
 
   useEffect(() => {
-    fetchUsers();
-    fetchBadges();
-  }, []);
+    if (isAdmin) {
+      fetchUsers();
+      fetchBadges();
+    }
+    fetchRequests();
+  }, [isAdmin]);
+
+  const fetchRequests = async () => {
+    try {
+      setLoadingRequests(true);
+      let query = supabase
+        .from('tasks')
+        .select('*')
+        .like('title', 'PROVISION_REQUEST:%')
+        .order('created_at', { ascending: false });
+      
+      if (!isAdmin) {
+        query = query.eq('user_id', user.id);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      setRequests(data || []);
+    } catch (err) {
+      console.error('Failed to load requests', err);
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
 
   const fetchBadges = async () => {
     try {
@@ -105,14 +136,56 @@ export default function AccountManagement() {
     if (!payload.username || payload.username.trim() === '') payload.username = null;
     
     try {
-       toast.loading('Provisioning account...', { id: 'create' });
-       await invokeAdminAction('createUser', payload);
-       toast.success('Account created successfully!', { id: 'create' });
+       toast.loading(isAdmin ? 'Provisioning account...' : 'Submitting request...', { id: 'create' });
+       
+       if (isAdmin) {
+         await invokeAdminAction('createUser', payload);
+         toast.success('Account created successfully!', { id: 'create' });
+         setSuccessPayload(payload);
+         fetchUsers();
+       } else {
+         const { error } = await supabase.from('tasks').insert({
+           title: `PROVISION_REQUEST: ${payload.full_name}`,
+           description: JSON.stringify(payload),
+           status: 'todo',
+           user_id: user.id
+         });
+         if (error) throw error;
+         toast.success('Provisioning request submitted!', { id: 'create' });
+         fetchRequests();
+       }
+       
        setShowCreateModal(false);
-       setSuccessPayload(payload);
-       fetchUsers();
     } catch (err) {
-       toast.error(err.message || 'Error creating account', { id: 'create' });
+       toast.error(err.message || 'Error processing request', { id: 'create' });
+    }
+  };
+
+  const handleApproveRequest = async (req, payload) => {
+    try {
+      toast.loading('Approving and provisioning...', { id: 'approve' });
+      await invokeAdminAction('createUser', payload);
+      const { error } = await supabase.from('tasks').update({ status: 'done' }).eq('id', req.id);
+      if (error) throw error;
+      
+      toast.success('Account provisioned successfully!', { id: 'approve' });
+      fetchRequests();
+      fetchUsers();
+    } catch (err) {
+      toast.error(err.message || 'Error approving request', { id: 'approve' });
+    }
+  };
+
+  const handleRejectRequest = async (req) => {
+    try {
+      toast.loading('Rejecting request...', { id: 'reject' });
+      const { error } = await supabase.from('tasks').update({ status: 'done', title: req.title + ' [REJECTED]' }).eq('id', req.id);
+      if (error) throw error;
+      
+      toast.success('Request rejected', { id: 'reject' });
+      fetchRequests();
+    } catch (err) {
+      toast.error('Error rejecting request', { id: 'reject' });
     }
   };
 
@@ -172,13 +245,78 @@ export default function AccountManagement() {
           className="group relative overflow-hidden bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:-translate-y-0.5 active:scale-95 border border-slate-700 shrink-0"
         >
           <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
-          <Plus size={18} className="drop-shadow-md" /> Provision Account
+          <Plus size={18} className="drop-shadow-md" /> {isAdmin ? 'Provision Account' : 'Request Account'}
         </button>
       </div>
 
       {/* Main Container */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      {!isAdmin ? (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+           <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+             <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2"><Clock size={16} className="text-slate-500" /> My Provisioning Requests</h2>
+           </div>
+           <div className="divide-y divide-slate-100">
+             {loadingRequests ? (
+               <div className="p-8 text-center text-slate-400 font-semibold animate-pulse">Loading requests...</div>
+             ) : requests.length === 0 ? (
+               <div className="p-12 text-center flex flex-col items-center">
+                 <Shield className="text-slate-300 mb-3" size={32} />
+                 <p className="text-slate-500 font-semibold">You have no pending or past provisioning requests.</p>
+               </div>
+             ) : (
+               requests.map(req => {
+                 let payload = {};
+                 try { payload = JSON.parse(req.description || '{}'); } catch(e) {}
+                 return (
+                   <div key={req.id} className="p-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                     <div>
+                       <h3 className="font-bold text-slate-900">{payload.full_name || 'Unknown'} {req.title.includes('[REJECTED]') && <span className="text-red-500 ml-2 text-[10px] uppercase font-black">(Rejected)</span>}</h3>
+                       <p className="text-xs font-semibold text-slate-500 mt-0.5">{payload.role} • {payload.department}</p>
+                     </div>
+                     <div>
+                       {req.status === 'todo' ? (
+                         <span className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-black tracking-wider uppercase border border-amber-200/50">Pending Review</span>
+                       ) : (
+                         <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black tracking-wider uppercase border border-emerald-200/50"><Check size={12} className="inline mr-1 -mt-0.5" /> Reviewed</span>
+                       )}
+                     </div>
+                   </div>
+                 )
+               })
+             )}
+           </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           
+          {/* Admin Pending Requests */}
+          {requests.filter(r => r.status === 'todo').length > 0 && (
+             <div className="border-b-4 border-slate-100">
+               <div className="p-4 bg-amber-50/50 border-b border-amber-100/50 flex items-center justify-between">
+                 <h2 className="text-sm font-bold text-amber-800 flex items-center gap-2"><Clock size={16} /> Pending Provisioning Requests</h2>
+                 <span className="bg-amber-200 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full">{requests.filter(r => r.status === 'todo').length}</span>
+               </div>
+               <div className="divide-y divide-slate-100 bg-white">
+                 {requests.filter(r => r.status === 'todo').map(req => {
+                   let payload = {};
+                   try { payload = JSON.parse(req.description || '{}'); } catch(e) {}
+                   return (
+                     <div key={req.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
+                       <div className="flex flex-col">
+                          <span className="text-sm font-bold text-slate-900">{payload.full_name || 'Unknown'} (requested by: {req.user_id?.substring(0,6)}...)</span>
+                          <span className="text-xs font-semibold text-slate-500 mt-1">{payload.email || 'No email'} • {payload.role} • {payload.department}</span>
+                       </div>
+                       <div className="flex items-center gap-2 shrink-0">
+                          <button onClick={() => handleApproveRequest(req, payload)} className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"><CheckCircle2 size={14} /> Approve</button>
+                          <button onClick={() => handleRejectRequest(req)} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 hover:text-red-600 hover:border-red-200 hover:bg-red-50 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"><X size={14} /> Reject</button>
+                       </div>
+                     </div>
+                   );
+                 })}
+               </div>
+             </div>
+          )}
+
           {/* Action Bar Inside Card */}
           <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/50">
              <div className="relative w-full max-w-md">
