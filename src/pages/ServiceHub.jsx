@@ -173,11 +173,10 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
         return (
             <div key={call.id} onClick={() => setInspectingCallId(call.id)} className={`group relative cursor-pointer bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-l-[5px] ${urgencyBorder} p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}>
                 
-                {isSLA_Violated && (
-                    <div className="absolute -top-3 -right-3 bg-gradient-to-br from-red-500 to-rose-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 uppercase tracking-wider animate-in zoom-in">
-                        <AlertTriangle size={12} strokeWidth={3} /> {Math.floor(hoursInStage)}h Overdue
-                    </div>
-                )}
+                <div className={`absolute -top-3 -right-3 text-[10px] font-black px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 uppercase tracking-wider z-20 ${isSLA_Violated ? 'bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-[0_4px_12px_rgba(239,68,68,0.3)]' : 'bg-white border border-slate-200 text-slate-500'}`}>
+                    {isSLA_Violated ? <AlertTriangle size={12} strokeWidth={3} /> : <Clock size={12} strokeWidth={3} />}
+                    {Math.floor(hoursInStage)}h {isSLA_Violated ? 'Overdue' : 'In Stage'}
+                </div>
 
                 <div className="flex justify-between items-start mb-2">
                     <div className="flex flex-col pr-4">
@@ -214,10 +213,6 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                         </span>
                     </div>
                     
-                    <div className="mt-1 pl-3 border-l-2 border-primary-300">
-                        <span className="text-[11px] font-bold text-slate-700 line-clamp-2">{call.issue_description}</span>
-                    </div>
-                    
                     {call.scheduled_start && (
                         <div className="flex items-center gap-1.5 mt-2 bg-emerald-100/50 text-emerald-700 px-2 py-1.5 rounded-lg w-fit border border-emerald-200/50">
                             <Calendar size={12} strokeWidth={2.5}/> 
@@ -227,11 +222,7 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                     )}
                 </div>
 
-                <div className="flex justify-between items-center pt-2 border-t border-slate-100 gap-2">
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest min-w-0 truncate">
-                        <Clock size={12} className="shrink-0" /> <span className="truncate">{Math.floor(hoursInStage)}h in stage</span>
-                    </div>
-
+                <div className="flex justify-end items-center pt-2 gap-2 mt-auto">
                     <div className="relative">
                         <div className={`flex items-center gap-1 ${assignedCrew ? 'bg-slate-50 border-slate-200' : 'bg-white border-dashed border-slate-300'} border px-1.5 py-1 rounded-full text-[10px] font-bold text-slate-700 shadow-sm shrink-0 transition-colors`}>
                             {assignedCrew ? (
