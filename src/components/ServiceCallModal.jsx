@@ -70,7 +70,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                 }
             }
 
-            setCallData({
+            const parsedCallData = {
                 ...data,
                 scheduled_start: data.scheduled_start ? data.scheduled_start.slice(0, 16) : '',
                 scheduled_end: data.scheduled_end ? data.scheduled_end.slice(0, 16) : '',
@@ -78,7 +78,8 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                 arrival_window_end: data.arrival_window_end ? data.arrival_window_end.slice(0, 16) : '',
                 assigned_techs: techs || [],
                 tags: Array.isArray(parsedTags) ? parsedTags : []
-            });
+            };
+            setCallData(parsedCallData);
 
             // Fetch the assigned crew if any
             if (techs && techs.length > 0) {
