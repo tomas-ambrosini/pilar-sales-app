@@ -201,40 +201,42 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                     </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-xl p-2.5 border border-slate-100/80 shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] flex flex-col gap-1.5 mb-2.5">
-                    <div className="flex items-center gap-2 text-[11px] font-medium text-slate-600">
-                        <MapPin size={12} className="text-slate-400"/> 
+                <div className="flex flex-col mt-auto gap-2">
+                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600">
+                        <MapPin size={12} className="text-slate-400 shrink-0"/> 
                         <span className="truncate">
-                            {call.households?.addresses?.city || 
-                             (Array.isArray(call.households?.addresses) ? call.households.addresses[0]?.city : null) || 
-                             call.households?.addresses?.street_address || 
-                             (Array.isArray(call.households?.addresses) ? call.households.addresses[0]?.street_address : null) || 
-                             'Unknown Location'}
+                            {(() => {
+                                const addr = Array.isArray(call.households?.addresses) ? call.households.addresses[0] : call.households?.addresses;
+                                if (!addr) return 'Unknown Location';
+                                const parts = [];
+                                if (addr.street_address) parts.push(addr.street_address);
+                                if (addr.city) parts.push(addr.city);
+                                return parts.length > 0 ? parts.join(', ') : 'Unknown Location';
+                            })()}
                         </span>
                     </div>
-                    
-                    {call.scheduled_start && (
-                        <div className="flex items-center gap-1.5 mt-2 bg-emerald-100/50 text-emerald-700 px-2 py-1.5 rounded-lg w-fit border border-emerald-200/50">
-                            <Calendar size={12} strokeWidth={2.5}/> 
-                            <span className="text-[10px] font-black uppercase tracking-wider">{new Date(call.scheduled_start).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'})}</span>
-                            <span className="text-[10px] font-black bg-white/60 px-1.5 rounded ml-1">{new Date(call.scheduled_start).toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'})}</span>
-                        </div>
-                    )}
-                </div>
 
-                <div className="flex justify-end items-center pt-2 gap-2 mt-auto">
-                    <div className="relative">
-                        <div className={`flex items-center gap-1 ${assignedCrew ? 'bg-slate-50 border-slate-200' : 'bg-white border-dashed border-slate-300'} border px-1.5 py-1 rounded-full text-[10px] font-bold text-slate-700 shadow-sm shrink-0 transition-colors`}>
-                            {assignedCrew ? (
-                                <>
-                                    <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{backgroundColor: assignedCrew.color_code || '#64748b', color: '#fff'}}>
-                                        <Wrench size={10} strokeWidth={3}/>
-                                    </div>
-                                    <span className="px-1 max-w-[80px] truncate">{assignedCrew.crew_name}</span>
-                                </>
-                            ) : (
-                                <span className="px-2 py-0.5 text-slate-400">Unassigned</span>
-                            )}
+                    <div className="flex items-center justify-between gap-2">
+                        {call.scheduled_start ? (
+                            <div className="flex items-center gap-1.5 text-emerald-700">
+                                <Calendar size={12} strokeWidth={2.5}/> 
+                                <span className="text-[10px] font-black uppercase tracking-wider">{new Date(call.scheduled_start).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'})}</span>
+                            </div>
+                        ) : <div/>}
+
+                        <div className="relative shrink-0">
+                            <div className={`flex items-center gap-1 ${assignedCrew ? 'bg-slate-50 border-slate-200' : 'bg-white border-dashed border-slate-300'} border px-1.5 py-1 rounded-full text-[10px] font-bold text-slate-700 shadow-sm transition-colors`}>
+                                {assignedCrew ? (
+                                    <>
+                                        <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{backgroundColor: assignedCrew.color_code || '#64748b', color: '#fff'}}>
+                                            <Wrench size={8} strokeWidth={3}/>
+                                        </div>
+                                        <span className="px-1 max-w-[70px] truncate">{assignedCrew.crew_name}</span>
+                                    </>
+                                ) : (
+                                    <span className="px-2 py-0.5 text-slate-400">Unassigned</span>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

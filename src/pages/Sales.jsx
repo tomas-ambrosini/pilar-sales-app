@@ -466,84 +466,86 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                                 )}
                                             </div>
 
-                                            <div className="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-xl p-2.5 border border-slate-100/80 shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] flex flex-col gap-1.5 mb-2.5">
-                                                <div className="flex items-center gap-2 text-[11px] font-medium text-slate-600">
-                                                    <MapPin size={12} className="text-slate-400"/> 
+                                            <div className="flex flex-col mt-auto gap-2">
+                                                <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600">
+                                                    <MapPin size={12} className="text-slate-400 shrink-0"/> 
                                                     <span className="truncate">
-                                                        {job.households?.addresses?.city || 
-                                                         (Array.isArray(job.households?.addresses) ? job.households.addresses[0]?.city : null) || 
-                                                         job.households?.addresses?.street_address || 
-                                                         (Array.isArray(job.households?.addresses) ? job.households.addresses[0]?.street_address : null) || 
-                                                         'Unknown Location'}
+                                                        {(() => {
+                                                            const addr = Array.isArray(job.households?.addresses) ? job.households.addresses[0] : job.households?.addresses;
+                                                            if (!addr) return 'Unknown Location';
+                                                            const parts = [];
+                                                            if (addr.street_address) parts.push(addr.street_address);
+                                                            if (addr.city) parts.push(addr.city);
+                                                            return parts.length > 0 ? parts.join(', ') : 'Unknown Location';
+                                                        })()}
                                                     </span>
                                                 </div>
-                                                
-                                                {col.id === PIPELINE_STATES.SCHEDULED && job.scheduled_date && (
-                                                    <div className="flex items-center gap-1.5 mt-1 bg-emerald-100/50 text-emerald-700 px-2 py-1.5 rounded-lg w-fit border border-emerald-200/50">
-                                                        <Calendar size={12} strokeWidth={2.5}/> 
-                                                        <span className="text-[10px] font-black uppercase tracking-wider">{new Date(job.scheduled_date).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'})}</span>
-                                                        {job.scheduled_time_block && <span className="text-[10px] font-black bg-white/60 px-1.5 rounded ml-1">{job.scheduled_time_block}</span>}
-                                                    </div>
-                                                )}
-                                            </div>
 
-                                            <div className="flex justify-end items-center pt-2 gap-2 mt-auto">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    {col.id === PIPELINE_STATES.SCHEDULED && job.scheduled_date ? (
+                                                        <div className="flex items-center gap-1.5 text-emerald-700">
+                                                            <Calendar size={12} strokeWidth={2.5}/> 
+                                                            <span className="text-[10px] font-black uppercase tracking-wider">{new Date(job.scheduled_date).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'})}</span>
+                                                        </div>
+                                                    ) : <div/>}
 
-                                                <div className="relative">
-                                                    <div 
-                                                        onClick={(e) => { e.stopPropagation(); setActiveAssignMenu(activeAssignMenu === job.id ? null : job.id); }}
-                                                        className={`flex items-center gap-1 ${assignedRep ? 'bg-slate-50 border-slate-200' : 'bg-white border-dashed border-slate-300 hover:bg-slate-50'} border px-1.5 py-1 rounded-full text-[10px] font-bold text-slate-700 shadow-sm shrink-0 cursor-pointer transition-colors`}
-                                                    >
-                                                        {assignedRep ? (
-                                                            <>
-                                                                {assignedRep.avatar_url ? (
-                                                                    <img src={assignedRep.avatar_url} className="w-5 h-5 rounded-full object-cover" />
-                                                                ) : (
-                                                                    <div className="w-5 h-5 rounded-full bg-slate-800 text-white flex items-center justify-center text-[8px]">{assignedRep.full_name?.substring(0, 2).toUpperCase()}</div>
-                                                                )}
-                                                                <span className="max-w-[70px] truncate">{assignedRep.full_name?.split(' ')[0]}</span>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <UserCircle2 size={16} className="text-slate-400" />
-                                                                <span className="text-slate-500">Unassigned</span>
-                                                            </>
+                                                    <div className="relative shrink-0">
+                                                        <div 
+                                                            onClick={(e) => { e.stopPropagation(); setActiveAssignMenu(activeAssignMenu === job.id ? null : job.id); }}
+                                                            className={`flex items-center gap-1 ${assignedRep ? 'bg-slate-50 border-slate-200' : 'bg-white border-dashed border-slate-300 hover:bg-slate-50'} border px-1.5 py-1 rounded-full text-[10px] font-bold text-slate-700 shadow-sm cursor-pointer transition-colors`}
+                                                        >
+                                                            {assignedRep ? (
+                                                                <>
+                                                                    {assignedRep.avatar_url ? (
+                                                                        <img src={assignedRep.avatar_url} className="w-4 h-4 rounded-full object-cover shrink-0" />
+                                                                    ) : (
+                                                                        <div className="w-4 h-4 rounded-full bg-slate-800 text-white flex items-center justify-center text-[8px] shrink-0">{assignedRep.full_name?.substring(0, 2).toUpperCase()}</div>
+                                                                    )}
+                                                                    <span className="max-w-[70px] truncate">{assignedRep.full_name?.split(' ')[0]}</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <UserCircle2 size={12} className="text-slate-400 shrink-0" />
+                                                                    <span className="text-slate-500">Unassigned</span>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        {activeAssignMenu === job.id && canActOnDeal && (
+                                                            <div className="absolute right-0 bottom-full mb-2 w-48 bg-white border border-slate-200 shadow-xl rounded-xl overflow-hidden z-50">
+                                                                <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                                    Assign Rep
+                                                                </div>
+                                                                <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                                                                    <div 
+                                                                        className="px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 cursor-pointer flex items-center gap-2"
+                                                                        onClick={(e) => handleAssignSalesperson(e, job.id, null)}
+                                                                    >
+                                                                        <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                                                            <X size={12} />
+                                                                        </div>
+                                                                        Unassign
+                                                                    </div>
+                                                                    {teamMembers.map(member => (
+                                                                        <div 
+                                                                            key={member.id}
+                                                                            className="px-3 py-2 text-sm text-slate-700 hover:bg-purple-50 hover:text-purple-700 cursor-pointer flex items-center gap-2"
+                                                                            onClick={(e) => handleAssignSalesperson(e, job.id, member.id)}
+                                                                        >
+                                                                            {member.avatar_url ? (
+                                                                                <img src={member.avatar_url} className="w-5 h-5 rounded-full object-cover" />
+                                                                            ) : (
+                                                                                <div className="w-5 h-5 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-[10px] font-bold">
+                                                                                    {member.full_name?.substring(0, 2).toUpperCase()}
+                                                                                </div>
+                                                                            )}
+                                                                            <span className="truncate">{member.full_name}</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
                                                         )}
                                                     </div>
-
-                                                    {activeAssignMenu === job.id && (
-                                                        <div className="absolute right-0 bottom-full mb-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2">
-                                                            <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-                                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Assign Rep</span>
-                                                                <button onClick={(e) => { e.stopPropagation(); setActiveAssignMenu(null); }} className="text-slate-400 hover:text-slate-600"><X size={12} /></button>
-                                                            </div>
-                                                            <div className="max-h-48 overflow-y-auto custom-scrollbar">
-                                                                {teamMembers.map(member => (
-                                                                    <div 
-                                                                        key={member.id}
-                                                                        onClick={async (e) => {
-                                                                            e.stopPropagation();
-                                                                            try {
-                                                                                await supabase.from('opportunities').update({ assigned_salesperson_id: member.id }).eq('id', job.id);
-                                                                                setActiveAssignMenu(null);
-                                                                                toast.success(`Assigned to ${member.full_name}`);
-                                                                            } catch (err) {
-                                                                                toast.error('Failed to assign rep');
-                                                                            }
-                                                                        }}
-                                                                        className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-primary-50 transition-colors ${assignedRep?.id === member.id ? 'bg-primary-50/50' : ''}`}
-                                                                    >
-                                                                        {member.avatar_url ? (
-                                                                            <img src={member.avatar_url} className="w-6 h-6 rounded-full object-cover shrink-0" />
-                                                                        ) : (
-                                                                            <div className="w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold shrink-0">{member.full_name?.substring(0, 2).toUpperCase()}</div>
-                                                                        )}
-                                                                        <span className="text-xs font-semibold text-slate-700 truncate">{member.full_name}</span>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
                                                 </div>
                                             </div>
 
