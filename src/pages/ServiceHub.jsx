@@ -170,8 +170,22 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
         else if (call.urgency === 'HIGH') urgencyBorder = 'border-l-orange-500';
         else if (call.urgency === 'NORMAL') urgencyBorder = 'border-l-blue-500';
         
+        let infectionPercentage = 0;
+        if (isSLA_Violated) {
+            const overdueHours = Math.max(0, hoursInStage - 24);
+            infectionPercentage = Math.min(100, (overdueHours / 72) * 100);
+        }
+
         return (
             <div key={call.id} onClick={() => setInspectingCallId(call.id)} className={`group relative cursor-pointer bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-l-[5px] ${urgencyBorder} p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}>
+                {isSLA_Violated && (
+                    <div 
+                        className="absolute inset-0 rounded-xl pointer-events-none z-0 transition-opacity duration-1000"
+                        style={{
+                            background: `radial-gradient(circle at top right, rgba(239, 68, 68, ${0.05 + (infectionPercentage * 0.0015)}) 0%, rgba(239, 68, 68, ${0.02 + (infectionPercentage * 0.001)}) ${infectionPercentage}%, transparent ${Math.min(100, infectionPercentage + 30)}%)`
+                        }}
+                    />
+                )}
                 <div className={`absolute -top-3 -right-3 text-[10px] font-black px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 uppercase tracking-wider z-20 ${isSLA_Violated ? 'bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-[0_4px_12px_rgba(239,68,68,0.3)]' : 'bg-white border border-slate-200 text-slate-500'}`}>
                     {isSLA_Violated ? <AlertTriangle size={12} strokeWidth={3} /> : <Clock size={12} strokeWidth={3} />}
                     {hoursInStage >= 72 ? `${Math.floor(hoursInStage / 24)} Days` : `${Math.floor(hoursInStage)}h`} {isSLA_Violated ? 'Overdue' : 'In Stage'}
