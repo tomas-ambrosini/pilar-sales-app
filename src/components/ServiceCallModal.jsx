@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { X, Wrench, Clock, MapPin, Phone, Save, Calendar as CalendarIcon, UserCheck, AlertCircle, Check, Mail, Navigation, Info, MessageSquare, Activity, Send, History } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -17,6 +17,15 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
     const [assignedCrew, setAssignedCrew] = useState(null);
     const [activities, setActivities] = useState([]);
     const [newNote, setNewNote] = useState('');
+    const dispatchNotesRef = useRef(null);
+    
+    useEffect(() => {
+        if (dispatchNotesRef.current) {
+            dispatchNotesRef.current.style.height = '0px';
+            const scrollHeight = dispatchNotesRef.current.scrollHeight;
+            dispatchNotesRef.current.style.height = scrollHeight + 'px';
+        }
+    }, [callData?.issue_description, isOpen]);
     
     useEffect(() => {
         if (callId) fetchCallDetails();
@@ -504,10 +513,15 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                             )}
                         </div>
                         <textarea 
-                            className="w-full min-h-[120px] bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-sm focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all outline-none text-sm font-medium text-slate-700 resize-none leading-relaxed placeholder-slate-400"
+                            ref={dispatchNotesRef}
+                            className="w-full min-h-[120px] bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-sm focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all outline-none text-sm font-medium text-slate-700 resize-none leading-relaxed placeholder-slate-400 overflow-hidden"
                             placeholder="Enter dispatch instructions..."
-                            value={callData.issue_description}
-                            onChange={e => setCallData({...callData, issue_description: e.target.value})}
+                            value={callData.issue_description || ''}
+                            onChange={e => {
+                                setCallData({...callData, issue_description: e.target.value});
+                                e.target.style.height = '0px';
+                                e.target.style.height = e.target.scrollHeight + 'px';
+                            }}
                         />
                     </div>
                 </div>
