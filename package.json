@@ -18,7 +18,7 @@
     "@fullcalendar/rrule": "^6.1.20",
     "@fullcalendar/timegrid": "^6.1.20",
     "@hello-pangea/dnd": "^18.0.1",
-    "@supabase/supabase-js": "^2.99.3",
+    "@supabase/supabase-js": "^2.109.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "dotenv": "^17.4.2",
