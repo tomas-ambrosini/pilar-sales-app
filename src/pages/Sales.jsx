@@ -436,8 +436,8 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                             className={`group relative cursor-pointer bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-l-[5px] ${urgencyBorder} p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}
                                         >
                                             
-                                            <div className={`absolute -top-3 -right-3 text-[10px] font-black px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 uppercase tracking-wider z-20 ${isSLA_Violated ? 'bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-[0_4px_12px_rgba(239,68,68,0.3)]' : 'bg-white border border-slate-200 text-slate-500'}`}>
-                                                {isSLA_Violated ? <AlertTriangle size={12} strokeWidth={3} /> : <Clock size={12} strokeWidth={3} />}
+                                            <div className={`absolute top-0 right-0 text-[9px] font-black px-2.5 py-1 rounded-bl-xl rounded-tr-xl flex items-center gap-1 uppercase tracking-wider z-10 ${isSLA_Violated ? 'bg-red-500 text-white shadow-sm' : 'bg-slate-100 text-slate-500 border-b border-l border-slate-200/60'}`}>
+                                                {isSLA_Violated ? <AlertTriangle size={10} strokeWidth={3} /> : <Clock size={10} strokeWidth={3} />}
                                                 {Math.floor(hoursInStage)}h {isSLA_Violated ? 'Overdue' : 'In Stage'}
                                             </div>
                                             {job.proposal_data?.type === 'MAINTENANCE' && (
@@ -466,65 +466,7 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                                 )}
                                             </div>
 
-                                            <div 
-                                                onClick={(e) => { e.stopPropagation(); setActiveAssignMenu(activeAssignMenu === job.id ? null : job.id); }}
-                                                className={`absolute -bottom-3 -right-3 z-20 ${assignedRep ? 'bg-white border border-slate-200 shadow-md hover:bg-slate-50' : 'bg-slate-50 border border-dashed border-slate-300 shadow-sm hover:bg-slate-100'} px-2 py-1.5 rounded-full text-[10px] font-black text-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer`}
-                                            >
-                                                {assignedRep ? (
-                                                    <>
-                                                        {assignedRep.avatar_url ? (
-                                                            <img src={assignedRep.avatar_url} className="w-5 h-5 rounded-full object-cover shrink-0 shadow-inner" />
-                                                        ) : (
-                                                            <div className="w-5 h-5 rounded-full bg-slate-800 text-white flex items-center justify-center text-[8px] shrink-0 shadow-inner">{assignedRep.full_name?.substring(0, 2).toUpperCase()}</div>
-                                                        )}
-                                                        <span className="pr-1 max-w-[80px] truncate">{assignedRep.full_name?.split(' ')[0]}</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-300 shrink-0">
-                                                            <UserCircle2 size={12} strokeWidth={3}/>
-                                                        </div>
-                                                        <span className="pr-1 text-slate-400">Unassigned</span>
-                                                    </>
-                                                )}
-                                                
-                                                {activeAssignMenu === job.id && canActOnDeal && (
-                                                    <div className="absolute right-0 bottom-full mb-2 w-48 bg-white border border-slate-200 shadow-xl rounded-xl overflow-hidden z-50 cursor-default" onClick={e => e.stopPropagation()}>
-                                                        <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                            Assign Rep
-                                                        </div>
-                                                        <div className="max-h-48 overflow-y-auto custom-scrollbar">
-                                                            <div 
-                                                                className="px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 cursor-pointer flex items-center gap-2"
-                                                                onClick={(e) => { e.stopPropagation(); handleAssignSalesperson(e, job.id, null); }}
-                                                            >
-                                                                <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                                                                    <X size={12} />
-                                                                </div>
-                                                                Unassign
-                                                            </div>
-                                                            {teamMembers.map(member => (
-                                                                <div 
-                                                                    key={member.id}
-                                                                    className="px-3 py-2 text-sm text-slate-700 hover:bg-purple-50 hover:text-purple-700 cursor-pointer flex items-center gap-2"
-                                                                    onClick={(e) => { e.stopPropagation(); handleAssignSalesperson(e, job.id, member.id); }}
-                                                                >
-                                                                    {member.avatar_url ? (
-                                                                        <img src={member.avatar_url} className="w-5 h-5 rounded-full object-cover" />
-                                                                    ) : (
-                                                                        <div className="w-5 h-5 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-[10px] font-bold">
-                                                                            {member.full_name?.substring(0, 2).toUpperCase()}
-                                                                        </div>
-                                                                    )}
-                                                                    <span className="truncate">{member.full_name}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="flex flex-col mt-auto gap-2">
+                                            <div className="flex flex-col mt-auto gap-2 pt-1">
                                                 <div className="flex items-start gap-1.5 text-[11px] font-medium text-slate-600">
                                                     <MapPin size={12} className="text-slate-400 shrink-0 mt-[2px]"/> 
                                                     <span className="leading-tight">
@@ -539,12 +481,73 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                                     </span>
                                                 </div>
 
-                                                    {col.id === PIPELINE_STATES.SCHEDULED && job.scheduled_date && (
+                                                <div className="flex items-center justify-between gap-2">
+                                                    {col.id === PIPELINE_STATES.SCHEDULED && job.scheduled_date ? (
                                                         <div className="flex items-center gap-1.5 text-emerald-700 w-fit">
                                                             <Calendar size={12} strokeWidth={2.5}/> 
                                                             <span className="text-[10px] font-black uppercase tracking-wider">{new Date(job.scheduled_date).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'})}</span>
                                                         </div>
-                                                    )}
+                                                    ) : <div/>}
+
+                                                    <div className="relative shrink-0">
+                                                        <div 
+                                                            onClick={(e) => { e.stopPropagation(); setActiveAssignMenu(activeAssignMenu === job.id ? null : job.id); }}
+                                                            className={`flex items-center gap-1 ${assignedRep ? 'bg-slate-50 border-slate-200 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]' : 'bg-white border-dashed border-slate-300'} border px-1.5 py-1 rounded-full text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors`}
+                                                        >
+                                                            {assignedRep ? (
+                                                                <>
+                                                                    {assignedRep.avatar_url ? (
+                                                                        <img src={assignedRep.avatar_url} className="w-4 h-4 rounded-full object-cover shrink-0 shadow-sm" />
+                                                                    ) : (
+                                                                        <div className="w-4 h-4 rounded-full bg-slate-800 text-white flex items-center justify-center text-[8px] shrink-0 shadow-sm">{assignedRep.full_name?.substring(0, 2).toUpperCase()}</div>
+                                                                    )}
+                                                                    <span className="pr-1 max-w-[75px] truncate">{assignedRep.full_name?.split(' ')[0]}</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <div className="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center text-slate-300 shrink-0">
+                                                                        <UserCircle2 size={10} strokeWidth={3}/>
+                                                                    </div>
+                                                                    <span className="pr-1 text-slate-400">Unassigned</span>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        {activeAssignMenu === job.id && canActOnDeal && (
+                                                            <div className="absolute right-0 bottom-full mb-2 w-48 bg-white border border-slate-200 shadow-xl rounded-xl overflow-hidden z-50 cursor-default" onClick={e => e.stopPropagation()}>
+                                                                <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                                    Assign Rep
+                                                                </div>
+                                                                <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                                                                    <div 
+                                                                        className="px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 cursor-pointer flex items-center gap-2"
+                                                                        onClick={(e) => { e.stopPropagation(); handleAssignSalesperson(e, job.id, null); }}
+                                                                    >
+                                                                        <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                                                            <X size={12} />
+                                                                        </div>
+                                                                        Unassign
+                                                                    </div>
+                                                                    {teamMembers.map(member => (
+                                                                        <div 
+                                                                            key={member.id}
+                                                                            className="px-3 py-2 text-sm text-slate-700 hover:bg-purple-50 hover:text-purple-700 cursor-pointer flex items-center gap-2"
+                                                                            onClick={(e) => { e.stopPropagation(); handleAssignSalesperson(e, job.id, member.id); }}
+                                                                        >
+                                                                            {member.avatar_url ? (
+                                                                                <img src={member.avatar_url} className="w-5 h-5 rounded-full object-cover" />
+                                                                            ) : (
+                                                                                <div className="w-5 h-5 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-[10px] font-bold">
+                                                                                    {member.full_name?.substring(0, 2).toUpperCase()}
+                                                                                </div>
+                                                                            )}
+                                                                            <span className="truncate">{member.full_name}</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         );
