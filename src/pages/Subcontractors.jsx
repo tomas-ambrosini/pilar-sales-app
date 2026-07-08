@@ -181,9 +181,9 @@ export default function Subcontractors() {
 
       {/* Editing Drawer / Modal */}
       {editingSub && createPortal(
-         <div className="fixed inset-0 z-[100] flex justify-end bg-slate-900/20 backdrop-blur-sm transition-all">
+         <div className="fixed inset-0 z-[100] flex justify-center items-center p-6 bg-slate-900/20 backdrop-blur-sm transition-all">
             <div className="absolute inset-0" onClick={() => setEditingSub(null)}></div>
-            <div className="relative w-full max-w-lg bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right-full duration-300">
+            <div className="relative w-full max-w-4xl max-h-full rounded-2xl bg-white shadow-2xl flex flex-col animate-in zoom-in-95 duration-200 overflow-hidden">
                 <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50 shrink-0">
                     <div>
                         <h2 className="text-xl font-black text-slate-900">{editingSub.subcontractor_company || 'Subcontractor Details'}</h2>

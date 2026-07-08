@@ -79,7 +79,7 @@ export default function SubcontractorJobHistory({ subcontractorId, crews, onInsp
     }
 
     return (
-        <div className="p-6 space-y-4 max-h-full overflow-y-auto custom-scrollbar">
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 max-h-full overflow-y-auto custom-scrollbar">
             {jobs.map(job => {
                 const isService = job.type === 'SERVICE';
                 const isMaintenance = job.type === 'MAINTENANCE';
