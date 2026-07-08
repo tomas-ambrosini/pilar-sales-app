@@ -641,25 +641,25 @@ export default function CatalogEditor() {
       {/* SUBCONTRACTOR & LABOR MODAL COMPONENT */}
       <Modal isOpen={isLaborModalOpen} onClose={() => setIsLaborModalOpen(false)} title={activeLabor?.id ? "Edit System Logistic / Material" : "Create Technical Add-on Matrix"}>
          <form className="flex flex-col h-full bg-slate-50 rounded-b-xl" onSubmit={handleSaveLabor}>
-            <div className="p-6 space-y-6">
+            <div className="p-4 space-y-3">
                
                {/* Identity Row */}
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
-                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">SKU / Code Number</label>
-                     <input className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 font-mono text-slate-800 font-bold focus:ring-2 ring-primary-500 outline-none transition-all shadow-inner" value={activeLabor.sku || ''} onChange={e => setActiveLabor({...activeLabor, sku: e.target.value})} placeholder="e.g. 1007"/>
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="bg-white p-3 border border-slate-200 rounded-xl shadow-sm">
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">SKU / Code Number</label>
+                     <input className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-mono text-slate-800 font-bold focus:ring-2 ring-primary-500 outline-none transition-all shadow-inner" value={activeLabor.sku || ''} onChange={e => setActiveLabor({...activeLabor, sku: e.target.value})} placeholder="e.g. 1007"/>
                   </div>
-                  <div className="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
-                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">In-Stock Inventory Qty</label>
-                     <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 font-mono text-slate-800 font-bold focus:ring-2 ring-primary-500 outline-none transition-all shadow-inner" value={activeLabor.in_stock_quantity || ''} onChange={e => setActiveLabor({...activeLabor, in_stock_quantity: e.target.value})} placeholder="0"/>
+                  <div className="bg-white p-3 border border-slate-200 rounded-xl shadow-sm">
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">In-Stock Inventory Qty</label>
+                     <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-mono text-slate-800 font-bold focus:ring-2 ring-primary-500 outline-none transition-all shadow-inner" value={activeLabor.in_stock_quantity || ''} onChange={e => setActiveLabor({...activeLabor, in_stock_quantity: e.target.value})} placeholder="0"/>
                   </div>
                </div>
                
                {/* Metadata Row */}
-               <div className="bg-white p-5 border border-slate-200 rounded-xl shadow-sm space-y-5">
+               <div className="bg-white p-3 border border-slate-200 rounded-xl shadow-sm space-y-3">
                    <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 flex items-center gap-1.5"><Layers size={12}/> Tax Categorization Protocol</label>
-                      <select className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 font-bold text-sm text-slate-700 focus:ring-2 ring-primary-500 outline-none shadow-sm cursor-pointer" value={activeLabor.category} onChange={e => setActiveLabor({...activeLabor, category: e.target.value})} required>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 flex items-center gap-1.5"><Layers size={12}/> Tax Categorization Protocol</label>
+                      <select className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-bold text-sm text-slate-700 focus:ring-2 ring-primary-500 outline-none shadow-sm cursor-pointer" value={activeLabor.category} onChange={e => setActiveLabor({...activeLabor, category: e.target.value})} required>
                          <option value="Labor">Tax Exempt Structural Labor</option>
                          <option value="Install">Tax Exempt Install Components</option>
                          <option value="Subcontract">3rd Party Subcontractor Payout</option>
@@ -667,35 +667,35 @@ export default function CatalogEditor() {
                          <option value="Material">Standard Taxable Material Line</option>
                          <option value="Miscellaneous">Unclassified Miscellaneous</option>
                       </select>
-                      <p className="text-[9px] text-slate-400 mt-2 font-bold tracking-wide uppercase">Controls exactly how this line item executes inside the Proposal State Sales Tax math engine.</p>
+                      <p className="text-[9px] text-slate-400 mt-1 font-bold tracking-wide uppercase">Controls exactly how this line item executes inside the Proposal State Sales Tax math engine.</p>
                    </div>
                    
-                   <div className="border-t border-slate-100 pt-5">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 flex items-center gap-1.5"><Box size={12}/> Customer/Tech Visible Array Name</label>
-                      <input className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 font-black text-lg text-slate-800 focus:ring-2 ring-primary-500 outline-none shadow-inner" value={activeLabor.item_name} onChange={e => setActiveLabor({...activeLabor, item_name: e.target.value})} placeholder="e.g. Concrete Slab" required/>
+                   <div className="border-t border-slate-100 pt-3">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 flex items-center gap-1.5"><Box size={12}/> Customer/Tech Visible Array Name</label>
+                      <input className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-black text-base text-slate-800 focus:ring-2 ring-primary-500 outline-none shadow-inner" value={activeLabor.item_name} onChange={e => setActiveLabor({...activeLabor, item_name: e.target.value})} placeholder="e.g. Concrete Slab" required/>
                    </div>
                </div>
                
                {/* Financial Engine Row */}
                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
-                  <div className="bg-slate-50 py-3 px-5 border-b border-slate-100 flex items-center gap-2">
+                  <div className="bg-slate-50 py-2 px-4 border-b border-slate-100 flex items-center gap-2">
                      <Calculator size={14} className="text-emerald-500" />
                      <h4 className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Internal Logistics Financial Engine</h4>
                   </div>
                   
-                  <div className="p-5 flex flex-col md:flex-row gap-6 items-center">
+                  <div className="p-4 flex flex-col md:flex-row gap-4 items-center">
                       <div className="flex-1 w-full relative">
-                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Raw Floor Cost Injection ($)</label>
+                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Raw Floor Cost Injection ($)</label>
                          <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-xl">$</span>
-                            <input type="number" step="0.01" className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-4 font-mono font-black text-2xl text-slate-800 focus:ring-2 ring-emerald-500 outline-none shadow-inner transition-all placeholder:text-slate-300" value={activeLabor.cost} onChange={e => setActiveLabor({...activeLabor, cost: e.target.value})} required placeholder="0.00"/>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-slate-400 text-lg">$</span>
+                            <input type="number" step="0.01" className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-2.5 font-mono font-black text-xl text-slate-800 focus:ring-2 ring-emerald-500 outline-none shadow-inner transition-all placeholder:text-slate-300" value={activeLabor.cost} onChange={e => setActiveLabor({...activeLabor, cost: e.target.value})} required placeholder="0.00"/>
                          </div>
-                         <p className="text-[9px] text-amber-600/80 mt-2 font-bold tracking-wide uppercase leading-tight">DANGER: Offset to customer total mapped via Targeted Margin rules.</p>
+                         <p className="text-[9px] text-amber-600/80 mt-1.5 font-bold tracking-wide uppercase leading-tight">DANGER: Offset to customer total mapped via Targeted Margin rules.</p>
                       </div>
                       
-                      <div className="hidden md:flex h-16 w-px bg-slate-200"></div>
+                      <div className="hidden md:flex h-12 w-px bg-slate-200"></div>
                       
-                      <div className="flex-1 border border-slate-100 bg-emerald-50/50 rounded-xl p-4 w-full h-full flex flex-col justify-center">
+                      <div className="flex-1 border border-slate-100 bg-emerald-50/50 rounded-xl p-3 w-full h-full flex flex-col justify-center">
                          {(() => {
                            const rawCost = parseFloat(activeLabor.cost || 0);
                            const margin = margins?.good_margin ?? 0.35;
