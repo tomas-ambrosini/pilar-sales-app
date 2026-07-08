@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { Users, Truck, Plus, Check, Search, MapPin, Edit2, X, Trash2, Save, Building2, UserCircle, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+import SubcontractorJobHistory from '../components/SubcontractorJobHistory';
+
 export default function Subcontractors() {
   const { user } = useAuth();
   const [subcontractors, setSubcontractors] = useState([]);
@@ -14,6 +16,7 @@ export default function Subcontractors() {
   
   const [showTechModal, setShowTechModal] = useState(null); // holds subcontractor ID
   const [editingSub, setEditingSub] = useState(null); // holds subcontractor object
+  const [activeTab, setActiveTab] = useState('profile');
 
   useEffect(() => {
     fetchData();
@@ -181,7 +184,7 @@ export default function Subcontractors() {
          <div className="fixed inset-0 z-[100] flex justify-end bg-slate-900/20 backdrop-blur-sm transition-all">
             <div className="absolute inset-0" onClick={() => setEditingSub(null)}></div>
             <div className="relative w-full max-w-lg bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right-full duration-300">
-                <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
+                <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50 shrink-0">
                     <div>
                         <h2 className="text-xl font-black text-slate-900">{editingSub.subcontractor_company || 'Subcontractor Details'}</h2>
                         <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{editingSub.id.split('-')[0]}</span>
@@ -191,7 +194,24 @@ export default function Subcontractors() {
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                <div className="flex px-6 pt-4 space-x-6 border-b border-slate-100 bg-slate-50 shrink-0">
+                    <button 
+                        onClick={() => setActiveTab('profile')} 
+                        className={`pb-3 text-sm font-black transition-colors border-b-2 ${activeTab === 'profile' ? 'border-primary-600 text-primary-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                    >
+                        Profile & Lanes
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('history')} 
+                        className={`pb-3 text-sm font-black transition-colors border-b-2 ${activeTab === 'history' ? 'border-primary-600 text-primary-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                    >
+                        Job History
+                    </button>
+                </div>
+
+                <div className="flex-1 overflow-hidden flex flex-col bg-slate-50/30">
+                    {activeTab === 'profile' ? (
+                    <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
                     {/* Basic Info Form */}
                     <form id="edit-sub-form" onSubmit={handleUpdateSub} className="space-y-4">
                         <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest border-b pb-2">Profile Information</h3>
@@ -250,6 +270,7 @@ export default function Subcontractors() {
                                                 <button onClick={() => toggleTechStatus(crew.id, crew.is_active)} className="text-[11px] font-bold text-slate-500 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all bg-white">
                                                     {crew.is_active ? 'Disable' : 'Enable'}
                                                 </button>
+                                                <button onClick={() => handleDeleteTech(crew.id)} className="text-[11px] font-bold text-red-500 hover:text-red-700 px-3 py-1.5 rounded-lg border border-red-100 hover:border-red-200 hover:bg-red-50 transition-all bg-white"><Trash2 size={12}/></button>
                                             </div>
                                         </div>
                                     ))}
@@ -257,6 +278,10 @@ export default function Subcontractors() {
                             );
                         })()}
                     </div>
+                    </div>
+                    ) : (
+                        <SubcontractorJobHistory subcontractorId={editingSub.id} crews={crews.filter(c => c.subcontractor_id === editingSub.id)} />
+                    )}
                 </div>
             </div>
          </div>
