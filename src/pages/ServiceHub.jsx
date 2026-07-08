@@ -243,11 +243,7 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                     </div>
                 </div>
 
-                <div className="flex justify-end mt-2.5">
-                    <button onClick={(e) => { e.stopPropagation(); setInspectingCallId(call.id); }} className="text-[10px] font-black text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-lg transition-all border border-emerald-200/50 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
-                        View Call <ArrowRight size={12} strokeWidth={3} />
-                    </button>
-                </div>
+
             </div>
         );
     };
