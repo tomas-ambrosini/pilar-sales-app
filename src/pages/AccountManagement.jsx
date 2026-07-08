@@ -451,6 +451,7 @@ export default function AccountManagement() {
             </table>
          </div>
       </div>
+      )}
 
       {/* CREATE MODAL */}
       {showCreateModal && (
