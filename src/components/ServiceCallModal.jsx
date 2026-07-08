@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { X, Wrench, Clock, MapPin, Phone, Save, Calendar as CalendarIcon, UserCheck, AlertCircle, Check, Mail, Navigation, Info, MessageSquare, Activity, Send, History } from 'lucide-react';
+import { X, Wrench, Clock, MapPin, Phone, Save, Calendar as CalendarIcon, UserCheck, AlertCircle, Check, Mail, Navigation, Info, MessageSquare, Activity, Send, History, Paperclip, Upload, FileText, Image as ImageIcon, Download, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
@@ -17,6 +17,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
     const [assignedCrew, setAssignedCrew] = useState(null);
     const [activities, setActivities] = useState([]);
     const [newNote, setNewNote] = useState('');
+    const [uploadingMedia, setUploadingMedia] = useState(false);
     
     useEffect(() => {
         if (callId) fetchCallDetails();
@@ -174,6 +175,51 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
         }
     };
 
+    const handleFileUpload = async (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        
+        setUploadingMedia(true);
+        const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+        
+        try {
+            for (const file of files) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+                const filePath = `${callData.customer_id}/service_calls/${callId}/${fileName}`;
+                
+                const { error: uploadError } = await supabase.storage
+                    .from('unit_media')
+                    .upload(filePath, file);
+                    
+                if (uploadError) throw uploadError;
+                
+                const { data } = supabase.storage.from('unit_media').getPublicUrl(filePath);
+                
+                await supabase.from('activity_logs').insert({
+                    household_id: callData.customer_id,
+                    service_call_id: callId,
+                    activity_type: 'Attachment',
+                    description: JSON.stringify({
+                        name: file.name,
+                        url: data.publicUrl,
+                        type: file.type,
+                        uploadedBy: userName
+                    })
+                });
+            }
+            
+            toast.success('Files uploaded successfully');
+            await fetchActivities(callData);
+        } catch (err) {
+            console.error("Upload error:", err);
+            toast.error('Failed to upload files. Ensure unit_media bucket exists and is public.');
+        } finally {
+            setUploadingMedia(false);
+            e.target.value = '';
+        }
+    };
+
     const handleSave = async (overrideStatus = null) => {
         setSaving(true);
         const finalStatus = typeof overrideStatus === 'string' ? overrideStatus : callData.status;
@@ -186,7 +232,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                 activity_type: 'Status Updated',
                 description: `Status changed to ${finalStatus}. (Action taken by: ${userName})`
             });
-            fetchActivities({ ...callData, status: finalStatus }); // Update timeline in background
+            fetchActivities({ ...callData, status: finalStatus });
         }
 
         const payload = {
@@ -195,8 +241,6 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
             call_type: callData.call_type,
             issue_description: callData.issue_description,
             updated_at: new Date().toISOString()
-            // Note: assigned_techs, scheduled_start, scheduled_end are intentionally NOT updated from the form.
-            // They are driven by the Dispatch Calendar dragging.
         };
 
         const { error } = await supabase
@@ -257,14 +301,13 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
 
     const customerName = (callData.households?.household_name || 'Unknown Customer').replace(/ Account$/i, '').trim();
     
-    // Extract Metadata from tags
-    const intakenByTag = callData.tags?.find(t => t.startsWith('INTAKEN_BY:'));
+    const intakenByTag = callData.tags?.find(t => typeof t === 'string' && t.startsWith('INTAKEN_BY:'));
     const intakenBy = intakenByTag ? intakenByTag.replace('INTAKEN_BY:', '') : 'Unknown Employee';
 
-    const scheduledByTag = callData.tags?.find(t => t.startsWith('SCHEDULED_BY:'));
+    const scheduledByTag = callData.tags?.find(t => typeof t === 'string' && t.startsWith('SCHEDULED_BY:'));
     const scheduledBy = scheduledByTag ? scheduledByTag.replace('SCHEDULED_BY:', '') : 'Pending Assignment';
     
-    const propertyTag = callData.tags?.find(t => t.startsWith('PROPERTY:'));
+    const propertyTag = callData.tags?.find(t => typeof t === 'string' && t.startsWith('PROPERTY:'));
     const propertyId = propertyTag ? propertyTag.replace('PROPERTY:', '') : null;
     
     // Match specific property if found, else fallback to primary or first available
@@ -507,6 +550,64 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                             {callData.issue_description || 'No dispatch instructions provided.'}
                         </div>
                     </div>
+                    
+                    {/* Documents & Photos */}
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm transition-shadow hover:shadow-md">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <Paperclip size={14} /> Documents & Photos
+                            </h3>
+                            <label className="cursor-pointer bg-primary-50 text-primary-700 hover:bg-primary-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 shadow-sm border border-primary-100">
+                                {uploadingMedia ? (
+                                    <span className="flex items-center gap-1"><div className="w-3 h-3 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div> Uploading...</span>
+                                ) : (
+                                    <><Upload size={14} /> Upload Files</>
+                                )}
+                                <input type="file" multiple className="hidden" onChange={handleFileUpload} disabled={uploadingMedia} />
+                            </label>
+                        </div>
+                        
+                        {attachments.length > 0 ? (
+                            <div className="grid grid-cols-2 gap-3 mt-4">
+                                {attachments.map((file, i) => {
+                                    const isImage = file.type?.startsWith('image/') || file.url.match(/\.(jpeg|jpg|gif|png|webp)$/i);
+                                    return (
+                                        <a 
+                                            key={i} 
+                                            href={file.url} 
+                                            target="_blank" 
+                                            rel="noreferrer" 
+                                            className="group relative bg-slate-50 border border-slate-200 rounded-xl overflow-hidden hover:border-primary-300 transition-all flex flex-col hover:shadow-md"
+                                        >
+                                            {isImage ? (
+                                                <div className="w-full h-24 bg-slate-100 relative">
+                                                    <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
+                                                    <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/10 transition-colors"></div>
+                                                </div>
+                                            ) : (
+                                                <div className="w-full h-24 bg-slate-100 flex items-center justify-center text-slate-400 group-hover:text-primary-500 transition-colors">
+                                                    <FileText size={32} />
+                                                </div>
+                                            )}
+                                            <div className="p-2.5 bg-white border-t border-slate-100 flex flex-col flex-1 justify-between">
+                                                <div className="text-xs font-bold text-slate-700 truncate mb-1" title={file.name}>{file.name}</div>
+                                                <div className="flex items-center justify-between mt-auto">
+                                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{file.uploadedBy || 'User'}</span>
+                                                    <ExternalLink size={12} className="text-slate-300 group-hover:text-primary-500" />
+                                                </div>
+                                            </div>
+                                        </a>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="text-center py-6 bg-slate-50 border border-dashed border-slate-200 rounded-xl">
+                                <Paperclip size={24} className="mx-auto text-slate-300 mb-2" />
+                                <p className="text-sm font-semibold text-slate-500">No documents or photos yet.</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Upload job photos, permits, or notes</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Right Panel: Unified Timeline */}
@@ -525,7 +626,9 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                 {activities.map((act) => (
                                     <div key={act.id} className="relative flex items-start gap-4 group">
                                         <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-white shadow-sm shrink-0 relative z-10">
-                                            {act.activity_type.includes('Note') ? (
+                                            {act.activity_type === 'Attachment' ? (
+                                                <div className="w-full h-full bg-purple-100 rounded-full flex items-center justify-center text-purple-600"><Paperclip size={14} /></div>
+                                            ) : act.activity_type.includes('Note') ? (
                                                 <div className="w-full h-full bg-blue-100 rounded-full flex items-center justify-center text-blue-600"><MessageSquare size={14} /></div>
                                             ) : act.activity_type.includes('Status') ? (
                                                 <div className="w-full h-full bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600"><Check size={14} /></div>
@@ -540,9 +643,15 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                                     {new Date(act.created_at).toLocaleDateString()}
                                                 </span>
                                             </div>
-                                            <div className="text-sm text-slate-600 font-medium whitespace-pre-wrap leading-relaxed">
-                                                {act.description}
-                                            </div>
+                                            {act.activity_type === 'Attachment' ? (
+                                                <div className="text-sm text-slate-500 font-medium italic">
+                                                    Uploaded a new document/photo. Check the Documents section.
+                                                </div>
+                                            ) : (
+                                                <div className="text-sm text-slate-600 font-medium whitespace-pre-wrap leading-relaxed">
+                                                    {act.description}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
