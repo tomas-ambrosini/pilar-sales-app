@@ -172,8 +172,8 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
         
         return (
             <div key={call.id} onClick={() => setInspectingCallId(call.id)} className={`group relative cursor-pointer bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-l-[5px] ${urgencyBorder} p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}>
-                <div className={`absolute top-0 right-0 text-[9px] font-black px-2.5 py-1 rounded-bl-xl rounded-tr-xl flex items-center gap-1 uppercase tracking-wider z-10 ${isSLA_Violated ? 'bg-red-500 text-white shadow-sm' : 'bg-slate-100 text-slate-500 border-b border-l border-slate-200/60'}`}>
-                    {isSLA_Violated ? <AlertTriangle size={10} strokeWidth={3} /> : <Clock size={10} strokeWidth={3} />}
+                <div className={`absolute -top-3 -right-3 text-[10px] font-black px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 uppercase tracking-wider z-20 ${isSLA_Violated ? 'bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-[0_4px_12px_rgba(239,68,68,0.3)]' : 'bg-white border border-slate-200 text-slate-500'}`}>
+                    {isSLA_Violated ? <AlertTriangle size={12} strokeWidth={3} /> : <Clock size={12} strokeWidth={3} />}
                     {Math.floor(hoursInStage)}h {isSLA_Violated ? 'Overdue' : 'In Stage'}
                 </div>
 
@@ -223,7 +223,7 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                             </div>
                         ) : <div/>}
 
-                        <div className={`shrink-0 flex items-center gap-1 ${assignedCrew ? 'bg-slate-50 border-slate-200 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]' : 'bg-white border-dashed border-slate-300'} border px-1.5 py-1 rounded-full text-[10px] font-bold text-slate-700 transition-colors`}>
+                        <div className={`shrink-0 flex items-center gap-1 ${assignedCrew ? 'bg-white border-slate-200 shadow-md' : 'bg-slate-50 border-dashed border-slate-300 shadow-sm'} border px-1.5 py-1 rounded-full text-[10px] font-bold text-slate-700 transition-transform duration-300 translate-x-[26px] z-10`}>
                             {assignedCrew ? (
                                 <>
                                     <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 shadow-sm" style={{backgroundColor: assignedCrew.color_code || '#64748b', color: '#fff'}}>
