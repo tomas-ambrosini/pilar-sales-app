@@ -90,11 +90,14 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
             }
         }
         
-        await fetchActivities();
+        await fetchActivities(parsedCallData);
         setLoading(false);
     };
 
-    const fetchActivities = async () => {
+    const fetchActivities = async (currentCallData) => {
+        const dataToUse = currentCallData || callData;
+        if (!dataToUse) return;
+
         try {
             const { data: actData, error: actError } = await supabase
                 .from('activity_logs')
@@ -103,7 +106,47 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                 .order('created_at', { ascending: false });
             
             if (!actError && actData) {
-                setActivities(actData);
+                const synthesized = [...actData];
+                
+                const hasCreation = synthesized.some(a => a.activity_type.includes('Created') || a.activity_type.includes('Intaken'));
+                if (!hasCreation) {
+                    const intakenByTag = dataToUse.tags?.find(t => typeof t === 'string' && t.startsWith('INTAKEN_BY:'));
+                    const intakeName = intakenByTag ? intakenByTag.replace('INTAKEN_BY:', '') : 'System';
+                    synthesized.push({
+                        id: `synth-create-${callId}`,
+                        activity_type: 'Service Call Created',
+                        description: `Call intaken by ${intakeName}.`,
+                        created_at: dataToUse.created_at || new Date().toISOString()
+                    });
+                }
+
+                const hasScheduled = synthesized.some(a => a.activity_type.includes('Scheduled') || a.description?.includes('Scheduled'));
+                if (!hasScheduled && dataToUse.scheduled_start) {
+                    const scheduledByTag = dataToUse.tags?.find(t => typeof t === 'string' && t.startsWith('SCHEDULED_BY:'));
+                    const schedName = scheduledByTag ? scheduledByTag.replace('SCHEDULED_BY:', '') : 'System';
+                    // Offset creation time slightly so it orders after creation
+                    const schedDate = new Date(new Date(dataToUse.created_at).getTime() + 1000).toISOString();
+                    synthesized.push({
+                        id: `synth-sched-${callId}`,
+                        activity_type: 'Job Scheduled',
+                        description: `Service call was scheduled and routed. (Action taken by: ${schedName})`,
+                        created_at: schedDate
+                    });
+                }
+
+                const hasStatusChange = synthesized.some(a => a.activity_type === 'Status Updated');
+                if (!hasStatusChange && dataToUse.status !== 'Pending' && dataToUse.status !== 'Scheduled') {
+                     const statusDate = dataToUse.updated_at || new Date().toISOString();
+                     synthesized.push({
+                        id: `synth-status-${callId}`,
+                        activity_type: 'Status Updated',
+                        description: `Status advanced to ${dataToUse.status}. (Legacy Record)`,
+                        created_at: statusDate
+                    });
+                }
+
+                synthesized.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                setActivities(synthesized);
             }
         } catch (e) {
             console.error('Failed to fetch activity logs', e);
@@ -122,7 +165,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
             });
             if (error) throw error;
             setNewNote('');
-            await fetchActivities();
+            await fetchActivities(callData);
             toast.success('Note added successfully');
         } catch (e) {
             toast.error('Failed to save note');
@@ -141,7 +184,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                 activity_type: 'Status Updated',
                 description: `Status changed to ${finalStatus}. (Action taken by: ${userName})`
             });
-            fetchActivities(); // Update timeline in background
+            fetchActivities({ ...callData, status: finalStatus }); // Update timeline in background
         }
 
         const payload = {
