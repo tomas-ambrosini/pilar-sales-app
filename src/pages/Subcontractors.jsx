@@ -7,6 +7,8 @@ import { Users, Truck, Plus, Check, Search, MapPin, Edit2, X, Trash2, Save, Buil
 import toast from 'react-hot-toast';
 
 import SubcontractorJobHistory from '../components/SubcontractorJobHistory';
+import OpportunityOverviewModal from '../components/OpportunityOverviewModal';
+import ServiceCallModal from '../components/ServiceCallModal';
 
 export default function Subcontractors() {
   const { user } = useAuth();
@@ -19,6 +21,9 @@ export default function Subcontractors() {
   const [showTechModal, setShowTechModal] = useState(null); // holds subcontractor ID
   const [editingSub, setEditingSub] = useState(null); // holds subcontractor object
   const [activeTab, setActiveTab] = useState('profile');
+  
+  const [selectedOpp, setSelectedOpp] = useState(null);
+  const [selectedServiceCall, setSelectedServiceCall] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -47,6 +52,30 @@ export default function Subcontractors() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleInspectJob = async (job, type) => {
+      try {
+          toast.loading('Loading details...', { id: 'inspect_job' });
+          if (type === 'SERVICE') {
+              const { data, error } = await supabase.from('service_calls')
+                  .select('*, households(household_name, phone, email, addresses(*))')
+                  .eq('id', job.id).single();
+              if (error) throw error;
+              toast.dismiss('inspect_job');
+              setSelectedServiceCall(data);
+          } else {
+              const { data, error } = await supabase.from('opportunities')
+                  .select('*, households(household_name, phone, email, addresses(*))')
+                  .eq('id', job.id).single();
+              if (error) throw error;
+              toast.dismiss('inspect_job');
+              setSelectedOpp(data);
+          }
+      } catch (err) {
+          console.error("Failed to fetch full job data:", err);
+          toast.error('Failed to load job details', { id: 'inspect_job' });
+      }
   };
 
   const handleUpdateSub = async (e) => {
@@ -302,7 +331,7 @@ export default function Subcontractors() {
                         <SubcontractorJobHistory 
                             subcontractorId={editingSub.id} 
                             crews={crews.filter(c => c.subcontractor_id === editingSub.id)}
-                            onInspectJob={(job) => navigate(`/tracker/${job.id}`)}
+                            onInspectJob={handleInspectJob}
                         />
                     )}
                 </div>
@@ -337,6 +366,24 @@ export default function Subcontractors() {
             </div>
          </div>
       , document.body)}
+      {/* Modals for Job History details */}
+      {selectedOpp && (
+          <OpportunityOverviewModal 
+              isOpen={!!selectedOpp} 
+              onClose={() => setSelectedOpp(null)} 
+              job={selectedOpp} 
+              onAction={() => {}} 
+          />
+      )}
+      
+      {selectedServiceCall && (
+          <ServiceCallModal 
+              isOpen={!!selectedServiceCall} 
+              onClose={() => setSelectedServiceCall(null)} 
+              serviceCall={selectedServiceCall} 
+              onUpdate={() => {}} 
+          />
+      )}
     </div>
   );
 }
