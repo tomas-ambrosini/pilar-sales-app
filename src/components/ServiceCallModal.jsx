@@ -598,13 +598,6 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                         </div>
                         <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                             <button onClick={onClose} className="w-full sm:w-auto justify-center px-6 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-all">Cancel</button>
-                            <button 
-                                onClick={() => handleSave(null)} 
-                                disabled={saving}
-                                className="w-full sm:w-auto justify-center px-6 py-2.5 text-sm font-black text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm rounded-xl transition-all flex items-center gap-2"
-                            >
-                                <Save size={16} /> Save Notes
-                            </button>
                             
                             {/* Primary Action Button pushes the state forward logically */}
                             {primaryActionText && (
