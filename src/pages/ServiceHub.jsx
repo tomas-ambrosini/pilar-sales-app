@@ -165,8 +165,13 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
             assignedCrew = crews.find(c => c.id === call.assigned_techs[0]);
         }
         
+        let urgencyBorder = 'border-l-slate-300';
+        if (call.urgency === 'EMERGENCY') urgencyBorder = 'border-l-red-500';
+        else if (call.urgency === 'HIGH') urgencyBorder = 'border-l-orange-500';
+        else if (call.urgency === 'NORMAL') urgencyBorder = 'border-l-blue-500';
+        
         return (
-            <div key={call.id} onClick={() => setInspectingCallId(call.id)} className={`group relative cursor-pointer bg-white rounded-xl shadow-sm border p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}>
+            <div key={call.id} onClick={() => setInspectingCallId(call.id)} className={`group relative cursor-pointer bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-l-[5px] ${urgencyBorder} p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}>
                 
                 {isSLA_Violated && (
                     <div className="absolute -top-3 -right-3 bg-gradient-to-br from-red-500 to-rose-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 uppercase tracking-wider animate-in zoom-in">
@@ -176,7 +181,7 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
 
                 <div className="flex justify-between items-start mb-2">
                     <div className="flex flex-col pr-4">
-                        <h4 className="font-black text-slate-800 text-base leading-tight truncate">{(call.households?.household_name || 'Unknown Client').replace(/ Account$/i, '').trim()}</h4>
+                        <h4 className="font-black text-slate-900 text-base tracking-tight leading-tight truncate group-hover:text-primary-600 transition-colors">{(call.households?.household_name || 'Unknown Client').replace(/ Account$/i, '').trim()}</h4>
                         <span className="text-[10px] font-semibold text-slate-500 mt-1 flex items-center gap-1.5 flex-wrap">
                             <span className="whitespace-nowrap">{new Date(call.created_at).toLocaleDateString()}</span> 
                             <span className="text-slate-300 whitespace-nowrap">&bull;</span> 
@@ -197,7 +202,7 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                     </div>
                 </div>
 
-                <div className="bg-slate-50/80 rounded-xl p-2.5 border border-slate-100/80 flex flex-col gap-1.5 mb-2.5">
+                <div className="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-xl p-2.5 border border-slate-100/80 shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] flex flex-col gap-1.5 mb-2.5">
                     <div className="flex items-center gap-2 text-[11px] font-medium text-slate-600">
                         <MapPin size={12} className="text-slate-400"/> 
                         <span className="truncate">
