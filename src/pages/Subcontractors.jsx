@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Users, Truck, Plus, Check, Search, MapPin, Edit2, X, Trash2, Save, Building2, UserCircle, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -9,6 +10,7 @@ import SubcontractorJobHistory from '../components/SubcontractorJobHistory';
 
 export default function Subcontractors() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [subcontractors, setSubcontractors] = useState([]);
   const [crews, setCrews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -297,7 +299,11 @@ export default function Subcontractors() {
                         </div>
                     </div>
                     ) : (
-                        <SubcontractorJobHistory subcontractorId={editingSub.id} crews={crews.filter(c => c.subcontractor_id === editingSub.id)} />
+                        <SubcontractorJobHistory 
+                            subcontractorId={editingSub.id} 
+                            crews={crews.filter(c => c.subcontractor_id === editingSub.id)}
+                            onInspectJob={(job) => navigate(`/tracker/${job.id}`)}
+                        />
                     )}
                 </div>
             </div>
