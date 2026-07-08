@@ -184,102 +184,108 @@ export default function Subcontractors() {
          <div className="fixed inset-0 z-[100] flex justify-center items-center p-6 bg-slate-900/20 backdrop-blur-sm transition-all">
             <div className="absolute inset-0" onClick={() => setEditingSub(null)}></div>
             <div className="relative w-full max-w-4xl max-h-full rounded-2xl bg-white shadow-2xl flex flex-col animate-in zoom-in-95 duration-200 overflow-hidden">
-                <div className="flex items-center justify-between px-8 py-6 bg-slate-900 text-white shrink-0">
+                <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 bg-white shrink-0">
                     <div>
-                        <h2 className="text-2xl font-black">{editingSub.subcontractor_company || 'Subcontractor Details'}</h2>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mt-1">
+                        <h2 className="text-2xl font-black text-slate-800 tracking-tight">{editingSub.subcontractor_company || 'Subcontractor Details'}</h2>
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2 mt-1">
                             <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
                             {editingSub.id.split('-')[0]}
                         </span>
                     </div>
-                    <button onClick={() => setEditingSub(null)} className="p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-full transition-colors">
-                        <X size={20} />
+                    <button onClick={() => setEditingSub(null)} className="p-2 text-slate-400 hover:text-slate-800 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors border border-slate-200 shadow-sm">
+                        <X size={18} />
                     </button>
                 </div>
 
-                <div className="flex px-8 py-4 border-b border-slate-100 bg-white shrink-0 justify-center">
-                    <div className="flex bg-slate-100 p-1.5 rounded-xl shadow-[inset_0_1px_3px_rgba(0,0,0,0.03)]">
+                <div className="flex px-8 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0 justify-start">
+                    <div className="flex space-x-2">
                         <button 
                             onClick={() => setActiveTab('profile')} 
-                            className={`px-8 py-2 text-sm font-black rounded-lg transition-all ${activeTab === 'profile' ? 'bg-white text-primary-600 shadow-sm border border-slate-200/60' : 'text-slate-500 hover:text-slate-800'}`}
+                            className={`px-5 py-2.5 text-sm font-black rounded-xl transition-all ${activeTab === 'profile' ? 'bg-white text-primary-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/50 border border-transparent'}`}
                         >
                             Profile & Lanes
                         </button>
                         <button 
                             onClick={() => setActiveTab('history')} 
-                            className={`px-8 py-2 text-sm font-black rounded-lg transition-all ${activeTab === 'history' ? 'bg-white text-primary-600 shadow-sm border border-slate-200/60' : 'text-slate-500 hover:text-slate-800'}`}
+                            className={`px-5 py-2.5 text-sm font-black rounded-xl transition-all ${activeTab === 'history' ? 'bg-white text-primary-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/50 border border-transparent'}`}
                         >
                             Job History
                         </button>
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-hidden flex flex-col bg-slate-50">
+                <div className="flex-1 overflow-hidden flex flex-col bg-slate-50/30">
                     {activeTab === 'profile' ? (
-                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
                             {/* Basic Info Form */}
-                            <form id="edit-sub-form" onSubmit={handleUpdateSub} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col h-fit">
-                                <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest border-b border-slate-100 pb-3 mb-5">Profile Information</h3>
+                            <form id="edit-sub-form" onSubmit={handleUpdateSub} className="flex flex-col h-fit">
+                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <Building2 size={14} /> Profile Information
+                                </h3>
                                 
-                                <div className="space-y-5">
+                                <div className="space-y-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm transition-shadow hover:shadow-md">
                                     <div>
-                                        <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5 mb-2"><Building2 size={14}/> Company Name</label>
-                                        <input type="text" name="company" defaultValue={editingSub.subcontractor_company} className="w-full border border-slate-200 rounded-xl p-3.5 text-sm font-semibold focus:ring-2 focus:ring-primary-500/20 outline-none transition-all hover:border-slate-300" required />
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Company Name</label>
+                                        <input type="text" name="company" defaultValue={editingSub.subcontractor_company} className="w-full bg-slate-50 border border-slate-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/15 focus:bg-white hover:border-slate-300 p-2.5 rounded-xl text-sm font-bold text-slate-800 transition-all shadow-sm outline-none" required />
                                     </div>
                                     
                                     <div>
-                                        <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5 mb-2"><UserCircle size={14}/> Primary Contact</label>
-                                        <input type="text" name="name" defaultValue={editingSub.full_name} className="w-full border border-slate-200 rounded-xl p-3.5 text-sm font-semibold focus:ring-2 focus:ring-primary-500/20 outline-none transition-all hover:border-slate-300" required />
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Primary Contact</label>
+                                        <input type="text" name="name" defaultValue={editingSub.full_name} className="w-full bg-slate-50 border border-slate-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/15 focus:bg-white hover:border-slate-300 p-2.5 rounded-xl text-sm font-bold text-slate-800 transition-all shadow-sm outline-none" required />
                                     </div>
                                     
                                     <div>
-                                        <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5 mb-2"><Mail size={14}/> Login Email</label>
-                                        <input type="email" defaultValue={editingSub.email} disabled className="w-full border border-slate-100 bg-slate-50 rounded-xl p-3.5 text-sm font-semibold text-slate-400 cursor-not-allowed" />
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Login Email</label>
+                                        <div className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-sm font-bold text-slate-400 flex items-center shadow-inner cursor-not-allowed">
+                                            {editingSub.email}
+                                        </div>
                                     </div>
-                                </div>
-
-                                <div className="pt-8 mt-auto">
-                                    <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 px-4 rounded-xl shadow-md shadow-slate-900/10 transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5">
-                                        <Save size={18} /> Save Changes
-                                    </button>
+                                    
+                                    <div className="pt-2">
+                                        <button type="submit" className="w-full justify-center px-4 py-3 text-sm font-black shadow-sm rounded-xl transition-all flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white shadow-primary-600/20 hover:-translate-y-0.5">
+                                            <Save size={16} /> Save Changes
+                                        </button>
+                                    </div>
                                 </div>
                             </form>
 
                             {/* Dispatch Lanes Management */}
-                            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col h-full max-h-full overflow-hidden">
-                                <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-5 shrink-0">
-                                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Dispatch Lanes</h3>
-                                    <button onClick={() => setShowTechModal(editingSub.id)} className="text-[10px] font-black text-primary-700 hover:text-primary-900 bg-primary-100 hover:bg-primary-200 px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 shadow-sm">
-                                        <Plus size={14}/> Add New
+                            <div className="flex flex-col h-full max-h-full overflow-hidden">
+                                <div className="flex items-center justify-between mb-4 shrink-0">
+                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Truck size={14} /> Dispatch Lanes
+                                    </h3>
+                                    <button onClick={() => setShowTechModal(editingSub.id)} className="text-[10px] font-black text-primary-600 hover:text-primary-800 uppercase tracking-widest flex items-center gap-1.5 bg-primary-50 hover:bg-primary-100 px-3 py-1.5 rounded-lg transition-all">
+                                        <Plus size={12}/> Add New
                                     </button>
                                 </div>
 
-                                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                                <div className="flex-1 overflow-y-auto custom-scrollbar bg-white p-5 rounded-2xl border border-slate-200 shadow-sm transition-shadow hover:shadow-md">
                                     {(() => {
                                         const subCrews = crews.filter(c => c.subcontractor_id === editingSub.id);
                                         if (subCrews.length === 0) {
                                             return (
-                                                <div className="flex flex-col items-center justify-center h-full text-center py-12 bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-xl">
-                                                    <Truck size={32} className="mx-auto text-slate-300 mb-3" />
-                                                    <p className="text-sm font-bold text-slate-500">No dispatch lanes configured.</p>
-                                                    <p className="text-xs font-semibold text-slate-400 mt-1 max-w-[200px]">Add a lane to start assigning jobs to this subcontractor.</p>
+                                                <div className="flex flex-col items-center justify-center h-full text-center py-12 bg-amber-50/50 border border-dashed border-amber-200 rounded-xl">
+                                                    <Truck size={32} className="mx-auto text-amber-300 mb-3" />
+                                                    <p className="text-sm font-bold text-amber-700">No dispatch lanes configured.</p>
+                                                    <p className="text-xs font-medium text-amber-600 mt-1 max-w-[200px]">Add a lane to start assigning jobs to this subcontractor.</p>
                                                 </div>
                                             );
                                         }
                                         return (
                                             <div className="space-y-3">
                                                 {subCrews.map(crew => (
-                                                    <div key={crew.id} className={`flex justify-between items-center p-4 border rounded-xl transition-all ${crew.is_active ? 'bg-white border-slate-200 shadow-sm hover:border-slate-300' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
+                                                    <div key={crew.id} className={`flex justify-between items-center p-3.5 border rounded-xl transition-all ${crew.is_active ? 'bg-slate-50 border-slate-200 shadow-inner' : 'bg-white border-slate-100 opacity-60'}`}>
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-4 h-4 rounded-full shadow-sm border border-black/10" style={{ backgroundColor: crew.color_code || '#cbd5e1' }}></div>
-                                                            <span className={`text-sm font-bold ${!crew.is_active ? 'line-through text-slate-400' : 'text-slate-800'}`}>{crew.crew_name}</span>
+                                                            <span className={`text-sm font-bold ${!crew.is_active ? 'line-through text-slate-400' : 'text-slate-700'}`}>{crew.crew_name}</span>
                                                         </div>
                                                         <div className="flex gap-2">
-                                                            <button onClick={() => toggleTechStatus(crew.id, crew.is_active)} className="text-[11px] font-black text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all bg-white shadow-sm">
+                                                            <button onClick={() => toggleTechStatus(crew.id, crew.is_active)} className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-white transition-all bg-slate-100 shadow-sm">
                                                                 {crew.is_active ? 'Disable' : 'Enable'}
                                                             </button>
-                                                            <button onClick={() => handleDeleteTech(crew.id)} className="text-[11px] font-black text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg border border-red-200 hover:border-red-300 hover:bg-red-50 transition-all bg-white shadow-sm flex items-center justify-center"><Trash2 size={14}/></button>
+                                                            <button onClick={() => handleDeleteTech(crew.id)} className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-700 px-3 py-1.5 rounded-lg border border-red-200 hover:border-red-300 hover:bg-white transition-all bg-red-50 shadow-sm flex items-center justify-center"><Trash2 size={12}/></button>
                                                         </div>
                                                     </div>
                                                 ))}
