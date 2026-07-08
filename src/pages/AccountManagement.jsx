@@ -345,11 +345,11 @@ export default function AccountManagement() {
                      <div className="flex-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Role</label>
                         <select name="role" value={createRole} onChange={(e) => setCreateRole(e.target.value)} className="w-full border rounded p-2 text-sm font-bold">
-                           <option value="SUPER_ADMIN">SUPER_ADMIN (Root Access)</option>
-                           <option value="DIRECTOR">DIRECTOR (Dept Head)</option>
+                           <option value="ADMIN">SUPER_ADMIN (Root Access)</option>
+                           <option value="MANAGER">DIRECTOR (Dept Head)</option>
                            <option value="MANAGER">MANAGER (Team Lead)</option>
-                           <option value="COORDINATOR">COORDINATOR (Desk Worker)</option>
-                           <option value="FIELD_WORKER">FIELD_WORKER (Tech/Install)</option>
+                           <option value="DISPATCHER">COORDINATOR (Desk Worker)</option>
+                           <option value="TECHNICIAN">FIELD_WORKER (Tech/Install)</option>
                         </select>
                      </div>
                      <div className="flex-1">
@@ -442,12 +442,12 @@ export default function AccountManagement() {
                      <div className="flex-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Account Role</label>
                         <select name="role" value={editRole} onChange={(e) => setEditRole(e.target.value)} className="w-full border rounded p-2 text-sm font-bold">
-                           <option value="SUPER_ADMIN">SUPER_ADMIN (Root Access)</option>
-                           <option value="DIRECTOR">DIRECTOR (Dept Head)</option>
+                           <option value="ADMIN">SUPER_ADMIN (Root Access)</option>
+                           <option value="MANAGER">DIRECTOR (Dept Head)</option>
                            <option value="MANAGER">MANAGER (Team Lead)</option>
-                           <option value="COORDINATOR">COORDINATOR (Desk Worker)</option>
-                           <option value="FIELD_WORKER">FIELD_WORKER (Tech/Install)</option>
-                           {!['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'COORDINATOR', 'FIELD_WORKER'].includes(editRole) && (
+                           <option value="DISPATCHER">COORDINATOR (Desk Worker)</option>
+                           <option value="TECHNICIAN">FIELD_WORKER (Tech/Install)</option>
+                           {!['ADMIN', 'MANAGER', 'DISPATCHER', 'TECHNICIAN', 'SALES', 'SUBCONTRACTOR', 'SUPER_ADMIN', 'DIRECTOR', 'COORDINATOR', 'FIELD_WORKER'].includes(editRole) && (
                                <option value={editRole}>{editRole}</option>
                            )}
                         </select>
