@@ -546,11 +546,11 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                                                     ))}
                                                                 </div>
                                                             </div>
-                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
-                                        );
+                                        </div>
+                                    );
                                 })}
                             </div>
                         </div>
