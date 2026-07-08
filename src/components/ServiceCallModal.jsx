@@ -89,9 +89,10 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                 const { data: crewData } = await supabase.from('crews').select('crew_name, color_code').eq('id', crewId).single();
                 if (crewData) setAssignedCrew(crewData);
             }
+            
+            await fetchActivities(parsedCallData);
         }
         
-        await fetchActivities(parsedCallData);
         setLoading(false);
     };
 
