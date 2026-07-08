@@ -25,7 +25,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
             const scrollHeight = dispatchNotesRef.current.scrollHeight;
             dispatchNotesRef.current.style.height = scrollHeight + 'px';
         }
-    }, [callData?.issue_description, isOpen]);
+    }, [callData?.issue_description]);
     
     useEffect(() => {
         if (callId) fetchCallDetails();
