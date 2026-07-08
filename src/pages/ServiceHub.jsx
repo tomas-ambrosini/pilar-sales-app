@@ -166,7 +166,7 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
         }
         
         return (
-            <div key={call.id} onClick={() => setInspectingCallId(call.id)} className={`group relative cursor-pointer bg-white rounded-2xl shadow-sm border p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}>
+            <div key={call.id} onClick={() => setInspectingCallId(call.id)} className={`group relative cursor-pointer bg-white rounded-xl shadow-sm border p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}>
                 
                 {isSLA_Violated && (
                     <div className="absolute -top-3 -right-3 bg-gradient-to-br from-red-500 to-rose-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 uppercase tracking-wider animate-in zoom-in">
@@ -174,7 +174,7 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                     </div>
                 )}
 
-                <div className="flex justify-between items-start mb-3">
+                <div className="flex justify-between items-start mb-2">
                     <div className="flex flex-col pr-4">
                         <h4 className="font-black text-slate-800 text-base leading-tight truncate">{(call.households?.household_name || 'Unknown Client').replace(/ Account$/i, '').trim()}</h4>
                         <span className="text-[10px] font-semibold text-slate-500 mt-1 flex items-center gap-1.5 flex-wrap">
@@ -197,7 +197,7 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                     </div>
                 </div>
 
-                <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-100/80 flex flex-col gap-2 mb-4">
+                <div className="bg-slate-50/80 rounded-xl p-2.5 border border-slate-100/80 flex flex-col gap-1.5 mb-2.5">
                     <div className="flex items-center gap-2 text-[11px] font-medium text-slate-600">
                         <MapPin size={12} className="text-slate-400"/> 
                         <span className="truncate">
@@ -222,7 +222,7 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                     )}
                 </div>
 
-                <div className="flex justify-between items-center pt-3 border-t border-slate-100 gap-2">
+                <div className="flex justify-between items-center pt-2 border-t border-slate-100 gap-2">
                     <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest min-w-0 truncate">
                         <Clock size={12} className="shrink-0" /> <span className="truncate">{Math.floor(hoursInStage)}h in stage</span>
                     </div>
@@ -243,7 +243,7 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                     </div>
                 </div>
 
-                <div className="flex justify-end mt-3">
+                <div className="flex justify-end mt-2.5">
                     <button onClick={(e) => { e.stopPropagation(); setInspectingCallId(call.id); }} className="text-[10px] font-black text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-lg transition-all border border-emerald-200/50 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
                         View Call <ArrowRight size={12} strokeWidth={3} />
                     </button>
