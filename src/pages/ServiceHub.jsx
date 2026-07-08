@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { useRole } from '../context/RoleContext';
-import { Wrench, Search, LayoutGrid, List, Clock, Calendar, CheckCircle2, MoreVertical, ShieldAlert, AlertCircle, Trash2, MapPin, ArrowRight, AlertTriangle } from 'lucide-react';
+import { X, Wrench, Search, Clock, Plus, Filter, ArrowRight, ShieldAlert, AlertTriangle, PlayCircle, MapPin, Calendar, Trash2, UserCircle2, LayoutGrid, List, CheckCircle2, MoreVertical, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ServiceCallModal from '../components/ServiceCallModal';
 
@@ -201,6 +201,24 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                     </div>
                 </div>
 
+                <div className={`absolute -bottom-3 -right-3 z-20 ${assignedCrew ? 'bg-white border border-slate-200 shadow-md' : 'bg-slate-50 border border-dashed border-slate-300 shadow-sm'} px-2 py-1.5 rounded-full text-[10px] font-black text-slate-700 flex items-center gap-1.5 transition-colors`}>
+                    {assignedCrew ? (
+                        <>
+                            <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-inner" style={{backgroundColor: assignedCrew.color_code || '#64748b', color: '#fff'}}>
+                                <Wrench size={10} strokeWidth={3}/>
+                            </div>
+                            <span className="pr-1 max-w-[80px] truncate">{assignedCrew.crew_name}</span>
+                        </>
+                    ) : (
+                        <>
+                            <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-300 shrink-0">
+                                <UserCircle2 size={12} strokeWidth={3}/>
+                            </div>
+                            <span className="pr-1 text-slate-400">Unassigned</span>
+                        </>
+                    )}
+                </div>
+
                 <div className="flex flex-col mt-auto gap-2">
                     <div className="flex items-start gap-1.5 text-[11px] font-medium text-slate-600">
                         <MapPin size={12} className="text-slate-400 shrink-0 mt-[2px]"/> 
@@ -216,29 +234,12 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                         </span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2">
-                        {call.scheduled_start ? (
-                            <div className="flex items-center gap-1.5 text-emerald-700">
-                                <Calendar size={12} strokeWidth={2.5}/> 
-                                <span className="text-[10px] font-black uppercase tracking-wider">{new Date(call.scheduled_start).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'})}</span>
-                            </div>
-                        ) : <div/>}
-
-                        <div className="relative shrink-0">
-                            <div className={`flex items-center gap-1 ${assignedCrew ? 'bg-slate-50 border-slate-200' : 'bg-white border-dashed border-slate-300'} border px-1.5 py-1 rounded-full text-[10px] font-bold text-slate-700 shadow-sm transition-colors`}>
-                                {assignedCrew ? (
-                                    <>
-                                        <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{backgroundColor: assignedCrew.color_code || '#64748b', color: '#fff'}}>
-                                            <Wrench size={8} strokeWidth={3}/>
-                                        </div>
-                                        <span className="px-1 max-w-[70px] truncate">{assignedCrew.crew_name}</span>
-                                    </>
-                                ) : (
-                                    <span className="px-2 py-0.5 text-slate-400">Unassigned</span>
-                                )}
-                            </div>
+                    {call.scheduled_start && (
+                        <div className="flex items-center gap-1.5 text-emerald-700 w-fit">
+                            <Calendar size={12} strokeWidth={2.5}/> 
+                            <span className="text-[10px] font-black uppercase tracking-wider">{new Date(call.scheduled_start).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'})}</span>
                         </div>
-                    </div>
+                    )}
                 </div>
 
 
