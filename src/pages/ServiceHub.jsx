@@ -186,7 +186,7 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                             <span className="font-mono uppercase tracking-widest text-slate-400 whitespace-nowrap">{displayId}</span>
                         </span>
                     </div>
-                    <div className="shrink-0 pt-0.5 flex flex-col items-end gap-2">
+                    <div className="shrink-0 pt-1.5 flex flex-col items-end gap-2">
                         {renderUrgencyBadge(call.urgency)}
                         {activeRole === ROLES.ADMIN && (
                             <button 

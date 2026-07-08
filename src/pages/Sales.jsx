@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { PIPELINE_STATES, PipelineController } from '../utils/pipelineControls';
-import { AlertTriangle, Clock, ArrowRight, DollarSign, Calendar, Zap, AlertCircle, MapPin, UserCircle2, X, Wrench } from 'lucide-react';
+import { AlertTriangle, Clock, ArrowRight, DollarSign, Calendar, Zap, AlertCircle, MapPin, UserCircle2, X, Wrench, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import OpportunityOverviewModal from '../components/OpportunityOverviewModal';
@@ -250,6 +250,21 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
     }
   };
 
+  const handleDeleteOpportunity = async (e, id) => {
+      e.stopPropagation();
+      if (window.confirm('Are you sure you want to delete this opportunity? This action cannot be undone.')) {
+          try {
+              const { error } = await supabase.from('opportunities').update({ is_active: false }).eq('id', id);
+              if (error) throw error;
+              toast.success('Opportunity deleted');
+              fetchOpportunities();
+          } catch (error) {
+              console.error('Error deleting opportunity:', error);
+              toast.error('Failed to delete opportunity');
+          }
+      }
+  };
+
   const calculateHoursInStage = (dateString) => {
       const hours = (new Date() - new Date(dateString)) / (1000 * 60 * 60);
       return Math.max(0, hours);
@@ -455,15 +470,26 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                                        <span className="font-mono uppercase tracking-widest text-slate-400 whitespace-nowrap">{displayId}</span>
                                                     </span>
                                                 </div>
-                                                {estValue && (
-                                                    <div className="font-black text-emerald-600 text-sm bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100/50">
-                                                        {canViewFinancials() ? (
-                                                            estValue.exact 
-                                                              ? `$${estValue.exact.toLocaleString()}` 
-                                                              : (estValue.min !== estValue.max ? `$${estValue.min.toLocaleString()} - $${estValue.max.toLocaleString()}` : `$${estValue.max.toLocaleString()}`)
-                                                        ) : '***'}
-                                                    </div>
-                                                )}
+                                                <div className="shrink-0 pt-1.5 flex flex-col items-end gap-2">
+                                                    {estValue && (
+                                                        <div className="font-black text-emerald-600 text-sm bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100/50">
+                                                            {canViewFinancials() ? (
+                                                                estValue.exact 
+                                                                  ? `$${estValue.exact.toLocaleString()}` 
+                                                                  : (estValue.min !== estValue.max ? `$${estValue.min.toLocaleString()} - $${estValue.max.toLocaleString()}` : `$${estValue.max.toLocaleString()}`)
+                                                            ) : '***'}
+                                                        </div>
+                                                    )}
+                                                    {activeRole === ROLES.ADMIN && (
+                                                        <button 
+                                                            onClick={(e) => handleDeleteOpportunity(e, job.id)} 
+                                                            className="text-slate-300 hover:text-red-500 transition-colors p-1 opacity-0 group-hover:opacity-100"
+                                                            title="Delete Opportunity"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             <div className="flex flex-col mt-auto gap-2 pt-1">
