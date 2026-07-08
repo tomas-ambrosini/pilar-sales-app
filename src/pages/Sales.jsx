@@ -426,9 +426,14 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                     const isDispatcherViewingOther = activeRole === ROLES.DISPATCHER && isAssignedToOther;
                                     const canActOnDeal = !isDispatcherViewingOther;
 
+                                    let urgencyBorder = 'border-l-slate-300';
+                                    if (job.urgency_level === 'EMERGENCY') urgencyBorder = 'border-l-red-500';
+                                    else if (job.urgency_level === 'HIGH') urgencyBorder = 'border-l-orange-500';
+                                    else if (job.urgency_level === 'NORMAL') urgencyBorder = 'border-l-blue-500';
+
                                     return (
                                         <div key={job.id} onClick={() => setInspectingJob(job)} 
-                                            className={`group relative cursor-pointer bg-white rounded-2xl shadow-sm border p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}
+                                            className={`group relative cursor-pointer bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-l-[5px] ${urgencyBorder} p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}
                                         >
                                             
                                             {isSLA_Violated && (
@@ -442,9 +447,9 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                                 </div>
                                             )}
 
-                                            <div className="flex justify-between items-start mb-3">
+                                            <div className="flex justify-between items-start mb-2">
                                                 <div className="flex flex-col pr-4">
-                                                    <h4 className="font-black text-slate-800 text-base leading-tight truncate">{formatCustomerName(job.households?.household_name, 'Unknown Client')}</h4>
+                                                    <h4 className="font-black text-slate-900 text-base tracking-tight leading-tight truncate group-hover:text-primary-600 transition-colors">{formatCustomerName(job.households?.household_name, 'Unknown Client')}</h4>
                                                     <span className="text-[10px] font-semibold text-slate-500 mt-1 flex items-center gap-1.5 flex-wrap">
                                                        <span className="whitespace-nowrap">{new Date(job.created_at).toLocaleDateString()}</span> 
                                                        <span className="text-slate-300 whitespace-nowrap">&bull;</span> 
@@ -462,7 +467,7 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                                 )}
                                             </div>
 
-                                            <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-100/80 flex flex-col gap-2 mb-4">
+                                            <div className="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-xl p-2.5 border border-slate-100/80 shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] flex flex-col gap-1.5 mb-2.5">
                                                 <div className="flex items-center gap-2 text-[11px] font-medium text-slate-600">
                                                     <MapPin size={12} className="text-slate-400"/> 
                                                     <span className="truncate">
@@ -489,7 +494,7 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                                 )}
                                             </div>
 
-                                            <div className="flex justify-between items-center pt-3 border-t border-slate-100 gap-2">
+                                            <div className="flex justify-between items-center pt-2 border-t border-slate-100 gap-2">
                                                 <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest min-w-0 truncate">
                                                     <Clock size={12} className="shrink-0" /> <span className="truncate">{Math.floor(hoursInStage)}h in stage</span>
                                                 </div>
@@ -552,82 +557,6 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                                 </div>
                                             </div>
 
-                                            {/* Action Buttons */}
-                                            {!isViewOnly && (
-                                            <div className="flex justify-end mt-3">
-                                                {col.id === PIPELINE_STATES.NEW_LEAD && canActOnDeal && (
-                                                    <button onClick={async (e) => {
-                                                        e.stopPropagation();
-                                                        if (job.proposal_data?.type === 'MAINTENANCE') {
-                                                            navigate(`/maintenance-wizard?opp_id=${job.id}`);
-                                                            return;
-                                                        }
-                                                        try {
-                                                            const newDraft = await createDraft({
-                                                                customer: formatCustomerName(job.households?.household_name, 'Unknown Client'),
-                                                                amount: 0,
-                                                                associated_opportunity_id: job.id,
-                                                                proposal_data: {
-                                                                    associated_opportunity_id: job.id,
-                                                                    wizard_state: {
-                                                                        step: 2,
-                                                                        selectedCustomerId: job.household_id,
-                                                                        selectedLocationId: job.service_address_id || job.households?.addresses?.id || (Array.isArray(job.households?.addresses) ? job.households.addresses[0]?.id : null) || ''
-                                                                    }
-                                                                }
-                                                            });
-
-                                                            if (newDraft && newDraft.id) {
-                                                                // Only advance pipeline state if the draft actually successfully created
-                                                                await PipelineController.startProposal(job.id, job.status);
-                                                                navigate(`/proposals?action=resume&id=${newDraft.id}`);
-                                                            } else {
-                                                                toast.error('Failed to create draft. Pipeline state was not changed.');
-                                                            }
-                                                        } catch (err) {
-                                                            toast.error('Failed to create draft and transition lead.');
-                                                        }
-                                                    }} className="text-[10px] font-black text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg transition-all shadow-sm shadow-primary-600/20 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
-                                                        Start Quote <ArrowRight size={12} strokeWidth={3} />
-                                                    </button>
-                                                )}
-                                                {col.id === PIPELINE_STATES.NEEDS_SCHEDULING && (
-                                                    <button onClick={(e) => { e.stopPropagation(); setInspectingJob(job); }} className="text-[10px] font-black text-amber-700 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-all border border-amber-200/50 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
-                                                        View Deal <ArrowRight size={12} strokeWidth={3} />
-                                                    </button>
-                                                )}
-                                                {col.id === PIPELINE_STATES.SCHEDULED && (
-                                                    <button onClick={(e) => { e.stopPropagation(); setInspectingJob(job); }} className="text-[10px] font-black text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-lg transition-all border border-emerald-200/50 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
-                                                        View Deal <ArrowRight size={12} strokeWidth={3} />
-                                                    </button>
-                                                )}
-                                                {col.id === PIPELINE_STATES.QUOTING && canActOnDeal && (
-                                                    <button onClick={(e) => { 
-                                                        e.stopPropagation(); 
-                                                        if (job.proposal_data?.type === 'MAINTENANCE') {
-                                                            navigate(`/maintenance-wizard?opp_id=${job.id}`);
-                                                        } else {
-                                                            navigate(`/proposals?action=resume_opp&opp_id=${job.id}`); 
-                                                        }
-                                                    }} className="text-[10px] font-black text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-all border border-slate-200/50 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
-                                                        Resume <ArrowRight size={12} strokeWidth={3} />
-                                                    </button>
-                                                )}
-                                                {col.id === PIPELINE_STATES.SENT && (
-                                                    <button onClick={(e) => { 
-                                                        e.stopPropagation(); 
-                                                        navigate(`/proposals?action=view_proposal&opp_id=${job.id}`); 
-                                                    }} className="text-[10px] font-black text-blue-700 bg-blue-100 hover:bg-blue-200 px-3 py-1.5 rounded-lg transition-all border border-blue-200/50 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
-                                                        View Proposal <ArrowRight size={12} strokeWidth={3} />
-                                                    </button>
-                                                )}
-                                                {col.id === PIPELINE_STATES.COMPLETED && (
-                                                    <button onClick={(e) => { e.stopPropagation(); setInspectingJob(job); }} className="text-[10px] font-black text-cyan-700 bg-cyan-100 hover:bg-cyan-200 px-3 py-1.5 rounded-lg transition-all border border-cyan-200/50 uppercase tracking-widest flex items-center gap-1.5 w-full justify-center">
-                                                        View Deal <ArrowRight size={12} strokeWidth={3} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                            )}
                                             </div>
                                     );
                                 })}
