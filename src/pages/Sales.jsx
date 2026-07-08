@@ -467,9 +467,9 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                             </div>
 
                                             <div className="flex flex-col mt-auto gap-2">
-                                                <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600">
-                                                    <MapPin size={12} className="text-slate-400 shrink-0"/> 
-                                                    <span className="truncate">
+                                                <div className="flex items-start gap-1.5 text-[11px] font-medium text-slate-600">
+                                                    <MapPin size={12} className="text-slate-400 shrink-0 mt-[2px]"/> 
+                                                    <span className="leading-tight">
                                                         {(() => {
                                                             const addr = Array.isArray(job.households?.addresses) ? job.households.addresses[0] : job.households?.addresses;
                                                             if (!addr) return 'Unknown Location';
