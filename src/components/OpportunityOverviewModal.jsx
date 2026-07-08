@@ -549,8 +549,8 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                 </div>
 
                 {/* Right Panel: Unified Timeline */}
-                <div className="w-full lg:w-[50%] xl:w-[55%] flex flex-col h-auto lg:h-full bg-white relative min-w-0 lg:min-h-0 shrink-0 lg:shrink">
-                    <div className="p-4 border-b border-slate-100 bg-white z-10 shadow-sm flex items-center justify-between">
+                <div className="w-full lg:w-[50%] xl:w-[55%] flex flex-col bg-white relative min-w-0 lg:min-h-0 shrink-0 lg:shrink">
+                    <div className="p-4 border-b border-slate-100 bg-white z-10 shadow-sm flex items-center justify-between shrink-0">
                         <h3 className="font-black text-slate-800 flex items-center gap-2 tracking-tight">
                             <History size={18} className="text-primary-600" /> Unified Timeline
                         </h3>
@@ -599,7 +599,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                         )}
                     </div>
                     
-                    <div className="p-4 border-t border-slate-200 bg-white z-10 shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)]">
+                    <div className="p-4 border-t border-slate-200 bg-white z-10 shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)] shrink-0">
                         <div className="flex gap-2">
                             <input 
                                 type="text" 
