@@ -28,7 +28,7 @@ export default function Subcontractors() {
       const { data: subsData, error: subsError } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('role', 'SUBCONTRACTOR')
+        .or('role.eq.SUBCONTRACTOR,department.eq.SUBCONTRACTOR')
         .order('full_name', { ascending: true });
         
       if (subsError) throw subsError;
