@@ -174,7 +174,7 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
             <div key={call.id} onClick={() => setInspectingCallId(call.id)} className={`group relative cursor-pointer bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-l-[5px] ${urgencyBorder} p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}>
                 <div className={`absolute -top-3 -right-3 text-[10px] font-black px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 uppercase tracking-wider z-20 ${isSLA_Violated ? 'bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-[0_4px_12px_rgba(239,68,68,0.3)]' : 'bg-white border border-slate-200 text-slate-500'}`}>
                     {isSLA_Violated ? <AlertTriangle size={12} strokeWidth={3} /> : <Clock size={12} strokeWidth={3} />}
-                    {Math.floor(hoursInStage)}h {isSLA_Violated ? 'Overdue' : 'In Stage'}
+                    {hoursInStage >= 72 ? `${Math.floor(hoursInStage / 24)} Days` : `${Math.floor(hoursInStage)}h`} {isSLA_Violated ? 'Overdue' : 'In Stage'}
                 </div>
 
                 <div className="flex justify-between items-start mb-2">

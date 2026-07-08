@@ -453,7 +453,7 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                             
                                             <div className={`absolute -top-3 -right-3 text-[10px] font-black px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 uppercase tracking-wider z-20 ${isSLA_Violated ? 'bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-[0_4px_12px_rgba(239,68,68,0.3)]' : 'bg-white border border-slate-200 text-slate-500'}`}>
                                                 {isSLA_Violated ? <AlertTriangle size={12} strokeWidth={3} /> : <Clock size={12} strokeWidth={3} />}
-                                                {Math.floor(hoursInStage)}h {isSLA_Violated ? 'Overdue' : 'In Stage'}
+                                                {hoursInStage >= 72 ? `${Math.floor(hoursInStage / 24)} Days` : `${Math.floor(hoursInStage)}h`} {isSLA_Violated ? 'Overdue' : 'In Stage'}
                                             </div>
                                             {job.proposal_data?.type === 'MAINTENANCE' && (
                                                 <div className="absolute -top-3 left-4 bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1.5 uppercase tracking-wider z-10">
