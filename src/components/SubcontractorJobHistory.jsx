@@ -23,7 +23,7 @@ export default function SubcontractorJobHistory({ subcontractorId, crews, onInsp
                 let allSvcCalls = [];
                 for (const cid of crewIds) {
                      const { data, error } = await supabase.from('service_calls')
-                         .select('id, created_at, status, urgency, issue_description, scheduled_start, assigned_techs, households(household_name, addresses(city, street_address))')
+                         .select('id, created_at, status, urgency, issue_description, scheduled_start, assigned_techs, households(household_name, addresses!addresses_household_id_fkey(city, street_address))')
                          .contains('assigned_techs', [cid]);
                      if (!error && data) allSvcCalls = [...allSvcCalls, ...data];
                 }
@@ -31,7 +31,7 @@ export default function SubcontractorJobHistory({ subcontractorId, crews, onInsp
                 // Fetch opportunities assigned to these crews
                 const { data: opps, error: oppError } = await supabase
                     .from('opportunities')
-                    .select('id, created_at, status, urgency_level, issue_description, scheduled_date, scheduled_time_block, assigned_crew_id, households(household_name, addresses(city, street_address)), proposal_data')
+                    .select('id, created_at, status, urgency_level, issue_description, scheduled_date, scheduled_time_block, assigned_crew_id, households(household_name, addresses!addresses_household_id_fkey(city, street_address)), proposal_data')
                     .in('assigned_crew_id', crewIds);
 
                 if (oppError) throw oppError;
