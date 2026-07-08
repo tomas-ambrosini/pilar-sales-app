@@ -360,6 +360,14 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
             break;
     }
 
+    const attachments = activities
+        .filter(act => act.activity_type === 'Attachment')
+        .map(act => {
+            try { return JSON.parse(act.description); }
+            catch(e) { return null; }
+        })
+        .filter(Boolean);
+
     return (
         <Modal 
             isOpen={true} 
