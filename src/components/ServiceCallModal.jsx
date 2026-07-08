@@ -17,15 +17,6 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
     const [assignedCrew, setAssignedCrew] = useState(null);
     const [activities, setActivities] = useState([]);
     const [newNote, setNewNote] = useState('');
-    const dispatchNotesRef = useRef(null);
-    
-    useEffect(() => {
-        if (dispatchNotesRef.current) {
-            dispatchNotesRef.current.style.height = '0px';
-            const scrollHeight = dispatchNotesRef.current.scrollHeight;
-            dispatchNotesRef.current.style.height = scrollHeight + 'px';
-        }
-    }, [callData?.issue_description]);
     
     useEffect(() => {
         if (callId) fetchCallDetails();
@@ -512,17 +503,9 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                 </span>
                             )}
                         </div>
-                        <textarea 
-                            ref={dispatchNotesRef}
-                            className="w-full min-h-[120px] bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-sm focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all outline-none text-sm font-medium text-slate-700 resize-none leading-relaxed placeholder-slate-400 overflow-hidden"
-                            placeholder="Enter dispatch instructions..."
-                            value={callData.issue_description || ''}
-                            onChange={e => {
-                                setCallData({...callData, issue_description: e.target.value});
-                                e.target.style.height = '0px';
-                                e.target.style.height = e.target.scrollHeight + 'px';
-                            }}
-                        />
+                        <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-inner text-sm font-medium text-slate-700 whitespace-pre-wrap leading-relaxed">
+                            {callData.issue_description || 'No dispatch instructions provided.'}
+                        </div>
                     </div>
                 </div>
 
