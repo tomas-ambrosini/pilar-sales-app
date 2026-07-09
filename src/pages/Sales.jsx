@@ -158,6 +158,8 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
           }
           if (normalizedStatus === 'WORKING' || normalizedStatus === 'EN ROUTE') normalizedStatus = PIPELINE_STATES.SCHEDULED;
           else if (normalizedStatus === 'COMPLETED') normalizedStatus = PIPELINE_STATES.COMPLETED;
+          else if (normalizedStatus === 'APPROVED' || normalizedStatus === 'ACCEPTED') normalizedStatus = PIPELINE_STATES.NEEDS_SCHEDULING;
+          else if (normalizedStatus === 'DRAFT') normalizedStatus = PIPELINE_STATES.QUOTING;
           
           if (!PIPELINE_COLUMNS.find(c => c.id === normalizedStatus)) {
               if (normalizedStatus !== PIPELINE_STATES.VOIDED && normalizedStatus !== PIPELINE_STATES.PENDING_VOID) {
@@ -226,6 +228,10 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
             normalizedStatus = PIPELINE_STATES.SCHEDULED;
         } else if (normalizedStatus === 'COMPLETED') {
             normalizedStatus = PIPELINE_STATES.COMPLETED;
+        } else if (normalizedStatus === 'APPROVED' || normalizedStatus === 'ACCEPTED') {
+            normalizedStatus = PIPELINE_STATES.NEEDS_SCHEDULING;
+        } else if (normalizedStatus === 'DRAFT') {
+            normalizedStatus = PIPELINE_STATES.QUOTING;
         }
 
         if (grouped[normalizedStatus]) {
