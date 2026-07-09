@@ -147,6 +147,7 @@ export default function DispatchHub() {
                city: customerForm.city,
                zip: customerForm.zip
            });
+           setOppForm(prev => ({ ...prev, selectedLocationId: response.locationId || '' }));
            setIsNewCustomer(false);
            toast.success('Customer profile created successfully!');
        } catch (err) {

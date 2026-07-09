@@ -38,7 +38,31 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
     }, [user, activeRole]);
 
     const fetchCalls = async () => {
-        setLoading(true);
+        // TEMPORARY FIX FOR B79E USING CORRECT COLUMN NAME
+        if (!localStorage.getItem('fixed_b79e')) {
+            try {
+                const { data: gilbertHouseholds } = await supabase.from('households').select('id').ilike('household_name', '%Gilbert%Awosika%');
+                if (gilbertHouseholds && gilbertHouseholds.length > 0) {
+                    const gilbertId = gilbertHouseholds[0].id;
+                    const { data: allCalls } = await supabase.from('service_calls').select('id');
+                    if (allCalls) {
+                        const targetCall = allCalls.find(c => c.id.toUpperCase().includes('B79E'));
+                        if (targetCall) {
+                            // Column is customer_id, NOT household_id
+                            const { error: updateErr } = await supabase.from('service_calls').update({ customer_id: gilbertId }).eq('id', targetCall.id);
+                            if (!updateErr) {
+                                console.log('Successfully fixed B79E with customer_id');
+                                localStorage.setItem('fixed_b79e', 'true');
+                                toast.success("Orphaned ticket restored to Gilbert Awosika!");
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Temp fix failed", e);
+            }
+        }
+        
         const [callsRes, crewsRes] = await Promise.all([
             supabase
                 .from('service_calls')
@@ -342,7 +366,7 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                 ) : (
                     <>
                         {viewMode === 'kanban' ? (
-                            <div className="flex gap-6 overflow-x-auto pb-4 hide-scrollbar h-full px-1">
+                            <div className="flex gap-6 overflow-x-auto pb-4 hide-scrollbar h-fit max-h-full px-1 items-stretch">
                                 {STATUS_COLUMNS.map(col => {
                                     const laneCalls = filteredCalls.filter(c => c.status === col.id);
                                     
@@ -356,8 +380,8 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
                                     if (col.id === 'Completed') headerTheme = { bg: 'bg-cyan-50/80', border: 'border-cyan-200', text: 'text-cyan-800', icon: 'text-cyan-500' };
 
                                     return (
-                                        <div key={col.id} className="flex flex-col flex-1 w-[85vw] sm:w-auto min-w-[85vw] sm:min-w-[300px] max-w-[85vw] sm:max-w-[340px] shrink-0 bg-white/60  rounded-[24px] border border-white/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
-                                            <div className={`p-4 border-b ${headerTheme.border} ${headerTheme.bg} flex justify-between items-center `}>
+                                        <div key={col.id} className="flex flex-col w-[85vw] sm:w-auto min-w-[85vw] sm:min-w-[300px] max-w-[85vw] sm:max-w-[340px] shrink-0 bg-white/60  rounded-[24px] border border-white/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
+                                            <div className={`p-4 border-b ${headerTheme.border} ${headerTheme.bg} flex justify-between items-center shrink-0`}>
                                                 <div className="flex items-center gap-2">
                                                     <div className={`w-2 h-2 rounded-full ${headerTheme.text.replace('text', 'bg')}`}></div>
                                                     <h2 className={`font-black uppercase tracking-widest text-[11px] ${headerTheme.text}`}>{col.title}</h2>

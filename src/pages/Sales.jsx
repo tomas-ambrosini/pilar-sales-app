@@ -303,7 +303,7 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
 
 
   return (
-    <div className="p-4 md:p-8 flex flex-col gap-8 h-[calc(100dvh-64px)] md:h-[calc(100vh-64px)] overflow-hidden bg-slate-50/50 relative">
+    <div className={`flex flex-col gap-8 overflow-hidden bg-slate-50/50 relative ${isEmbedded ? 'h-full p-2 md:p-4' : 'p-4 md:p-8 h-[calc(100vh-64px)]'}`}>
         {/* Subtle background decoration */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
             <div className="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-primary-100/40 blur-3xl"></div>
@@ -355,12 +355,12 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
         <React.Fragment>
         {/* Kanban Board Container */}
         <div className="flex-1 overflow-x-auto overflow-y-hidden rounded-3xl pb-4 -mx-4 md:mx-0 px-4 md:px-0 custom-scrollbar relative z-10">
-            <div className="flex gap-6 h-full min-w-max pb-2">
+            <div className="flex gap-6 h-fit max-h-full min-w-max pb-2 px-1 items-stretch">
                 {loading ? (
                     /* Premium Kanban Skeleton */
-                    <div className="flex gap-6 h-full min-w-max">
-                        {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="flex flex-col flex-1 min-w-[300px] max-w-[340px] shrink-0 bg-white/40 rounded-[24px] border border-white shadow-sm overflow-hidden opacity-70">
+                    <div className="flex gap-6 h-fit max-h-full min-w-max px-1 items-stretch">
+                        {[1, 2, 3, 4, 5, 6, 7].map(i => (
+                            <div key={i} className="flex flex-col w-[85vw] sm:w-auto min-w-[85vw] sm:min-w-[300px] max-w-[85vw] sm:max-w-[340px] shrink-0 bg-white/40 rounded-[24px] border border-white shadow-sm overflow-hidden opacity-70">
                                 <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center animate-pulse">
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 rounded-full bg-slate-200"></div>
@@ -402,8 +402,8 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                     if (col.id === PIPELINE_STATES.LOST) headerTheme = { bg: 'bg-red-50/80', border: 'border-red-200', text: 'text-red-800', icon: 'text-red-500' };
 
                     return (
-                        <div key={col.id} className="flex flex-col flex-1 min-w-[300px] max-w-[340px] shrink-0 bg-white/60  rounded-[24px] border border-white/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
-                            <div className={`p-4 border-b ${headerTheme.border} ${headerTheme.bg} flex justify-between items-center `}>
+                        <div key={col.id} className="flex flex-col w-[85vw] sm:w-auto min-w-[85vw] sm:min-w-[300px] max-w-[85vw] sm:max-w-[340px] shrink-0 bg-white/60 rounded-[24px] border border-white/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
+                            <div className={`p-4 border-b ${headerTheme.border} ${headerTheme.bg} flex justify-between items-center shrink-0`}>
                                 <div className="flex items-center gap-2">
                                     <div className={`w-2 h-2 rounded-full ${headerTheme.text.replace('text', 'bg')}`}></div>
                                     <span className={`font-black uppercase tracking-widest text-[11px] ${headerTheme.text}`}>{col.title}</span>
@@ -450,18 +450,19 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                     if (isSLA_Violated) {
                                         const slaLimit = col.id === PIPELINE_STATES.SENT ? 48 : 2;
                                         const overdueHours = Math.max(0, hoursInStage - slaLimit);
-                                        infectionPercentage = Math.min(100, (overdueHours / 72) * 100);
+                                        // Reaches 100% after 48 hours overdue
+                                        infectionPercentage = Math.min(100, (overdueHours / 48) * 100);
                                     }
 
                                     return (
                                         <div key={job.id} onClick={() => setInspectingJob(job)} 
-                                            className={`group relative cursor-pointer bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-l-[5px] ${urgencyBorder} p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}
+                                            className={`group relative cursor-pointer bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-l-[5px] ${urgencyBorder} p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)] overflow-hidden' : 'border-slate-200/80 hover:border-slate-300'}`}
                                         >
                                             {isSLA_Violated && (
                                                 <div 
-                                                    className="absolute inset-0 rounded-xl pointer-events-none z-0 transition-opacity duration-1000"
+                                                    className="absolute inset-0 pointer-events-none z-0 transition-all duration-1000"
                                                     style={{
-                                                        background: `radial-gradient(circle at top right, rgba(239, 68, 68, ${0.05 + (infectionPercentage * 0.0015)}) 0%, rgba(239, 68, 68, ${0.02 + (infectionPercentage * 0.001)}) ${infectionPercentage}%, transparent ${Math.min(100, infectionPercentage + 30)}%)`
+                                                        background: `linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(239, 68, 68, 0.1) ${infectionPercentage}%, transparent ${Math.min(100, infectionPercentage + 20)}%)`
                                                     }}
                                                 />
                                             )}

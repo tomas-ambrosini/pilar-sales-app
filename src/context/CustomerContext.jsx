@@ -247,8 +247,26 @@ export function CustomerProvider({ children }) {
 
     const addCustomer = async (customerData) => {
         try {
-            // 0. Duplicate Detection
-            if (customerData.email || customerData.phone) {
+            // 0. Smart Duplicate Detection (Fixes Duplicate Gilbert Issue)
+            let existingHouseholdId = null;
+            let existingAddressId = null;
+
+            if (customerData.address) {
+                // Check if physical address already exists
+                const { data: existingAddr } = await supabase
+                    .from('addresses')
+                    .select('id, household_id')
+                    .ilike('street_address', customerData.address.trim())
+                    .limit(1);
+                    
+                if (existingAddr && existingAddr.length > 0) {
+                    existingHouseholdId = existingAddr[0].household_id;
+                    existingAddressId = existingAddr[0].id;
+                }
+            }
+
+            if (!existingHouseholdId && (customerData.email || customerData.phone)) {
+                // Fallback: Check if contact info exists
                 const orQuery = [];
                 if (customerData.email) orQuery.push(`email.eq."${customerData.email}"`);
                 if (customerData.phone) orQuery.push(`primary_phone.eq."${customerData.phone}"`);
@@ -256,18 +274,51 @@ export function CustomerProvider({ children }) {
                 if (orQuery.length > 0) {
                     const { data: duplicates } = await supabase
                         .from('contacts')
-                        .select('household_id, first_name, last_name, email')
+                        .select('household_id')
                         .or(orQuery.join(','))
                         .limit(1);
 
                     if (duplicates && duplicates.length > 0) {
-                        return { 
-                            success: false, 
-                            duplicateId: duplicates[0].household_id, 
-                            message: `A customer (${duplicates[0].first_name} ${duplicates[0].last_name}) already exists with this email or phone.` 
-                        };
+                        existingHouseholdId = duplicates[0].household_id;
+                        // Fetch their primary address to return
+                        const { data: primAddr } = await supabase
+                            .from('addresses')
+                            .select('id')
+                            .eq('household_id', existingHouseholdId)
+                            .order('created_at', { ascending: true })
+                            .limit(1);
+                        if (primAddr && primAddr.length > 0) {
+                            existingAddressId = primAddr[0].id;
+                        }
                     }
                 }
+            }
+
+            const nameParts = (customerData.name || '').split(' ');
+            const firstName = nameParts[0] || 'Unknown';
+            const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
+            if (existingHouseholdId) {
+                // Match found! Instead of blocking, we gracefully append the new contact to the existing house.
+                const { data: contactMatches } = await supabase
+                    .from('contacts')
+                    .select('id')
+                    .eq('household_id', existingHouseholdId)
+                    .eq('primary_phone', customerData.phone || '')
+                    .limit(1);
+                    
+                if (!contactMatches || contactMatches.length === 0) {
+                    await supabase.from('contacts').insert({
+                        household_id: existingHouseholdId,
+                        first_name: firstName,
+                        last_name: lastName,
+                        primary_phone: customerData.phone || '',
+                        email: customerData.email || ''
+                    });
+                }
+                
+                fetchCustomers();
+                return { success: true, id: existingHouseholdId, locationId: existingAddressId, message: "Merged with existing customer profile." };
             }
 
             // 1. Insert Household (Account) First so it gets an ID
@@ -339,10 +390,6 @@ export function CustomerProvider({ children }) {
             }
 
             // 3. Insert Primary Contact
-            const nameParts = (customerData.name || '').split(' ');
-            const firstName = nameParts[0] || 'Unknown';
-            const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
-            
             const { error: contactError } = await supabase.from('contacts')
                 .insert({
                     household_id: householdData.id,
@@ -360,7 +407,8 @@ export function CustomerProvider({ children }) {
 
             // Trigger optimistic refresh
             fetchCustomers();
-            return { success: true, id: householdData.id };
+            // Fixes Orphaned Quote Issue: Return locationId
+            return { success: true, id: householdData.id, locationId: addressId };
         } catch (error) {
             console.error('Failed to create customer relations:', error);
             return { success: false, error: error.message };
