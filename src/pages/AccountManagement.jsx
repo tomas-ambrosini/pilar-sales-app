@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { useRole } from '../context/RoleContext';
-import { Users, Shield, UserX, UserCheck, Key, Plus, Lock, Search, Copy, Check, CheckCircle2, Clock, Trash2 } from 'lucide-react';
+import { Users, Shield, UserX, UserCheck, Key, Plus, Lock, Search, Copy, Check, CheckCircle2, Clock, Trash2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import UserBadges from '../components/UserBadges';
