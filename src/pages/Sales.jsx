@@ -396,7 +396,7 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                         ))}
                     </div>
                 ) : PIPELINE_COLUMNS.map(col => {
-                    const columnJobs = pipeline[col.id] || [];
+                    const columnJobs = combinedPipeline[col.id] || [];
                     
                     let headerTheme = { bg: 'bg-slate-50/80', border: 'border-slate-200', text: 'text-slate-700', icon: 'text-slate-400' };
                     if (col.id === PIPELINE_STATES.NEW_LEAD) headerTheme = { bg: 'bg-purple-50/80', border: 'border-purple-200', text: 'text-purple-800', icon: 'text-purple-500' };
