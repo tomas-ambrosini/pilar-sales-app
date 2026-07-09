@@ -31,7 +31,7 @@ const STATIC_COMMANDS = [
   
   { id: 'subcontractors', name: 'Subcontractors', icon: Users, route: '/subcontractors', section: 'System', allowedRoles: [ROLES.ADMIN] },
   { id: 'template_settings', name: 'Template Settings', icon: Settings, route: '/template-settings', section: 'System', allowedRoles: [ROLES.ADMIN] },
-  { id: 'settings', name: 'Account Management', icon: Settings, route: '/account-management', section: 'System', allowedRoles: [ROLES.ADMIN] },
+  { id: 'settings', name: 'Account Management', icon: Settings, route: '/account-management', section: 'System', allowedRoles: [ROLES.ADMIN, ROLES.DIRECTOR, ROLES.MANAGER, ROLES.SALES, ROLES.COORDINATOR] },
 ];
 
 export default function CommandMenu({ isOpen, setIsOpen }) {

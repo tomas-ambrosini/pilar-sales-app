@@ -56,7 +56,7 @@ export default function Layout() {
         { path: '/catalog', label: 'Catalog', icon: BookOpen, isVisible: [ROLES.ADMIN, ROLES.MANAGER].includes(activeRole) || isDaniel },
         { path: '/finance', label: 'Finance', icon: DollarSign, isVisible: canViewFinancials() },
         { path: '/template-settings', label: 'Templates', icon: FileText, isVisible: activeRole === ROLES.ADMIN },
-        { path: '/account-management', label: 'Settings', icon: Settings, isVisible: activeRole === ROLES.ADMIN },
+        { path: '/account-management', label: 'Settings', icon: Settings, isVisible: [ROLES.ADMIN, ROLES.DIRECTOR, ROLES.MANAGER, ROLES.SALES, ROLES.COORDINATOR].includes(activeRole) },
         { path: '/subcontractors', label: 'Subcontractors', icon: Users, isVisible: activeRole === ROLES.ADMIN }
       ]
     }
