@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { useRole } from '../context/RoleContext';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X, Wrench, Search, Clock, Plus, Filter, ArrowRight, ShieldAlert, AlertTriangle, PlayCircle, MapPin, Calendar, Trash2, UserCircle2, LayoutGrid, List, CheckCircle2, MoreVertical, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ServiceCallModal from '../components/ServiceCallModal';
@@ -203,17 +204,36 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
         return (
             <div key={call.id} onClick={() => setInspectingCallId(call.id)} className={`group relative cursor-pointer bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-l-[5px] ${urgencyBorder} p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}>
                 {isSLA_Violated && (
-                    <div 
-                        className="absolute inset-0 rounded-xl pointer-events-none z-0 transition-opacity duration-1000"
-                        style={{
-                            background: `radial-gradient(circle at top right, rgba(239, 68, 68, ${0.05 + (infectionPercentage * 0.0015)}) 0%, rgba(239, 68, 68, ${0.02 + (infectionPercentage * 0.001)}) ${infectionPercentage}%, transparent ${Math.min(100, infectionPercentage + 30)}%)`
+                    <motion.div 
+                        className="absolute inset-0 rounded-xl pointer-events-none z-0"
+                        animate={{
+                            background: [
+                                `radial-gradient(circle at top right, rgba(239, 68, 68, ${0.05 + (infectionPercentage * 0.0015)}) 0%, rgba(239, 68, 68, ${0.02 + (infectionPercentage * 0.001)}) ${infectionPercentage}%, transparent ${Math.min(100, infectionPercentage + 20)}%)`,
+                                `radial-gradient(circle at top right, rgba(239, 68, 68, ${0.1 + (infectionPercentage * 0.0025)}) 0%, rgba(239, 68, 68, ${0.05 + (infectionPercentage * 0.002)}) ${Math.min(100, infectionPercentage + 15)}%, transparent ${Math.min(100, infectionPercentage + 40)}%)`,
+                                `radial-gradient(circle at top right, rgba(239, 68, 68, ${0.05 + (infectionPercentage * 0.0015)}) 0%, rgba(239, 68, 68, ${0.02 + (infectionPercentage * 0.001)}) ${infectionPercentage}%, transparent ${Math.min(100, infectionPercentage + 20)}%)`
+                            ]
+                        }}
+                        transition={{
+                            duration: Math.max(0.8, 3.5 - (infectionPercentage / 30)), // Faster heartbeat as infection grows
+                            repeat: Infinity,
+                            ease: "easeInOut"
                         }}
                     />
                 )}
-                <div className={`absolute -top-3 -right-3 text-[10px] font-black px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 uppercase tracking-wider z-20 ${isSLA_Violated ? 'bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-[0_4px_12px_rgba(239,68,68,0.3)]' : 'bg-white border border-slate-200 text-slate-500'}`}>
+                <motion.div 
+                    animate={isSLA_Violated ? { 
+                        scale: [1, 1.05, 1], 
+                        boxShadow: ['0 4px 12px rgba(239,68,68,0.3)', '0 8px 24px rgba(239,68,68,0.6)', '0 4px 12px rgba(239,68,68,0.3)'] 
+                    } : {}}
+                    transition={isSLA_Violated ? { 
+                        duration: Math.max(0.8, 3.5 - (infectionPercentage / 30)), 
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                    } : {}}
+                    className={`absolute -top-3 -right-3 text-[10px] font-black px-3 py-1.5 rounded-full flex items-center gap-1.5 uppercase tracking-wider z-20 ${isSLA_Violated ? 'bg-gradient-to-br from-red-500 to-rose-600 text-white' : 'bg-white border border-slate-200 text-slate-500 shadow-md'}`}>
                     {isSLA_Violated ? <AlertTriangle size={12} strokeWidth={3} /> : <Clock size={12} strokeWidth={3} />}
                     {hoursInStage >= 72 ? `${Math.floor(hoursInStage / 24)} Days` : `${Math.floor(hoursInStage)}h`} {isSLA_Violated ? 'Overdue' : 'In Stage'}
-                </div>
+                </motion.div>
 
                 <div className="flex justify-between items-start mb-2">
                     <div className="flex flex-col pr-4">
