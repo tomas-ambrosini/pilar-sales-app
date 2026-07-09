@@ -112,6 +112,50 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
     }
   }, [pipelineFilter]);
 
+  const combinedPipeline = useMemo(() => {
+     const next = { ...pipeline };
+     PIPELINE_COLUMNS.forEach(c => {
+         if (!next[c.id]) next[c.id] = [];
+         else next[c.id] = [...next[c.id]]; // copy array so we can mutate
+     });
+     
+     const orphaned = proposals.filter(p => !p.associated_opportunity_id && !p.is_lead);
+     orphaned.forEach(p => {
+         const fakeOpp = {
+             id: p.id,
+             status: p.status,
+             is_orphaned_proposal: true,
+             created_at: p.created_at || p.date,
+             updated_at: p.updated_at || p.created_at || p.date,
+             assigned_salesperson_id: p.created_by,
+             households: { household_name: p.customer, addresses: [] },
+             proposal_data: p.proposal_data || {},
+         };
+         
+         let normalizedStatus = (p.status || '').toUpperCase();
+         if (normalizedStatus === 'LEAD' || normalizedStatus === 'NEW LEAD') normalizedStatus = PIPELINE_STATES.NEW_LEAD;
+         else if (normalizedStatus === 'WORKING' || normalizedStatus === 'EN ROUTE') normalizedStatus = PIPELINE_STATES.SCHEDULED;
+         else if (normalizedStatus === 'COMPLETED') normalizedStatus = PIPELINE_STATES.COMPLETED;
+         else if (normalizedStatus === 'APPROVED' || normalizedStatus === 'ACCEPTED') normalizedStatus = PIPELINE_STATES.NEEDS_SCHEDULING;
+         else if (normalizedStatus === 'DRAFT') normalizedStatus = PIPELINE_STATES.QUOTING;
+         else if (normalizedStatus === 'SENT') normalizedStatus = PIPELINE_STATES.SENT;
+         
+         if (next[normalizedStatus]) {
+             if (!next[normalizedStatus].some(opp => opp.id === fakeOpp.id)) {
+                 next[normalizedStatus].push(fakeOpp);
+             }
+         } else if (normalizedStatus !== PIPELINE_STATES.VOIDED && normalizedStatus !== PIPELINE_STATES.PENDING_VOID) {
+             next[PIPELINE_STATES.NEW_LEAD].push(fakeOpp);
+         }
+     });
+     
+     Object.keys(next).forEach(k => {
+         next[k].sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date));
+     });
+     
+     return next;
+  }, [pipeline, proposals]);
+
   const fetchSingleOpportunity = async (id) => {
       const { data, error } = await supabase
         .from('opportunities')
