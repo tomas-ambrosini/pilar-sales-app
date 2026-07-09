@@ -142,6 +142,12 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
 
     try {
         if (!draftServerId) {
+            if (isInitializingDraft.current) {
+                // Auto-save is already creating the draft. Avoid duplication.
+                onComplete();
+                return;
+            }
+            isInitializingDraft.current = true;
             const newDraft = await createDraft({
                 customer: customerName,
                 amount: 0,
@@ -150,6 +156,8 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
             });
             if (newDraft && newDraft.id) {
                 setDraftServerId(newDraft.id);
+            } else {
+                isInitializingDraft.current = false;
             }
         } else {
             const currentStatus = editModeData?.status || 'Lead';
@@ -201,11 +209,11 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                 });
                 if (newDraft && newDraft.id) {
                     setDraftServerId(newDraft.id);
+                } else {
+                    isInitializingDraft.current = false;
                 }
-             } finally {
-                if (!draftServerId) {
-                   isInitializingDraft.current = false;
-                }
+             } catch (err) {
+                 isInitializingDraft.current = false;
              }
          } else {
              const currentStatus = editModeData?.status || 'Lead';
