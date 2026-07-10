@@ -57,7 +57,7 @@ export default function Layout() {
         { path: '/finance', label: 'Finance', icon: DollarSign, isVisible: canViewFinancials() },
         { path: '/template-settings', label: 'Templates', icon: FileText, isVisible: activeRole === ROLES.ADMIN },
         { path: '/account-management', label: 'Settings', icon: Settings, isVisible: [ROLES.ADMIN, ROLES.DIRECTOR, ROLES.MANAGER, ROLES.SALES, ROLES.COORDINATOR].includes(activeRole) },
-        { path: '/subcontractors', label: 'Subcontractors', icon: Users, isVisible: activeRole === ROLES.ADMIN }
+        { path: '/subcontractors', label: 'Subcontractors', icon: Users, isVisible: [ROLES.ADMIN, ROLES.SUPER_ADMIN, ROLES.DIRECTOR, ROLES.MANAGER].includes(activeRole) }
       ]
     }
   ];

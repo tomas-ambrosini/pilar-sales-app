@@ -29,7 +29,7 @@ const STATIC_COMMANDS = [
   { id: 'finance_margins', name: 'Global Margins & Taxes', icon: DollarSign, route: '/finance?tab=margins', section: 'Finance', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
   { id: 'finance_invoices', name: 'Deposits & Invoices', icon: DollarSign, route: '/finance?tab=invoices', section: 'Finance', allowedRoles: [ROLES.ADMIN, ROLES.MANAGER] },
   
-  { id: 'subcontractors', name: 'Subcontractors', icon: Users, route: '/subcontractors', section: 'System', allowedRoles: [ROLES.ADMIN] },
+  { id: 'subcontractors', name: 'Subcontractors', icon: Users, route: '/subcontractors', section: 'System', allowedRoles: [ROLES.ADMIN, ROLES.SUPER_ADMIN, ROLES.DIRECTOR, ROLES.MANAGER] },
   { id: 'template_settings', name: 'Template Settings', icon: Settings, route: '/template-settings', section: 'System', allowedRoles: [ROLES.ADMIN] },
   { id: 'settings', name: 'Account Management', icon: Settings, route: '/account-management', section: 'System', allowedRoles: [ROLES.ADMIN, ROLES.DIRECTOR, ROLES.MANAGER, ROLES.SALES, ROLES.COORDINATOR] },
 ];
