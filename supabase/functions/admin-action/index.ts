@@ -62,6 +62,39 @@ serve(async (req) => {
     }
 
     // fallback for existing actions
+    if (action === 'updateUser') {
+        const { targetUserId, ...updates } = payload;
+        
+        // Update auth metadata if applicable
+        if (updates.password || updates.role || updates.department) {
+            const authUpdates: any = {};
+            if (updates.password) authUpdates.password = updates.password;
+            
+            const metaUpdates: any = {};
+            if (updates.role) metaUpdates.role = updates.role;
+            if (updates.department) metaUpdates.department = updates.department;
+            
+            if (Object.keys(metaUpdates).length > 0) {
+                authUpdates.user_metadata = metaUpdates;
+            }
+            
+            const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, authUpdates);
+            if (authError) return new Response(JSON.stringify({ error: authError.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+        }
+        
+        // Update user_profiles
+        // Remove password before updating user_profiles since it doesn't belong there
+        const profileUpdates = { ...updates };
+        delete profileUpdates.password;
+        
+        if (Object.keys(profileUpdates).length > 0) {
+            const { error: profileError } = await supabaseAdmin.from('user_profiles').update(profileUpdates).eq('id', targetUserId);
+            if (profileError) return new Response(JSON.stringify({ error: profileError.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+        }
+
+        return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+    }
+
     if (action === 'deleteServiceCall') {
         const { error } = await supabaseAdmin.from('service_calls').delete().eq('id', payload.callId);
         return new Response(JSON.stringify({ error }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: error ? 400 : 200 });
