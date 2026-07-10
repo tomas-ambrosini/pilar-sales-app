@@ -187,12 +187,14 @@ export default function DispatchCalendar({ isSubView = false }) {
              
              if (isService) {
                  const [hourStr] = newTimeBlock.split(':');
-                 const startH = parseInt(hourStr, 10);
-                 const endH = startH + 2; // Default 2 hr duration
                  
                  // Parse as local time then convert to ISO for DB
-                 svcStartTime = new Date(`${newDateStr}T${hourStr.padStart(2, '0')}:00:00`).toISOString();
-                 svcEndTime = new Date(`${newDateStr}T${endH.toString().padStart(2, '0')}:00:00`).toISOString();
+                 const startDate = new Date(`${newDateStr}T${hourStr.padStart(2, '0')}:00:00`);
+                 svcStartTime = startDate.toISOString();
+                 
+                 const endDate = new Date(startDate.getTime());
+                 endDate.setHours(endDate.getHours() + 2); // Default 2 hr duration, properly wraps around midnight
+                 svcEndTime = endDate.toISOString();
              }
          }
       }
