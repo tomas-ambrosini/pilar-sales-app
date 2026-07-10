@@ -112,7 +112,7 @@ function MainRouter() {
           <Route path="camp-points" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR']}><CampPointsTracker /></RoleRoute>} />
           <Route path="analytics" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR']} allowedDepartments={['EXECUTIVE', 'FINANCE']}><ExecutiveAnalytics /></RoleRoute>} />
           <Route path="account-management/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'SALES', 'COORDINATOR']}><AccountManagement /></RoleRoute>} />
-          <Route path="subcontractors" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR', 'MANAGER']} allowedDepartments={['ADMINISTRATION', 'INSTALL']}><Subcontractors /></RoleRoute>} />
+          <Route path="subcontractors" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR', 'MANAGER']} allowedDepartments={['ADMINISTRATION', 'INSTALL', 'SALES']}><Subcontractors /></RoleRoute>} />
           <Route path="template-settings/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR']} allowedDepartments={['ADMINISTRATION', 'MARKETING']}><TemplateDashboard /></RoleRoute>} />
           <Route path="finance/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR', 'MANAGER']} allowedDepartments={['FINANCE', 'EXECUTIVE']}><FinanceDashboard /></RoleRoute>} />
           
