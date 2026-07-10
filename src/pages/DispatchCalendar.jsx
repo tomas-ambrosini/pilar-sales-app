@@ -363,13 +363,17 @@ export default function DispatchCalendar({ isSubView = false }) {
 
       return (
       <Draggable draggableId={job.id} index={index}>
-         {(provided, snapshot) => (
+         {(provided, snapshot) => {
+            const assignedCrew = crews.find(c => c.id === job.assigned_crew_id);
+            const accentColor = assignedCrew?.color_code || 'transparent';
+
+            return (
             <div
                ref={provided.innerRef}
                {...provided.draggableProps}
                {...provided.dragHandleProps}
                onClick={() => setInspectingJob(job)}
-               className={`w-full min-w-0 ${compact ? 'p-2' : 'p-3.5'} shrink-0 rounded-[16px] flex flex-col transition-all duration-300 group select-none cursor-pointer overflow-hidden bg-white
+               className={`w-full min-w-0 ${compact ? 'p-2 pl-3' : 'p-3.5 pl-4'} shrink-0 rounded-[16px] flex flex-col transition-all duration-300 group select-none cursor-pointer overflow-hidden bg-white relative
                   ${snapshot.isDragging ? 'shadow-2xl z-50 ring-2 ring-primary-400 scale-[1.02]' : 'hover:shadow-lg hover:-translate-y-0.5 hover:ring-slate-300 shadow-sm ring-1 ring-slate-200/60'}
                `}
                style={
@@ -378,6 +382,9 @@ export default function DispatchCalendar({ isSubView = false }) {
                    : {}
                }
             >
+               {accentColor !== 'transparent' && (
+                   <div className="absolute top-0 bottom-0 left-0 w-1.5" style={{ backgroundColor: accentColor }}></div>
+               )}
                <div className={`flex justify-between items-start gap-3 ${compact ? '' : 'mb-3'}`}>
                   <div className="flex items-center gap-2.5 w-full min-w-0">
                       {!compact && (
@@ -414,7 +421,8 @@ export default function DispatchCalendar({ isSubView = false }) {
                    </div>
                )}
             </div>
-         )}
+            );
+         }}
       </Draggable>
       );
    };
