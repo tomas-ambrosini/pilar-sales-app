@@ -56,7 +56,7 @@ export default function DispatchCalendar({ isSubView = false }) {
 
    const fetchData = async () => {
       try {
-         const { data: crewsData } = await supabase.from('crews').select('*').eq('is_active', true).order('crew_name');
+         const { data: crewsData } = await supabase.from('crews').select('*, user_profiles(subcontractor_company)').eq('is_active', true).order('crew_name');
          if (crewsData) setCrews(crewsData);
 
          // Fetch Opportunities (Sales)
@@ -501,6 +501,9 @@ export default function DispatchCalendar({ isSubView = false }) {
                                                     <div className="w-1.5 h-8 rounded-full" style={{ backgroundColor: crew.color_code || '#cbd5e1' }}></div> 
                                                     <div className="flex flex-col min-w-0">
                                                         <span className="text-xs md:text-sm line-clamp-2 md:truncate leading-tight">{crew.crew_name}</span>
+                                                        {crew.user_profiles?.subcontractor_company && (
+                                                            <span className="text-[10px] text-slate-500 line-clamp-1">{crew.user_profiles.subcontractor_company}</span>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 {currentBlocks.map((block, idx) => {
@@ -541,6 +544,9 @@ export default function DispatchCalendar({ isSubView = false }) {
                                                     <div className="w-1.5 h-8 rounded-full" style={{ backgroundColor: crew.color_code || '#cbd5e1' }}></div> 
                                                     <div className="flex flex-col min-w-0">
                                                         <span className="text-xs md:text-sm line-clamp-2 md:truncate leading-tight">{crew.crew_name}</span>
+                                                        {crew.user_profiles?.subcontractor_company && (
+                                                            <span className="text-[10px] text-slate-500 line-clamp-1">{crew.user_profiles.subcontractor_company}</span>
+                                                        )}
                                                     </div>
                                                 </div>
                                                {days.map((d, idx) => {
