@@ -14,11 +14,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   const isEditing = hasPreloadedData && editModeData.id != null && !isDraftLaunch;
   const editingId = isEditing ? editModeData.id : null;
 
-  // Local Storage Draft Recovery is now handled dynamically per-customer via useEffect below
-  const [localDraftPayload, setLocalDraftPayload] = useState(null);
-  const [showRestoreBanner, setShowRestoreBanner] = useState(false);
-  const sessionId = React.useRef(Date.now().toString());
-  
+
   const [step, setStep] = useState(() => {
      if (isEditing) return 6;
      if (isDraftLaunch) {
@@ -36,34 +32,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   });
   const [selectedLocationId, setSelectedLocationId] = useState('');
 
-  useEffect(() => {
-      if (isEditing || isDraftLaunch) return;
-      
-      const key = selectedCustomerId ? `pilar_wizard_draft_${selectedCustomerId}` : 'pilar_wizard_draft_new';
-      try {
-          const d = localStorage.getItem(key);
-          if (!d) return;
-          const parsed = JSON.parse(d);
-          let isEmpty = true;
-          if (parsed.sessionId === sessionId.current) return; // Ignore drafts saved by this exact session
 
-          if (parsed.step > 1) {
-              isEmpty = false;
-          } else if (parsed.systems && parsed.systems[0]) {
-             const survey = parsed.systems[0].survey;
-             if (survey && (survey.systemType || survey.currentTonnage || survey.existingBrand)) isEmpty = false;
-             for (let i = 1; i <= 27; i++) {
-                if (survey && survey[`m${i}`]) isEmpty = false;
-             }
-          }
-          if (!isEmpty) {
-              setLocalDraftPayload(parsed);
-              setShowRestoreBanner(true);
-          }
-      } catch (e) {
-          // ignore
-      }
-  }, [selectedCustomerId, isEditing, isDraftLaunch]);
   
   const generateEmptySystem = (id) => ({
     id,
@@ -232,13 +201,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
   }, [step, selectedCustomerId, selectedLocationId, systems, dbReady, isEditing, draftServerId]);
 
-  // Aggressive Local Storage Auto-Save (Namespaced)
-  useEffect(() => {
-      if (showRestoreBanner || isEditing) return; // Don't overwrite if they haven't decided yet or if editing
-      const payload = { sessionId: sessionId.current, step, selectedCustomerId, selectedLocationId, systems, draftServerId };
-      const key = selectedCustomerId ? `pilar_wizard_draft_${selectedCustomerId}` : 'pilar_wizard_draft_new';
-      localStorage.setItem(key, JSON.stringify(payload));
-  }, [step, selectedCustomerId, selectedLocationId, systems, draftServerId, showRestoreBanner, isEditing]);
+
 
   // Handle Edit/Clone Mode Rehydration
   useEffect(() => {
@@ -268,19 +231,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     }
   }, [hasPreloadedData, editModeData]);
 
-  const handleRestoreLocalDraft = () => {
-     if (localDraftPayload) {
-         if (localDraftPayload.step) setStep(localDraftPayload.step);
-         if (localDraftPayload.selectedCustomerId) setSelectedCustomerId(localDraftPayload.selectedCustomerId);
-         if (localDraftPayload.selectedLocationId) setSelectedLocationId(localDraftPayload.selectedLocationId);
-         if (localDraftPayload.systems) {
-             setSystems(localDraftPayload.systems);
-             setActiveSystemId(localDraftPayload.systems[0].id);
-         }
-         if (localDraftPayload.draftServerId) setDraftServerId(localDraftPayload.draftServerId);
-     }
-     setShowRestoreBanner(false);
-  };
+
 
   useEffect(() => {
     async function loadBackendData() {
@@ -666,27 +617,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
   return (
     <div className="page-container fade-in flex flex-col pt-2 md:pt-6 pb-6 overflow-x-hidden w-full max-w-[100vw]">
       <AnimatePresence>
-      {showRestoreBanner && (
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="max-w-[1000px] mx-auto w-full mb-6 px-4 md:px-8"
-        >
-          <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 shadow-lg">
-             <div className="flex items-center gap-3 mb-2">
-                <Clock className="text-blue-400 shrink-0" size={22} />
-                <h4 className="text-white font-bold text-base m-0">Unsaved Session Recovered</h4>
-             </div>
-             <p className="text-slate-300 text-sm mb-5">We found a quote you were working on recently. Would you like to resume it?</p>
-             <div className="flex flex-wrap gap-3">
-                <button onClick={() => { setShowRestoreBanner(false); setLocalDraftPayload(null); localStorage.removeItem(selectedCustomerId ? `pilar_wizard_draft_${selectedCustomerId}` : 'pilar_wizard_draft_new'); }} className="text-slate-500 hover:text-slate-800 p-2"><X size={18}/></button>
-                <button onClick={() => { setShowRestoreBanner(false); setLocalDraftPayload(null); localStorage.removeItem(selectedCustomerId ? `pilar_wizard_draft_${selectedCustomerId}` : 'pilar_wizard_draft_new'); }} className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-lg border border-slate-700 transition-colors w-auto">Discard Draft</button>
-                <button onClick={handleRestoreLocalDraft} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg border border-blue-500 transition-colors shadow-sm w-auto">Resume Progress</button>
-             </div>
-          </div>
-        </motion.div>
-      )}
+
       </AnimatePresence>
       <div className="glass-panel p-4 md:p-8 max-w-[1000px] mx-auto w-full md:w-[95%] lg:w-full min-w-0 overflow-hidden shadow-sm md:shadow-glass">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-slate-100 pb-4">

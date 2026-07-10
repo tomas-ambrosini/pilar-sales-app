@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
 import { supabase } from '../supabaseClient';
-import { History, MessageSquare, Send, MapPin, AlertTriangle, User, Calendar, Clock, Activity, ArrowRight, FileText, ShieldCheck, Banknote, Check, Mail, Phone, Package, DollarSign, Wallet, Navigation } from 'lucide-react';
+import { History, MessageSquare, Send, MapPin, AlertTriangle, User, Calendar, Clock, Activity, ArrowRight, FileText, ShieldCheck, Banknote, Check, Mail, Phone, Package, DollarSign, Wallet, Navigation, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatQuoteId } from '../utils/formatters';
 import { useProposals } from '../context/ProposalContext';
@@ -640,6 +640,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                     >
                         Close
                     </button>
+                    {/* Legacy discard button removed */}
                     <button 
                         onClick={() => {
                             onClose();

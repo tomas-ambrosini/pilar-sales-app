@@ -150,10 +150,9 @@ export function ProposalProvider({ children }) {
         const newId = crypto.randomUUID();
         let finalOppId = draftData.associated_opportunity_id || null;
 
-        if (!finalOppId && draftData.proposal_data?.wizard_state?.selectedCustomerId) {
+        if (!finalOppId) {
             const { data: newOpp, error: oppErr } = await supabase.from('opportunities').insert([{
-                household_id: draftData.proposal_data.wizard_state.selectedCustomerId,
-                service_address_id: draftData.proposal_data.wizard_state.selectedLocationId || null,
+                household_id: draftData.proposal_data?.wizard_state?.selectedCustomerId || null,
                 status: PIPELINE_STATES.QUOTING,
                 urgency_level: 'Low',
                 issue_description: 'Auto-generated Opportunity from Proposal Wizard',
@@ -265,6 +264,10 @@ export function ProposalProvider({ children }) {
     };
 
     const updateProposal = async (id, updatedData) => {
+        // Prevent client from accidentally wiping out the opportunity link during auto-save loops
+        if (updatedData.associated_opportunity_id === null) delete updatedData.associated_opportunity_id;
+        if (updatedData.proposal_data && updatedData.proposal_data.associated_opportunity_id === null) delete updatedData.proposal_data.associated_opportunity_id;
+
         const oldProposal = proposals.find(p => p.id === id);
         const oppId = oldProposal?.associated_opportunity_id || oldProposal?.proposal_data?.associated_opportunity_id;
         
