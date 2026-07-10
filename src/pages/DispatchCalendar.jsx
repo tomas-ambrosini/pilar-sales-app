@@ -554,7 +554,7 @@ export default function DispatchCalendar({ isSubView = false }) {
                                                                         className={`absolute inset-0 overflow-y-auto p-2 flex flex-col gap-2 transition-colors
                                                                    ${snapshot.isDraggingOver ? 'bg-primary-50 ring-inset ring-2 ring-primary-200' : 'bg-transparent hover:bg-slate-50/50'}
                                                                    `}>
-                                                                   {cellJobs.map((j, i) => <JobCard key={j.id} job={j} index={i} />)}
+                                                                   {cellJobs.map((j, i) => <JobCard key={j.id} job={j} index={i} compact={true} />)}
                                                                    {provided.placeholder}
                                                                 </div>
                                                             )}
