@@ -126,6 +126,28 @@ export default function Subcontractors() {
     }
   };
 
+  const handleEditTech = async (e, crew) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const techName = fd.get('tech_name');
+    const colorCode = fd.get('color_code') || '#64748b';
+
+    try {
+      toast.loading('Saving lane...', { id: 'edit-tech' });
+      const { error } = await supabase.from('crews').update({
+        crew_name: techName,
+        color_code: colorCode,
+      }).eq('id', crew.id);
+
+      if (error) throw error;
+      setCrews(crews.map(c => c.id === crew.id ? { ...c, crew_name: techName, color_code: colorCode } : c));
+      toast.success('Dispatch lane updated!', { id: 'edit-tech' });
+      setShowTechModal(null);
+    } catch (err) {
+      toast.error(err.message || 'Error updating lane', { id: 'edit-tech' });
+    }
+  };
+
   const toggleTechStatus = async (crewId, currentStatus) => {
       try {
           const { error } = await supabase.from('crews').update({ is_active: !currentStatus }).eq('id', crewId);
@@ -316,6 +338,7 @@ export default function Subcontractors() {
                                                             <span className={`text-sm font-bold ${!crew.is_active ? 'line-through text-slate-400' : 'text-slate-700'}`}>{crew.crew_name}</span>
                                                         </div>
                                                         <div className="flex gap-2">
+                                                            <button onClick={() => setShowTechModal(crew)} className="text-[10px] font-black uppercase tracking-widest text-primary-500 hover:text-primary-700 px-3 py-1.5 rounded-lg border border-primary-200 hover:border-primary-300 hover:bg-white transition-all bg-primary-50 shadow-sm"><Edit2 size={12}/></button>
                                                             <button onClick={() => toggleTechStatus(crew.id, crew.is_active)} className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-white transition-all bg-slate-100 shadow-sm">
                                                                 {crew.is_active ? 'Disable' : 'Enable'}
                                                             </button>
@@ -347,23 +370,23 @@ export default function Subcontractors() {
          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-in fade-in duration-200 modal-layout-wrapper">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowTechModal(null)}></div>
             <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200">
-               <h3 className="text-lg font-black text-slate-900 mb-5 border-b pb-2">New Dispatch Lane</h3>
-               <form onSubmit={(e) => handleAddTech(e, showTechModal)} className="space-y-4">
+               <h3 className="text-lg font-black text-slate-900 mb-5 border-b pb-2">{typeof showTechModal === 'object' ? 'Edit Dispatch Lane' : 'New Dispatch Lane'}</h3>
+               <form onSubmit={(e) => typeof showTechModal === 'object' ? handleEditTech(e, showTechModal) : handleAddTech(e, showTechModal)} className="space-y-4">
                   <div>
                      <label className="text-xs font-bold text-slate-500 uppercase">Lane Name</label>
-                     <input type="text" name="tech_name" required className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold focus:ring-2 focus:ring-primary-500/20 outline-none mt-1.5" placeholder="e.g. Truck 1" />
+                     <input type="text" name="tech_name" required defaultValue={typeof showTechModal === 'object' ? showTechModal.crew_name : ''} className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold focus:ring-2 focus:ring-primary-500/20 outline-none mt-1.5" placeholder="e.g. Truck 1" />
                   </div>
                   <div>
                      <label className="text-xs font-bold text-slate-500 uppercase">Lane Color Marker</label>
                      <div className="flex items-center gap-3 mt-1.5 bg-slate-50 p-2 rounded-xl border border-slate-100">
-                        <input type="color" name="color_code" defaultValue="#3b82f6" className="w-10 h-10 border-0 rounded cursor-pointer bg-transparent" />
+                        <input type="color" name="color_code" defaultValue={typeof showTechModal === 'object' ? showTechModal.color_code : "#3b82f6"} className="w-10 h-10 border-0 rounded cursor-pointer bg-transparent" />
                         <span className="text-xs font-semibold text-slate-500">Appears on Dispatch Hub</span>
                      </div>
                   </div>
                   
                   <div className="flex justify-end gap-3 pt-4 mt-2">
                      <button type="button" onClick={() => setShowTechModal(null)} className="px-4 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-colors">Cancel</button>
-                     <button type="submit" className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-bold shadow-sm transition-colors">Create Lane</button>
+                     <button type="submit" className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-bold shadow-sm transition-colors">{typeof showTechModal === 'object' ? 'Save Changes' : 'Create Lane'}</button>
                   </div>
                </form>
             </div>
