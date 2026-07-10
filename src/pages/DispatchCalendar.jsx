@@ -69,7 +69,7 @@ export default function DispatchCalendar({ isSubView = false }) {
          const { data: svc } = await supabase.from('service_calls').select(`
              id, created_at, status, urgency, call_type, tags, issue_description, customer_id, assigned_techs, scheduled_start, scheduled_end,
              households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
-         `).in('status', ['Pending', 'Scheduled', 'Dispatched', 'In Progress', 'Completed']);
+         `).in('status', ['Pending', 'Scheduled', 'Dispatched', 'En Route', 'Working', 'Completed']);
 
          const normalizedOpps = (opps || []).map(o => {
              let targetAddress = null;
@@ -334,7 +334,18 @@ export default function DispatchCalendar({ isSubView = false }) {
       
       if (isService) {
           systemSummary = job.call_type || 'Service Call';
-          tagColor = 'bg-purple-50 text-purple-700 border-purple-200';
+          if (job.status === 'Dispatched') {
+              tagColor = 'bg-blue-50 text-blue-700 border-blue-200';
+          }
+          if (job.status === 'In Progress' || job.status === 'Working') {
+              tagColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+          }
+          if (job.status === 'En Route') {
+              tagColor = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+          }
+          if (tagColor === 'bg-slate-100 text-slate-600 border-slate-200') {
+              tagColor = 'bg-purple-50 text-purple-700 border-purple-200';
+          }
       } else {
           if (associatedProposal?.proposal_data?.systemTiers && associatedProposal.proposal_data.systemTiers.length > 0) {
               const numSystems = associatedProposal.proposal_data.systemTiers.length;
