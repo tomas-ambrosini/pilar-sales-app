@@ -88,8 +88,11 @@ export default function Subcontractors() {
 
       try {
           toast.loading('Saving details...', { id: 'save-sub' });
-          const { error } = await supabase.from('user_profiles').update(updates).eq('id', editingSub.id);
+          const { data, error } = await supabase.functions.invoke('admin-action', {
+              body: { action: 'updateUser', payload: { targetUserId: editingSub.id, ...updates } }
+          });
           if (error) throw error;
+          if (data?.error) throw new Error(data.error);
           
           setSubcontractors(subs => subs.map(s => s.id === editingSub.id ? { ...s, ...updates } : s));
           setEditingSub(prev => ({ ...prev, ...updates }));
