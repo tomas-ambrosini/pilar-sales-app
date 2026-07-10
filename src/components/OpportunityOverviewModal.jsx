@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
 import { supabase } from '../supabaseClient';
-import { History, MessageSquare, Send, MapPin, AlertTriangle, User, Calendar, Clock, Activity, ArrowRight, FileText, ShieldCheck, Banknote, Check, Mail, Phone, Package, DollarSign, Wallet, Navigation } from 'lucide-react';
+import { History, MessageSquare, Send, MapPin, AlertTriangle, User, Calendar, Clock, Activity, ArrowRight, FileText, ShieldCheck, Banknote, Check, Mail, Phone, Package, DollarSign, Wallet, Navigation, Upload, Paperclip, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatQuoteId } from '../utils/formatters';
 import { useProposals } from '../context/ProposalContext';
@@ -21,6 +21,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
     const [viewingContract, setViewingContract] = useState(null);
     const [viewingInvoice, setViewingInvoice] = useState(null);
     const [loadingInvoice, setLoadingInvoice] = useState(false);
+    const [uploadingMedia, setUploadingMedia] = useState(false);
     const navigate = useNavigate();
     const { proposals } = useProposals();
     const { user } = useAuth();
@@ -107,6 +108,52 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
             toast.error('Failed to save notes');
         }
     };
+
+    const handleFileUpload = async (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        
+        setUploadingMedia(true);
+        const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+        
+        try {
+            for (const file of files) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+                const filePath = `${job.household_id}/opportunities/${job.id}/${fileName}`;
+                
+                const { error: uploadError } = await supabase.storage
+                    .from('unit_media')
+                    .upload(filePath, file);
+                    
+                if (uploadError) throw uploadError;
+                
+                const { data } = supabase.storage.from('unit_media').getPublicUrl(filePath);
+                
+                await supabase.from('activity_logs').insert({
+                    household_id: job.household_id,
+                    opportunity_id: job.id,
+                    activity_type: 'Attachment',
+                    description: JSON.stringify({
+                        name: file.name,
+                        url: data.publicUrl,
+                        type: file.type,
+                        uploadedBy: userName
+                    })
+                });
+            }
+            
+            toast.success('Files uploaded successfully');
+            await fetchActivities();
+        } catch (err) {
+            console.error("Upload error:", err);
+            toast.error('Failed to upload files.');
+        } finally {
+            setUploadingMedia(false);
+            e.target.value = '';
+        }
+    };
+
 
     if (!job) return null;
 
@@ -216,6 +263,14 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
     
     const proposalDoneBy = proposedEvent ? extractNameFromAction(proposedEvent.description) : null;
     const dispatchedBy = (scheduledEvent ? extractNameFromAction(scheduledEvent.description) : null) || job.proposal_data?.dispatcher;
+
+    const attachments = activities
+        .filter(act => act.activity_type === 'Attachment')
+        .map(act => {
+            try { return JSON.parse(act.description); }
+            catch(e) { return null; }
+        })
+        .filter(Boolean);
 
     return (
         <>
@@ -546,6 +601,64 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                             </div>
                         </div>
                     )}
+
+                    {/* Documents & Photos */}
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm transition-shadow hover:shadow-md">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <Paperclip size={14} /> Documents & Photos
+                            </h3>
+                            <label className="cursor-pointer bg-primary-50 text-primary-700 hover:bg-primary-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 shadow-sm border border-primary-100">
+                                {uploadingMedia ? (
+                                    <span className="flex items-center gap-1"><div className="w-3 h-3 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div> Uploading...</span>
+                                ) : (
+                                    <><Upload size={14} /> Upload Files</>
+                                )}
+                                <input type="file" multiple className="hidden" onChange={handleFileUpload} disabled={uploadingMedia} />
+                            </label>
+                        </div>
+                        
+                        {attachments.length > 0 ? (
+                            <div className="grid grid-cols-2 gap-3 mt-4">
+                                {attachments.map((file, i) => {
+                                    const isImage = file.type?.startsWith('image/') || file.url.match(/\.(jpeg|jpg|gif|png|webp)$/i);
+                                    return (
+                                        <a 
+                                            key={i} 
+                                            href={file.url} 
+                                            target="_blank" 
+                                            rel="noreferrer" 
+                                            className="group relative bg-slate-50 border border-slate-200 rounded-xl overflow-hidden hover:border-primary-300 transition-all flex flex-col hover:shadow-md"
+                                        >
+                                            {isImage ? (
+                                                <div className="w-full h-24 bg-slate-100 relative">
+                                                    <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
+                                                    <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/10 transition-colors"></div>
+                                                </div>
+                                            ) : (
+                                                <div className="w-full h-24 bg-slate-100 flex items-center justify-center text-slate-400 group-hover:text-primary-500 transition-colors">
+                                                    <FileText size={32} />
+                                                </div>
+                                            )}
+                                            <div className="p-2.5 bg-white border-t border-slate-100 flex flex-col flex-1 justify-between">
+                                                <div className="text-xs font-bold text-slate-700 truncate mb-1" title={file.name}>{file.name}</div>
+                                                <div className="flex items-center justify-between mt-auto">
+                                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{file.uploadedBy || 'User'}</span>
+                                                    <ExternalLink size={12} className="text-slate-300 group-hover:text-primary-500" />
+                                                </div>
+                                            </div>
+                                        </a>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="text-center py-6 bg-slate-50 border border-dashed border-slate-200 rounded-xl">
+                                <Paperclip size={24} className="mx-auto text-slate-300 mb-2" />
+                                <p className="text-sm font-semibold text-slate-500">No documents or photos yet.</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Upload files to attach to this deal</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Right Panel: Unified Timeline */}
