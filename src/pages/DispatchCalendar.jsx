@@ -363,13 +363,17 @@ export default function DispatchCalendar({ isSubView = false }) {
 
       return (
       <Draggable draggableId={job.id} index={index}>
-         {(provided, snapshot) => (
+         {(provided, snapshot) => {
+            const assignedCrew = crews.find(c => c.id === job.assigned_crew_id);
+            const accentColor = assignedCrew?.color_code || 'transparent';
+
+            return (
             <div
                ref={provided.innerRef}
                {...provided.draggableProps}
                {...provided.dragHandleProps}
                onClick={() => setInspectingJob(job)}
-               className={`w-full min-w-0 ${compact ? 'p-2' : 'p-3.5'} shrink-0 rounded-[16px] flex flex-col transition-all duration-300 group select-none cursor-pointer overflow-hidden bg-white
+               className={`w-full min-w-0 ${compact ? 'p-2 pl-3' : 'p-3.5 pl-4'} shrink-0 rounded-[16px] flex flex-col transition-all duration-300 group select-none cursor-pointer overflow-hidden bg-white relative
                   ${snapshot.isDragging ? 'shadow-2xl z-50 ring-2 ring-primary-400 scale-[1.02]' : 'hover:shadow-lg hover:-translate-y-0.5 hover:ring-slate-300 shadow-sm ring-1 ring-slate-200/60'}
                `}
                style={
@@ -378,6 +382,9 @@ export default function DispatchCalendar({ isSubView = false }) {
                    : {}
                }
             >
+               {accentColor !== 'transparent' && (
+                   <div className="absolute top-0 bottom-0 left-0 w-1.5" style={{ backgroundColor: accentColor }}></div>
+               )}
                <div className={`flex justify-between items-start gap-3 ${compact ? '' : 'mb-3'}`}>
                   <div className="flex items-center gap-2.5 w-full min-w-0">
                       {!compact && (
@@ -414,7 +421,8 @@ export default function DispatchCalendar({ isSubView = false }) {
                    </div>
                )}
             </div>
-         )}
+            );
+         }}
       </Draggable>
       );
    };
@@ -500,9 +508,9 @@ export default function DispatchCalendar({ isSubView = false }) {
                                                 <div className="sticky left-0 z-10 bg-white border-b border-r border-slate-200 flex items-center p-3 font-bold text-slate-800 gap-3 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
                                                     <div className="w-1.5 h-8 rounded-full" style={{ backgroundColor: crew.color_code || '#cbd5e1' }}></div> 
                                                     <div className="flex flex-col min-w-0">
-                                                        <span className="text-xs md:text-sm line-clamp-2 md:truncate leading-tight">{crew.crew_name}</span>
+                                                        <span className="text-xs md:text-sm line-clamp-2 leading-tight" title={crew.crew_name}>{crew.crew_name}</span>
                                                         {crew.user_profiles?.subcontractor_company && (
-                                                            <span className="text-[10px] text-slate-500 line-clamp-1">{crew.user_profiles.subcontractor_company}</span>
+                                                            <span className="text-[10px] text-slate-500 line-clamp-2 mt-0.5" title={crew.user_profiles.subcontractor_company}>{crew.user_profiles.subcontractor_company}</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -543,9 +551,9 @@ export default function DispatchCalendar({ isSubView = false }) {
                                                 <div className="sticky left-0 z-10 bg-white border-b border-r border-slate-200 flex items-center p-3 font-bold text-slate-800 gap-3 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
                                                     <div className="w-1.5 h-8 rounded-full" style={{ backgroundColor: crew.color_code || '#cbd5e1' }}></div> 
                                                     <div className="flex flex-col min-w-0">
-                                                        <span className="text-xs md:text-sm line-clamp-2 md:truncate leading-tight">{crew.crew_name}</span>
+                                                        <span className="text-xs md:text-sm line-clamp-2 leading-tight" title={crew.crew_name}>{crew.crew_name}</span>
                                                         {crew.user_profiles?.subcontractor_company && (
-                                                            <span className="text-[10px] text-slate-500 line-clamp-1">{crew.user_profiles.subcontractor_company}</span>
+                                                            <span className="text-[10px] text-slate-500 line-clamp-2 mt-0.5" title={crew.user_profiles.subcontractor_company}>{crew.user_profiles.subcontractor_company}</span>
                                                         )}
                                                     </div>
                                                 </div>
