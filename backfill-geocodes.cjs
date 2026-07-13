@@ -6,21 +6,37 @@ const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SU
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-async function geocode(addressString) {
-    try {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressString)}`;
-        const res = await fetch(url, {
-            headers: {
-                'User-Agent': 'PilarSalesApp/1.0 (prototype)'
+async function geocodeAddress(addressString) {
+    const fetchCoords = async (query) => {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`;
+        try {
+            const res = await fetch(url, { headers: { 'User-Agent': 'PilarSalesApp/1.0' } });
+            const data = await res.json();
+            if (data && data.length > 0) {
+                return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
             }
-        });
-        const data = await res.json();
-        if (data && data.length > 0) {
-            return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+        } catch (e) {
+            console.warn('Geocode error:', e);
         }
-    } catch (e) {
-        console.error('Geocode error for', addressString, e.message);
+        return null;
+    };
+
+    let coords = await fetchCoords(addressString);
+    if (coords) return coords;
+
+    let cleaned = addressString.replace(/(?:\b(?:Unit|Apt\.?|Ste\.?|Suite)\b|#)\s*[a-zA-Z0-9\-]+/gi, '');
+    cleaned = cleaned.split(',')
+                     .map(p => p.trim())
+                     .filter(p => p.length > 0)
+                     .join(', ');
+
+    if (cleaned !== addressString.trim() && cleaned.length > 0) {
+        await delay(1500); // Rate limit before second attempt
+        console.log(`Fallback: Geocoding cleaned address: "${cleaned}"`);
+        coords = await fetchCoords(cleaned);
+        if (coords) return coords;
     }
+
     return null;
 }
 
@@ -33,21 +49,21 @@ async function run() {
         return;
     }
 
-    console.log(`Found ${addresses.length} addresses. Backfilling...`);
+    console.log(`Found ${addresses.length} addresses. Backfilling missing...`);
     
     let successCount = 0;
+    let failCount = 0;
     
     for (const addr of addresses) {
         // Skip if already geocoded
         if (addr.property_details && addr.property_details.lat && addr.property_details.lng) {
-            console.log(`Skipping ${addr.street_address}, already geocoded.`);
             continue;
         }
 
-        const addressString = `${addr.street_address}, ${addr.city}, ${addr.state} ${addr.zip}`;
+        const addressString = `${addr.street_address || ''}, ${addr.city || ''}, ${addr.state || ''} ${addr.zip || ''}`.replace(/,\s*,/g, ',');
         console.log(`Geocoding: ${addressString}`);
         
-        const coords = await geocode(addressString);
+        const coords = await geocodeAddress(addressString);
         if (coords) {
             const updatedDetails = {
                 ...(addr.property_details || {}),
@@ -55,8 +71,6 @@ async function run() {
                 lng: coords.lng
             };
             
-            // Note: Since RLS is enabled, we need to bypass it or use admin-action. 
-            // Wait, we only have ANON_KEY. Let's try direct update, if RLS blocks, we use the Edge Function.
             const { error: updateError } = await supabase.from('addresses').update({ property_details: updatedDetails }).eq('id', addr.id);
             
             if (updateError) {
@@ -66,14 +80,14 @@ async function run() {
                 successCount++;
             }
         } else {
-            console.log(`Could not geocode ${addressString}`);
+            console.log(`Still could not geocode ${addressString}`);
+            failCount++;
         }
         
-        // Respect Nominatim rate limits (1 request per second)
         await delay(1500);
     }
     
-    console.log(`Done! Backfilled ${successCount} addresses.`);
+    console.log(`Done! Backfilled ${successCount} addresses. Failed: ${failCount}.`);
 }
 
 run();

@@ -5,16 +5,35 @@ import toast from 'react-hot-toast';
 import { debounce } from '../utils/debounce';
 
 async function geocodeAddress(addressString) {
-    try {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressString)}`;
-        const res = await fetch(url, { headers: { 'User-Agent': 'PilarSalesApp/1.0' } });
-        const data = await res.json();
-        if (data && data.length > 0) {
-            return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    const fetchCoords = async (query) => {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`;
+        try {
+            const res = await fetch(url, { headers: { 'User-Agent': 'PilarSalesApp/1.0' } });
+            const data = await res.json();
+            if (data && data.length > 0) {
+                return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+            }
+        } catch (e) {
+            console.warn('Geocode error:', e);
         }
-    } catch (e) {
-        console.warn('Geocode error:', e);
+        return null;
+    };
+
+    let coords = await fetchCoords(addressString);
+    if (coords) return coords;
+
+    let cleaned = addressString.replace(/(?:\b(?:Unit|Apt\.?|Ste\.?|Suite)\b|#)\s*[a-zA-Z0-9\-]+/gi, '');
+    cleaned = cleaned.split(',')
+                     .map(p => p.trim())
+                     .filter(p => p.length > 0)
+                     .join(', ');
+
+    if (cleaned !== addressString.trim() && cleaned.length > 0) {
+        // await new Promise(r => setTimeout(r, 1000)); // Rate limit not strictly needed here for 1-off creation
+        coords = await fetchCoords(cleaned);
+        if (coords) return coords;
     }
+
     return null;
 }
 
