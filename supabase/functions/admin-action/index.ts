@@ -112,8 +112,8 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: error ? 400 : 200 });
     }
 
-    return new Response(JSON.stringify({ error: 'Action not found' }), { status: 400 })
+    return new Response(JSON.stringify({ error: 'Action not found' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 400 })
+    return new Response(JSON.stringify({ error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })
   }
 })

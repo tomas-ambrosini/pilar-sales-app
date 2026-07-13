@@ -222,7 +222,7 @@ export default function AccountManagement() {
      
      try {
        toast.loading('Resetting password...', { id: 'reset' });
-       await invokeAdminAction('resetPassword', { targetUserId: showResetModal.id, newPassword });
+       await invokeAdminAction('updateUser', { targetUserId: showResetModal.id, password: newPassword, must_change_password: true });
        toast.success('Password flag reset successfully.', { id: 'reset' });
        setShowResetModal(null);
        fetchUsers();
