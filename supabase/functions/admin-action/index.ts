@@ -95,6 +95,18 @@ serve(async (req) => {
         return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
 
+    if (action === 'updateCrew') {
+        const { targetCrewId, ...updates } = payload;
+        const { data, error } = await supabaseAdmin.from('crews').update(updates).eq('id', targetCrewId).select();
+        return new Response(JSON.stringify({ success: !error, data, error: error?.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: error ? 400 : 200 });
+    }
+
+    if (action === 'deleteCrew') {
+        const { targetCrewId } = payload;
+        const { error } = await supabaseAdmin.from('crews').delete().eq('id', targetCrewId);
+        return new Response(JSON.stringify({ success: !error, error: error?.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: error ? 400 : 200 });
+    }
+
     if (action === 'deleteServiceCall') {
         const { error } = await supabaseAdmin.from('service_calls').delete().eq('id', payload.callId);
         return new Response(JSON.stringify({ error }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: error ? 400 : 200 });

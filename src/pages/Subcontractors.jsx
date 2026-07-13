@@ -134,12 +134,11 @@ export default function Subcontractors() {
 
     try {
       toast.loading('Saving lane...', { id: 'edit-tech' });
-      const { error } = await supabase.from('crews').update({
-        crew_name: techName,
-        color_code: colorCode,
-      }).eq('id', crew.id);
+      const { data, error } = await supabase.functions.invoke('admin-action', {
+          body: { action: 'updateCrew', payload: { targetCrewId: crew.id, crew_name: techName, color_code: colorCode } }
+      });
 
-      if (error) throw error;
+      if (error || data?.error) throw new Error(error?.message || data?.error || 'Failed to update crew');
       setCrews(crews.map(c => c.id === crew.id ? { ...c, crew_name: techName, color_code: colorCode } : c));
       toast.success('Dispatch lane updated!', { id: 'edit-tech' });
       setShowTechModal(null);
@@ -150,12 +149,29 @@ export default function Subcontractors() {
 
   const toggleTechStatus = async (crewId, currentStatus) => {
       try {
-          const { error } = await supabase.from('crews').update({ is_active: !currentStatus }).eq('id', crewId);
-          if (error) throw error;
+          const { data, error } = await supabase.functions.invoke('admin-action', {
+              body: { action: 'updateCrew', payload: { targetCrewId: crewId, is_active: !currentStatus } }
+          });
+          if (error || data?.error) throw new Error(error?.message || data?.error || 'Failed to update tech status.');
           setCrews(crews.map(c => c.id === crewId ? { ...c, is_active: !currentStatus } : c));
           toast.success(currentStatus ? 'Tech deactivated.' : 'Tech activated.');
       } catch (err) {
           toast.error("Failed to update tech status.");
+      }
+  };
+
+  const handleDeleteTech = async (crewId) => {
+      if (!window.confirm("Are you sure you want to delete this dispatch lane? This action cannot be undone.")) return;
+      try {
+          toast.loading('Deleting lane...', { id: 'delete-tech' });
+          const { data, error } = await supabase.functions.invoke('admin-action', {
+              body: { action: 'deleteCrew', payload: { targetCrewId: crewId } }
+          });
+          if (error || data?.error) throw new Error(error?.message || data?.error || 'Failed to delete lane.');
+          setCrews(crews.filter(c => c.id !== crewId));
+          toast.success('Dispatch lane deleted!', { id: 'delete-tech' });
+      } catch (err) {
+          toast.error(err.message || 'Error deleting lane', { id: 'delete-tech' });
       }
   };
 
