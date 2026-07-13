@@ -216,6 +216,11 @@ export default function DispatchHub() {
            setSearchQuery('');
            setMatchedCustomer(null);
            setOppForm({ type: 'SALES', salesCallType: 'INSTALL', urgency: 'Medium', callType: 'REPAIR', tags: [], issueDescription: '', dispatchNotes: '', assignedSalespersonId: '', selectedLocationId: '' });
+           setCustomerForm({
+               firstName: '', lastName: '', phone: '', email: '', 
+               address: '', city: '', zip: '', sameAsService: true, 
+               billingAddress: '', billingCity: '', billingState: '', billingZip: ''
+           });
        } catch (err) {
            toast.error(err.message);
        }
@@ -422,7 +427,7 @@ export default function DispatchHub() {
                                             )}
                                        </div>
                                        <div className="flex gap-3">
-                                           <button type="button" onClick={() => setIsNewCustomer(false)} className="btn-secondary flex-1 py-2.5">Cancel</button>
+                                           <button type="button" onClick={() => { setIsNewCustomer(false); setCustomerForm({ firstName: '', lastName: '', phone: '', email: '', address: '', city: '', zip: '', sameAsService: true, billingAddress: '', billingCity: '', billingState: '', billingZip: '' }); }} className="btn-secondary flex-1 py-2.5">Cancel</button>
                                            <button type="submit" disabled={loading} className="btn-primary flex-1 py-2.5">Save Profile</button>
                                        </div>
                                    </form>
