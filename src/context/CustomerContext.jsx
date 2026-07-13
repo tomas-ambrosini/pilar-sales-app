@@ -34,6 +34,23 @@ async function geocodeAddress(addressString) {
         if (coords) return coords;
     }
 
+    const parts = cleaned.split(',').map(p => p.trim());
+    if (parts.length >= 2) {
+        if (parts.length >= 3) {
+            const cityState = parts.slice(-2).join(', ').replace(/\s*\d{5}.*$/, '').trim(); // strip zip code
+            if (cityState) {
+                coords = await fetchCoords(cityState);
+                if (coords) return coords;
+            }
+        } else {
+            const city = parts.slice(-1).join(', ');
+            if (city) {
+                coords = await fetchCoords(city);
+                if (coords) return coords;
+            }
+        }
+    }
+
     return null;
 }
 
