@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-screen w-screen flex flex-col">
+  <div class="flex-1 min-h-0 flex flex-col">
+    <div class="flex-1 min-h-0 min-w-0 bg-white relative">
+      <div class="w-full h-full overflow-auto grid" style="grid-template-columns: 200px repeat(3, minmax(150px, 1fr)); grid-template-rows: 48px repeat(2, minmax(110px, 1fr));">
+         <div class="bg-purple-200">Header</div><div class="bg-purple-300">1</div><div class="bg-purple-300">2</div><div class="bg-purple-300">3</div>
+         
+         <div class="bg-yellow-200">Row 1</div>
+         <div class="bg-gray-100 border relative">
+            <div class="absolute inset-0 overflow-y-auto p-2">
+               <div class="h-[200px] bg-red-400">Card 1 (200px tall)</div>
+            </div>
+         </div>
+         <div class="bg-gray-100 border relative"></div>
+         <div class="bg-gray-100 border relative"></div>
+         
+         <div class="bg-yellow-200">Row 2</div>
+         <div class="bg-white border relative"></div>
+         <div class="bg-white border relative"></div>
+         <div class="bg-white border relative"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

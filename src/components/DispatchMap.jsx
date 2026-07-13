@@ -141,13 +141,13 @@ export default function DispatchMap() {
             // Fetch Opportunities (Sales)
             const { data: opps } = await supabase.from('opportunities').select(`
                 id, created_at, status, urgency_level, scheduled_date, scheduled_time_block, assigned_crew_id, issue_description, household_id, proposal_data,
-                households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
+                households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence, property_details ) )
             `).in('status', [PIPELINE_STATES.SCHEDULED, 'En Route', 'Working', 'Completed', 'Complete']).eq('is_active', true);
 
             // Fetch Service Calls (Service)
             const { data: svc } = await supabase.from('service_calls').select(`
                 id, created_at, status, urgency, call_type, tags, issue_description, customer_id, assigned_techs, scheduled_start, scheduled_end,
-                households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
+                households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence, property_details ) )
             `).in('status', ['Scheduled', 'En Route', 'Working', 'Completed', 'Complete']);
 
             const normalizedOpps = (opps || []).map(o => {
@@ -197,9 +197,15 @@ export default function DispatchMap() {
             });
             setLiveTechLocations(prev => ({ ...prev, ...latestLocs }));
 
-            // Map coordinates: Use live location if available, else mock
+            // Map coordinates: Use live location if available, else property_details coords, else mock
             const jobsWithCoords = allJobs.map(job => {
-                let coords = generateMockCoordinates(job.id);
+                let coords = null;
+                if (job.address?.property_details?.lat) {
+                    coords = [job.address.property_details.lat, job.address.property_details.lng];
+                } else {
+                    coords = generateMockCoordinates(job.id);
+                }
+
                 // We use the functional state update above, but for immediate mapping we use latestLocs
                 // or if it was already in state (from websocket)
                 if (latestLocs[job.id]) {

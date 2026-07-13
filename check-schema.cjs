@@ -1,13 +1,7 @@
-require('dotenv').config({ path: '.env' });
 const { createClient } = require('@supabase/supabase-js');
-const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
-
-async function check() {
-  const { data, error } = await supabase.from('user_profiles').select('*').limit(1);
-  if (data && data.length > 0) {
-     console.log("Columns:", Object.keys(data[0]));
-  } else {
-     console.log("Error or no data:", error);
-  }
-}
-check();
+require('dotenv').config();
+const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY, { auth: { persistSession: false }, realtime: { transport: require('ws') } });
+supabase.from('user_profiles').select('*').limit(1).then(({ data, error }) => {
+  if (error) console.error(error);
+  else console.log(Object.keys(data[0]));
+});

@@ -1,8 +1,8 @@
+require('dotenv').config({ path: '.env' });
 const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config();
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
-async function test() {
-    const { data } = await supabase.from('user_profiles').select('*').limit(1);
-    console.log(data);
+async function run() {
+  const { data, error } = await supabase.from('subcontractors').select('*').limit(1);
+  console.log('subcontractors:', error ? error.message : Object.keys(data[0] || {}));
 }
-test();
+run();

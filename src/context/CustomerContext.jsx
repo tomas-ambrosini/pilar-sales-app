@@ -4,6 +4,20 @@ import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
 import { debounce } from '../utils/debounce';
 
+async function geocodeAddress(addressString) {
+    try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressString)}`;
+        const res = await fetch(url, { headers: { 'User-Agent': 'PilarSalesApp/1.0' } });
+        const data = await res.json();
+        if (data && data.length > 0) {
+            return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+        }
+    } catch (e) {
+        console.warn('Geocode error:', e);
+    }
+    return null;
+}
+
 const CustomerContext = createContext(null);
 
 export function CustomerProvider({ children }) {
@@ -336,6 +350,12 @@ export function CustomerProvider({ children }) {
             let billingAddressId = null;
 
             if (customerData.address) {
+                let property_details = {};
+                try {
+                    const coords = await geocodeAddress(`${customerData.address}, ${customerData.city || ''}, ${customerData.state || ''} ${customerData.zip || ''}`);
+                    if (coords) { property_details.lat = coords.lat; property_details.lng = coords.lng; }
+                } catch(e) {}
+
                 const { data: addressData, error: addressError } = await supabase.from('addresses')
                     .insert({ 
                         street_address: customerData.address, 
@@ -343,7 +363,7 @@ export function CustomerProvider({ children }) {
                         state: customerData.state || '', 
                         zip: customerData.zip || '',
                         household_id: householdData.id,
-                        property_details: {},
+                        property_details,
                         is_primary_residence: true
                     })
                     .select()
@@ -358,6 +378,12 @@ export function CustomerProvider({ children }) {
 
             // 2.5 Insert Billing Address if distinct
             if (customerData.billing_address && customerData.billing_address !== customerData.address) {
+                let property_details = {};
+                try {
+                    const coords = await geocodeAddress(`${customerData.billing_address}, ${customerData.billing_city || ''}, ${customerData.billing_state || ''} ${customerData.billing_zip || ''}`);
+                    if (coords) { property_details.lat = coords.lat; property_details.lng = coords.lng; }
+                } catch(e) {}
+
                 const { data: billingData, error: billingError } = await supabase.from('addresses')
                     .insert({ 
                         street_address: customerData.billing_address, 
@@ -365,7 +391,7 @@ export function CustomerProvider({ children }) {
                         state: customerData.billing_state || '', 
                         zip: customerData.billing_zip || '',
                         household_id: householdData.id,
-                        property_details: {},
+                        property_details,
                         is_primary_residence: false
                     })
                     .select()
@@ -478,11 +504,17 @@ export function CustomerProvider({ children }) {
 
     const addPropertyToCustomer = async (householdId, addressString) => {
         try {
+            let property_details = {};
+            try {
+                const coords = await geocodeAddress(addressString);
+                if (coords) { property_details.lat = coords.lat; property_details.lng = coords.lng; }
+            } catch(e) {}
+
             const { error } = await supabase.from('addresses').insert({
                 household_id: householdId,
                 street_address: addressString,
                 city: '', state: '', zip: '',
-                property_details: {},
+                property_details,
                 is_primary_residence: false
             });
             if (error) throw error;
