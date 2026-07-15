@@ -250,29 +250,13 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @keyframes infection-pulse {
-  0% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.02); filter: brightness(1.2); }
-  100% { transform: scale(1); filter: brightness(1); }
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.8; }
 }
 
-@keyframes carnage-crawl {
-  0% { background-position: 0% 0%, 0px 0px, 0px 0px; }
-  100% { background-position: 100% 100%, 40px 50px, -30px -40px; }
-}
-
-@keyframes carnage-breathe {
-  0% { opacity: 0.85; transform: scaleX(1); }
-  50% { opacity: 1; transform: scaleX(1.05); }
-  100% { opacity: 0.85; transform: scaleX(1); }
-}
-
-.carnage-symbiote {
-  background-color: #450a0a;
-  background-image: 
-    radial-gradient(circle at top right, #991b1b 0%, transparent 60%),
-    repeating-radial-gradient(circle at 20% 30%, #7f1d1d 0, transparent 3px, #450a0a 6px, transparent 10px),
-    repeating-radial-gradient(circle at 80% 80%, #b91c1c 0, transparent 4px, #2a0000 8px, transparent 15px);
-  background-size: 150% 150%, 100px 100px, 120px 120px;
-  animation: carnage-crawl 12s infinite alternate ease-in-out;
-  box-shadow: -15px 0 40px 15px rgba(153, 27, 27, 0.9);
+@keyframes infection-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }

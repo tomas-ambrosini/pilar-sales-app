@@ -482,13 +482,32 @@ export function CustomerProvider({ children }) {
             // Optimistic fast update
             setCustomers(prev => prev.map(c => c.id === id ? { ...c, ...updatedData } : c));
             
-            if (updatedData.tags) {
+            if (updatedData.tags !== undefined) {
                 await supabase.from('households').update({ tags: updatedData.tags }).eq('id', id);
             }
             if (updatedData.active_maintenance_agreement !== undefined) {
                 await supabase.from('households').update({ active_maintenance_agreement: updatedData.active_maintenance_agreement }).eq('id', id);
             }
             
+            // Sync Addresses if provided
+            if (updatedData.service_address_id && updatedData.address) {
+                await supabase.from('addresses').update({
+                    street: updatedData.address,
+                    city: updatedData.city,
+                    state: updatedData.state,
+                    zip: updatedData.zip
+                }).eq('id', updatedData.service_address_id);
+            }
+            
+            if (updatedData.billing_address_id && updatedData.billing_address) {
+                await supabase.from('addresses').update({
+                    street: updatedData.billing_address,
+                    city: updatedData.billing_city,
+                    state: updatedData.billing_state,
+                    zip: updatedData.billing_zip
+                }).eq('id', updatedData.billing_address_id);
+            }
+
             const contactUpdates = {};
             if (updatedData.name) {
                 const nameParts = (updatedData.name || '').split(' ');
@@ -513,7 +532,10 @@ export function CustomerProvider({ children }) {
                 } else if (!updatedRows || updatedRows.length === 0) {
                     // LEGACY FIX: Customer has no contact row in the DB! We must force insert one.
                     await supabase.from('contacts').insert({ 
-                        ...contactUpdates, 
+                        first_name: contactUpdates.first_name || 'Unknown',
+                        last_name: contactUpdates.last_name || '',
+                        email: contactUpdates.email || '',
+                        primary_phone: contactUpdates.primary_phone || '',
                         household_id: id 
                     });
                 }

@@ -196,51 +196,52 @@ export default function ServiceHub({ isEmbedded = false, initialCallId = null })
         else if (call.urgency === 'NORMAL') urgencyBorder = 'border-l-blue-500';
         
         let infectionPercentage = 0;
-        let isHeavilyInfected = false;
         if (isSLA_Violated) {
             const overdueHours = Math.max(0, hoursInStage - 24);
             infectionPercentage = Math.min(100, (overdueHours / 72) * 100);
-            isHeavilyInfected = infectionPercentage > 50;
         }
 
-        const textColor = isHeavilyInfected ? 'text-white' : 'text-slate-900';
-        const subtextColor = isHeavilyInfected ? 'text-red-200' : 'text-slate-500';
-
         return (
-            <div key={call.id} onClick={() => setInspectingCallId(call.id)} className={`group relative cursor-pointer rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-l-[5px] ${urgencyBorder} p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-800 shadow-[0_4px_20px_rgba(153,27,27,0.4)] overflow-hidden bg-slate-900' : 'bg-white border-slate-200/80 hover:border-slate-300'}`}>
+            <div key={call.id} onClick={() => setInspectingCallId(call.id)} className={`group relative cursor-pointer bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-l-[5px] ${urgencyBorder} p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}>
                 {isSLA_Violated && (
-                    <div 
-                        className="absolute top-0 right-0 bottom-0 pointer-events-none z-0 carnage-symbiote rounded-xl transition-all duration-1000"
-                        style={{
-                            width: `${Math.max(15, infectionPercentage)}%`,
-                            borderBottomLeftRadius: '30% 70%',
-                            borderTopLeftRadius: '60% 20%',
-                            opacity: 0.8 + (infectionPercentage/500)
+                    <motion.div 
+                        className="absolute inset-0 rounded-xl pointer-events-none z-0"
+                        animate={{
+                            background: [
+                                `radial-gradient(circle at top right, rgba(239, 68, 68, ${0.05 + (infectionPercentage * 0.0015)}) 0%, rgba(239, 68, 68, ${0.02 + (infectionPercentage * 0.001)}) ${infectionPercentage}%, transparent ${Math.min(100, infectionPercentage + 20)}%)`,
+                                `radial-gradient(circle at top right, rgba(239, 68, 68, ${0.1 + (infectionPercentage * 0.0025)}) 0%, rgba(239, 68, 68, ${0.05 + (infectionPercentage * 0.002)}) ${Math.min(100, infectionPercentage + 15)}%, transparent ${Math.min(100, infectionPercentage + 40)}%)`,
+                                `radial-gradient(circle at top right, rgba(239, 68, 68, ${0.05 + (infectionPercentage * 0.0015)}) 0%, rgba(239, 68, 68, ${0.02 + (infectionPercentage * 0.001)}) ${infectionPercentage}%, transparent ${Math.min(100, infectionPercentage + 20)}%)`
+                            ]
+                        }}
+                        transition={{
+                            duration: Math.max(0.8, 3.5 - (infectionPercentage / 30)), // Faster heartbeat as infection grows
+                            repeat: Infinity,
+                            ease: "easeInOut"
                         }}
                     />
                 )}
                 <motion.div 
                     animate={isSLA_Violated ? { 
                         scale: [1, 1.05, 1], 
-                        boxShadow: ['0 4px 12px rgba(153,27,27,0.4)', '0 8px 24px rgba(153,27,27,0.7)', '0 4px 12px rgba(153,27,27,0.4)'] 
+                        boxShadow: ['0 4px 12px rgba(239,68,68,0.3)', '0 8px 24px rgba(239,68,68,0.6)', '0 4px 12px rgba(239,68,68,0.3)'] 
                     } : {}}
                     transition={isSLA_Violated ? { 
                         duration: Math.max(0.8, 3.5 - (infectionPercentage / 30)), 
                         repeat: Infinity,
                         ease: "easeInOut"
                     } : {}}
-                    className={`absolute -top-3 -right-3 text-[10px] font-black px-3 py-1.5 rounded-full flex items-center gap-1.5 uppercase tracking-wider z-20 ${isSLA_Violated ? 'bg-gradient-to-br from-red-600 to-red-900 text-white border border-red-500/30' : 'bg-white border border-slate-200 text-slate-500 shadow-md'}`}>
+                    className={`absolute -top-3 -right-3 text-[10px] font-black px-3 py-1.5 rounded-full flex items-center gap-1.5 uppercase tracking-wider z-20 ${isSLA_Violated ? 'bg-gradient-to-br from-red-500 to-rose-600 text-white' : 'bg-white border border-slate-200 text-slate-500 shadow-md'}`}>
                     {isSLA_Violated ? <AlertTriangle size={12} strokeWidth={3} /> : <Clock size={12} strokeWidth={3} />}
                     {hoursInStage >= 72 ? `${Math.floor(hoursInStage / 24)} Days` : `${Math.floor(hoursInStage)}h`} {isSLA_Violated ? 'Overdue' : 'In Stage'}
                 </motion.div>
 
-                <div className="relative z-10 flex justify-between items-start mb-2">
+                <div className="flex justify-between items-start mb-2">
                     <div className="flex flex-col pr-4">
-                        <h4 className={`font-black text-base tracking-tight leading-tight truncate transition-colors ${textColor} ${!isHeavilyInfected ? 'group-hover:text-primary-600' : ''}`}>{(call.households?.household_name || 'Unknown Client').replace(/ Account$/i, '').trim()}</h4>
-                        <span className={`text-[10px] font-semibold mt-1 flex items-center gap-1.5 flex-wrap ${subtextColor}`}>
+                        <h4 className="font-black text-slate-900 text-base tracking-tight leading-tight truncate group-hover:text-primary-600 transition-colors">{(call.households?.household_name || 'Unknown Client').replace(/ Account$/i, '').trim()}</h4>
+                        <span className="text-[10px] font-semibold text-slate-500 mt-1 flex items-center gap-1.5 flex-wrap">
                             <span className="whitespace-nowrap">{new Date(call.created_at).toLocaleDateString()}</span> 
-                            <span className={`whitespace-nowrap ${isHeavilyInfected ? 'text-red-500' : 'text-slate-300'}`}>&bull;</span> 
-                            <span className={`font-mono uppercase tracking-widest whitespace-nowrap ${isHeavilyInfected ? 'text-red-300' : 'text-slate-400'}`}>{displayId}</span>
+                            <span className="text-slate-300 whitespace-nowrap">&bull;</span> 
+                            <span className="font-mono uppercase tracking-widest text-slate-400 whitespace-nowrap">{displayId}</span>
                         </span>
                     </div>
                     <div className="shrink-0 pt-1.5 flex flex-col items-end gap-2">
