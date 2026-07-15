@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useDeferredValue } from 'react';
 import { Routes, Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Search, Plus, Phone, Mail, MapPin, ChevronRight, User as UserIcon, Users, Calendar, FileText, Edit2, Trash2, Tag, Clock, Zap, Activity, Settings, AlertTriangle, Box, Shield, CalendarClock } from 'lucide-react';
-import Modal from '../components/Modal';
+import SlideDrawer from '../components/SlideDrawer';
 import './Customers.css';
 import { useCustomers } from '../context/CustomerContext';
 import toast from 'react-hot-toast';
@@ -221,20 +221,23 @@ function CustomerList() {
                  <tr key={i} className="animate-pulse">
                    <td className="p-4 px-6">
                      <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-full bg-slate-200"></div>
-                       <div className="h-4 bg-slate-200 rounded w-32"></div>
+                       <div className="w-9 h-9 rounded-full bg-slate-100"></div>
+                       <div>
+                         <div className="h-4 bg-slate-100 rounded-md w-32 mb-2"></div>
+                         <div className="h-3 bg-slate-100 rounded-md w-16"></div>
+                       </div>
                      </div>
                    </td>
                    <td className="p-4 px-6">
-                     <div className="h-4 bg-slate-200 rounded w-24 mb-1.5"></div>
-                     <div className="h-3 bg-slate-200 rounded w-32"></div>
+                     <div className="h-3 bg-slate-100 rounded-md w-24 mb-2"></div>
+                     <div className="h-3 bg-slate-100 rounded-md w-32"></div>
                    </td>
                    <td className="p-4 px-6">
-                     <div className="h-4 bg-slate-200 rounded w-48 mb-1.5"></div>
-                     <div className="h-3 bg-slate-200 rounded w-24"></div>
+                     <div className="h-4 bg-slate-100 rounded-md w-48 mb-2"></div>
+                     <div className="h-3 bg-slate-100 rounded-md w-24"></div>
                    </td>
                    <td className="p-4 px-6 text-right">
-                     <div className="h-4 bg-slate-200 rounded w-4 inline-block"></div>
+                     <div className="h-4 bg-slate-100 rounded-md w-4 inline-block"></div>
                    </td>
                  </tr>
                ))}
@@ -271,7 +274,23 @@ function CustomerList() {
                </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-               {filteredCustomers.slice(0, 100).map((customer) => (
+               {filteredCustomers.length === 0 ? (
+                 <tr>
+                   <td colSpan="4" className="p-16 text-center">
+                     <div className="flex flex-col items-center justify-center">
+                       <div className="w-20 h-20 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-5 border border-slate-100 shadow-sm">
+                         <Search size={36} />
+                       </div>
+                       <h3 className="text-base font-bold text-slate-900 mb-1">No customers found</h3>
+                       <p className="text-sm font-medium text-slate-500 mb-6">We couldn't find any matching "{searchTerm}".</p>
+                       <button className="bg-primary-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm shadow-md hover:bg-primary-700 hover:shadow-lg transition-all focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 flex items-center gap-2" onClick={() => setIsAddCustomerOpen(true)}>
+                         <Plus size={18} /> Add New Customer
+                       </button>
+                     </div>
+                   </td>
+                 </tr>
+               ) : (
+                 filteredCustomers.slice(0, 100).map((customer) => (
                  <tr 
                    key={customer.id} 
                    onClick={(e) => {
@@ -371,10 +390,11 @@ function CustomerList() {
       </div>
       </div>
 
-      <Modal
+      <SlideDrawer
         isOpen={isAddCustomerOpen}
         onClose={handleCloseModal}
         title="Add New Customer"
+        width="max-w-2xl"
       >
         <form className="modal-form" onSubmit={handleSubmit}>
           <div className="form-group">
@@ -447,16 +467,16 @@ function CustomerList() {
             <label htmlFor="tags">Tags (comma separated)</label>
             <input type="text" id="tags" placeholder="Residential, VIP" value={formData.tags} onChange={handleInputChange} />
           </div>
-          <div className="modal-actions">
+          <div className="modal-actions pt-6 mt-6 border-t border-slate-100 flex justify-end gap-3 sticky bottom-0 bg-white">
             <button type="button" className="btn-secondary" onClick={handleCloseModal}>
               Cancel
             </button>
             <button type="submit" className="btn-primary">
-              Save Customer
+              Create Customer
             </button>
           </div>
         </form>
-      </Modal>
+      </SlideDrawer>
     </div>
   );
 }
@@ -892,7 +912,7 @@ function CustomerDetail() {
       </Modal>
 
       {/* Edit Modal */}
-      <Modal
+      <SlideDrawer
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         title="Edit Customer Details"
@@ -973,7 +993,7 @@ function CustomerDetail() {
               <input type="text" id="tags" value={editFormData.tags} onChange={handleEditChange} className="w-full border border-slate-200 p-3 rounded-xl text-slate-900 bg-slate-50 focus:bg-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all outline-none" />
             </div>
           </div>
-          <div className="modal-actions">
+          <div className="modal-actions pt-6 mt-6 border-t border-slate-100 flex justify-end gap-3 sticky bottom-0 bg-white">
             <button type="button" className="btn-secondary" onClick={() => setIsEditModalOpen(false)}>
               Cancel
             </button>
@@ -982,7 +1002,7 @@ function CustomerDetail() {
             </button>
           </div>
         </form>
-      </Modal>
+      </SlideDrawer>
 
       {/* Archive Confirmation Modal */}
       <Modal
