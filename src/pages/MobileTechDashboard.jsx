@@ -1,0 +1,202 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Briefcase, MessageSquare, PhoneCall, Truck, Clock, ChevronRight } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useRole } from '../context/RoleContext';
+import { supabase } from '../supabaseClient';
+import { motion } from 'framer-motion';
+
+export default function MobileTechDashboard() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isSubcontractor } = useRole();
+  const [jobCount, setJobCount] = useState(0);
+  const [loadingJobs, setLoadingJobs] = useState(true);
+  
+  // Dummy state for Clock In (Would be hooked to a backend later)
+  const [isClockedIn, setIsClockedIn] = useState(false);
+  const [clockInTime, setClockInTime] = useState(null);
+
+  useEffect(() => {
+    fetchJobCount();
+  }, []);
+
+  const fetchJobCount = async () => {
+    try {
+      setLoadingJobs(true);
+      // Fetch crew ID based on user. If they are assigned to a crew, count jobs for that crew.
+      const { data: crewMember } = await supabase
+        .from('crews')
+        .select('id')
+        .contains('members', [user.id])
+        .single();
+        
+      if (crewMember) {
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Count Service Calls
+        const { count: scCount } = await supabase
+          .from('service_calls')
+          .select('id', { count: 'exact', head: true })
+          .eq('crew_id', crewMember.id)
+          .gte('scheduled_at', `${today}T00:00:00Z`)
+          .lt('scheduled_at', `${today}T23:59:59Z`);
+          
+        // Count Work Orders (Installs)
+        const { count: woCount } = await supabase
+          .from('work_orders')
+          .select('id', { count: 'exact', head: true })
+          .eq('crew_id', crewMember.id)
+          .gte('scheduled_date', `${today}T00:00:00Z`)
+          .lt('scheduled_date', `${today}T23:59:59Z`);
+          
+        setJobCount((scCount || 0) + (woCount || 0));
+      }
+    } catch (err) {
+      console.error("Error fetching job count:", err);
+    } finally {
+      setLoadingJobs(false);
+    }
+  };
+
+  const handleClockToggle = () => {
+    if (isClockedIn) {
+      setIsClockedIn(false);
+      setClockInTime(null);
+    } else {
+      setIsClockedIn(true);
+      setClockInTime(new Date());
+    }
+  };
+
+  // Helper to format time
+  const formatTime = (date) => {
+    if (!date) return '';
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  return (
+    <div className="p-4 flex flex-col gap-4">
+      {/* Welcome Banner */}
+      <div className="mb-2 mt-4 px-2">
+        <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+          Welcome back,
+        </h2>
+        <h3 className="text-xl font-bold text-slate-500">
+          {user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'Technician'}
+        </h3>
+      </div>
+
+      {/* Primary Action: Assigned Work */}
+      <motion.button 
+        whileTap={{ scale: 0.98 }}
+        onClick={() => navigate('/my-day')}
+        className="w-full bg-slate-900 rounded-3xl p-6 shadow-xl shadow-slate-900/20 relative overflow-hidden group text-left"
+      >
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
+        <div className="relative z-10 flex items-center justify-between">
+          <div>
+            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-4 border border-white/10 backdrop-blur-sm">
+              <Briefcase size={24} className="text-white" />
+            </div>
+            <h3 className="text-2xl font-black text-white tracking-tight">Assigned Work</h3>
+            <p className="text-slate-300 font-medium mt-1 flex items-center gap-2">
+              {loadingJobs ? (
+                <span className="w-20 h-4 bg-white/20 animate-pulse rounded"></span>
+              ) : (
+                jobCount > 0 ? `${jobCount} Jobs Today` : 'No Jobs Assigned'
+              )}
+            </p>
+          </div>
+          <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+            <ChevronRight size={20} className="text-white" />
+          </div>
+        </div>
+      </motion.button>
+
+      {/* Secondary Action: Company Chat */}
+      <motion.button 
+        whileTap={{ scale: 0.98 }}
+        // The drawer state is managed by the layout, so we could theoretically just fire an event
+        // But since we are inside an Outlet, navigating to a chat route or using a global state is best.
+        // For now, we will assume they use the bottom nav for chat, or we can use a custom event.
+        onClick={() => document.dispatchEvent(new CustomEvent('open-chat'))}
+        className="w-full bg-white rounded-3xl p-6 shadow-md shadow-slate-200/50 border border-slate-100 flex items-center justify-between"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-primary-50 rounded-2xl flex items-center justify-center text-primary-600">
+            <MessageSquare size={24} />
+          </div>
+          <div className="text-left">
+            <h3 className="text-xl font-bold text-slate-800">Company Chat</h3>
+            <p className="text-sm font-medium text-slate-500">Message Dispatch & Team</p>
+          </div>
+        </div>
+        <ChevronRight size={20} className="text-slate-300" />
+      </motion.button>
+
+      <div className="grid grid-cols-2 gap-4 mt-2">
+        {/* Contact Dispatch (Phone) */}
+        <motion.a 
+          whileTap={{ scale: 0.95 }}
+          href="tel:5551234567" // Placeholder company number
+          className="col-span-2 bg-gradient-to-br from-rose-500 to-rose-600 rounded-3xl p-5 shadow-lg shadow-rose-500/20 text-white flex items-center gap-4"
+        >
+          <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+            <PhoneCall size={24} className="text-white" />
+          </div>
+          <div>
+            <h3 className="font-bold text-lg leading-tight">Call Dispatch</h3>
+            <p className="text-rose-100 text-sm font-medium">Urgent assistance</p>
+          </div>
+        </motion.a>
+
+        {/* Conditional Buttons for In-House Techs */}
+        {!isSubcontractor() && (
+          <>
+            {/* Fleet Management */}
+            <motion.button 
+              whileTap={{ scale: 0.95 }}
+              onClick={() => alert("Fleet Management Coming Soon")}
+              className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center gap-3"
+            >
+              <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600">
+                <Truck size={24} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800 text-sm leading-tight">Fleet Mgmt</h3>
+                <p className="text-[10px] text-slate-500 font-medium uppercase mt-0.5">Inspections</p>
+              </div>
+            </motion.button>
+
+            {/* Clock In / Out */}
+            <motion.button 
+              whileTap={{ scale: 0.95 }}
+              onClick={handleClockToggle}
+              className={`${
+                isClockedIn 
+                  ? 'bg-emerald-50 border-emerald-200 shadow-emerald-500/10' 
+                  : 'bg-white border-slate-100 shadow-sm'
+              } rounded-3xl p-5 border flex flex-col items-center justify-center text-center gap-3 transition-colors`}
+            >
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                isClockedIn ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600'
+              }`}>
+                <Clock size={24} />
+              </div>
+              <div>
+                <h3 className={`font-bold text-sm leading-tight ${isClockedIn ? 'text-emerald-800' : 'text-slate-800'}`}>
+                  {isClockedIn ? 'Clock Out' : 'Clock In'}
+                </h3>
+                <p className={`text-[10px] font-medium uppercase mt-0.5 ${isClockedIn ? 'text-emerald-600' : 'text-slate-500'}`}>
+                  {isClockedIn ? formatTime(clockInTime) : 'Time Tracking'}
+                </p>
+              </div>
+            </motion.button>
+          </>
+        )}
+      </div>
+
+    </div>
+  );
+}

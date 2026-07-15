@@ -21,6 +21,24 @@ export default function TechnicianMyDay() {
         if (selectedCrewId) {
             localStorage.setItem('technician_crew_id', selectedCrewId);
             fetchMyDay();
+
+            // Realtime Subscriptions
+            const svcSub = supabase.channel('svc-changes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'service_calls' }, payload => {
+                    fetchMyDay();
+                })
+                .subscribe();
+
+            const oppSub = supabase.channel('opp-changes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'opportunities' }, payload => {
+                    fetchMyDay();
+                })
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(svcSub);
+                supabase.removeChannel(oppSub);
+            };
         } else {
             setJobs([]);
         }
@@ -67,27 +85,29 @@ export default function TechnicianMyDay() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-24 font-sans selection:bg-orange-500/30">
-            {/* Header matches Pilar standard: White, soft shadows, clean typography */}
-            <div className="bg-white px-5 pt-8 pb-6 shadow-sm border-b border-slate-200 sticky top-0 z-20">
-                <div className="flex items-center justify-between mb-6">
+        <div className="min-h-screen bg-[#fafafc] pb-24 font-sans selection:bg-primary-500/30">
+            {/* Crew Selection Area */}
+            <div className="bg-white/70 backdrop-blur-xl px-5 pt-4 pb-4 border-b border-slate-100 sticky top-0 z-20">
+                <div className="flex items-center justify-between mb-3">
                     <div>
-                        <h1 className="text-2xl font-black tracking-tight text-slate-900">My Route</h1>
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-0.5">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</p>
+                        <h1 className="text-xl font-black tracking-tight text-slate-800">Assigned Route</h1>
+                        <p className="text-[10px] font-bold text-primary-500 uppercase tracking-widest mt-0.5">
+                            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                        </p>
                     </div>
-                    <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center border border-orange-100">
-                        <Truck size={20} className="text-orange-600" />
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center border border-primary-200/50 shadow-sm">
+                        <Truck size={20} className="text-primary-600" />
                     </div>
                 </div>
 
                 <div className="relative group">
-                    <div className="relative flex items-center bg-white border border-slate-200 rounded-xl shadow-sm focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/20 transition-all">
+                    <div className="relative flex items-center bg-white border border-slate-200 rounded-2xl shadow-sm focus-within:border-primary-500 focus-within:ring-4 focus-within:ring-primary-500/10 transition-all overflow-hidden">
                         <select 
-                            className="w-full bg-transparent text-slate-900 px-4 py-3 text-sm font-bold appearance-none outline-none z-10 cursor-pointer"
+                            className="w-full bg-transparent text-slate-800 px-4 py-3.5 text-sm font-bold appearance-none outline-none z-10 cursor-pointer"
                             value={selectedCrewId}
                             onChange={e => setSelectedCrewId(e.target.value)}
                         >
-                            <option value="" className="text-slate-500">Select your Truck / Crew...</option>
+                            <option value="" className="text-slate-400">Select your Vehicle / Crew...</option>
                             {crews.map(c => (
                                 <option key={c.id} value={c.id}>{c.crew_name}</option>
                             ))}

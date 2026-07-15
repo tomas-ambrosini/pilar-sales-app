@@ -66,8 +66,12 @@ const ProposalsRedirect = () => {
   return <Navigate to={`/sales?${params.toString()}`} replace />;
 };
 
+import MobileTechLayout from './components/MobileTechLayout';
+import MobileTechDashboard from './pages/MobileTechDashboard';
+
 function MainRouter() {
   const { user } = useAuth();
+  const { isFieldWorker } = useRole();
 
   const localSetupComplete = localStorage.getItem(`setup_complete_${user?.id}`) === 'true';
 
@@ -92,16 +96,21 @@ function MainRouter() {
         <Route path="contact" element={<ContactMock />} />
       </Route>
 
-      
       {!user ? (
         <Route path="*" element={<Login />} />
+      ) : isFieldWorker() ? (
+        <Route path="/" element={<MobileTechLayout />}>
+          <Route index element={<MobileTechDashboard />} />
+          <Route path="my-day" element={<TechnicianMyDay />} />
+          <Route path="tasks/*" element={<Tasks />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
       ) : (
         <Route path="/" element={<Layout />}>
           {/* SALES DOMAINS */}
           <Route path="customers/*" element={<RoleRoute><Customers /></RoleRoute>} />
           <Route path="tasks/*" element={<RoleRoute><Tasks /></RoleRoute>} />
           <Route path="calendar/*" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'COORDINATOR']}><CompanyCalendar /></RoleRoute>} />
-          <Route path="my-day" element={<RoleRoute allowedRoles={['FIELD_WORKER', 'SUPER_ADMIN']}><TechnicianMyDay /></RoleRoute>} />
           
           {/* MANAGER DOMAINS */}
           <Route path="catalog/*" element={<RoleRoute><Catalog /></RoleRoute>} />
