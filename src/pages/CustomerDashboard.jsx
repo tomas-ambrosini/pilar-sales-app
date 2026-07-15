@@ -141,7 +141,7 @@ function UnitDetailView({ unit, address }) {
                                      </span>
                                      <span className="text-xs font-bold text-slate-400">{new Date(event.date).toLocaleDateString()}</span>
                                   </div>
-                                  {event.cost && <span className="font-black text-slate-700 bg-slate-100 px-2 py-1 rounded text-xs">{canViewFinancials() ? \`$\${parseFloat(event.cost).toLocaleString('en-US', {minimumFractionDigits: 2})}\` : '***'}</span>}
+                                  {event.cost && <span className="font-black text-slate-700 bg-slate-100 px-2 py-1 rounded text-xs">{canViewFinancials() ? `$${parseFloat(event.cost).toLocaleString('en-US', {minimumFractionDigits: 2})}` : '***'}</span>}
                                </div>
                                <p className="text-slate-600 text-sm mt-2 font-medium line-clamp-3">{event.description}</p>
                                {event.technician && <div className="text-[10px] font-bold text-slate-400 mt-3 flex items-center gap-1 uppercase tracking-wider"><UserIcon size={10}/> Tech: {event.technician}</div>}
@@ -189,7 +189,7 @@ export default function CustomerDashboard() {
   }
 
   const handleDelete = () => {
-     if (window.confirm(\`Are you sure you want to delete \${customer.name}?\`)) {
+     if (window.confirm(`Are you sure you want to delete \${customer.name}?`)) {
          deleteCustomer(customer.id);
          navigate('/customers');
      }
@@ -274,7 +274,7 @@ export default function CustomerDashboard() {
                  <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={\`px-6 py-2 rounded-lg text-sm font-bold capitalize transition-all \${activeTab === tab ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}\`}
+                    className={`px-6 py-2 rounded-lg text-sm font-bold capitalize transition-all \${activeTab === tab ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                  >
                     {tab === 'properties' ? 'Properties & Assets' : tab === 'financials' ? 'Financials & Deals' : tab}
                  </button>
@@ -296,14 +296,14 @@ export default function CustomerDashboard() {
                       {(customer.locations || []).map((loc, idx) => {
                           const isExpanded = expandedProperty === loc.id;
                           return (
-                              <div key={loc.id} className={\`bg-white rounded-2xl border transition-all duration-300 overflow-hidden \${isExpanded ? 'border-primary-300 shadow-md ring-4 ring-primary-50' : 'border-slate-200 shadow-sm hover:border-primary-200'}\`}>
+                              <div key={loc.id} className={`bg-white rounded-2xl border transition-all duration-300 overflow-hidden \${isExpanded ? 'border-primary-300 shadow-md ring-4 ring-primary-50' : 'border-slate-200 shadow-sm hover:border-primary-200'}`}>
                                   {/* Property Header */}
                                   <div 
                                      onClick={() => setExpandedProperty(isExpanded ? null : loc.id)}
                                      className="p-6 flex items-center justify-between cursor-pointer group bg-gradient-to-r from-white to-slate-50/50"
                                   >
                                       <div className="flex items-center gap-4">
-                                          <div className={\`w-12 h-12 rounded-full flex items-center justify-center transition-colors \${isExpanded ? 'bg-primary-100 text-primary-600' : 'bg-slate-100 text-slate-400 group-hover:bg-primary-50 group-hover:text-primary-500'}\`}>
+                                          <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors \${isExpanded ? 'bg-primary-100 text-primary-600' : 'bg-slate-100 text-slate-400 group-hover:bg-primary-50 group-hover:text-primary-500'}`}>
                                               <MapPin size={20} />
                                           </div>
                                           <div>
@@ -314,7 +314,7 @@ export default function CustomerDashboard() {
                                               <p className="text-sm font-medium text-slate-500">{loc.city}, {loc.state} {loc.zip}</p>
                                           </div>
                                       </div>
-                                      <ChevronRight size={20} className={\`text-slate-400 transition-transform duration-300 \${isExpanded ? 'rotate-90 text-primary-500' : ''}\`} />
+                                      <ChevronRight size={20} className={`text-slate-400 transition-transform duration-300 \${isExpanded ? 'rotate-90 text-primary-500' : ''}`} />
                                   </div>
 
                                   {/* Expanded Content: Property Details & Units */}
@@ -371,7 +371,7 @@ export default function CustomerDashboard() {
                                                               {badges.length > 0 && (
                                                                   <div className="flex flex-wrap gap-2 mb-3">
                                                                       {badges.map((b, i) => (
-                                                                          <span key={i} className={\`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border \${b.color}\`}>
+                                                                          <span key={i} className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border \${b.color}`}>
                                                                               {b.icon} {b.label}
                                                                           </span>
                                                                       ))}
@@ -418,7 +418,7 @@ export default function CustomerDashboard() {
       <SlideDrawer
           isOpen={isUnitDrawerOpen}
           onClose={() => { setIsUnitDrawerOpen(false); setTimeout(() => setSelectedUnit(null), 300); }}
-          title={selectedUnit ? \`Unit \${selectedUnit.unit.unit_number} Details\` : 'Unit Details'}
+          title={selectedUnit ? `Unit \${selectedUnit.unit.unit_number} Details` : 'Unit Details'}
           width="max-w-2xl"
       >
           {selectedUnit && <UnitDetailView unit={selectedUnit.unit} address={selectedUnit.address} />}
