@@ -15,7 +15,6 @@ import { useRole } from '../context/RoleContext';
 import { supabase } from '../supabaseClient';
 import { PIPELINE_STATES } from '../utils/pipelineControls';
 import { formatQuoteId, formatPhoneNumber } from '../utils/formatters';
-import CustomerDashboard from './CustomerDashboard';
 
 function CustomerList() {
   const navigate = useNavigate();
@@ -488,7 +487,7 @@ function CustomerList() {
   );
 }
 
-function PropertyDetailsCard({ location, index }) {
+function PropertyDetailsCard({ location, index, onViewAddress }) {
    const { updatePropertyDetails, deleteProperty } = useCustomers();
    const { activeRole, ROLES } = useRole();
    const { id } = useParams();
@@ -527,7 +526,7 @@ function PropertyDetailsCard({ location, index }) {
                  </div>
              ) : (
                 <div className="flex flex-wrap gap-2 w-full md:w-auto">
-                   <button className="text-xs font-bold text-white hover:bg-primary-700 bg-primary-600 px-3 py-1.5 rounded flex items-center justify-center gap-1 transition-all shadow-sm flex-1 md:flex-none min-w-[180px]" onClick={() => navigate(`/customers/${id}/address/${location.id}`)}>
+                   <button className="text-xs font-bold text-white hover:bg-primary-700 bg-primary-600 px-3 py-1.5 rounded flex items-center justify-center gap-1 transition-all shadow-sm flex-1 md:flex-none min-w-[180px]" onClick={() => onViewAddress(location.id)}>
                        View Lifecycle & Equipment <ChevronRight size={14}/>
                    </button>
                    <button className="text-xs font-bold text-slate-400 hover:text-primary-500 flex items-center gap-1" onClick={() => setIsEditing(true)}>
@@ -651,6 +650,12 @@ function CustomerDetail() {
   const [viewingContract, setViewingContract] = useState(null);
   const [viewingInvoice, setViewingInvoice] = useState(null);
   
+  const [isAddressDrawerOpen, setIsAddressDrawerOpen] = useState(false);
+  const [activeAddressId, setActiveAddressId] = useState(null);
+  
+  const [isUnitDrawerOpen, setIsUnitDrawerOpen] = useState(false);
+  const [activeUnitId, setActiveUnitId] = useState(null);
+  
   const customer = customers.find(c => c.id.toString() === id.toString());
   
   const primaryLocations = (customer?.locations || []).filter(loc => loc.is_primary_residence);
@@ -709,11 +714,9 @@ function CustomerDetail() {
      e.preventDefault();
      if (!customer) return;
      
-     const primaryLoc = customer.locations?.find((loc) => loc.is_primary_residence) || customer.locations?.[0];
-     
      const { data: oppData, error } = await supabase.from('opportunities').insert({
          household_id: customer.id,
-         service_address_id: primaryLoc ? primaryLoc.id : null,
+         service_address_id: dealForm.service_address_id || null,
          assigned_salesperson_id: user?.id,
          urgency_level: dealForm.urgency,
          issue_description: dealForm.issue_description,
@@ -829,7 +832,7 @@ function CustomerDetail() {
                     <h2 className="card-title text-slate-800 m-0">Primary Residence</h2>
                  </div>
                  {primaryLocations.map((loc, index) => (
-                     <PropertyDetailsCard key={loc.id} location={loc} index={index + 1} />
+                     <PropertyDetailsCard key={loc.id} location={loc} index={index + 1} onViewAddress={(locId) => { setActiveAddressId(locId); setIsAddressDrawerOpen(true); }} />
                  ))}
              </div>
            )}
@@ -844,7 +847,7 @@ function CustomerDetail() {
                  </div>
                  {managedLocations.length > 0 ? (
                      managedLocations.map((loc, index) => (
-                         <PropertyDetailsCard key={loc.id} location={loc} index={primaryLocations.length + index + 1} />
+                         <PropertyDetailsCard key={loc.id} location={loc} index={primaryLocations.length + index + 1} onViewAddress={(locId) => { setActiveAddressId(locId); setIsAddressDrawerOpen(true); }} />
                      ))
                  ) : (
                      <div className="detail-card glass-panel flex-center p-6"><p className="text-slate-500 font-medium text-sm">No managed properties recorded.</p></div>
@@ -857,6 +860,18 @@ function CustomerDetail() {
            <ActivityTimeline householdId={customer.id} />
         </section>
 
+      </div>
+
+      <div className="mt-8">
+          <AddressOperations 
+             id={id} 
+             addressId={null} 
+             address={null} 
+             customer={{...customer, opportunities: customer.opportunities, work_orders: customer.work_orders}} 
+             setViewingProposal={setViewingProposal} 
+             setViewingContract={setViewingContract} 
+             setViewingInvoice={setViewingInvoice} 
+          />
       </div>
 
       <Modal
@@ -1097,6 +1112,16 @@ function CustomerDetail() {
             </div>
             
             <div className="form-group mb-3">
+               <label className="text-xs font-bold text-slate-600 mb-1 block">Service Property</label>
+               <select className="w-full border p-2 rounded-lg" value={dealForm.service_address_id || ''} onChange={e => setDealForm({...dealForm, service_address_id: e.target.value})}>
+                  <option value="">Select Property...</option>
+                  {customer.locations?.map(loc => (
+                      <option key={loc.id} value={loc.id}>{loc.street_address} {loc.is_primary_residence ? '(Primary)' : ''}</option>
+                  ))}
+               </select>
+            </div>
+
+            <div className="form-group mb-3">
                <label className="text-xs font-bold text-slate-600 mb-1 block">Urgency / Severity</label>
                <select className="w-full border p-2 rounded-lg" value={dealForm.urgency} onChange={e => setDealForm({...dealForm, urgency: e.target.value})}>
                   <option value="Low">Low - Working Condition</option>
@@ -1123,6 +1148,41 @@ function CustomerDetail() {
             </div>
          </form>
       </Modal>
+
+      <SlideDrawer
+         isOpen={isAddressDrawerOpen}
+         onClose={() => { setIsAddressDrawerOpen(false); setTimeout(() => setActiveAddressId(null), 300); }}
+         title="Property Units & Equipment"
+         width="max-w-4xl"
+      >
+         {activeAddressId && (
+             <AddressDrawerContent 
+                 customerId={id} 
+                 addressId={activeAddressId} 
+                 customer={customer} 
+                 address={customer.locations?.find(l => l.id === activeAddressId)} 
+                 onViewUnit={(unitId) => { setActiveUnitId(unitId); setIsUnitDrawerOpen(true); }}
+             />
+         )}
+      </SlideDrawer>
+
+      <SlideDrawer
+         isOpen={isUnitDrawerOpen}
+         onClose={() => { setIsUnitDrawerOpen(false); setTimeout(() => setActiveUnitId(null), 300); }}
+         title="Unit Details"
+         width="max-w-4xl"
+      >
+         {activeUnitId && activeAddressId && (
+             <UnitDrawerContent 
+                 customerId={id} 
+                 addressId={activeAddressId} 
+                 unitId={activeUnitId} 
+                 customer={customer} 
+                 address={customer.locations?.find(l => l.id === activeAddressId)}
+                 unit={customer.locations?.find(l => l.id === activeAddressId)?.property_details?.units?.find(u => u.id === activeUnitId)}
+             />
+         )}
+      </SlideDrawer>
 
     </div>
   );
@@ -1237,6 +1297,7 @@ function AddressOperations({ id, addressId, address, customer, setViewingProposa
    const navigate = useNavigate();
 
    const addressOpportunities = customer?.opportunities?.filter(opp => {
+       if (!addressId) return true; // Global view
        const oppAddressId = opp.proposal_data?.service_address_id || opp.site_survey_data?.property_id || opp.site_survey_data?.service_address_id;
        if (oppAddressId) return oppAddressId === addressId;
        return true; // If no address assigned yet, show on all
@@ -1244,6 +1305,7 @@ function AddressOperations({ id, addressId, address, customer, setViewingProposa
    const addressWorkOrders = customer?.work_orders?.filter(wo => wo.opportunity_id && addressOpportunities.some(opp => opp.id === wo.opportunity_id)) || [];
    
    const addressProposals = proposals?.filter(p => {
+       if (!addressId) return true; // Global view (if this proposal belongs to customer, which we filtered initially anyway)
        const oppId = p.associated_opportunity_id || p.proposal_data?.associated_opportunity_id;
        if (oppId && addressOpportunities.some(opp => opp.id === oppId)) return true;
        if (p.proposal_data?.service_address_id === addressId) return true;
@@ -1335,38 +1397,31 @@ function AddressOperations({ id, addressId, address, customer, setViewingProposa
    );
 }
 
-function AddressDetail() {
-  const { id, addressId } = useParams();
-  const navigate = useNavigate();
-  const { customers, addUnitToAddress, deleteUnit } = useCustomers();
-  
-  const customer = customers.find(c => c.id === id);
-  const address = customer?.locations?.find(l => l.id === addressId);
+function AddressDrawerContent({ customerId, addressId, customer, address, onViewUnit }) {
+  const { addUnitToAddress, deleteUnit } = useCustomers();
   
   const [isAddUnitOpen, setIsAddUnitOpen] = useState(false);
-  const [unitForm, setUnitForm] = useState({ unit_number: '', system_type: '', description: '' });
-  const [viewingProposal, setViewingProposal] = useState(null);
-  const [viewingContract, setViewingContract] = useState(null);
-  const [viewingInvoice, setViewingInvoice] = useState(null);
+  const defaultUnitForm = { unit_number: '', system_type: '', brand: '', tonnage: '', seer: '', serial_number: '', model_number: '', filter_size: '', install_date: '', parts_warranty_years: '', labor_warranty_years: '', description: '' };
+  const [unitForm, setUnitForm] = useState(defaultUnitForm);
   
   const [unitToDelete, setUnitToDelete] = useState(null);
 
   if (!customer || !address) {
-     return <div className="page-container flex-center"><h3>Address Not Found</h3><button className="btn-primary mt-4" onClick={() => navigate(`/customers/${id}`)}>Go Back</button></div>;
+     return <div className="p-8 flex-center"><h3>Address Not Found</h3></div>;
   }
 
   const units = address.property_details?.units || [];
 
   const handleAddUnit = async (e) => {
      e.preventDefault();
-     await addUnitToAddress(id, addressId, unitForm);
+     await addUnitToAddress(customerId, addressId, unitForm);
      setIsAddUnitOpen(false);
-     setUnitForm({ unit_number: '', system_type: '', description: '' });
+     setUnitForm(defaultUnitForm);
   };
   
   const handleDeleteUnit = async () => {
      if (!unitToDelete) return;
-     await deleteUnit(id, addressId, unitToDelete.id);
+     await deleteUnit(customerId, addressId, unitToDelete.id);
      setUnitToDelete(null);
   };
 
@@ -1381,10 +1436,7 @@ function AddressDetail() {
   };
 
   return (
-     <div className="page-container">
-        <button className="back-btn group mb-6" onClick={() => navigate(`/customers/${id}`)}>
-          <ChevronRight size={18} className="icon-flip group-hover:-translate-x-1 transition-transform" /> Back to Customer
-        </button>
+     <div className="p-2 sm:p-4">
         
         <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl shadow-xl mb-8 border border-slate-700/50 p-8">
            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-primary-500/10 rounded-full"></div>
@@ -1404,7 +1456,7 @@ function AddressDetail() {
            {units.length > 0 ? units.map(unit => {
                const badges = parseSpecs(unit.description);
                return (
-               <div key={unit.id} className="group relative bg-white border border-slate-200/80 rounded-xl shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-primary-300 transition-all duration-300 overflow-hidden flex flex-col cursor-pointer" onClick={() => navigate(`/customers/${id}/address/${addressId}/unit/${unit.id}`)}>
+               <div key={unit.id} className="group relative bg-white border border-slate-200/80 rounded-xl shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-primary-300 transition-all duration-300 overflow-hidden flex flex-col cursor-pointer" onClick={() => onViewUnit(unit.id)}>
                   <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary-400 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   <div className="p-6 flex-1">
                       <div className="flex justify-between items-start mb-4">
@@ -1452,21 +1504,63 @@ function AddressDetail() {
            )}
         </div>
 
-        <AddressOperations id={id} addressId={addressId} address={address} customer={customer} setViewingProposal={setViewingProposal} setViewingContract={setViewingContract} setViewingInvoice={setViewingInvoice} />
-
-        <Modal isOpen={isAddUnitOpen} onClose={() => setIsAddUnitOpen(false)} title="Add New Unit">
+        <Modal isOpen={isAddUnitOpen} onClose={() => setIsAddUnitOpen(false)} title="Add New Unit" width="max-w-2xl">
            <form className="modal-form" onSubmit={handleAddUnit}>
-              <div className="form-group">
-                 <label>Unit Number / Name</label>
-                 <input type="text" value={unitForm.unit_number} onChange={e => setUnitForm({...unitForm, unit_number: e.target.value})} required placeholder="e.g. 1A or Rooftop AC" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="form-group">
+                     <label>Unit Name / Number</label>
+                     <input type="text" value={unitForm.unit_number} onChange={e => setUnitForm({...unitForm, unit_number: e.target.value})} required placeholder="e.g. 1A" />
+                  </div>
+                  <div className="form-group">
+                     <label>System Type</label>
+                     <input type="text" value={unitForm.system_type} onChange={e => setUnitForm({...unitForm, system_type: e.target.value})} required placeholder="e.g. Split System" />
+                  </div>
               </div>
-              <div className="form-group">
-                 <label>System Type</label>
-                 <input type="text" value={unitForm.system_type} onChange={e => setUnitForm({...unitForm, system_type: e.target.value})} required placeholder="e.g. Heat Pump, Furnace" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="form-group">
+                     <label>Brand</label>
+                     <input type="text" value={unitForm.brand} onChange={e => setUnitForm({...unitForm, brand: e.target.value})} placeholder="e.g. Daikin" />
+                  </div>
+                  <div className="form-group">
+                     <label>Tonnage</label>
+                     <input type="text" value={unitForm.tonnage} onChange={e => setUnitForm({...unitForm, tonnage: e.target.value})} placeholder="e.g. 3 Ton" />
+                  </div>
+                  <div className="form-group">
+                     <label>SEER</label>
+                     <input type="text" value={unitForm.seer} onChange={e => setUnitForm({...unitForm, seer: e.target.value})} placeholder="e.g. 16 SEER" />
+                  </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div className="form-group">
+                     <label>Serial Number</label>
+                     <input type="text" value={unitForm.serial_number} onChange={e => setUnitForm({...unitForm, serial_number: e.target.value})} placeholder="e.g. WX8482029" />
+                  </div>
+                  <div className="form-group">
+                     <label>Model Number</label>
+                     <input type="text" value={unitForm.model_number} onChange={e => setUnitForm({...unitForm, model_number: e.target.value})} placeholder="e.g. GSX160361" />
+                  </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div className="form-group">
+                     <label>Filter Size</label>
+                     <input type="text" value={unitForm.filter_size} onChange={e => setUnitForm({...unitForm, filter_size: e.target.value})} placeholder="e.g. 20x25x1" />
+                  </div>
+                  <div className="form-group">
+                     <label>Install Date</label>
+                     <input type="date" value={unitForm.install_date} onChange={e => setUnitForm({...unitForm, install_date: e.target.value})} />
+                  </div>
+                  <div className="form-group">
+                     <label>Warranty (Yrs)</label>
+                     <div className="flex gap-2">
+                        <input type="number" min="0" value={unitForm.parts_warranty_years} onChange={e => setUnitForm({...unitForm, parts_warranty_years: e.target.value})} placeholder="Parts" className="w-full sm:w-1/2" />
+                        <input type="number" min="0" value={unitForm.labor_warranty_years} onChange={e => setUnitForm({...unitForm, labor_warranty_years: e.target.value})} placeholder="Labor" className="w-full sm:w-1/2" />
+                     </div>
+                  </div>
               </div>
               <div className="form-group">
                  <label>Description & Specs</label>
-                 <textarea value={unitForm.description} onChange={e => setUnitForm({...unitForm, description: e.target.value})} className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all" placeholder="e.g. Trane 3 Ton 16 SEER..." rows={3}></textarea>
+                 <textarea value={unitForm.description} onChange={e => setUnitForm({...unitForm, description: e.target.value})} className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none" placeholder="Full specification string..." required rows={4}></textarea>
+                 <p className="text-xs text-slate-400 mt-2 font-medium">Tonnage and SEER ratings will fallback to automated parsing from this description block if explicitly left blank above.</p>
               </div>
               <div className="modal-actions mt-6">
                  <button type="button" className="btn-secondary" onClick={() => setIsAddUnitOpen(false)}>Cancel</button>
@@ -1488,43 +1582,13 @@ function AddressDetail() {
               </div>
            </div>
         </Modal>
-
-        <ProposalViewerModal 
-             isOpen={!!viewingProposal} 
-             onClose={() => setViewingProposal(null)} 
-             proposal={viewingProposal} 
-             onViewContract={(proposalData) => {
-                setViewingProposal(null);
-                const matchedTierName = ['good', 'better', 'best'].find(t => proposalData.proposal_data?.tiers[t]?.salesPrice === proposalData.amount) || 'good';
-                const matchedTierData = proposalData.proposal_data?.tiers[matchedTierName];
-                setViewingContract({ proposal: proposalData, tierName: matchedTierName?.toUpperCase(), tierData: matchedTierData, date: proposalData.date });
-             }}
-         />
-
-         <ContractDocumentModal 
-           isOpen={!!viewingContract}
-           onClose={() => setViewingContract(null)}
-           contractData={viewingContract}
-         />
-         
-         <InvoiceDocument 
-           isOpen={!!viewingInvoice} 
-           onClose={() => setViewingInvoice(null)} 
-           invoice={viewingInvoice} 
-         />
      </div>
   );
 }
 
-function UnitDetail() {
-  const { id, addressId, unitId } = useParams();
-  const navigate = useNavigate();
-  const { customers, addHistoryToUnit, updateUnit, mergeUnits, undoMerge } = useCustomers();
+function UnitDrawerContent({ customerId, addressId, unitId, customer, address, unit }) {
+  const { addHistoryToUnit, updateUnit, mergeUnits, undoMerge } = useCustomers();
   const { canViewFinancials } = useRole();
-  
-  const customer = customers.find(c => c.id === id);
-  const address = customer?.locations?.find(l => l.id === addressId);
-  const unit = address?.property_details?.units?.find(u => u.id === unitId);
   
   const [isMergeOpen, setIsMergeOpen] = useState(false);
   const [mergeSourceId, setMergeSourceId] = useState('');
@@ -1549,7 +1613,7 @@ function UnitDetail() {
           for (const file of files) {
               const fileExt = file.name.split('.').pop();
               const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-              const filePath = `${id}/${unitId}/${fileName}`;
+              const filePath = `${customerId}/${unitId}/${fileName}`;
               
               const { error: uploadError } = await supabase.storage
                   .from('unit_media')
@@ -1581,12 +1645,12 @@ function UnitDetail() {
   });
 
   if (!unit) {
-     return <div className="page-container flex-center"><h3>Unit Not Found</h3><button className="btn-primary mt-4" onClick={() => navigate(`/customers/${id}/address/${addressId}`)}>Go Back</button></div>;
+     return <div className="p-8 flex-center"><h3>Unit Not Found</h3></div>;
   }
 
   const handleAddEvent = async (e) => {
      e.preventDefault();
-     await addHistoryToUnit(id, addressId, unitId, eventForm);
+     await addHistoryToUnit(customerId, addressId, unitId, eventForm);
      setIsAddEventOpen(false);
      setEventForm({ 
          type: 'Service', description: '', technician: '', cost: '', resolution: '',
@@ -1597,7 +1661,7 @@ function UnitDetail() {
   
   const handleEditUnit = async (e) => {
      e.preventDefault();
-     await updateUnit(id, addressId, unitId, editForm);
+     await updateUnit(customerId, addressId, unitId, editForm);
      setIsEditOpen(false);
   };
   
@@ -1628,13 +1692,13 @@ function UnitDetail() {
      
      // Wrap in setTimeout to ensure modal unmounts cleanly before context updates
      setTimeout(async () => {
-         await mergeUnits(id, addressId, unitId, sourceId);
+         await mergeUnits(customerId, addressId, unitId, sourceId);
      }, 0);
   };
 
   const handleUndoMerge = async (eventId) => {
      if (window.confirm("Are you sure you want to undo this merge? The legacy unit will be restored and its history separated.")) {
-        await undoMerge(id, addressId, unitId, eventId);
+        await undoMerge(customerId, addressId, unitId, eventId);
      }
   };
 
@@ -1643,10 +1707,7 @@ function UnitDetail() {
   const brandMatch = unit.brand || unit.description?.split(' ')[0];
 
   return (
-     <div className="page-container max-w-5xl mx-auto">
-        <button className="back-btn group mb-6" onClick={() => navigate(`/customers/${id}/address/${addressId}`)}>
-          <ChevronRight size={18} className="icon-flip group-hover:-translate-x-1 transition-transform" /> Back to Units
-        </button>
+     <div className="p-2 sm:p-4 max-w-5xl mx-auto">
         
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
            <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-8 py-8 relative">
@@ -2148,7 +2209,7 @@ export default function Customers() {
   return (
     <Routes>
       <Route path="/" element={<CustomerList />} />
-      <Route path="/:id" element={<CustomerDashboard />} />
+      <Route path="/:id" element={<CustomerDetail />} />
     </Routes>
   );
 }
