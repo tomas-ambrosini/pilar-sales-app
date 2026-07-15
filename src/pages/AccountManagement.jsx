@@ -27,9 +27,9 @@ export default function AccountManagement() {
   const [successPayload, setSuccessPayload] = useState(null);
   const [userBadgesMap, setUserBadgesMap] = useState({}); // { userId: ['star_employee', ...] }
   const [editBadges, setEditBadges] = useState([]); // badge keys being edited
-  const [createRole, setCreateRole] = useState('FIELD_WORKER');
+  const [createRole, setCreateRole] = useState('TECHNICIAN');
   const [createDepartment, setCreateDepartment] = useState('SERVICE');
-  const [editRole, setEditRole] = useState('FIELD_WORKER');
+  const [editRole, setEditRole] = useState('TECHNICIAN');
   const [editDepartment, setEditDepartment] = useState('SERVICE');
 
   useEffect(() => {
@@ -449,7 +449,7 @@ export default function AccountManagement() {
                                     <button onClick={(e) => handleClearSetup(e, u)} className="px-3 py-2 bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-200 font-bold text-xs rounded-lg shadow-sm transition-all" title="Manually mark as Secured">Clear Setup</button>
                                  )}
                                  <button onClick={(e) => { e.stopPropagation(); setShowResetModal(u); }} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="Force Password Reset"><Key size={16}/></button>
-                                 <button onClick={(e) => { e.stopPropagation(); setShowEditModal(u); setEditBadges(userBadgesMap[u.id] || []); setEditRole(u.role || 'FIELD_WORKER'); setEditDepartment(u.department || 'SERVICE'); }} className="px-4 py-2 bg-white border border-slate-200 hover:border-primary-300 hover:text-primary-700 text-slate-600 font-bold text-xs rounded-lg shadow-sm transition-all hover:shadow">Manage</button>
+                                 <button onClick={(e) => { e.stopPropagation(); setShowEditModal(u); setEditBadges(userBadgesMap[u.id] || []); setEditRole(u.role || 'TECHNICIAN'); setEditDepartment(u.department || 'SERVICE'); }} className="px-4 py-2 bg-white border border-slate-200 hover:border-primary-300 hover:text-primary-700 text-slate-600 font-bold text-xs rounded-lg shadow-sm transition-all hover:shadow">Manage</button>
                               </div>
                            </td>
                         </tr>

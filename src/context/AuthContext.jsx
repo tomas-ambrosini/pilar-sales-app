@@ -66,7 +66,29 @@ export function AuthProvider({ children }) {
     setIsLoading(true);
     setError(null);
     
-    let loginEmail = emailOrUsername.trim();
+    let loginEmail = emailOrUsername.trim().toLowerCase();
+
+    // If input doesn't look like an email, assume it's a username and try to resolve it
+    if (!loginEmail.includes('@')) {
+      try {
+        const { data: edgeData, error: edgeError } = await supabase.functions.invoke('admin-action', {
+           body: { action: 'resolveUsername', payload: { username: loginEmail } }
+        });
+          
+        if (edgeData?.email) {
+          loginEmail = edgeData.email;
+        } else {
+          setError("Invalid username or password");
+          setIsLoading(false);
+          return false;
+        }
+      } catch (err) {
+        console.error("Error resolving username:", err);
+        setError("Invalid username or password");
+        setIsLoading(false);
+        return false;
+      }
+    }
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email: loginEmail,
@@ -74,7 +96,7 @@ export function AuthProvider({ children }) {
     });
     
     if (error) {
-      setError(error.message);
+      setError("Invalid login credentials");
       setIsLoading(false);
       return false;
     }

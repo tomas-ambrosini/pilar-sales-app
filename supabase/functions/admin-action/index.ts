@@ -30,6 +30,13 @@ serve(async (req) => {
         return new Response(JSON.stringify({ columns: data ? Object.keys(data[0] || {}) : [], error }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
 
+    if (action === 'resolveUsername') {
+        const { username } = payload;
+        const { data, error } = await supabaseAdmin.from('user_profiles').select('email').ilike('username', username).single();
+        if (error || !data) return new Response(JSON.stringify({ error: 'User not found' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 });
+        return new Response(JSON.stringify({ email: data.email }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+    }
+
     if (action === 'createUser') {
         const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
             email: payload.email,
