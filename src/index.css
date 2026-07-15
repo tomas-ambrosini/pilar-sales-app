@@ -175,6 +175,12 @@ h1, h2, h3, h4, h5, h6 {
   transition: right 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
+/* Fix mobile Safari modal cutoff issues by strictly adhering to dynamic viewport height */
+.modal-layout-wrapper > .relative,
+.modal-layout-wrapper > .modal-container {
+  max-height: calc(100dvh - 32px) !important;
+}
+
 /* --- PRINT STYLES --- */
 @media print {
   @page {
