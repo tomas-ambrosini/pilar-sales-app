@@ -2,6 +2,7 @@ import React, { useState, useEffect, useDeferredValue } from 'react';
 import { Routes, Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Search, Plus, Phone, Mail, MapPin, ChevronRight, User as UserIcon, Users, Calendar, FileText, Edit2, Trash2, Tag, Clock, Zap, Activity, Settings, AlertTriangle, Box, Shield, CalendarClock } from 'lucide-react';
 import SlideDrawer from '../components/SlideDrawer';
+import Modal from '../components/Modal';
 import './Customers.css';
 import { useCustomers } from '../context/CustomerContext';
 import toast from 'react-hot-toast';
@@ -397,27 +398,33 @@ function CustomerList() {
         width="max-w-2xl"
       >
         <form className="modal-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="firstName">First Name</label>
-            <input type="text" id="firstName" placeholder="Enter first name" value={formData.firstName} onChange={handleInputChange} required />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="form-group">
+              <label htmlFor="firstName">First Name</label>
+              <input type="text" id="firstName" placeholder="Enter first name" value={formData.firstName} onChange={handleInputChange} required />
+            </div>
+            <div className="form-group">
+              <label htmlFor="lastName">Last Name</label>
+              <input type="text" id="lastName" placeholder="Enter last name" value={formData.lastName} onChange={handleInputChange} required />
+            </div>
           </div>
-          <div className="form-group">
-            <label htmlFor="lastName">Last Name</label>
-            <input type="text" id="lastName" placeholder="Enter last name" value={formData.lastName} onChange={handleInputChange} required />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="form-group">
+              <label htmlFor="email">Email</label>
+              <input type="email" id="email" placeholder="email@example.com" value={formData.email} onChange={handleInputChange} />
+            </div>
+            <div className="form-group">
+              <label htmlFor="phone">Phone Number</label>
+              <input type="tel" id="phone" placeholder="(555) 555-5555" value={formData.phone} onChange={handleInputChange} />
+            </div>
           </div>
+
           <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input type="email" id="email" placeholder="email@example.com" value={formData.email} onChange={handleInputChange} />
-          </div>
-          <div className="form-group">
-            <label htmlFor="phone">Phone Number</label>
-            <input type="tel" id="phone" placeholder="(555) 555-5555" value={formData.phone} onChange={handleInputChange} />
-          </div>
-          <div className="form-group">
-            <label htmlFor="address">Address</label>
+            <label htmlFor="address">Service Address</label>
             <input type="text" id="address" placeholder="123 Main St" value={formData.address} onChange={handleInputChange} />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="form-group">
                 <label htmlFor="city">City</label>
                 <input type="text" id="city" placeholder="Miami" value={formData.city} onChange={handleInputChange} />
@@ -427,7 +434,6 @@ function CustomerList() {
                 <input type="text" id="zip" placeholder="33101" value={formData.zip} onChange={handleInputChange} />
               </div>
           </div>
-          
           <div className="form-group bg-slate-50 p-4 rounded-xl border border-slate-200 mt-2 mb-2">
              <label className="flex items-center gap-2 cursor-pointer mb-2 text-sm font-semibold text-slate-700">
                  <input 
