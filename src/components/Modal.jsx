@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './Modal.css';
 
-export default function Modal({ isOpen, onClose, title, children, width = "max-w-lg", bodyClassName = "p-5 max-h-[85vh] overflow-y-auto" }) {
+export default function Modal({ isOpen, onClose, title, children, width = "max-w-lg", bodyClassName = "p-5 overflow-y-auto flex-1" }) {
   return createPortal(
     <AnimatePresence>
       {isOpen && (
@@ -22,7 +22,7 @@ export default function Modal({ isOpen, onClose, title, children, width = "max-w
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className={`modal-container bg-white border border-slate-200 shadow-2xl shadow-slate-900/10 relative z-10 w-full ${width} rounded-3xl overflow-hidden flex flex-col`}
+            className={`modal-container bg-white border border-slate-200 shadow-2xl shadow-slate-900/10 relative z-10 w-full ${width} rounded-3xl overflow-hidden flex flex-col max-h-[95vh]`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-white">

@@ -896,6 +896,7 @@ function CustomerDetail() {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         title="Edit Customer Details"
+        width="max-w-4xl"
       >
         <form className="modal-form" onSubmit={handleEditSubmit}>
           <div className="grid grid-cols-1 gap-5">
@@ -915,50 +916,54 @@ function CustomerDetail() {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-100">
-                <h4 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Service Address</h4>
-                <div className="grid grid-cols-1 gap-4 mb-4">
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Street Address</label>
-                        <input type="text" id="address" value={editFormData.address} onChange={handleEditChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
+                {/* Service Address */}
+                <div>
+                    <h4 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Service Address</h4>
+                    <div className="grid grid-cols-1 gap-4 mb-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Street Address</label>
+                            <input type="text" id="address" value={editFormData.address} onChange={handleEditChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none" />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">City</label>
+                            <input type="text" id="city" value={editFormData.city} onChange={handleEditChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none" />
+                        </div>
+                        <div className="col-span-1">
+                            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">State</label>
+                            <input type="text" id="state" value={editFormData.state} onChange={handleEditChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none" />
+                        </div>
+                        <div className="col-span-1">
+                            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Zip</label>
+                            <input type="text" id="zip" value={editFormData.zip} onChange={handleEditChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none" />
+                        </div>
                     </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
-                    <div className="col-span-1">
-                        <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">City</label>
-                        <input type="text" id="city" value={editFormData.city} onChange={handleEditChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none" />
-                    </div>
-                    <div className="col-span-1">
-                        <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">State</label>
-                        <input type="text" id="state" value={editFormData.state} onChange={handleEditChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none" />
-                    </div>
-                    <div className="col-span-1">
-                        <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Zip</label>
-                        <input type="text" id="zip" value={editFormData.zip} onChange={handleEditChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none" />
-                    </div>
-                </div>
-            </div>
 
-            <div className="pt-4 border-t border-slate-100">
-                <h4 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Billing Address</h4>
-                <div className="grid grid-cols-1 gap-4 mb-4">
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Street Address</label>
-                        <input type="text" id="billing_address" value={editFormData.billing_address} onChange={handleEditChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none" />
+                {/* Billing Address */}
+                <div>
+                    <h4 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Billing Address</h4>
+                    <div className="grid grid-cols-1 gap-4 mb-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Street Address</label>
+                            <input type="text" id="billing_address" value={editFormData.billing_address} onChange={handleEditChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none" />
+                        </div>
                     </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                    <div className="col-span-1">
-                        <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">City</label>
-                        <input type="text" id="billing_city" value={editFormData.billing_city} onChange={handleEditChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none" />
-                    </div>
-                    <div className="col-span-1">
-                        <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">State</label>
-                        <input type="text" id="billing_state" value={editFormData.billing_state} onChange={handleEditChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none" />
-                    </div>
-                    <div className="col-span-1">
-                        <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Zip</label>
-                        <input type="text" id="billing_zip" value={editFormData.billing_zip} onChange={handleEditChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none" />
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">City</label>
+                            <input type="text" id="billing_city" value={editFormData.billing_city} onChange={handleEditChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none" />
+                        </div>
+                        <div className="col-span-1">
+                            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">State</label>
+                            <input type="text" id="billing_state" value={editFormData.billing_state} onChange={handleEditChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none" />
+                        </div>
+                        <div className="col-span-1">
+                            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Zip</label>
+                            <input type="text" id="billing_zip" value={editFormData.billing_zip} onChange={handleEditChange} className="w-full border p-2.5 rounded-lg text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all outline-none" />
+                        </div>
                     </div>
                 </div>
             </div>
