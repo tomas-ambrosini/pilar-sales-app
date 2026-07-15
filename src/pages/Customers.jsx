@@ -15,6 +15,7 @@ import { useRole } from '../context/RoleContext';
 import { supabase } from '../supabaseClient';
 import { PIPELINE_STATES } from '../utils/pipelineControls';
 import { formatQuoteId, formatPhoneNumber } from '../utils/formatters';
+import CustomerDashboard from './CustomerDashboard';
 
 function CustomerList() {
   const navigate = useNavigate();
@@ -2147,9 +2148,7 @@ export default function Customers() {
   return (
     <Routes>
       <Route path="/" element={<CustomerList />} />
-      <Route path="/:id" element={<CustomerDetail />} />
-      <Route path="/:id/address/:addressId" element={<AddressDetail />} />
-      <Route path="/:id/address/:addressId/unit/:unitId" element={<UnitDetail />} />
+      <Route path="/:id" element={<CustomerDashboard />} />
     </Routes>
   );
 }
