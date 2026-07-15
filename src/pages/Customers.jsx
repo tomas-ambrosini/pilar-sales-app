@@ -382,7 +382,7 @@ function CustomerList() {
                      )}
                    </td>
                  </tr>
-               ))}
+               )))}
             </tbody>
           </table>
           </div>
