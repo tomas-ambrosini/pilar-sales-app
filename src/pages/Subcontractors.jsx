@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Users, Truck, Plus, Check, Search, MapPin, Edit2, X, Trash2, Save, Building2, UserCircle, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { formatPhoneNumber } from '../utils/formatters';
 
 import SubcontractorJobHistory from '../components/SubcontractorJobHistory';
 import OpportunityOverviewModal from '../components/OpportunityOverviewModal';
@@ -83,7 +84,8 @@ export default function Subcontractors() {
       const fd = new FormData(e.target);
       const updates = {
           subcontractor_company: fd.get('company'),
-          full_name: fd.get('name')
+          full_name: fd.get('name'),
+          phone: fd.get('phone')
       };
 
       try {
@@ -305,6 +307,11 @@ export default function Subcontractors() {
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Primary Contact</label>
                                         <input type="text" name="name" defaultValue={editingSub.full_name} className="w-full bg-slate-50 border border-slate-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/15 focus:bg-white hover:border-slate-300 p-2.5 rounded-xl text-sm font-bold text-slate-800 transition-all shadow-sm outline-none" required />
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Phone Number</label>
+                                        <input type="tel" name="phone" defaultValue={editingSub.phone} onChange={(e) => e.target.value = formatPhoneNumber(e.target.value)} className="w-full bg-slate-50 border border-slate-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/15 focus:bg-white hover:border-slate-300 p-2.5 rounded-xl text-sm font-bold text-slate-800 transition-all shadow-sm outline-none" placeholder="(555) 555-5555" />
                                     </div>
                                     
                                     <div>
