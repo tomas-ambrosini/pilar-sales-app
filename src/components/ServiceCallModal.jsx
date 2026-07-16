@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { X, Wrench, Clock, MapPin, Phone, Save, Calendar as CalendarIcon, UserCheck, AlertCircle, Check, Mail, Navigation, Info, MessageSquare, Activity, Send, History, Paperclip, Upload, FileText, Image as ImageIcon, Download, ExternalLink } from 'lucide-react';
+import { X, Wrench, Clock, MapPin, Phone, Save, Calendar as CalendarIcon, UserCheck, AlertCircle, Check, Mail, Navigation, Info, MessageSquare, Activity, Send, History, Paperclip, Upload, FileText, Image as ImageIcon, Download, ExternalLink, Calculator, DollarSign, PlusCircle, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
@@ -18,10 +18,25 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
     const [activities, setActivities] = useState([]);
     const [newNote, setNewNote] = useState('');
     const [uploadingMedia, setUploadingMedia] = useState(false);
+
+    // Quoting & Invoicing State
+    const [activeTab, setActiveTab] = useState('timeline'); // 'timeline' | 'quote'
+    const [quoteItems, setQuoteItems] = useState([]);
+    const [taxRate, setTaxRate] = useState(0);
+    const [quoteSaving, setQuoteSaving] = useState(false);
+    const [generatingInvoice, setGeneratingInvoice] = useState(false);
+    const [paymentCollected, setPaymentCollected] = useState(false);
     
     useEffect(() => {
         if (callId) fetchCallDetails();
     }, [callId]);
+
+    useEffect(() => {
+        if (callData && callData.metadata && callData.metadata.quote_data) {
+            setQuoteItems(callData.metadata.quote_data.items || []);
+            setTaxRate(callData.metadata.quote_data.taxRate || 0);
+        }
+    }, [callData]);
 
     const fetchCallDetails = async () => {
         setLoading(true);
@@ -296,6 +311,94 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
         }
         setConverting(false);
     };
+
+    // Quote & Invoice Logic
+    const quoteSubtotal = quoteItems.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0), 0);
+    const quoteTaxAmount = quoteSubtotal * (parseFloat(taxRate) || 0) / 100;
+    const quoteTotal = quoteSubtotal + quoteTaxAmount;
+
+    const handleAddQuoteItem = () => {
+        setQuoteItems([...quoteItems, { id: Date.now(), description: '', quantity: 1, unit_price: 0 }]);
+    };
+
+    const handleUpdateQuoteItem = (id, field, value) => {
+        setQuoteItems(quoteItems.map(item => item.id === id ? { ...item, [field]: value } : item));
+    };
+
+    const handleRemoveQuoteItem = (id) => {
+        setQuoteItems(quoteItems.filter(item => item.id !== id));
+    };
+
+    const handleSaveQuote = async () => {
+        setQuoteSaving(true);
+        try {
+            const currentMetadata = callData.metadata || {};
+            const newMetadata = {
+                ...currentMetadata,
+                quote_data: { items: quoteItems, taxRate, subtotal: quoteSubtotal, taxAmount: quoteTaxAmount, total: quoteTotal }
+            };
+
+            const { error } = await supabase.from('service_calls').update({ metadata: newMetadata }).eq('id', callId);
+            if (error) throw error;
+
+            await supabase.from('activity_logs').insert({
+                household_id: callData.customer_id,
+                service_call_id: callId,
+                activity_type: 'Quote Updated',
+                description: `Quote was updated. Total is now $${quoteTotal.toFixed(2)}.`
+            });
+
+            setCallData(prev => ({ ...prev, metadata: newMetadata }));
+            toast.success("Quote saved successfully");
+            await fetchActivities(callData);
+        } catch (err) {
+            toast.error("Failed to save quote");
+        }
+        setQuoteSaving(false);
+    };
+
+    const handleGenerateInvoice = async () => {
+        if (!window.confirm("This will lock the quote, generate the final invoice, and mark the job as Completed. Continue?")) return;
+        setGeneratingInvoice(true);
+        try {
+            // Ensure quote is saved first
+            const currentMetadata = callData.metadata || {};
+            const newMetadata = {
+                ...currentMetadata,
+                quote_data: { items: quoteItems, taxRate, subtotal: quoteSubtotal, taxAmount: quoteTaxAmount, total: quoteTotal }
+            };
+
+            await supabase.from('service_calls').update({ metadata: newMetadata, status: 'Completed' }).eq('id', callId);
+
+            // Generate Invoice
+            const { error: invError } = await supabase.from('invoices').insert({
+                customer_id: callData.customer_id,
+                proposal_id: null,
+                total_contract_amount: quoteTotal,
+                deposit_collected: paymentCollected ? quoteTotal : 0,
+                balance_due: paymentCollected ? 0 : quoteTotal,
+                status: paymentCollected ? 'Paid in Full' : 'Pending',
+                due_date: new Date().toISOString()
+            });
+
+            if (invError) throw invError;
+
+            await supabase.from('activity_logs').insert({
+                household_id: callData.customer_id,
+                service_call_id: callId,
+                activity_type: 'Invoice Generated',
+                description: `Invoice for $${quoteTotal.toFixed(2)} was generated. Payment ${paymentCollected ? 'Collected' : 'Pending'}.`
+            });
+
+            toast.success("Invoice generated successfully!");
+            if (onUpdate) onUpdate();
+            onClose();
+        } catch (err) {
+            toast.error("Failed to generate invoice");
+        }
+        setGeneratingInvoice(false);
+    };
+
 
     if (loading || !callData) return null;
 
@@ -618,79 +721,235 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                     </div>
                 </div>
 
-                {/* Right Panel: Unified Timeline */}
+                {/* Right Panel: Unified Timeline or Quote Builder */}
                 <div className="w-full lg:w-[55%] flex flex-col bg-white relative border-t lg:border-t-0 border-slate-200 min-w-0 lg:min-h-0 shrink-0 lg:shrink">
                     
                     <div className="p-4 border-b border-slate-100 bg-white z-10 shadow-sm flex items-center justify-between shrink-0">
-                        <h3 className="font-black text-slate-800 flex items-center gap-2 tracking-tight">
-                            <History size={18} className="text-primary-600" /> Unified Timeline
-                        </h3>
-                        <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">{activities.length} Events</span>
-                    </div>
-
-                    <div className="p-6 lg:overflow-y-auto flex-1 lg:min-h-0 custom-scrollbar bg-slate-50/30">
-                        {activities.length > 0 ? (
-                            <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
-                                {activities.map((act) => (
-                                    <div key={act.id} className="relative flex items-start gap-4 group">
-                                        <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-white shadow-sm shrink-0 relative z-10">
-                                            {act.activity_type === 'Attachment' ? (
-                                                <div className="w-full h-full bg-purple-100 rounded-full flex items-center justify-center text-purple-600"><Paperclip size={14} /></div>
-                                            ) : act.activity_type.includes('Note') ? (
-                                                <div className="w-full h-full bg-blue-100 rounded-full flex items-center justify-center text-blue-600"><MessageSquare size={14} /></div>
-                                            ) : act.activity_type.includes('Status') ? (
-                                                <div className="w-full h-full bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600"><Check size={14} /></div>
-                                            ) : (
-                                                <div className="w-full h-full bg-slate-100 rounded-full flex items-center justify-center text-slate-600"><Activity size={14} /></div>
-                                            )}
-                                        </div>
-                                        <div className="flex-1 p-4 rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="font-black text-slate-800 text-sm">{act.activity_type}</span>
-                                                <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">
-                                                    {new Date(act.created_at).toLocaleDateString()}
-                                                </span>
-                                            </div>
-                                            {act.activity_type === 'Attachment' ? (
-                                                <div className="text-sm text-slate-500 font-medium italic">
-                                                    Uploaded a new document/photo. Check the Documents section.
-                                                </div>
-                                            ) : (
-                                                <div className="text-sm text-slate-600 font-medium whitespace-pre-wrap leading-relaxed">
-                                                    {act.description}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-slate-400">
-                                <History size={48} className="mb-4 opacity-20" />
-                                <p className="font-medium">No activity recorded yet.</p>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="p-4 border-t border-slate-200 bg-white z-10 shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)] shrink-0">
-                        <div className="flex gap-2">
-                            <input 
-                                type="text" 
-                                value={newNote}
-                                onChange={(e) => setNewNote(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
-                                placeholder="Drop a note into the timeline..."
-                                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition-all"
-                            />
+                        <div className="flex bg-slate-100 p-1 rounded-xl">
                             <button 
-                                onClick={handleAddNote}
-                                disabled={!newNote.trim()}
-                                className="bg-slate-900 hover:bg-slate-800 text-white p-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shrink-0"
+                                onClick={() => setActiveTab('timeline')}
+                                className={`px-4 py-1.5 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === 'timeline' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                             >
-                                <Send size={18} />
+                                <span className="flex items-center gap-1.5"><History size={14} /> Timeline</span>
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('quote')}
+                                className={`px-4 py-1.5 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === 'quote' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                <span className="flex items-center gap-1.5"><Calculator size={14} /> Quote & Invoice</span>
                             </button>
                         </div>
+                        {activeTab === 'timeline' && <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">{activities.length} Events</span>}
                     </div>
+
+                    {activeTab === 'timeline' ? (
+                        <>
+                            <div className="p-6 lg:overflow-y-auto flex-1 lg:min-h-0 custom-scrollbar bg-slate-50/30">
+                                {activities.length > 0 ? (
+                                    <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
+                                        {activities.map((act) => (
+                                            <div key={act.id} className="relative flex items-start gap-4 group">
+                                                <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-white shadow-sm shrink-0 relative z-10">
+                                                    {act.activity_type === 'Attachment' ? (
+                                                        <div className="w-full h-full bg-purple-100 rounded-full flex items-center justify-center text-purple-600"><Paperclip size={14} /></div>
+                                                    ) : act.activity_type.includes('Note') ? (
+                                                        <div className="w-full h-full bg-blue-100 rounded-full flex items-center justify-center text-blue-600"><MessageSquare size={14} /></div>
+                                                    ) : act.activity_type.includes('Status') ? (
+                                                        <div className="w-full h-full bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600"><Check size={14} /></div>
+                                                    ) : (
+                                                        <div className="w-full h-full bg-slate-100 rounded-full flex items-center justify-center text-slate-600"><Activity size={14} /></div>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 p-4 rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className="font-black text-slate-800 text-sm">{act.activity_type}</span>
+                                                        <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">
+                                                            {new Date(act.created_at).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                    {act.activity_type === 'Attachment' ? (
+                                                        <div className="text-sm text-slate-500 font-medium italic">
+                                                            Uploaded a new document/photo. Check the Documents section.
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-sm text-slate-600 font-medium whitespace-pre-wrap leading-relaxed">
+                                                            {act.description}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                                        <History size={48} className="mb-4 opacity-20" />
+                                        <p className="font-medium">No activity recorded yet.</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="p-4 border-t border-slate-200 bg-white z-10 shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)] shrink-0">
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="text" 
+                                        value={newNote}
+                                        onChange={(e) => setNewNote(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
+                                        placeholder="Drop a note into the timeline..."
+                                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition-all"
+                                    />
+                                    <button 
+                                        onClick={handleAddNote}
+                                        disabled={!newNote.trim()}
+                                        className="bg-slate-900 hover:bg-slate-800 text-white p-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shrink-0"
+                                    >
+                                        <Send size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex-1 flex flex-col min-h-0 bg-slate-50/50">
+                            <div className="p-6 lg:overflow-y-auto flex-1 lg:min-h-0 custom-scrollbar flex flex-col gap-6">
+                                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col shrink-0">
+                                    <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between shrink-0">
+                                        <h4 className="font-black text-slate-800 flex items-center gap-2">
+                                            <Calculator size={16} className="text-primary-600" /> Line Items
+                                        </h4>
+                                        <button 
+                                            onClick={handleAddQuoteItem}
+                                            className="px-3 py-1.5 bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm border border-primary-100"
+                                        >
+                                            <PlusCircle size={14} /> Add Item
+                                        </button>
+                                    </div>
+                                    <div className="p-0 lg:overflow-y-auto custom-scrollbar lg:max-h-[300px]">
+                                        {quoteItems.length > 0 ? (
+                                            <table className="w-full text-left border-collapse">
+                                                <thead className="bg-slate-50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky top-0 z-10">
+                                                    <tr>
+                                                        <th className="p-3 pl-4">Description</th>
+                                                        <th className="p-3 w-20 text-center">Qty</th>
+                                                        <th className="p-3 w-28 text-right">Unit Price</th>
+                                                        <th className="p-3 w-28 text-right">Ext Price</th>
+                                                        <th className="p-3 w-12"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100">
+                                                    {quoteItems.map((item, index) => (
+                                                        <tr key={item.id} className="group hover:bg-slate-50 transition-colors">
+                                                            <td className="p-3 pl-4">
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={item.description} 
+                                                                    onChange={(e) => handleUpdateQuoteItem(item.id, 'description', e.target.value)}
+                                                                    placeholder="Item description..."
+                                                                    className="w-full bg-transparent border-none focus:ring-0 p-0 text-sm font-medium text-slate-800 placeholder-slate-300"
+                                                                />
+                                                            </td>
+                                                            <td className="p-3 text-center">
+                                                                <input 
+                                                                    type="number" 
+                                                                    min="1"
+                                                                    value={item.quantity} 
+                                                                    onChange={(e) => handleUpdateQuoteItem(item.id, 'quantity', e.target.value)}
+                                                                    className="w-16 mx-auto bg-white border border-slate-200 rounded-lg p-1.5 text-center text-sm font-bold text-slate-700 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                                                                />
+                                                            </td>
+                                                            <td className="p-3">
+                                                                <div className="relative">
+                                                                    <span className="absolute left-2 top-1.5 text-slate-400 text-sm font-bold">$</span>
+                                                                    <input 
+                                                                        type="number" 
+                                                                        min="0" step="0.01"
+                                                                        value={item.unit_price} 
+                                                                        onChange={(e) => handleUpdateQuoteItem(item.id, 'unit_price', e.target.value)}
+                                                                        className="w-full bg-white border border-slate-200 rounded-lg pl-6 pr-2 py-1.5 text-right text-sm font-bold text-slate-700 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                                                                    />
+                                                                </div>
+                                                            </td>
+                                                            <td className="p-3 text-right text-sm font-black text-slate-800">
+                                                                ${((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0)).toFixed(2)}
+                                                            </td>
+                                                            <td className="p-3 text-center">
+                                                                <button 
+                                                                    onClick={() => handleRemoveQuoteItem(item.id)}
+                                                                    className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        ) : (
+                                            <div className="p-8 text-center text-slate-400 font-medium">
+                                                No items added yet.
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col gap-2 shrink-0">
+                                        <div className="flex justify-between items-center text-sm font-bold text-slate-600">
+                                            <span>Subtotal</span>
+                                            <span>${quoteSubtotal.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-sm font-bold text-slate-600">
+                                            <div className="flex items-center gap-2">
+                                                <span>Tax (%)</span>
+                                                <input 
+                                                    type="number" 
+                                                    min="0" step="0.1"
+                                                    value={taxRate} 
+                                                    onChange={(e) => setTaxRate(e.target.value)}
+                                                    className="w-16 bg-white border border-slate-200 rounded-md p-1 text-right text-xs focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                                                />
+                                            </div>
+                                            <span>${quoteTaxAmount.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-lg font-black text-slate-900 mt-2 pt-2 border-t border-slate-200">
+                                            <span>Total</span>
+                                            <span>${quoteTotal.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm shrink-0">
+                                    <h4 className="font-black text-slate-800 mb-3 flex items-center gap-2">
+                                        <DollarSign size={16} className="text-emerald-600" /> Invoice Payment
+                                    </h4>
+                                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={paymentCollected}
+                                            onChange={(e) => setPaymentCollected(e.target.checked)}
+                                            className="w-5 h-5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                                        />
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-bold text-slate-800">Mark as Paid in Full</span>
+                                            <span className="text-xs font-medium text-slate-500">Select this if the subcontractor collected payment on-site.</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div className="p-4 border-t border-slate-200 bg-white shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)] shrink-0 flex justify-end gap-3">
+                                <button 
+                                    onClick={handleSaveQuote}
+                                    disabled={quoteSaving}
+                                    className="px-6 py-2.5 text-sm font-bold text-primary-700 bg-primary-50 border border-primary-200 hover:bg-primary-100 rounded-xl transition-all shadow-sm"
+                                >
+                                    {quoteSaving ? 'Saving...' : 'Save Quote Only'}
+                                </button>
+                                <button 
+                                    onClick={handleGenerateInvoice}
+                                    disabled={generatingInvoice || quoteItems.length === 0}
+                                    className="px-6 py-2.5 text-sm font-black text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all shadow-md disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {generatingInvoice ? 'Generating...' : 'Finalize & Generate Invoice'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Footer Actions - Strict State Machine Driven */}
                     <div className="p-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0 relative z-10">

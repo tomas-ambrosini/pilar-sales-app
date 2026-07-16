@@ -13,59 +13,59 @@ export default function MobileTechDashboard() {
   const [jobCount, setJobCount] = useState(0);
   const [loadingJobs, setLoadingJobs] = useState(true);
   
-  // Dummy state for Clock In (Would be hooked to a backend later)
+  // Real database-backed clock state
   const [isClockedIn, setIsClockedIn] = useState(false);
   const [clockInTime, setClockInTime] = useState(null);
+  const [updatingClock, setUpdatingClock] = useState(false);
 
   useEffect(() => {
     fetchJobCount();
-  }, []);
+    fetchClockStatus();
+  }, [user]);
 
-  const fetchJobCount = async () => {
+  const fetchClockStatus = async () => {
+    if (!user?.id) return;
     try {
-      setLoadingJobs(true);
-      // Fetch crew ID based on user. If they are assigned to a crew, count jobs for that crew.
-      const { data: crewMember } = await supabase
-        .from('crews')
-        .select('id')
-        .contains('members', [user.id])
-        .single();
-        
-      if (crewMember) {
-        const today = new Date().toISOString().split('T')[0];
-        
-        // Count Service Calls
-        const { count: scCount } = await supabase
-          .from('service_calls')
-          .select('id', { count: 'exact', head: true })
-          .eq('crew_id', crewMember.id)
-          .gte('scheduled_at', `${today}T00:00:00Z`)
-          .lt('scheduled_at', `${today}T23:59:59Z`);
-          
-        // Count Work Orders (Installs)
-        const { count: woCount } = await supabase
-          .from('work_orders')
-          .select('id', { count: 'exact', head: true })
-          .eq('crew_id', crewMember.id)
-          .gte('scheduled_date', `${today}T00:00:00Z`)
-          .lt('scheduled_date', `${today}T23:59:59Z`);
-          
-        setJobCount((scCount || 0) + (woCount || 0));
+      const { data, error } = await supabase.from('user_profiles').select('metadata').eq('id', user.id).single();
+      if (!error && data?.metadata?.clock_status) {
+        setIsClockedIn(data.metadata.clock_status.is_clocked_in);
+        setClockInTime(data.metadata.clock_status.last_clock_in ? new Date(data.metadata.clock_status.last_clock_in) : null);
       }
     } catch (err) {
-      console.error("Error fetching job count:", err);
-    } finally {
-      setLoadingJobs(false);
+      console.error(err);
     }
   };
 
-  const handleClockToggle = () => {
-    if (isClockedIn) {
-      setIsClockedIn(false);
-      setClockInTime(null);
-    } else {
-      setIsClockedIn(true);
-      setClockInTime(new Date());
+  const handleClockToggle = async () => {
+    if (updatingClock || !user?.id) return;
+    setUpdatingClock(true);
+    
+    const newStatus = !isClockedIn;
+    const time = newStatus ? new Date() : null;
+    
+    // Optimistic UI update
+    setIsClockedIn(newStatus);
+    setClockInTime(time);
+    
+    try {
+      const { data: existing } = await supabase.from('user_profiles').select('metadata').eq('id', user.id).single();
+      
+      const newMeta = {
+        ...(existing?.metadata || {}),
+        clock_status: {
+          is_clocked_in: newStatus,
+          last_clock_in: time ? time.toISOString() : null
+        }
+      };
+      
+      await supabase.from('user_profiles').update({ metadata: newMeta }).eq('id', user.id);
+    } catch (err) {
+      console.error("Failed to update clock status", err);
+      // Revert on error
+      setIsClockedIn(!newStatus);
+      setClockInTime(clockInTime);
+    } finally {
+      setUpdatingClock(false);
     }
   };
 

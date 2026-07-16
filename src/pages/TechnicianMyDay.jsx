@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { Truck, MapPin, Phone, User, Clock, AlertTriangle, CheckCircle, Navigation, MessageSquare, ChevronDown, Wrench, DollarSign, X } from 'lucide-react';
+import { MapPin, Navigation, Phone, CheckCircle, Clock, FileText, XCircle, DollarSign, PenTool, Truck } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useRole } from '../context/RoleContext';
 import { formatCustomerName } from '../utils/formatters';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -56,13 +58,13 @@ export default function TechnicianMyDay() {
         try {
             // Fetch Service Calls assigned to this crew today
             const { data: svcData } = await supabase.from('service_calls').select(`
-                id, status, urgency, call_type, issue_description, scheduled_start,
+                id, status, urgency, call_type, issue_description, scheduled_start, metadata,
                 households ( household_name, contacts ( primary_phone ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
             `).contains('assigned_techs', [selectedCrewId]).gte('scheduled_start', `${today}T00:00:00`).lte('scheduled_start', `${today}T23:59:59`);
 
             // Fetch Installs/Opportunities assigned to this crew today
             const { data: oppData } = await supabase.from('opportunities').select(`
-                id, status, urgency_level, issue_description, scheduled_date, scheduled_time_block, proposal_data,
+                id, status, urgency_level, issue_description, scheduled_date, scheduled_time_block, proposal_data, metadata,
                 households ( household_name, contacts ( primary_phone ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
             `).eq('assigned_crew_id', selectedCrewId).eq('scheduled_date', today);
 
@@ -160,6 +162,11 @@ function JobCard({ job, index, onUpdate, crewId }) {
     const [isSigning, setIsSigning] = useState(false);
     const [invoiceAmount, setInvoiceAmount] = useState('');
     const [paymentCollected, setPaymentCollected] = useState(false);
+    
+    const [materials, setMaterials] = useState(job.metadata?.materials_used || '');
+    const [photos, setPhotos] = useState(job.metadata?.photos || []);
+    const fileInputRef = useRef(null);
+    const { isSubcontractor } = useRole();
 
     const isService = job.__type === 'SERVICE';
     const customerName = formatCustomerName(job.households?.household_name);
@@ -168,11 +175,9 @@ function JobCard({ job, index, onUpdate, crewId }) {
         ? job.households?.contacts?.[0]?.primary_phone
         : job.households?.contacts?.[0]?.primary_phone;
 
-    // Call the custom hook to broadcast location if this job is "En Route"
     const isEnRoute = job.status === 'En Route';
     const { isBroadcasting } = useLocationTracking(crewId, job.id, isEnRoute);
 
-    // Status config matching Pilar Dashboard aesthetics
     let statusConfig = { bg: "bg-slate-100", text: "text-slate-700" };
     if (job.status === 'En Route') statusConfig = { bg: "bg-yellow-100", text: "text-yellow-700" };
     if (job.status === 'Working') statusConfig = { bg: "bg-blue-100", text: "text-blue-700" };
@@ -182,7 +187,20 @@ function JobCard({ job, index, onUpdate, crewId }) {
         setUpdating(true);
         try {
             const table = isService ? 'service_calls' : 'opportunities';
-            const { error } = await supabase.from(table).update({ status: newStatus }).eq('id', job.id);
+            const timestamp = new Date().toISOString();
+            
+            const { data: existing } = await supabase.from(table).select('metadata').eq('id', job.id).single();
+            const currentTimestamps = existing?.metadata?.status_timestamps || {};
+            
+            const newMeta = {
+                ...(existing?.metadata || {}),
+                status_timestamps: {
+                    ...currentTimestamps,
+                    [newStatus]: timestamp
+                }
+            };
+
+            const { error } = await supabase.from(table).update({ status: newStatus, metadata: newMeta }).eq('id', job.id);
             if (error) throw error;
             toast.success(`Status: ${newStatus}`);
             onUpdate();
@@ -216,7 +234,6 @@ function JobCard({ job, index, onUpdate, crewId }) {
                 }
             }
 
-            // Generate the invoice record
             const { error: invError } = await supabase.from('invoices').insert({
                 proposal_id: targetProposalId,
                 customer_id: targetCustomerId,
@@ -232,10 +249,22 @@ function JobCard({ job, index, onUpdate, crewId }) {
 
             if (invError) throw invError;
 
-            // Complete the job
             const table = isService ? 'service_calls' : 'opportunities';
             const newStatus = isService ? 'Completed' : 'COMPLETED';
-            const { error: statError } = await supabase.from(table).update({ status: newStatus }).eq('id', job.id);
+            const timestamp = new Date().toISOString();
+            
+            const { data: existing } = await supabase.from(table).select('metadata').eq('id', job.id).single();
+            const currentTimestamps = existing?.metadata?.status_timestamps || {};
+            
+            const newMeta = {
+                ...(existing?.metadata || {}),
+                status_timestamps: {
+                    ...currentTimestamps,
+                    [newStatus]: timestamp
+                }
+            };
+
+            const { error: statError } = await supabase.from(table).update({ status: newStatus, metadata: newMeta }).eq('id', job.id);
             
             if (statError) throw statError;
 
@@ -245,6 +274,39 @@ function JobCard({ job, index, onUpdate, crewId }) {
         } catch (err) {
             console.error(err);
             toast.error("Failed to finalize job & invoice");
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const submitForPayment = async () => {
+        setUpdating(true);
+        try {
+            const table = isService ? 'service_calls' : 'opportunities';
+            const timestamp = new Date().toISOString();
+            
+            const { data: existing } = await supabase.from(table).select('metadata').eq('id', job.id).single();
+            const currentTimestamps = existing?.metadata?.status_timestamps || {};
+            
+            const newMeta = {
+                ...(existing?.metadata || {}),
+                subcontractor_pay_app: {
+                    submitted: true,
+                    submitted_at: timestamp
+                },
+                status_timestamps: {
+                    ...currentTimestamps,
+                    ['Ready for Review']: timestamp
+                }
+            };
+
+            const { error: statError } = await supabase.from(table).update({ status: 'Ready for Review', metadata: newMeta }).eq('id', job.id);
+            
+            if (statError) throw statError;
+            toast.success("Job submitted for review & payment");
+            onUpdate();
+        } catch (err) {
+            toast.error("Failed to submit");
         } finally {
             setUpdating(false);
         }
@@ -275,6 +337,75 @@ function JobCard({ job, index, onUpdate, crewId }) {
         } finally {
             setUpdating(false);
         }
+    };
+
+    const saveMaterials = async () => {
+        setUpdating(true);
+        try {
+            const table = isService ? 'service_calls' : 'opportunities';
+            const { data: existing } = await supabase.from(table).select('metadata').eq('id', job.id).single();
+            const newMeta = { ...(existing?.metadata || {}), materials_used: materials };
+            await supabase.from(table).update({ metadata: newMeta }).eq('id', job.id);
+            toast.success("Materials logged!");
+            onUpdate();
+        } catch (err) {
+            toast.error("Failed to save materials");
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handlePhotoUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = async () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 800;
+                const MAX_HEIGHT = 800;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+                setUpdating(true);
+                try {
+                    const newPhotos = [...photos, dataUrl];
+                    const table = isService ? 'service_calls' : 'opportunities';
+                    const { data: existing } = await supabase.from(table).select('metadata').eq('id', job.id).single();
+                    const newMeta = { ...(existing?.metadata || {}), photos: newPhotos };
+                    await supabase.from(table).update({ metadata: newMeta }).eq('id', job.id);
+                    setPhotos(newPhotos);
+                    toast.success("Photo attached to job!");
+                    onUpdate();
+                } catch (err) {
+                    toast.error("Failed to upload photo");
+                } finally {
+                    setUpdating(false);
+                }
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
     };
 
     return (
@@ -368,6 +499,54 @@ function JobCard({ job, index, onUpdate, crewId }) {
                                 </button>
                             </div>
 
+                            {/* Phase 1: Proof of Work & Materials Used */}
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-inner flex flex-col gap-4">
+                                <div>
+                                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Materials Used Log</h4>
+                                    <div className="flex items-end gap-2">
+                                        <textarea 
+                                            className="flex-1 bg-white border border-slate-200 p-3 rounded-lg text-sm font-medium text-slate-900 outline-none focus:border-purple-400 transition-all shadow-sm resize-none h-[60px]"
+                                            placeholder="e.g. 1x Contactor, 2 lbs R410a"
+                                            value={materials}
+                                            onChange={e => setMaterials(e.target.value)}
+                                            onBlur={saveMaterials}
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Proof of Work Photos</h4>
+                                        <button 
+                                            onClick={() => fileInputRef.current?.click()}
+                                            disabled={updating}
+                                            className="text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg shadow-sm active:scale-95 transition-all"
+                                        >
+                                            + Add Photo
+                                        </button>
+                                        <input 
+                                            type="file" 
+                                            accept="image/*" 
+                                            capture="environment" 
+                                            ref={fileInputRef} 
+                                            onChange={handlePhotoUpload} 
+                                            className="hidden" 
+                                        />
+                                    </div>
+                                    <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                                        {photos.length === 0 ? (
+                                            <div className="w-full h-20 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center text-xs font-bold text-slate-400">
+                                                No photos attached
+                                            </div>
+                                        ) : (
+                                            photos.map((p, i) => (
+                                                <img key={i} src={p} alt="Proof" className="h-20 w-20 object-cover rounded-lg border border-slate-200 shadow-sm shrink-0" />
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Status Controls */}
                             <div className="pt-2">
                                 {isGeneratingInvoice ? (
@@ -431,25 +610,37 @@ function JobCard({ job, index, onUpdate, crewId }) {
                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                             <button 
                                                 onClick={() => updateStatus('En Route')}
-                                                disabled={updating}
-                                                className="bg-yellow-50/80 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 font-black text-[11px] uppercase tracking-wider py-4 rounded-xl shadow-sm active:scale-95 transition-all flex flex-col justify-center items-center gap-2"
+                                                disabled={updating || job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED'}
+                                                className="bg-yellow-50/80 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 font-black text-[11px] uppercase tracking-wider py-4 rounded-xl shadow-sm active:scale-95 transition-all flex flex-col justify-center items-center gap-2 disabled:opacity-50"
                                             >
                                                 <Truck size={18}/> En Route
                                             </button>
                                             <button 
                                                 onClick={() => updateStatus('Working')}
-                                                disabled={updating}
-                                                className="bg-blue-50/80 hover:bg-blue-100 text-blue-700 border border-blue-200 font-black text-[11px] uppercase tracking-wider py-4 rounded-xl shadow-sm active:scale-95 transition-all flex flex-col justify-center items-center gap-2"
+                                                disabled={updating || job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED'}
+                                                className="bg-blue-50/80 hover:bg-blue-100 text-blue-700 border border-blue-200 font-black text-[11px] uppercase tracking-wider py-4 rounded-xl shadow-sm active:scale-95 transition-all flex flex-col justify-center items-center gap-2 disabled:opacity-50"
                                             >
                                                 <Wrench size={18}/> Working
                                             </button>
-                                            <button 
-                                                onClick={() => setIsGeneratingInvoice(true)}
-                                                disabled={updating}
-                                                className="bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-black text-[11px] uppercase tracking-wider py-4 rounded-xl shadow-sm active:scale-95 transition-all flex flex-col justify-center items-center gap-2"
-                                            >
-                                                <CheckCircle size={18}/> Finish
-                                            </button>
+                                            
+                                            {isSubcontractor() ? (
+                                                <button 
+                                                    onClick={submitForPayment}
+                                                    disabled={updating || job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED'}
+                                                    className={`${(job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED') ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-500/20 active:scale-95'} font-black text-[11px] uppercase tracking-wider py-4 rounded-xl transition-all flex flex-col justify-center items-center gap-2 disabled:opacity-50`}
+                                                >
+                                                    <DollarSign size={18}/> 
+                                                    {(job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED') ? 'Submitted' : 'Submit App'}
+                                                </button>
+                                            ) : (
+                                                <button 
+                                                    onClick={() => setIsGeneratingInvoice(true)}
+                                                    disabled={updating || job.status === 'Completed' || job.status === 'COMPLETED'}
+                                                    className="bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-black text-[11px] uppercase tracking-wider py-4 rounded-xl shadow-sm active:scale-95 transition-all flex flex-col justify-center items-center gap-2 disabled:opacity-50"
+                                                >
+                                                    <CheckCircle size={18}/> Finish
+                                                </button>
+                                            )}
                                         </div>
                                     </>
                                 )}

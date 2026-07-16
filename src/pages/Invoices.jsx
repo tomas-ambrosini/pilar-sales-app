@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import { Banknote, FileText, Search, Clock, CheckCircle2, AlertCircle, Eye, Trash2 } from 'lucide-react';
 import { formatQuoteId } from '../utils/formatters';
 import InvoiceDocument from '../components/InvoiceDocument';
+import RecordPaymentModal from '../components/RecordPaymentModal';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -12,6 +13,7 @@ export default function Invoices({ isSubView = false }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [viewTab, setViewTab] = useState('all'); // 'all', 'unpaid', 'paid'
     const [selectedInvoice, setSelectedInvoice] = useState(null);
+    const [paymentInvoice, setPaymentInvoice] = useState(null);
     const { user } = useAuth();
 
     const handleDeleteInvoice = async (invoiceId) => {
@@ -27,25 +29,44 @@ export default function Invoices({ isSubView = false }) {
         }
     };
 
-    const handleRecordPayment = async (inv) => {
-        const amt = parseFloat(inv.balance_due ?? inv.amount);
-        if (!window.confirm(`Record payment of $${amt.toLocaleString()} for Invoice ${inv.id.substring(0,6).toUpperCase()}?`)) return;
+    const executePayment = async ({ amount, method, reference }) => {
+        if (!paymentInvoice) return;
+        const inv = paymentInvoice;
+        const oldBalance = parseFloat(inv.balance_due ?? inv.amount ?? 0);
+        const newBalance = Math.max(0, oldBalance - amount);
+        const oldCollected = parseFloat(inv.deposit_collected ?? 0);
+        const newCollected = oldCollected + amount;
+        const isPaidInFull = newBalance <= 0;
+
+        const newPaymentRecord = {
+            date: new Date().toISOString(),
+            amount,
+            method,
+            reference,
+            recorded_by: user?.email || 'System'
+        };
+
+        const currentMetadata = inv.metadata || {};
+        const currentHistory = currentMetadata.payment_history || [];
         
         try {
-            const totalAmt = parseFloat(inv.amount || 0);
             const { error } = await supabase.from('invoices').update({
-                status: 'Paid in Full',
-                deposit_collected: totalAmt,
-                balance_due: 0,
+                status: isPaidInFull ? 'Paid in Full' : 'Partial Payment',
+                deposit_collected: newCollected,
+                balance_due: newBalance,
+                metadata: {
+                    ...currentMetadata,
+                    payment_history: [...currentHistory, newPaymentRecord]
+                },
                 updated_at: new Date().toISOString()
             }).eq('id', inv.id);
+
             if (error) throw error;
-            
             toast.success('Payment recorded successfully!');
             fetchInvoices();
         } catch (err) {
             console.error(err);
-            toast.error('Failed to record payment');
+            throw new Error('Failed to record payment in database.');
         }
     };
 
@@ -182,7 +203,7 @@ export default function Invoices({ isSubView = false }) {
                                             <td className="p-4 text-center">
                                                 <div className="flex items-center justify-center gap-2">
                                                     {inv.status !== 'Paid in Full' && (
-                                                        <button onClick={() => handleRecordPayment(inv)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800 rounded-lg text-emerald-600 font-bold text-[10px] uppercase tracking-wider transition-all shadow-sm">
+                                                        <button onClick={() => setPaymentInvoice(inv)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800 rounded-lg text-emerald-600 font-bold text-[10px] uppercase tracking-wider transition-all shadow-sm">
                                                             <Banknote size={14} /> Pay
                                                         </button>
                                                     )}
@@ -247,6 +268,7 @@ export default function Invoices({ isSubView = false }) {
 
             {/* Document Modal */}
             <InvoiceDocument isOpen={!!selectedInvoice} onClose={() => setSelectedInvoice(null)} invoice={selectedInvoice} />
+            <RecordPaymentModal isOpen={!!paymentInvoice} onClose={() => setPaymentInvoice(null)} invoice={paymentInvoice} onRecordPayment={executePayment} />
         </div>
     );
 }
