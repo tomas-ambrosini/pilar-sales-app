@@ -4,6 +4,7 @@ import { X, Wrench, Clock, MapPin, Phone, Save, Calendar as CalendarIcon, UserCh
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
+import InvoiceDocument from './InvoiceDocument';
 import { useAuth } from '../context/AuthContext';
 
 export default function ServiceCallModal({ callId, onClose, onUpdate }) {
@@ -26,6 +27,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
     const [quoteSaving, setQuoteSaving] = useState(false);
     const [generatingInvoice, setGeneratingInvoice] = useState(false);
     const [paymentCollected, setPaymentCollected] = useState(false);
+    const [showDraftInvoice, setShowDraftInvoice] = useState(false);
     
     useEffect(() => {
         if (callId) fetchCallDetails();
@@ -318,8 +320,22 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
 
     // Quote & Invoice Logic
     const quoteSubtotal = quoteItems.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0), 0);
-    const quoteTaxAmount = quoteSubtotal * (parseFloat(taxRate) || 0) / 100;
+    const quoteTaxAmount = quoteSubtotal * (parseFloat(taxRate)/100 || 0);
     const quoteTotal = quoteSubtotal + quoteTaxAmount;
+
+    const draftInvoice = {
+        id: callData?.id || 'DRAFT',
+        created_at: new Date().toISOString(),
+        due_date: new Date().toISOString(),
+        status: 'Draft',
+        total_contract_amount: quoteTotal,
+        amount: quoteTotal,
+        balance_due: quoteTotal,
+        customer_id: callData?.customer_id,
+        metadata: {
+            service_call_items: quoteItems
+        }
+    };
 
     const handleAddQuoteItem = () => {
         setQuoteItems([...quoteItems, { id: Date.now(), description: '', quantity: 1, unit_price: 0 }]);
@@ -934,6 +950,12 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                             </div>
                             <div className="p-4 border-t border-slate-200 bg-white shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)] shrink-0 flex justify-end gap-3">
                                 <button 
+                                    onClick={() => setShowDraftInvoice(true)}
+                                    className="px-6 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all shadow-sm"
+                                >
+                                    Preview Draft Invoice
+                                </button>
+                                <button 
                                     onClick={handleSaveQuote}
                                     disabled={quoteSaving}
                                     className="px-6 py-2.5 text-sm font-bold text-primary-700 bg-primary-50 border border-primary-200 hover:bg-primary-100 rounded-xl transition-all shadow-sm"
@@ -991,6 +1013,15 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                     </div>
                 </div>
             </div>
+
+            {/* Draft Invoice Modal */}
+            {showDraftInvoice && (
+                <InvoiceDocument 
+                    isOpen={showDraftInvoice} 
+                    onClose={() => setShowDraftInvoice(false)} 
+                    invoice={draftInvoice} 
+                />
+            )}
         </Modal>
     );
 }

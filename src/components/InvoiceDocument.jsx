@@ -230,8 +230,35 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                             </div>
                         </div>
 
-                        {/* Unit Info Box */}
-                        {(resolvedSystemsList && resolvedSystemsList.length > 0) ? (
+                        {/* Unit Info / Custom Items Box */}
+                        {invoice?.metadata?.service_call_items && invoice.metadata.service_call_items.length > 0 ? (
+                            <div className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
+                                <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
+                                    <div className="flex-1 px-3 py-1.5 border-r border-slate-300">Service Items</div>
+                                    <div className="w-20 px-3 py-1.5 border-r border-slate-300 text-center">Qty</div>
+                                    <div className="w-32 px-3 py-1.5 border-r border-slate-300 text-right">Unit Price</div>
+                                    <div className="w-32 px-3 py-1.5 text-right">Ext Price</div>
+                                </div>
+                                <div className="flex flex-col bg-[#f8fafc]">
+                                    {invoice.metadata.service_call_items.map((item, idx) => (
+                                        <div key={idx} className="flex border-b border-slate-200">
+                                            <div className="flex-1 px-3 py-2 border-r border-slate-200 text-slate-800 font-medium">
+                                                {item.description || 'Custom Item'}
+                                            </div>
+                                            <div className="w-20 px-3 py-2 border-r border-slate-200 text-center text-slate-600">
+                                                {item.quantity}
+                                            </div>
+                                            <div className="w-32 px-3 py-2 border-r border-slate-200 text-right text-slate-600">
+                                                ${parseFloat(item.unit_price || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                            </div>
+                                            <div className="w-32 px-3 py-2 text-right font-bold text-slate-800">
+                                                ${(parseFloat(item.quantity || 0) * parseFloat(item.unit_price || 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (resolvedSystemsList && resolvedSystemsList.length > 0) ? (
                             resolvedSystemsList.map((sys, idx) => (
                                 <div key={idx} className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
                                     <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
@@ -329,7 +356,8 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                             </div>
                         )}
 
-                        {/* Materials & Labor */}
+                        {/* Materials & Labor (Hide for Service Calls) */}
+                        {!invoice?.metadata?.service_call_items && (
                         <div className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
                              <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
                                 <div className="flex-1 px-3 py-1.5">Materials & Labor / Subs needed</div>
@@ -364,6 +392,7 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                                  })()}
                             </div>
                         </div>
+                        )}
 
                         {/* Totals Section */}
                         <div className="flex justify-between items-start mb-6 print-safe-block">
@@ -421,7 +450,7 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                                             <div className="flex border-b border-slate-300 text-emerald-600">
                                                 <div className="flex-1 px-3 py-2 text-right uppercase text-[10px] tracking-wider font-bold">Deposits/Payments (-):</div>
                                                 <div className="w-32 px-3 py-2 text-right font-bold">
-                                                    ${(parseFloat(invoice.deposit_collected || invoice.amount) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                    ${(parseFloat(invoice.deposit_collected ?? 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                                 </div>
                                             </div>
                                             <div className="flex font-bold bg-[#e2e8f0]/40">
