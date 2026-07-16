@@ -4,6 +4,7 @@ import { CompanyCalendarEngine } from '../components/calendar/CompanyCalendarEng
 import { useCompanyCalendarEvents } from '../hooks/useCompanyCalendarEvents';
 import { mutateCalendarEvent } from '../lib/calendar/mutationSources';
 import { useAuth } from '../context/AuthContext';
+import { useRole } from '../context/RoleContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { supabase } from '../supabaseClient';
@@ -13,6 +14,7 @@ import ServiceCallModal from '../components/ServiceCallModal';
 
 export default function CompanyCalendar() {
   const { user } = useAuth();
+  const { isManagerOrAbove, activeDepartment } = useRole();
   const navigate = useNavigate();
   const [dateRange, setDateRange] = useState({ start: null, end: null });
   const [departments, setDepartments] = useState([]);
@@ -26,27 +28,48 @@ export default function CompanyCalendar() {
 
   React.useEffect(() => {
     const fetchConfig = async () => {
-      const { data: deptData } = await supabase.from('departments').select('*').eq('is_active', true);
-      if (deptData) setDepartments(deptData);
+      let query = supabase.from('departments').select('*').eq('is_active', true);
+      
+      // Lock-in permissions: Restrict non-managers to their active department
+      if (!isManagerOrAbove() && activeDepartment) {
+         query = query.ilike('name', activeDepartment);
+      }
+
+      const { data: deptData } = await query;
+      if (deptData) {
+         setDepartments(deptData);
+         // Auto-lock the filter if they only have 1 department allowed
+         if (!isManagerOrAbove() && deptData.length === 1) {
+            setFilters(prev => ({ ...prev, department_id: deptData[0].id }));
+         }
+      }
 
       const { data: typesData } = await supabase.from('event_types').select('*');
       if (typesData) setEventTypes(typesData);
     };
     fetchConfig();
-  }, []);
+  }, [isManagerOrAbove, activeDepartment]);
 
   // Compute effective filters before passing to EventRegistry
   const effectiveFilters = React.useMemo(() => {
+    // Determine the baseline allowed departments
+    const allowedDeptIds = departments.map(d => d.id);
+    
     // If a specific department is selected, we should ONLY allow event types that belong to that department
     if (filters.department_id !== 'ALL' && eventTypes.length > 0) {
-      // Find all event types that belong to the selected department
       const validTypesForDept = eventTypes.filter(t => t.department_id === filters.department_id).map(t => t.code);
-      // Intersect with user's checked event types
       const activeTypes = filters.event_types.filter(type => validTypesForDept.includes(type));
       return { ...filters, event_types: activeTypes };
+    } 
+    // If ALL is selected, but they are restricted, we ONLY allow events for their allowed departments
+    else if (eventTypes.length > 0) {
+      const validTypesForAllowedDepts = eventTypes.filter(t => allowedDeptIds.includes(t.department_id)).map(t => t.code);
+      const activeTypes = filters.event_types.filter(type => validTypesForAllowedDepts.includes(type));
+      return { ...filters, event_types: activeTypes };
     }
+    
     return filters;
-  }, [filters, eventTypes]);
+  }, [filters, eventTypes, departments]);
 
   // Target routing state
   const [inspectingOpportunityId, setInspectingOpportunityId] = useState(null);
