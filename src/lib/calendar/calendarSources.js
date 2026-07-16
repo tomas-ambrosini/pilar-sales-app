@@ -6,6 +6,7 @@ import { companyEventsAdapter } from './adapters/companyEventsAdapter';
 import { serviceCallsAdapter } from './adapters/serviceCallsAdapter';
 import { financeAdapter } from './adapters/financeAdapter';
 import { customerAdapter } from './adapters/customerAdapter';
+import { subcontractorAdapter } from './adapters/subcontractorAdapter';
 
 export const calendarSources = [
   opportunitiesAdapter,
@@ -15,5 +16,6 @@ export const calendarSources = [
   proposalsAdapter,
   serviceCallsAdapter,
   financeAdapter,
-  customerAdapter
+  customerAdapter,
+  subcontractorAdapter
 ];

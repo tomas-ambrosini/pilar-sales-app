@@ -31,9 +31,9 @@ export default function CompanyCalendar() {
   };
 
   const handleEventDrop = async ({ event, newStart, newEnd, revert }) => {
-    // Only allow mutations on specific tables, or block if it's a read-only event
-    if (event.source_table === 'proposals') {
-      toast.error("Cannot reschedule finalized contracts via Drag & Drop.");
+    // Prevent dragging read-only generated events (Invoices, Proposals, Expirations, Blackout Dates)
+    if (event.is_blocking || ['proposals', 'invoices', 'user_profiles', 'households'].includes(event.source_table)) {
+      toast.error(`Cannot modify read-only system events (${event.source_table || 'protected'}).`);
       revert();
       return;
     }
