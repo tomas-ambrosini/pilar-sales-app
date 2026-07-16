@@ -6,6 +6,7 @@ import { mutateCalendarEvent } from '../lib/calendar/mutationSources';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { supabase } from '../supabaseClient';
 import OpportunityOverviewModal from '../components/OpportunityOverviewModal';
 import ServiceCallModal from '../components/ServiceCallModal';
 // Import other modals here when needed (e.g. Task Modal, etc.)
