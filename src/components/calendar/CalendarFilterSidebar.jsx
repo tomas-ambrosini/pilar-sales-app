@@ -48,7 +48,7 @@ export function CalendarFilterSidebar({ filters, setFilters }) {
   };
 
   return (
-    <div className="w-full md:w-[280px] bg-white/80 backdrop-blur-xl border-b md:border-b-0 border-r md:border-r-slate-200/60 p-4 md:h-full flex flex-col gap-6 overflow-y-auto shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-10 max-h-[35vh] md:max-h-full">
+    <div className="w-full h-full flex flex-col gap-6 p-4 overflow-y-auto custom-scrollbar">
       
       {/* Header */}
       <div>
