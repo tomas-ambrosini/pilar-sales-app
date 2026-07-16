@@ -80,7 +80,7 @@ export default function CompanyCalendar() {
   };
 
   return (
-    <div className="flex flex-row h-[calc(100vh-64px)] w-full overflow-hidden bg-slate-50 relative">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] w-full overflow-y-auto md:overflow-hidden bg-slate-50 relative">
       
       {/* Background Blobs for aesthetics */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
@@ -89,12 +89,12 @@ export default function CompanyCalendar() {
       </div>
 
       {/* Sidebar Filter Panel */}
-      <div className="w-72 shrink-0 h-full z-10 flex flex-col relative bg-white/80 backdrop-blur-xl border-r border-slate-200/60 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+      <div className="w-full md:w-72 shrink-0 h-auto md:h-full z-10 flex flex-col relative bg-white/80 backdrop-blur-xl border-b md:border-b-0 md:border-r border-slate-200/60 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
          <CalendarFilterSidebar filters={filters} setFilters={setFilters} />
       </div>
 
       {/* Main Calendar Engine Wrapper */}
-      <div className="flex-1 min-w-0 h-full flex flex-col z-10 relative p-4 md:p-6 overflow-hidden">
+      <div className="flex-1 w-full md:w-auto min-h-[700px] md:min-h-0 h-auto md:h-full flex flex-col z-10 relative p-4 md:p-6 md:overflow-hidden">
         
         {loading && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-2xl m-4 md:m-6">
