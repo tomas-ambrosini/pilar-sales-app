@@ -336,6 +336,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
     const handleSaveQuote = async () => {
         setQuoteSaving(true);
         try {
+            const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
             const qdStr = 'QUOTE_DATA:' + JSON.stringify({ items: quoteItems, taxRate, subtotal: quoteSubtotal, taxAmount: quoteTaxAmount, total: quoteTotal });
             const newTags = (callData.tags || []).filter(t => !t.startsWith('QUOTE_DATA:')).concat(qdStr);
 
@@ -346,7 +347,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                 household_id: callData.customer_id,
                 service_call_id: callId,
                 activity_type: 'Quote Updated',
-                description: `Quote was updated. Total is now $${quoteTotal.toFixed(2)}.`
+                description: `Quote was updated. Total is now $${quoteTotal.toFixed(2)}. (Action taken by: ${userName})`
             });
 
             setCallData(prev => ({ ...prev, tags: newTags }));
