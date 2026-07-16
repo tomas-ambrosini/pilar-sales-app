@@ -32,9 +32,13 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
     }, [callId]);
 
     useEffect(() => {
-        if (callData && callData.metadata && callData.metadata.quote_data) {
-            setQuoteItems(callData.metadata.quote_data.items || []);
-            setTaxRate(callData.metadata.quote_data.taxRate || 0);
+        const quoteTag = (callData && callData.tags) ? callData.tags.find(t => t.startsWith('QUOTE_DATA:')) : null;
+        if (quoteTag) {
+            try {
+                const qd = JSON.parse(quoteTag.substring(11));
+                setQuoteItems(qd.items || []);
+                setTaxRate(qd.taxRate || 0);
+            } catch(e) {}
         }
     }, [callData]);
 
@@ -332,13 +336,10 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
     const handleSaveQuote = async () => {
         setQuoteSaving(true);
         try {
-            const currentMetadata = callData.metadata || {};
-            const newMetadata = {
-                ...currentMetadata,
-                quote_data: { items: quoteItems, taxRate, subtotal: quoteSubtotal, taxAmount: quoteTaxAmount, total: quoteTotal }
-            };
+            const qdStr = 'QUOTE_DATA:' + JSON.stringify({ items: quoteItems, taxRate, subtotal: quoteSubtotal, taxAmount: quoteTaxAmount, total: quoteTotal });
+            const newTags = (callData.tags || []).filter(t => !t.startsWith('QUOTE_DATA:')).concat(qdStr);
 
-            const { error } = await supabase.from('service_calls').update({ metadata: newMetadata }).eq('id', callId);
+            const { error } = await supabase.from('service_calls').update({ tags: newTags }).eq('id', callId);
             if (error) throw error;
 
             await supabase.from('activity_logs').insert({
@@ -348,11 +349,12 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                 description: `Quote was updated. Total is now $${quoteTotal.toFixed(2)}.`
             });
 
-            setCallData(prev => ({ ...prev, metadata: newMetadata }));
+            setCallData(prev => ({ ...prev, tags: newTags }));
             toast.success("Quote saved successfully");
             await fetchActivities(callData);
         } catch (err) {
-            toast.error("Failed to save quote");
+            console.error("Quote save error:", err);
+            toast.error("Failed to save quote: " + err.message);
         }
         setQuoteSaving(false);
     };
@@ -362,13 +364,10 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
         setGeneratingInvoice(true);
         try {
             // Ensure quote is saved first
-            const currentMetadata = callData.metadata || {};
-            const newMetadata = {
-                ...currentMetadata,
-                quote_data: { items: quoteItems, taxRate, subtotal: quoteSubtotal, taxAmount: quoteTaxAmount, total: quoteTotal }
-            };
+            const qdStr = 'QUOTE_DATA:' + JSON.stringify({ items: quoteItems, taxRate, subtotal: quoteSubtotal, taxAmount: quoteTaxAmount, total: quoteTotal });
+            const newTags = (callData.tags || []).filter(t => !t.startsWith('QUOTE_DATA:')).concat(qdStr);
 
-            await supabase.from('service_calls').update({ metadata: newMetadata, status: 'Completed' }).eq('id', callId);
+            await supabase.from('service_calls').update({ tags: newTags, status: 'Completed' }).eq('id', callId);
 
             // Generate Invoice
             const { error: invError } = await supabase.from('invoices').insert({
