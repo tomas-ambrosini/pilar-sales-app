@@ -14,17 +14,44 @@ export default function CompanyCalendar() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [dateRange, setDateRange] = useState({ start: null, end: null });
+  const [departments, setDepartments] = useState([]);
+  const [eventTypes, setEventTypes] = useState([]);
+  
   const [filters, setFilters] = useState({
     department_id: 'ALL',
-    // By default, let's select all event types we know about
-    event_types: ['SALES_APPT', 'PROJECT_INSTALL', 'TASK_DEADLINE', 'FINANCE_EVENT', 'HR_ADMIN', 'SERVICE_DISPATCH']
+    users: [],
+    event_types: ['SALES_APPT', 'PROJECT_INSTALL', 'TASK_DEADLINE', 'FINANCIAL', 'HR_ADMIN', 'SERVICE_DISPATCH']
   });
+
+  React.useEffect(() => {
+    const fetchConfig = async () => {
+      const { data: deptData } = await supabase.from('departments').select('*').eq('is_active', true);
+      if (deptData) setDepartments(deptData);
+
+      const { data: typesData } = await supabase.from('event_types').select('*');
+      if (typesData) setEventTypes(typesData);
+    };
+    fetchConfig();
+  }, []);
+
+  // Compute effective filters before passing to EventRegistry
+  const effectiveFilters = React.useMemo(() => {
+    // If a specific department is selected, we should ONLY allow event types that belong to that department
+    if (filters.department_id !== 'ALL' && eventTypes.length > 0) {
+      // Find all event types that belong to the selected department
+      const validTypesForDept = eventTypes.filter(t => t.department_id === filters.department_id).map(t => t.code);
+      // Intersect with user's checked event types
+      const activeTypes = filters.event_types.filter(type => validTypesForDept.includes(type));
+      return { ...filters, event_types: activeTypes };
+    }
+    return filters;
+  }, [filters, eventTypes]);
 
   // Target routing state
   const [inspectingOpportunityId, setInspectingOpportunityId] = useState(null);
   const [inspectingServiceCallId, setInspectingServiceCallId] = useState(null);
 
-  const { events, loading, refetch } = useCompanyCalendarEvents(dateRange.start, dateRange.end, filters);
+  const { events, loading, refetch } = useCompanyCalendarEvents(dateRange.start, dateRange.end, effectiveFilters);
 
   const handleDateRangeChange = (startStr, endStr) => {
     setDateRange({ start: startStr, end: endStr });
@@ -80,7 +107,7 @@ export default function CompanyCalendar() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] w-full overflow-y-auto md:overflow-hidden bg-slate-50 relative">
+    <div className="flex flex-row h-[calc(100vh-64px)] w-full overflow-hidden bg-slate-50 relative">
       
       {/* Background Blobs for aesthetics */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
@@ -89,12 +116,12 @@ export default function CompanyCalendar() {
       </div>
 
       {/* Sidebar Filter Panel */}
-      <div className="w-full md:w-72 shrink-0 h-auto md:h-full z-10 flex flex-col relative bg-white/80 backdrop-blur-xl border-b md:border-b-0 md:border-r border-slate-200/60 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
-         <CalendarFilterSidebar filters={filters} setFilters={setFilters} />
+      <div className="w-72 shrink-0 h-full z-10 flex flex-col relative bg-white/80 backdrop-blur-xl border-r border-slate-200/60 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+         <CalendarFilterSidebar filters={filters} setFilters={setFilters} departments={departments} eventTypes={eventTypes} />
       </div>
 
       {/* Main Calendar Engine Wrapper */}
-      <div className="flex-1 w-full md:w-auto min-h-[700px] md:min-h-0 h-auto md:h-full flex flex-col z-10 relative p-4 md:p-6 md:overflow-hidden">
+      <div className="flex-1 min-w-0 h-full flex flex-col z-10 relative p-4 md:p-6 overflow-hidden">
         
         {loading && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-2xl m-4 md:m-6">

@@ -2,24 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Filter, Users, LayoutGrid, Calendar as CalendarIcon, MapPin, Briefcase, FileText, Banknote, ShieldAlert, Zap } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 
-export function CalendarFilterSidebar({ filters, setFilters }) {
-  const [departments, setDepartments] = useState([]);
-  const [eventTypes, setEventTypes] = useState([]);
-
-  useEffect(() => {
-    // Fetch dynamic departments and event types
-    const fetchConfig = async () => {
-      const { data: deptData, error: deptErr } = await supabase.from('departments').select('*').eq('is_active', true);
-      console.log("DEPARTMENTS LOADED:", deptData, deptErr);
-      if (deptData) setDepartments(deptData);
-
-      const { data: typesData, error: typeErr } = await supabase.from('event_types').select('*');
-      console.log("EVENT TYPES LOADED:", typesData, typeErr);
-      if (typesData) setEventTypes(typesData);
-    };
-    fetchConfig();
-  }, []);
-
+export function CalendarFilterSidebar({ filters, setFilters, departments, eventTypes }) {
   const toggleEventType = (code) => {
     setFilters(prev => {
       const current = prev.event_types || [];
