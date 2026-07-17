@@ -641,13 +641,13 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Scheduled Start</label>
                                         <div className="text-sm font-semibold text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                                            {callData.scheduled_start ? new Date(callData.scheduled_start.includes('Z') || callData.scheduled_start.includes('+') ? callData.scheduled_start : callData.scheduled_start + 'Z').toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
+                                            {callData.scheduled_start ? new Date(callData.scheduled_start.replace(' ', 'T').concat(!callData.scheduled_start.includes('Z') && !callData.scheduled_start.includes('+') ? (callData.scheduled_start.split(':').length === 2 ? ':00Z' : 'Z') : '')).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
                                         </div>
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Scheduled End</label>
                                         <div className="text-sm font-semibold text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                                            {callData.scheduled_end ? new Date(callData.scheduled_end.includes('Z') || callData.scheduled_end.includes('+') ? callData.scheduled_end : callData.scheduled_end + 'Z').toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
+                                            {callData.scheduled_end ? new Date(callData.scheduled_end.replace(' ', 'T').concat(!callData.scheduled_end.includes('Z') && !callData.scheduled_end.includes('+') ? (callData.scheduled_end.split(':').length === 2 ? ':00Z' : 'Z') : '')).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
                                         </div>
                                     </div>
                                 </div>
