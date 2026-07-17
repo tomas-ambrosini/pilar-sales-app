@@ -465,6 +465,35 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                             })()}
                         </div>
                         
+                        {/* Payment History */}
+                        {invoice.metadata?.payment_history && invoice.metadata.payment_history.length > 0 && (
+                            <div className="mt-8 border-t border-slate-200 pt-6 print-safe-block">
+                                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-widest mb-4">Payment History</h4>
+                                <table className="w-full text-left border-collapse">
+                                    <thead className="bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest border-y border-slate-200">
+                                        <tr>
+                                            <th className="p-2.5 pl-4">Date</th>
+                                            <th className="p-2.5">Method</th>
+                                            <th className="p-2.5">Reference</th>
+                                            <th className="p-2.5 pr-4 text-right">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 text-xs">
+                                        {invoice.metadata.payment_history.map((payment, index) => (
+                                            <tr key={index}>
+                                                <td className="p-2.5 pl-4 text-slate-600 font-bold">{new Date(payment.date).toLocaleDateString()}</td>
+                                                <td className="p-2.5 text-slate-700 font-bold">{payment.method}</td>
+                                                <td className="p-2.5 text-slate-500">{payment.reference || '-'}</td>
+                                                <td className="p-2.5 pr-4 text-right text-emerald-700 font-bold">
+                                                    ${parseFloat(payment.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                        
                         {/* Signature Block */}
                         {invoice.customer_signature && (
                             <div className="mt-8 border-t border-slate-200 pt-6 print-safe-block">

@@ -120,6 +120,28 @@ export default function Invoices({ isSubView = false }) {
     const grandTotalUnpaid = invoices.filter(i => i.status !== 'Paid in Full').reduce((sum, inv) => sum + (parseFloat(inv.balance_due) || 0), 0);
     const grandTotalCollected = invoices.reduce((sum, inv) => sum + (parseFloat(inv.deposit_collected ?? (inv.status === 'Paid in Full' ? inv.amount : 0)) || 0), 0);
 
+    const now = new Date();
+    const unpaidInvoices = invoices.filter(inv => inv.status !== 'Paid in Full' && (parseFloat(inv.balance_due) || 0) > 0);
+    
+    let currentTotal = 0; // 0-30 days
+    let thirtyToSixtyTotal = 0; // 31-60 days
+    let sixtyPlusTotal = 0; // 60+ days
+
+    unpaidInvoices.forEach(inv => {
+        const invDate = new Date(inv.created_at);
+        const diffTime = Math.abs(now - invDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const balance = parseFloat(inv.balance_due) || 0;
+
+        if (diffDays <= 30) {
+            currentTotal += balance;
+        } else if (diffDays <= 60) {
+            thirtyToSixtyTotal += balance;
+        } else {
+            sixtyPlusTotal += balance;
+        }
+    });
+
     return (
         <div className={`${isSubView ? 'p-6' : 'page-container p-8'} h-full flex flex-col bg-slate-50 overflow-y-auto`}>
             
@@ -127,6 +149,26 @@ export default function Invoices({ isSubView = false }) {
                 {/* Main Ledger Area */}
                 <div className="responsive-invoices-main bg-white border border-slate-200 shadow-xl shadow-slate-200/40 rounded-2xl overflow-hidden flex flex-col">
                     
+                    {/* Aging Dashboard */}
+                    <div className="bg-slate-900 text-white p-6 grid grid-cols-1 md:grid-cols-4 gap-6 border-b border-slate-800 shrink-0">
+                        <div className="flex flex-col gap-1">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Unpaid</span>
+                            <span className="text-2xl font-black">${grandTotalUnpaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        </div>
+                        <div className="flex flex-col gap-1 md:border-l md:border-slate-700/50 md:pl-6">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Current (0-30 Days)</span>
+                            <span className="text-2xl font-black">${currentTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        </div>
+                        <div className="flex flex-col gap-1 md:border-l md:border-slate-700/50 md:pl-6">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">31-60 Days</span>
+                            <span className="text-2xl font-black">${thirtyToSixtyTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        </div>
+                        <div className="flex flex-col gap-1 md:border-l md:border-slate-700/50 md:pl-6">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-red-400">60+ Days</span>
+                            <span className="text-2xl font-black">${sixtyPlusTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        </div>
+                    </div>
+
                     {/* Header & Tabs */}
                     <div className="border-b border-slate-200 bg-white">
                         <div className="flex flex-wrap items-center justify-between p-5 gap-4">
