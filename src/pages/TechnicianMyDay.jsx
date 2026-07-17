@@ -121,14 +121,8 @@ export default function TechnicianMyDay() {
                 // Check if it belongs to selected crew
                 let belongsToCrew = false;
                 if (job.__type === 'SERVICE') {
-                    let techs = job.assigned_techs;
-                    if (typeof techs === 'string') {
-                        try { techs = JSON.parse(techs); } 
-                        catch (_) { techs = techs.match(/([a-f0-9-]{36})/gi) || []; }
-                    }
-                    if (Array.isArray(techs)) {
-                        belongsToCrew = techs.some(t => typeof t === 'object' ? t.id === selectedCrewId : t === selectedCrewId);
-                    }
+                    let techsStr = typeof job.assigned_techs === 'string' ? job.assigned_techs : JSON.stringify(job.assigned_techs || []);
+                    belongsToCrew = techsStr.includes(selectedCrewId);
                 } else {
                     belongsToCrew = job.assigned_crew_id === selectedCrewId;
                 }
@@ -138,8 +132,7 @@ export default function TechnicianMyDay() {
                 // Check if it's scheduled for today (local time)
                 let jobDateStr = null;
                 if (job.__type === 'SERVICE' && job.scheduled_start) {
-                    let dateStr = job.scheduled_start.replace(' ', 'T');
-                    if (!dateStr.includes('Z') && !dateStr.includes('+')) dateStr += 'Z'; // Force UTC if no timezone is provided by DB
+                    let dateStr = job.scheduled_start.replace(' ', 'T').slice(0, 19) + 'Z';
                     jobDateStr = new Date(dateStr).toDateString();
                 } else if (job.__type === 'SALES' && job.scheduled_date) {
                     // scheduled_date is YYYY-MM-DD
@@ -149,8 +142,8 @@ export default function TechnicianMyDay() {
                 
                 return jobDateStr === todayStr;
             }).sort((a, b) => {
-                const timeA = a.scheduled_start ? new Date(a.scheduled_start.replace(' ', 'T').concat(!a.scheduled_start.includes('Z') && !a.scheduled_start.includes('+') ? 'Z' : '')).getTime() : 0;
-                const timeB = b.scheduled_start ? new Date(b.scheduled_start.replace(' ', 'T').concat(!b.scheduled_start.includes('Z') && !b.scheduled_start.includes('+') ? 'Z' : '')).getTime() : 0;
+                const timeA = a.scheduled_start ? new Date(a.scheduled_start.replace(' ', 'T').slice(0, 19) + 'Z').getTime() : 0;
+                const timeB = b.scheduled_start ? new Date(b.scheduled_start.replace(' ', 'T').slice(0, 19) + 'Z').getTime() : 0;
                 return timeA - timeB;
             });
 
