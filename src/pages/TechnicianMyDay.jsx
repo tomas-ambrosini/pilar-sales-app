@@ -10,6 +10,8 @@ import SignatureCanvas from 'react-signature-canvas';
 import { useLocationTracking } from '../hooks/useLocationTracking';
 
 export default function TechnicianMyDay() {
+    const { user } = useAuth();
+    const { activeRole } = useRole();
     const [crews, setCrews] = useState([]);
     const [selectedCrewId, setSelectedCrewId] = useState(() => localStorage.getItem('technician_crew_id') || '');
     const [jobs, setJobs] = useState([]);
@@ -17,7 +19,7 @@ export default function TechnicianMyDay() {
 
     useEffect(() => {
         fetchCrews();
-    }, []);
+    }, [user, activeRole]);
 
     useEffect(() => {
         if (selectedCrewId) {
@@ -48,7 +50,36 @@ export default function TechnicianMyDay() {
 
     const fetchCrews = async () => {
         const { data } = await supabase.from('crews').select('*').eq('is_active', true).order('crew_name');
-        if (data) setCrews(data);
+        if (data) {
+            let availableCrews = data;
+            const isManagerOrAdmin = ['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'COORDINATOR'].includes(activeRole || user?.user_metadata?.role);
+            
+            if (!isManagerOrAdmin && user) {
+                const userName = (user?.user_metadata?.full_name || '').toLowerCase().trim();
+                const companyName = (user?.user_metadata?.company_name || '').toLowerCase().trim();
+                
+                // Strict filter so techs/subs only see their own crews
+                availableCrews = data.filter(c => {
+                    const cName = c.crew_name.toLowerCase().trim();
+                    if (!userName && !companyName) return false;
+                    return (userName && cName.includes(userName)) || 
+                           (companyName && cName.includes(companyName)) ||
+                           (userName && userName.includes(cName));
+                });
+                
+                // Fallback: if exact match fails, maybe they don't have a crew set up yet, 
+                // but we still restrict them from seeing other companies.
+                
+                // Auto-select if there's only 1 or we don't have a selection
+                if (availableCrews.length > 0) {
+                    if (!selectedCrewId || !availableCrews.find(c => c.id === selectedCrewId)) {
+                        setSelectedCrewId(availableCrews[0].id);
+                    }
+                }
+            }
+            
+            setCrews(availableCrews);
+        }
     };
 
     const fetchMyDay = async () => {
@@ -102,21 +133,30 @@ export default function TechnicianMyDay() {
                     </div>
                 </div>
 
-                <div className="relative group">
-                    <div className="relative flex items-center bg-white border border-slate-200 rounded-2xl shadow-sm focus-within:border-primary-500 focus-within:ring-4 focus-within:ring-primary-500/10 transition-all overflow-hidden">
-                        <select 
-                            className="w-full bg-transparent text-slate-800 px-4 py-3.5 text-sm font-bold appearance-none outline-none z-10 cursor-pointer"
-                            value={selectedCrewId}
-                            onChange={e => setSelectedCrewId(e.target.value)}
-                        >
-                            <option value="" className="text-slate-400">Select your Vehicle / Crew...</option>
-                            {crews.map(c => (
-                                <option key={c.id} value={c.id}>{c.crew_name}</option>
-                            ))}
-                        </select>
-                        <ChevronDown size={18} className="absolute right-4 text-slate-400 pointer-events-none" />
+                {(!['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'COORDINATOR'].includes(activeRole || user?.user_metadata?.role) && crews.length <= 1) ? (
+                    crews.length === 1 && (
+                        <div className="mt-2 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 w-fit">
+                             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                             <span className="text-xs font-bold text-slate-700">{crews[0].crew_name}</span>
+                        </div>
+                    )
+                ) : (
+                    <div className="relative group">
+                        <div className="relative flex items-center bg-white border border-slate-200 rounded-2xl shadow-sm focus-within:border-primary-500 focus-within:ring-4 focus-within:ring-primary-500/10 transition-all overflow-hidden">
+                            <select 
+                                className="w-full bg-transparent text-slate-800 px-4 py-3.5 text-sm font-bold appearance-none outline-none z-10 cursor-pointer"
+                                value={selectedCrewId}
+                                onChange={e => setSelectedCrewId(e.target.value)}
+                            >
+                                <option value="" className="text-slate-400">Select your Vehicle / Crew...</option>
+                                {crews.map(c => (
+                                    <option key={c.id} value={c.id}>{c.crew_name}</option>
+                                ))}
+                            </select>
+                            <ChevronDown size={18} className="absolute right-4 text-slate-400 pointer-events-none" />
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             {/* Content Area */}
