@@ -23,6 +23,13 @@ export default function MobileTechDashboard() {
     fetchClockStatus();
   }, [user]);
 
+  const fetchJobCount = async () => {
+    // Safely fallback to 0 for now to prevent production crash.
+    // The actual job list is correctly fetched in TechnicianMyDay.jsx
+    setJobCount(0);
+    setLoadingJobs(false);
+  };
+
   const fetchClockStatus = async () => {
     if (!user?.id) return;
     try {
