@@ -90,31 +90,71 @@ export default function TechnicianMyDay() {
 
     const fetchMyDay = async () => {
         setLoading(true);
-        const today = new Date().toISOString().split('T')[0];
-        
         try {
-            // Fetch Service Calls assigned to this crew today
-            const { data: svcData } = await supabase.from('service_calls').select(`
-                id, status, urgency, call_type, issue_description, scheduled_start, metadata,
-                households ( household_name, contacts ( primary_phone ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
-            `).contains('assigned_techs', [selectedCrewId]).gte('scheduled_start', `${today}T00:00:00`).lte('scheduled_start', `${today}T23:59:59`);
+            // Fetch jobs in a wide range to handle UTC boundaries, then filter locally
+            const d = new Date();
+            d.setDate(d.getDate() - 2);
+            const past = d.toISOString().split('T')[0];
+            d.setDate(d.getDate() + 4);
+            const future = d.toISOString().split('T')[0];
 
-            // Fetch Installs/Opportunities assigned to this crew today
-            const { data: oppData } = await supabase.from('opportunities').select(`
-                id, status, urgency_level, issue_description, scheduled_date, scheduled_time_block, proposal_data, metadata,
+            // Fetch Service Calls
+            const { data: svcData } = await supabase.from('service_calls').select(`
+                id, status, urgency, call_type, issue_description, scheduled_start, metadata, assigned_techs,
                 households ( household_name, contacts ( primary_phone ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
-            `).eq('assigned_crew_id', selectedCrewId).eq('scheduled_date', today);
+            `).gte('scheduled_start', `${past}T00:00:00`).lte('scheduled_start', `${future}T23:59:59`);
+
+            // Fetch Installs/Opportunities
+            const { data: oppData } = await supabase.from('opportunities').select(`
+                id, status, urgency_level, issue_description, scheduled_date, scheduled_time_block, proposal_data, metadata, assigned_crew_id,
+                households ( household_name, contacts ( primary_phone ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
+            `).gte('scheduled_date', past).lte('scheduled_date', future);
 
             const combined = [
                 ...(svcData || []).map(s => ({ ...s, __type: 'SERVICE' })),
                 ...(oppData || []).map(o => ({ ...o, __type: 'SALES' }))
-            ].sort((a, b) => {
+            ];
+            
+            const todayStr = new Date().toDateString(); // local today, e.g. "Fri Jul 17 2026"
+            
+            const filteredJobs = combined.filter(job => {
+                // Check if it belongs to selected crew
+                let belongsToCrew = false;
+                if (job.__type === 'SERVICE') {
+                    let techs = job.assigned_techs;
+                    if (typeof techs === 'string') {
+                        try { techs = JSON.parse(techs); } 
+                        catch (_) { techs = techs.match(/([a-f0-9-]{36})/gi) || []; }
+                    }
+                    if (Array.isArray(techs)) {
+                        belongsToCrew = techs.some(t => typeof t === 'object' ? t.id === selectedCrewId : t === selectedCrewId);
+                    }
+                } else {
+                    belongsToCrew = job.assigned_crew_id === selectedCrewId;
+                }
+                
+                if (!belongsToCrew) return false;
+                
+                // Check if it's scheduled for today (local time)
+                let jobDateStr = null;
+                if (job.__type === 'SERVICE' && job.scheduled_start) {
+                    let dateStr = job.scheduled_start;
+                    if (!dateStr.includes('Z') && !dateStr.includes('+')) dateStr += 'Z'; // Force UTC if no timezone is provided by DB
+                    jobDateStr = new Date(dateStr).toDateString();
+                } else if (job.__type === 'SALES' && job.scheduled_date) {
+                    // scheduled_date is YYYY-MM-DD
+                    const [year, month, day] = job.scheduled_date.split('-');
+                    jobDateStr = new Date(year, month - 1, day).toDateString();
+                }
+                
+                return jobDateStr === todayStr;
+            }).sort((a, b) => {
                 const timeA = a.scheduled_start ? new Date(a.scheduled_start).getTime() : 0;
                 const timeB = b.scheduled_start ? new Date(b.scheduled_start).getTime() : 0;
                 return timeA - timeB;
             });
 
-            setJobs(combined);
+            setJobs(filteredJobs);
         } catch (error) {
             console.error("Error fetching jobs:", error);
             toast.error("Failed to load your route.");

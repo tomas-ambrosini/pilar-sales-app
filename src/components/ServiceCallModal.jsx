@@ -23,7 +23,6 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
     // Quoting & Invoicing State
     const [activeTab, setActiveTab] = useState('timeline'); // 'timeline' | 'quote'
     const [quoteItems, setQuoteItems] = useState([]);
-    const [taxRate, setTaxRate] = useState(0);
     const [quoteSaving, setQuoteSaving] = useState(false);
     const [generatingInvoice, setGeneratingInvoice] = useState(false);
     const [paymentCollected, setPaymentCollected] = useState(false);
@@ -38,8 +37,9 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
         if (quoteTag) {
             try {
                 const qd = JSON.parse(quoteTag.substring(11));
-                setQuoteItems(qd.items || []);
-                setTaxRate(qd.taxRate || 0);
+                if (qd.items) {
+                    setQuoteItems(qd.items);
+                }
             } catch(e) {}
         }
     }, [callData]);
@@ -319,9 +319,8 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
     };
 
     // Quote & Invoice Logic
-    const quoteSubtotal = quoteItems.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0), 0);
-    const quoteTaxAmount = quoteSubtotal * (parseFloat(taxRate)/100 || 0);
-    const quoteTotal = quoteSubtotal + quoteTaxAmount;
+    const quoteSubtotal = quoteItems.reduce((sum, item) => sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0)), 0);
+    const quoteTotal = quoteSubtotal;
 
     const draftInvoice = {
         id: callData?.id || 'DRAFT',
@@ -353,7 +352,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
         setQuoteSaving(true);
         try {
             const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
-            const qdStr = 'QUOTE_DATA:' + JSON.stringify({ items: quoteItems, taxRate, subtotal: quoteSubtotal, taxAmount: quoteTaxAmount, total: quoteTotal });
+            const qdStr = 'QUOTE_DATA:' + JSON.stringify({ items: quoteItems, subtotal: quoteSubtotal, total: quoteTotal });
             const newTags = (callData.tags || []).filter(t => !t.startsWith('QUOTE_DATA:')).concat(qdStr);
 
             const { error } = await supabase.from('service_calls').update({ tags: newTags }).eq('id', callId);
@@ -381,7 +380,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
         setGeneratingInvoice(true);
         try {
             // Ensure quote is saved first
-            const qdStr = 'QUOTE_DATA:' + JSON.stringify({ items: quoteItems, taxRate, subtotal: quoteSubtotal, taxAmount: quoteTaxAmount, total: quoteTotal });
+            const qdStr = 'QUOTE_DATA:' + JSON.stringify({ items: quoteItems, subtotal: quoteSubtotal, total: quoteTotal });
             const newTags = (callData.tags || []).filter(t => !t.startsWith('QUOTE_DATA:')).concat(qdStr);
 
             await supabase.from('service_calls').update({ tags: newTags, status: 'Completed' }).eq('id', callId);
@@ -642,13 +641,13 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Scheduled Start</label>
                                         <div className="text-sm font-semibold text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                                            {callData.scheduled_start ? new Date(callData.scheduled_start).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
+                                            {callData.scheduled_start ? new Date(callData.scheduled_start.includes('Z') || callData.scheduled_start.includes('+') ? callData.scheduled_start : callData.scheduled_start + 'Z').toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
                                         </div>
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Scheduled End</label>
                                         <div className="text-sm font-semibold text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                                            {callData.scheduled_end ? new Date(callData.scheduled_end).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
+                                            {callData.scheduled_end ? new Date(callData.scheduled_end.includes('Z') || callData.scheduled_end.includes('+') ? callData.scheduled_end : callData.scheduled_end + 'Z').toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
                                         </div>
                                     </div>
                                 </div>
@@ -832,12 +831,6 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                         <h4 className="font-black text-slate-800 flex items-center gap-2">
                                             <Calculator size={16} className="text-primary-600" /> Line Items
                                         </h4>
-                                        <button 
-                                            onClick={handleAddQuoteItem}
-                                            className="px-3 py-1.5 bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm border border-primary-100"
-                                        >
-                                            <PlusCircle size={14} /> Add Item
-                                        </button>
                                     </div>
                                     <div className="p-0 lg:overflow-y-auto custom-scrollbar lg:max-h-[300px]">
                                         {quoteItems.length > 0 ? (
@@ -905,24 +898,20 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                             </div>
                                         )}
                                     </div>
+                                    <div className="px-4 py-3 bg-white border-t border-slate-100 shrink-0">
+                                        <button 
+                                            onClick={handleAddQuoteItem}
+                                            className="text-sm font-bold text-primary-600 hover:text-primary-700 flex items-center gap-2 transition-colors py-1"
+                                        >
+                                            <PlusCircle size={16} /> Add line item
+                                        </button>
+                                    </div>
                                     <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col gap-2 shrink-0">
                                         <div className="flex justify-between items-center text-sm font-bold text-slate-600">
                                             <span>Subtotal</span>
                                             <span>${quoteSubtotal.toFixed(2)}</span>
                                         </div>
-                                        <div className="flex justify-between items-center text-sm font-bold text-slate-600">
-                                            <div className="flex items-center gap-2">
-                                                <span>Tax (%)</span>
-                                                <input 
-                                                    type="number" 
-                                                    min="0" step="0.1"
-                                                    value={taxRate} 
-                                                    onChange={(e) => setTaxRate(e.target.value)}
-                                                    className="w-16 bg-white border border-slate-200 rounded-md p-1 text-right text-xs focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-                                                />
-                                            </div>
-                                            <span>${quoteTaxAmount.toFixed(2)}</span>
-                                        </div>
+
                                         <div className="flex justify-between items-center text-lg font-black text-slate-900 mt-2 pt-2 border-t border-slate-200">
                                             <span>Total</span>
                                             <span>${quoteTotal.toFixed(2)}</span>
