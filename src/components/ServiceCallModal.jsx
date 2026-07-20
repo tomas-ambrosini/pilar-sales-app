@@ -479,14 +479,14 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
     }
 
     const attachments = activities
-        .filter(act => act.activity_type === 'Attachment')
+        .filter(act => act.activity_type?.startsWith('Attachment'))
         .map(act => {
             try { return JSON.parse(act.description); }
             catch(e) { return null; }
         })
         .filter(Boolean);
 
-    const materialsLogged = activities.filter(act => act.activity_type === 'Materials Logged');
+    const materialsLogged = activities.filter(act => act.activity_type?.startsWith('Materials Logged'));
 
     return (
         <Modal 
@@ -782,11 +782,11 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                         {activities.map((act) => (
                                             <div key={act.id} className="relative flex items-start gap-4 group">
                                                 <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-white shadow-sm shrink-0 relative z-10">
-                                                    {act.activity_type === 'Attachment' ? (
+                                                    {act.activity_type?.startsWith('Attachment') ? (
                                                         <div className="w-full h-full bg-purple-100 rounded-full flex items-center justify-center text-purple-600"><Paperclip size={14} /></div>
-                                                    ) : act.activity_type.includes('Note') ? (
+                                                    ) : act.activity_type?.includes('Note') || act.activity_type?.startsWith('Materials Logged') ? (
                                                         <div className="w-full h-full bg-blue-100 rounded-full flex items-center justify-center text-blue-600"><MessageSquare size={14} /></div>
-                                                    ) : act.activity_type.includes('Status') ? (
+                                                    ) : act.activity_type?.includes('Status') ? (
                                                         <div className="w-full h-full bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600"><Check size={14} /></div>
                                                     ) : (
                                                         <div className="w-full h-full bg-slate-100 rounded-full flex items-center justify-center text-slate-600"><Activity size={14} /></div>

@@ -273,9 +273,9 @@ function JobCard({ job, index, onUpdate, crewId }) {
         }
     };
 
-    const loggedMaterials = activities.filter(a => a.activity_type === 'Materials Logged');
+    const loggedMaterials = activities.filter(a => a.activity_type?.startsWith('Materials Logged'));
     const uploadedPhotos = activities
-        .filter(a => a.activity_type === 'Attachment')
+        .filter(a => a.activity_type?.startsWith('Attachment'))
         .map(a => {
             try { return JSON.parse(a.description); } catch(e) { return null; }
         })
@@ -444,7 +444,7 @@ function JobCard({ job, index, onUpdate, crewId }) {
             const { error } = await supabase.from('activity_logs').insert({
                 household_id: customerId,
                 [isService ? 'service_call_id' : 'opportunity_id']: job.id,
-                activity_type: 'Materials Logged',
+                activity_type: `Materials Logged by ${TechName}`,
                 description: materialsInput
             });
             if (error) throw error;
@@ -506,7 +506,7 @@ function JobCard({ job, index, onUpdate, crewId }) {
                     const { error: logError } = await supabase.from('activity_logs').insert({
                         household_id: customerId,
                         [isService ? 'service_call_id' : 'opportunity_id']: job.id,
-                        activity_type: 'Attachment',
+                        activity_type: `Attachment by ${TechName}`,
                         description: JSON.stringify({
                             name: 'Proof of Work Photo',
                             url: data.publicUrl,
