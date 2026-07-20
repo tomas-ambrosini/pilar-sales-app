@@ -137,6 +137,17 @@ serve(async (req) => {
         return new Response(JSON.stringify({ svcData, oppData }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
 
+    if (action === 'fetchTimeLogs') {
+        const { targetUserId } = payload;
+        const { data, error } = await supabaseAdmin.from('activity_logs')
+            .select('*')
+            .eq('created_by', targetUserId)
+            .in('activity_type', ['Clock In', 'Clock Out'])
+            .order('created_at', { ascending: false });
+        
+        return new Response(JSON.stringify({ data, error }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+    }
+
     return new Response(JSON.stringify({ error: 'Action not found' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })

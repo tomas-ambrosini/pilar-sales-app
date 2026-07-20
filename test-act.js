@@ -2,14 +2,13 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 async function test() {
-    // 1. Authenticate
     const authRes = await fetch(process.env.VITE_SUPABASE_URL + '/auth/v1/token?grant_type=password', {
         method: 'POST',
         headers: {
             'apikey': process.env.VITE_SUPABASE_ANON_KEY,
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email: 'test@usac.com', password: 'WelcomeToPilar123!' })
+        body: JSON.stringify({ email: 'tomas@pilar.com', password: 'WelcomeToPilar123!' }) // logging in as admin
     });
     
     const authData = await authRes.json();
@@ -20,40 +19,15 @@ async function test() {
     
     const token = authData.access_token;
     
-    // 2. Fetch one activity_log to see schema
-    const actRes = await fetch(process.env.VITE_SUPABASE_URL + '/rest/v1/activity_logs?limit=1', {
+    // Fetch Clock Ins
+    const actRes = await fetch(process.env.VITE_SUPABASE_URL + '/rest/v1/activity_logs?activity_type=in.(Clock In,Clock Out)', {
         headers: {
             'apikey': process.env.VITE_SUPABASE_ANON_KEY,
             'Authorization': 'Bearer ' + token
         }
     });
     const actData = await actRes.json();
-    console.log("Activity Logs schema:");
-    if (actData.length) {
-        console.log(Object.keys(actData[0]));
-    } else {
-        console.log("Empty table");
-    }
-    
-    // 3. Try to insert
-    const insertRes = await fetch(process.env.VITE_SUPABASE_URL + '/rest/v1/activity_logs', {
-        method: 'POST',
-        headers: {
-            'apikey': process.env.VITE_SUPABASE_ANON_KEY,
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-        },
-        body: JSON.stringify({
-            activity_type: 'Clock In',
-            description: JSON.stringify({ event: 'Clock In' }),
-            created_by: authData.user.id
-        })
-    });
-    
-    const insertData = await insertRes.json();
-    console.log("Insert response status:", insertRes.status);
-    console.log("Insert response:", insertData);
+    console.log("Admin fetched clock logs:", actData);
 }
 
 test();

@@ -45,15 +45,12 @@ export default function Subcontractors() {
   const fetchTimeLogs = async (subId) => {
       setLoadingLogs(true);
       try {
-          const { data, error } = await supabase
-              .from('activity_logs')
-              .select('*')
-              .eq('created_by', subId)
-              .in('activity_type', ['Clock In', 'Clock Out'])
-              .order('created_at', { ascending: false });
+          const { data: resData, error } = await supabase.functions.invoke('admin-action', {
+              body: { action: 'fetchTimeLogs', payload: { targetUserId: subId } }
+          });
           
-          if (!error && data) {
-              setTimeLogs(data);
+          if (!error && resData?.data) {
+              setTimeLogs(resData.data);
           }
       } catch (err) {
           console.error(err);
