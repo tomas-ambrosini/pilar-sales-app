@@ -89,8 +89,8 @@ export default function TechnicianMyDay() {
         }
     };
 
-    const fetchMyDay = async () => {
-        setLoading(true);
+    const fetchMyDay = async (silent = false) => {
+        if (!silent) setLoading(true);
         try {
             // Fetch jobs in a wide range to handle UTC boundaries, then filter locally
             const d = new Date();
@@ -109,7 +109,7 @@ export default function TechnicianMyDay() {
 
             // Fetch Installs/Opportunities
             const { data: oppData, error: oppError } = await supabase.from('opportunities').select(`
-                id, status, urgency_level, issue_description, scheduled_date, scheduled_time_block, proposal_data, assigned_crew_id,
+                id, status, urgency_level, issue_description, scheduled_date, scheduled_time_block, proposal_data, assigned_crew_id, metadata,
                 households ( household_name, contacts ( primary_phone ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
             `).gte('scheduled_date', past).lte('scheduled_date', future);
 
@@ -155,11 +155,11 @@ export default function TechnicianMyDay() {
             });
 
             setJobs(filteredJobs);
-        } catch (error) {
-            console.error("Error fetching jobs:", error);
+        } catch (err) {
+            console.error("Error fetching jobs:", err);
             toast.error("Failed to load your route.");
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
@@ -216,7 +216,7 @@ export default function TechnicianMyDay() {
                 ) : (
                     <div className="space-y-4">
                         {jobs.map((job, idx) => (
-                            <JobCard key={job.id} job={job} index={idx + 1} onUpdate={fetchMyDay} crewId={selectedCrewId} />
+                            <JobCard key={job.id} job={job} index={idx + 1} onUpdate={() => fetchMyDay(true)} crewId={selectedCrewId} />
                         ))}
                     </div>
                 )}
