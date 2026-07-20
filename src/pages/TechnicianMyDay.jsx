@@ -15,6 +15,7 @@ export default function TechnicianMyDay() {
     const [crews, setCrews] = useState([]);
     const [selectedCrewId, setSelectedCrewId] = useState(() => localStorage.getItem('technician_crew_id') || '');
     const [jobs, setJobs] = useState([]);
+    const [rawCounts, setRawCounts] = useState({ svc: 0, opp: 0 });
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -115,6 +116,8 @@ export default function TechnicianMyDay() {
                 ...(oppData || []).map(o => ({ ...o, __type: 'SALES' }))
             ];
             
+            setRawCounts({ svc: svcData?.length || 0, opp: oppData?.length || 0 });
+            
             const todayStr = new Date().toDateString(); // local today, e.g. "Fri Jul 17 2026"
             
             const filteredJobs = combined.filter(job => {
@@ -180,6 +183,11 @@ export default function TechnicianMyDay() {
                          </span>
                     </div>
                 )}
+            </div>
+            
+            {/* DIAGNOSTIC OVERLAY */}
+            <div className="fixed bottom-20 left-4 bg-black text-white text-[10px] p-2 rounded z-50 opacity-80 pointer-events-none">
+                CrewID: {selectedCrewId ? selectedCrewId.slice(0,8) : 'none'} | RawSvc: {rawCounts.svc} | RawOpp: {rawCounts.opp} | Today: {new Date().toDateString()}
             </div>
 
             {/* Content Area */}
