@@ -24,10 +24,77 @@ export default function MobileTechDashboard() {
   }, [user]);
 
   const fetchJobCount = async () => {
-    // Safely fallback to 0 for now to prevent production crash.
-    // The actual job list is correctly fetched in TechnicianMyDay.jsx
-    setJobCount(0);
-    setLoadingJobs(false);
+    if (!user) return;
+    try {
+        const userName = (user.user_metadata?.full_name || '').toLowerCase().trim();
+        const companyName = (user.user_metadata?.company_name || '').toLowerCase().trim();
+        const email = (user.email || '').toLowerCase().trim();
+        
+        const { data: crews } = await supabase.from('crews').select('*').eq('is_active', true);
+        if (!crews || crews.length === 0) {
+            setJobCount(0); setLoadingJobs(false); return;
+        }
+
+        let myCrews = crews.filter(c => {
+            const cName = c.crew_name.toLowerCase().trim();
+            const cEmail = (c.tech_email || '').toLowerCase().trim();
+            if (cEmail && email && cEmail === email) return true;
+            if (!userName && !companyName) return false;
+            return (userName && cName.includes(userName)) || 
+                   (companyName && cName.includes(companyName)) ||
+                   (userName && userName.includes(cName));
+        });
+
+        if (myCrews.length === 0) {
+            setJobCount(0); setLoadingJobs(false); return;
+        }
+
+        const crewId = myCrews[0].id;
+        
+        const d = new Date();
+        d.setDate(d.getDate() - 2);
+        const past = d.toISOString().split('T')[0];
+        d.setDate(d.getDate() + 4);
+        const future = d.toISOString().split('T')[0];
+
+        const { data: svcData } = await supabase.from('service_calls').select('id, scheduled_start, assigned_techs').gte('scheduled_start', `${past}T00:00:00`).lte('scheduled_start', `${future}T23:59:59`);
+        const { data: oppData } = await supabase.from('opportunities').select('id, scheduled_date, assigned_crew_id').gte('scheduled_date', past).lte('scheduled_date', future);
+        
+        const combined = [
+            ...(svcData || []).map(s => ({ ...s, __type: 'SERVICE' })),
+            ...(oppData || []).map(o => ({ ...o, __type: 'SALES' }))
+        ];
+
+        const todayStr = new Date().toDateString();
+
+        const filteredJobs = combined.filter(job => {
+            let belongsToCrew = false;
+            if (job.__type === 'SERVICE') {
+                let techsStr = typeof job.assigned_techs === 'string' ? job.assigned_techs : JSON.stringify(job.assigned_techs || []);
+                belongsToCrew = techsStr.includes(crewId);
+            } else {
+                belongsToCrew = job.assigned_crew_id === crewId;
+            }
+            if (!belongsToCrew) return false;
+
+            let jobDateStr = null;
+            if (job.__type === 'SERVICE' && job.scheduled_start) {
+                let dateStr = job.scheduled_start.replace(' ', 'T').slice(0, 19) + 'Z';
+                jobDateStr = new Date(dateStr).toDateString();
+            } else if (job.__type === 'SALES' && job.scheduled_date) {
+                const [year, month, day] = job.scheduled_date.split('-');
+                jobDateStr = new Date(year, month - 1, day).toDateString();
+            }
+            return jobDateStr === todayStr;
+        });
+
+        setJobCount(filteredJobs.length);
+    } catch (e) {
+        console.error("Failed to fetch jobs", e);
+        setJobCount(0);
+    } finally {
+        setLoadingJobs(false);
+    }
   };
 
   const fetchClockStatus = async () => {
