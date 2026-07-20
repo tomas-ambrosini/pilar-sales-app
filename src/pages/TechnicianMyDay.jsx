@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { MapPin, Navigation, Phone, CheckCircle, Clock, FileText, XCircle, DollarSign, PenTool, Truck, ChevronDown } from 'lucide-react';
+import { MapPin, Navigation, Phone, CheckCircle, Clock, FileText, XCircle, DollarSign, PenTool, Truck, ChevronDown, MessageSquare, MapIcon, AlertTriangle, Wrench } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useRole } from '../context/RoleContext';
 import { formatCustomerName } from '../utils/formatters';
