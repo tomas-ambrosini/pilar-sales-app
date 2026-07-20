@@ -148,6 +148,17 @@ serve(async (req) => {
         return new Response(JSON.stringify({ data, error }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
 
+    if (action === 'insertTimeLog') {
+        const { targetUserId, activity_type, description } = payload;
+        const { data, error } = await supabaseAdmin.from('activity_logs').insert({
+            created_by: targetUserId,
+            activity_type,
+            description
+        }).select();
+        
+        return new Response(JSON.stringify({ data, error }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+    }
+
     return new Response(JSON.stringify({ error: 'Action not found' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })

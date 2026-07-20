@@ -124,12 +124,18 @@ export default function MobileTechDashboard() {
     setClockInTime(newStatus ? time : null);
     
     try {
-      // 1. Log to activity_logs for Admin Timesheet view
-      await supabase.from('activity_logs').insert({
-          activity_type: newStatus ? 'Clock In' : 'Clock Out',
-          description: JSON.stringify({ event: newStatus ? 'Clocked In' : 'Clocked Out', timestamp: time.toISOString() }),
-          created_by: user.id
+      // 1. Log to activity_logs for Admin Timesheet view via edge function to bypass INSERT RLS
+      const { data: insertData, error: insertError } = await supabase.functions.invoke('admin-action', {
+          body: {
+              action: 'insertTimeLog',
+              payload: {
+                  targetUserId: user.id,
+                  activity_type: newStatus ? 'Clock In' : 'Clock Out',
+                  description: JSON.stringify({ event: newStatus ? 'Clocked In' : 'Clocked Out', timestamp: time.toISOString() })
+              }
+          }
       });
+      if (insertError || insertData?.error) throw new Error(insertError?.message || insertData?.error || 'Failed to save time log');
       
       // 2. Update auth metadata for reliable mobile UI state (immune to RLS)
       const { data: { user: authUser } } = await supabase.auth.getUser();
