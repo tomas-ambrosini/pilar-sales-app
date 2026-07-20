@@ -119,6 +119,24 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: error ? 400 : 200 });
     }
 
+    if (action === 'fetchMyDayJobs') {
+        const { past, future } = payload;
+        
+        // Fetch Service Calls (Bypassing RLS)
+        const { data: svcData } = await supabaseAdmin.from('service_calls').select(`
+            id, status, urgency, call_type, issue_description, scheduled_start, metadata, assigned_techs,
+            households ( household_name, contacts ( primary_phone ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
+        `).gte('scheduled_start', `${past}T00:00:00`).lte('scheduled_start', `${future}T23:59:59`);
+
+        // Fetch Opportunities (Bypassing RLS)
+        const { data: oppData } = await supabaseAdmin.from('opportunities').select(`
+            id, status, urgency_level, issue_description, scheduled_date, scheduled_time_block, proposal_data, metadata, assigned_crew_id,
+            households ( household_name, contacts ( primary_phone ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
+        `).gte('scheduled_date', past).lte('scheduled_date', future);
+
+        return new Response(JSON.stringify({ svcData, oppData }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+    }
+
     return new Response(JSON.stringify({ error: 'Action not found' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })
