@@ -488,7 +488,14 @@ export function CustomerProvider({ children }) {
             if (updatedData.active_maintenance_agreement !== undefined) {
                 await supabase.from('households').update({ active_maintenance_agreement: updatedData.active_maintenance_agreement }).eq('id', id);
             }
-            
+            // Check if they are trying to split a shared address
+            const isSplittingSharedAddress = updatedData.billing_address_id && updatedData.billing_address_id === updatedData.service_address_id && (
+                updatedData.billing_address !== updatedData.address ||
+                updatedData.billing_city !== updatedData.city ||
+                updatedData.billing_state !== updatedData.state ||
+                updatedData.billing_zip !== updatedData.zip
+            );
+
             // Sync Addresses if provided
             if (updatedData.address && updatedData.service_address_id) {
                 await supabase.from('addresses').update({
@@ -500,7 +507,7 @@ export function CustomerProvider({ children }) {
             }
             
             if (updatedData.billing_address) {
-                if (updatedData.billing_address_id) {
+                if (updatedData.billing_address_id && !isSplittingSharedAddress) {
                     await supabase.from('addresses').update({
                         street_address: updatedData.billing_address,
                         city: updatedData.billing_city,
