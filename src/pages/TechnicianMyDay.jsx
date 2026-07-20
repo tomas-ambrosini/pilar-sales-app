@@ -226,6 +226,8 @@ export default function TechnicianMyDay() {
 }
 
 function JobCard({ job, index, onUpdate, crewId }) {
+    const { user } = useAuth();
+    const TechName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'TECH';
     const [expanded, setExpanded] = useState(false);
     const [note, setNote] = useState('');
     const [updating, setUpdating] = useState(false);
@@ -388,7 +390,7 @@ function JobCard({ job, index, onUpdate, crewId }) {
         setUpdating(true);
         try {
             const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const noteEntry = `\n[TECH ${timestamp}]: ${note}`;
+            const noteEntry = `\n[${TechName} ${timestamp}]: ${note}`;
 
             if (isService) {
                 const { data: latestSvc } = await supabase.from('service_calls').select('issue_description').eq('id', job.id).single();
@@ -572,7 +574,16 @@ function JobCard({ job, index, onUpdate, crewId }) {
                             {/* Phase 1: Proof of Work & Materials Used */}
                             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-inner flex flex-col gap-4">
                                 <div>
-                                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Materials Used Log</h4>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Materials Used Log</h4>
+                                        <button 
+                                            onClick={saveMaterials}
+                                            disabled={updating || materials === (job.metadata?.materials_used || '')}
+                                            className="text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg shadow-sm active:scale-95 transition-all disabled:opacity-50"
+                                        >
+                                            {updating ? 'Saving...' : 'Save'}
+                                        </button>
+                                    </div>
                                     <div className="flex items-end gap-2">
                                         <textarea 
                                             className="flex-1 bg-white border border-slate-200 p-2.5 rounded-lg text-sm font-medium text-slate-900 outline-none focus:border-purple-400 transition-all shadow-sm resize-none h-[50px]"
