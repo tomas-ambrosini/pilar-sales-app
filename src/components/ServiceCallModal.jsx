@@ -478,13 +478,20 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
             break;
     }
 
-    const attachments = activities
+    const baseAttachments = activities
         .filter(act => act.activity_type === 'Attachment')
         .map(act => {
             try { return JSON.parse(act.description); }
             catch(e) { return null; }
         })
         .filter(Boolean);
+
+    const techPhotos = (callData?.metadata?.photos || []).map(url => ({
+        url,
+        name: 'Tech Uploaded Photo'
+    }));
+
+    const attachments = [...baseAttachments, ...techPhotos];
 
     return (
         <Modal 
@@ -672,6 +679,12 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                 </span>
                             )}
                         </div>
+                        {callData.metadata?.materials_used && (
+                            <div className="w-full bg-orange-50/50 border border-orange-100 rounded-xl p-4 shadow-inner mb-2">
+                                <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest block mb-2">Materials Used</span>
+                                <div className="text-sm font-medium text-orange-800 whitespace-pre-wrap leading-relaxed">{callData.metadata.materials_used}</div>
+                            </div>
+                        )}
                         <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-inner text-sm font-medium text-slate-700 whitespace-pre-wrap leading-relaxed">
                             {callData.issue_description || 'No dispatch instructions provided.'}
                         </div>

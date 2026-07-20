@@ -264,13 +264,20 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
     const proposalDoneBy = proposedEvent ? extractNameFromAction(proposedEvent.description) : null;
     const dispatchedBy = (scheduledEvent ? extractNameFromAction(scheduledEvent.description) : null) || job.proposal_data?.dispatcher;
 
-    const attachments = activities
+    const baseAttachments = activities
         .filter(act => act.activity_type === 'Attachment')
         .map(act => {
             try { return JSON.parse(act.description); }
             catch(e) { return null; }
         })
         .filter(Boolean);
+
+    const techPhotos = (job?.metadata?.photos || []).map(url => ({
+        url,
+        name: 'Tech Uploaded Photo'
+    }));
+
+    const attachments = [...baseAttachments, ...techPhotos];
 
     return (
         <>
@@ -489,6 +496,13 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                             <div className="mb-4 flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
                                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dispatched By</div>
                                 <div className="text-sm font-black text-slate-800">{dispatchedBy}</div>
+                            </div>
+                        )}
+
+                        {job.metadata?.materials_used && (
+                            <div className="mb-4 bg-orange-50/50 border border-orange-100 rounded-xl p-4 shadow-inner">
+                                <div className="text-[10px] font-black text-orange-400 uppercase tracking-wider mb-2">Materials Used</div>
+                                <div className="text-sm font-medium text-orange-800 whitespace-pre-wrap">{job.metadata.materials_used}</div>
                             </div>
                         )}
 
