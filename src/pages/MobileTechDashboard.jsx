@@ -100,19 +100,11 @@ export default function MobileTechDashboard() {
   const fetchClockStatus = async () => {
     if (!user?.id) return;
     try {
-      const { data, error } = await supabase
-          .from('activity_logs')
-          .select('*')
-          .eq('created_by', user.id)
-          .in('activity_type', ['Clock In', 'Clock Out'])
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-          
-      if (!error && data) {
-        const isCurrentlyClockedIn = data.activity_type === 'Clock In';
-        setIsClockedIn(isCurrentlyClockedIn);
-        setClockInTime(isCurrentlyClockedIn ? new Date(data.created_at) : null);
+      // Use auth metadata for reliable client-side state (bypasses RLS issues on activity_logs)
+      const { data: { user: authUser }, error } = await supabase.auth.getUser();
+      if (!error && authUser?.user_metadata?.clock_status) {
+        setIsClockedIn(authUser.user_metadata.clock_status.is_clocked_in);
+        setClockInTime(authUser.user_metadata.clock_status.last_clock_in ? new Date(authUser.user_metadata.clock_status.last_clock_in) : null);
       }
     } catch (err) {
       console.error(err);
@@ -132,9 +124,25 @@ export default function MobileTechDashboard() {
     setClockInTime(newStatus ? time : null);
     
     try {
-      const { error } = await supabase.from('activity_logs').insert({
+      // 1. Log to activity_logs for Admin Timesheet view
+      await supabase.from('activity_logs').insert({
           activity_type: newStatus ? 'Clock In' : 'Clock Out',
-          description: JSON.stringify({ event: newStatus ? 'Clocked In' : 'Clocked Out', timestamp: time.toISOString() })
+          description: JSON.stringify({ event: newStatus ? 'Clocked In' : 'Clocked Out', timestamp: time.toISOString() }),
+          created_by: user.id
+      });
+      
+      // 2. Update auth metadata for reliable mobile UI state (immune to RLS)
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const currentMeta = authUser?.user_metadata || {};
+      
+      const { error } = await supabase.auth.updateUser({
+          data: {
+              ...currentMeta,
+              clock_status: {
+                  is_clocked_in: newStatus,
+                  last_clock_in: newStatus ? time.toISOString() : null
+              }
+          }
       });
       
       if (error) throw error;
