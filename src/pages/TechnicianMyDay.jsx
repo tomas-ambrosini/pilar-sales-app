@@ -571,60 +571,49 @@ function JobCard({ job, index, onUpdate, crewId }) {
                                 </button>
                             </div>
 
-                            {/* Phase 1: Proof of Work & Materials Used */}
-                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-inner flex flex-col gap-4">
+                            {/* Phase 1: Proof of Work & Materials */}
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-inner flex flex-col gap-5">
                                 <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Materials Used Log</h4>
-                                        <button 
-                                            onClick={saveMaterials}
-                                            disabled={updating || materials === (job.metadata?.materials_used || '')}
-                                            className="text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg shadow-sm active:scale-95 transition-all disabled:opacity-50"
-                                        >
-                                            {updating ? 'Saving...' : 'Save'}
-                                        </button>
-                                    </div>
-                                    <div className="flex items-end gap-2">
-                                        <textarea 
-                                            className="flex-1 bg-white border border-slate-200 p-2.5 rounded-lg text-sm font-medium text-slate-900 outline-none focus:border-purple-400 transition-all shadow-sm resize-none h-[50px]"
-                                            placeholder="e.g. 1x Contactor, 2 lbs R410a"
-                                            value={materials}
-                                            onChange={e => setMaterials(e.target.value)}
-                                            onBlur={saveMaterials}
-                                        />
-                                    </div>
+                                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Materials Used Log</h4>
+                                    <textarea 
+                                        className="w-full bg-white border border-slate-200 p-3 rounded-lg text-sm font-medium text-slate-900 outline-none focus:border-purple-400 transition-all shadow-sm resize-none h-[60px] mb-2"
+                                        placeholder="e.g. 1x Contactor, 2 lbs R410a"
+                                        value={materials}
+                                        onChange={e => setMaterials(e.target.value)}
+                                    />
+                                    <button 
+                                        onClick={saveMaterials}
+                                        disabled={updating || materials === (job.metadata?.materials_used || '')}
+                                        className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs uppercase tracking-wider py-3 rounded-lg shadow-sm transition-all disabled:opacity-50 disabled:bg-slate-300 disabled:text-slate-500"
+                                    >
+                                        {updating ? 'Saving...' : materials === (job.metadata?.materials_used || '') ? 'Saved' : 'Save Materials'}
+                                    </button>
                                 </div>
                                 
-                                <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Proof of Work Photos</h4>
+                                <div className="border-t border-slate-200 pt-4">
+                                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Proof of Work Photos</h4>
+                                    
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {photos.map((p, i) => (
+                                            <img key={i} src={p} alt="Proof" className="aspect-square w-full object-cover rounded-lg border border-slate-200 shadow-sm" />
+                                        ))}
                                         <button 
                                             onClick={() => fileInputRef.current?.click()}
                                             disabled={updating}
-                                            className="text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg shadow-sm active:scale-95 transition-all"
+                                            className="aspect-square w-full border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 hover:border-slate-400 transition-all active:scale-95 bg-white shadow-sm"
                                         >
-                                            + Add Photo
+                                            <span className="text-2xl font-light mb-1">+</span>
+                                            <span className="text-[9px] font-bold uppercase tracking-wider">Add</span>
                                         </button>
-                                        <input 
-                                            type="file" 
-                                            accept="image/*" 
-                                            capture="environment" 
-                                            ref={fileInputRef} 
-                                            onChange={handlePhotoUpload} 
-                                            className="hidden" 
-                                        />
                                     </div>
-                                    <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
-                                        {photos.length === 0 ? (
-                                            <div className="w-full h-16 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center text-xs font-bold text-slate-400">
-                                                No photos attached
-                                            </div>
-                                        ) : (
-                                            photos.map((p, i) => (
-                                                <img key={i} src={p} alt="Proof" className="h-16 w-16 object-cover rounded-lg border border-slate-200 shadow-sm shrink-0" />
-                                            ))
-                                        )}
-                                    </div>
+                                    <input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        capture="environment" 
+                                        ref={fileInputRef} 
+                                        onChange={handlePhotoUpload} 
+                                        className="hidden" 
+                                    />
                                 </div>
                             </div>
 
