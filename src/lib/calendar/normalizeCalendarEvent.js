@@ -32,6 +32,8 @@ export function normalizeCalendarEvent(rawEvent) {
     priority: rawEvent.priority || 'NORMAL',
     
     customer_id: rawEvent.customer_id || null,
+    customer_name: rawEvent.customer_name || null,
+    location: rawEvent.location || null,
     opportunity_id: rawEvent.opportunity_id || null,
     work_order_id: rawEvent.work_order_id || null,
     service_call_id: rawEvent.service_call_id || null,
