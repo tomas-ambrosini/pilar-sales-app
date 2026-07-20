@@ -242,8 +242,9 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                                 <div className="flex flex-col bg-[#f8fafc]">
                                     {invoice.metadata.service_call_items.map((item, idx) => (
                                         <div key={idx} className="flex border-b border-slate-200">
-                                            <div className="flex-1 px-3 py-2 border-r border-slate-200 text-slate-800 font-medium">
-                                                {item.description || 'Custom Item'}
+                                            <div className="flex-1 px-3 py-2 border-r border-slate-200 flex flex-col justify-center">
+                                                <span className="text-slate-800 font-bold">{item.title || 'Custom Item'}</span>
+                                                {item.description && <span className="text-slate-500 text-xs mt-0.5">{item.description}</span>}
                                             </div>
                                             <div className="w-20 px-3 py-2 border-r border-slate-200 text-center text-slate-600">
                                                 {item.quantity}

@@ -337,7 +337,8 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
     };
 
     const handleAddQuoteItem = () => {
-        setQuoteItems([...quoteItems, { id: Date.now(), description: '', quantity: 1, unit_price: 0 }]);
+        if (!callData.customer_id) return toast.error("Must have a customer profile to quote.");
+        setQuoteItems([...quoteItems, { id: Date.now(), title: '', description: '', quantity: 1, unit_price: 0 }]);
     };
 
     const handleUpdateQuoteItem = (id, field, value) => {
@@ -874,13 +875,20 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                                 <tbody className="divide-y divide-slate-100">
                                                     {quoteItems.map((item, index) => (
                                                         <tr key={item.id} className="group hover:bg-slate-50 transition-colors">
-                                                            <td className="p-3 pl-4">
+                                                            <td className="p-3 pl-4 flex flex-col gap-1">
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={item.title || ''} 
+                                                                    onChange={(e) => handleUpdateQuoteItem(item.id, 'title', e.target.value)}
+                                                                    placeholder="Item title..."
+                                                                    className="w-full bg-transparent border-none focus:ring-0 p-0 text-sm font-bold text-slate-800 placeholder-slate-400"
+                                                                />
                                                                 <input 
                                                                     type="text" 
                                                                     value={item.description} 
                                                                     onChange={(e) => handleUpdateQuoteItem(item.id, 'description', e.target.value)}
                                                                     placeholder="Item description..."
-                                                                    className="w-full bg-transparent border-none focus:ring-0 p-0 text-sm font-medium text-slate-800 placeholder-slate-300"
+                                                                    className="w-full bg-transparent border-none focus:ring-0 p-0 text-xs font-medium text-slate-500 placeholder-slate-300"
                                                                 />
                                                             </td>
                                                             <td className="p-3 text-center">
