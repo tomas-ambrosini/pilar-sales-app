@@ -100,10 +100,19 @@ export default function MobileTechDashboard() {
   const fetchClockStatus = async () => {
     if (!user?.id) return;
     try {
-      const { data, error } = await supabase.from('user_profiles').select('metadata').eq('id', user.id).single();
-      if (!error && data?.metadata?.clock_status) {
-        setIsClockedIn(data.metadata.clock_status.is_clocked_in);
-        setClockInTime(data.metadata.clock_status.last_clock_in ? new Date(data.metadata.clock_status.last_clock_in) : null);
+      const { data, error } = await supabase
+          .from('activity_logs')
+          .select('*')
+          .eq('created_by', user.id)
+          .in('activity_type', ['Clock In', 'Clock Out'])
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+          
+      if (!error && data) {
+        const isCurrentlyClockedIn = data.activity_type === 'Clock In';
+        setIsClockedIn(isCurrentlyClockedIn);
+        setClockInTime(isCurrentlyClockedIn ? new Date(data.created_at) : null);
       }
     } catch (err) {
       console.error(err);
@@ -123,33 +132,16 @@ export default function MobileTechDashboard() {
     setClockInTime(newStatus ? time : null);
     
     try {
-      const { data: existing } = await supabase.from('user_profiles').select('metadata').eq('id', user.id).single();
-      
-      const existingLogs = existing?.metadata?.time_logs || [];
-      const newLog = {
-        action: newStatus ? 'Clocked In' : 'Clocked Out',
-        timestamp: time.toISOString()
-      };
-
-      const newMeta = {
-        ...(existing?.metadata || {}),
-        clock_status: {
-          is_clocked_in: newStatus,
-          last_clock_in: newStatus ? time.toISOString() : null
-        },
-        time_logs: [...existingLogs, newLog]
-      };
-      
-      const { data, error } = await supabase.functions.invoke('admin-action', {
-          body: { 
-              action: 'updateUser', 
-              payload: { targetUserId: user.id, metadata: newMeta } 
-          }
+      const { error } = await supabase.from('activity_logs').insert({
+          activity_type: newStatus ? 'Clock In' : 'Clock Out',
+          description: JSON.stringify({ event: newStatus ? 'Clocked In' : 'Clocked Out', timestamp: time.toISOString() })
       });
-      if (error || data?.error) throw new Error(error?.message || data?.error || 'Failed to update user profile');
+      
+      if (error) throw error;
       
     } catch (err) {
       console.error("Failed to update clock status", err);
+      toast.error(err.message || 'Failed to update clock status');
       // Revert on error
       setIsClockedIn(!newStatus);
       setClockInTime(oldClockInTime);

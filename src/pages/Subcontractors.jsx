@@ -25,10 +25,42 @@ export default function Subcontractors() {
   
   const [selectedOpp, setSelectedOpp] = useState(null);
   const [selectedServiceCall, setSelectedServiceCall] = useState(null);
+  
+  const [timeLogs, setTimeLogs] = useState([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+      if (editingSub) {
+          fetchTimeLogs(editingSub.id);
+      } else {
+          setTimeLogs([]);
+          setActiveTab('profile');
+      }
+  }, [editingSub]);
+
+  const fetchTimeLogs = async (subId) => {
+      setLoadingLogs(true);
+      try {
+          const { data, error } = await supabase
+              .from('activity_logs')
+              .select('*')
+              .eq('created_by', subId)
+              .in('activity_type', ['Clock In', 'Clock Out'])
+              .order('created_at', { ascending: false });
+          
+          if (!error && data) {
+              setTimeLogs(data);
+          }
+      } catch (err) {
+          console.error(err);
+      } finally {
+          setLoadingLogs(false);
+      }
+  };
 
   const fetchData = async () => {
     try {
@@ -296,21 +328,26 @@ export default function Subcontractors() {
                             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                 <Clock size={14} /> Clock In/Out History
                             </h3>
-                            {(!editingSub.metadata?.time_logs || editingSub.metadata.time_logs.length === 0) ? (
+                            {loadingLogs ? (
+                                <div className="text-center py-12 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                                    <Clock size={32} className="mx-auto text-slate-300 mb-3 animate-pulse" />
+                                    <p className="text-sm font-bold text-slate-500 animate-pulse">Loading time logs...</p>
+                                </div>
+                            ) : timeLogs.length === 0 ? (
                                 <div className="text-center py-12 bg-white rounded-2xl border border-slate-200 shadow-sm">
                                     <Clock size={32} className="mx-auto text-slate-300 mb-3" />
                                     <p className="text-sm font-bold text-slate-500">No time logs available.</p>
                                 </div>
                             ) : (
                                 <div className="space-y-3 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm custom-scrollbar">
-                                    {[...(editingSub.metadata.time_logs)].reverse().map((log, i) => (
-                                        <div key={i} className="flex justify-between items-center p-4 rounded-xl border border-slate-100 bg-slate-50">
+                                    {timeLogs.map((log) => (
+                                        <div key={log.id} className="flex justify-between items-center p-4 rounded-xl border border-slate-100 bg-slate-50">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-2 h-2 rounded-full ${log.action === 'Clocked In' ? 'bg-emerald-400' : 'bg-amber-400'}`}></div>
-                                                <span className="font-bold text-slate-700 text-sm">{log.action}</span>
+                                                <div className={`w-2 h-2 rounded-full ${log.activity_type === 'Clock In' ? 'bg-emerald-400' : 'bg-amber-400'}`}></div>
+                                                <span className="font-bold text-slate-700 text-sm">{log.activity_type}</span>
                                             </div>
                                             <span className="text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-                                                {new Date(log.timestamp).toLocaleString()}
+                                                {new Date(log.created_at).toLocaleString()}
                                             </span>
                                         </div>
                                     ))}
