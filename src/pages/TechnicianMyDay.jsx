@@ -287,22 +287,36 @@ function JobCard({ job, index, onUpdate, crewId }) {
             const table = isService ? 'service_calls' : 'opportunities';
             const timestamp = new Date().toISOString();
             
-            const { data: existing } = await supabase.from(table).select('metadata').eq('id', job.id).single();
-            const currentTimestamps = existing?.metadata?.status_timestamps || {};
+            let updatePayload = { status: newStatus };
             
-            const newMeta = {
-                ...(existing?.metadata || {}),
-                status_timestamps: {
-                    ...currentTimestamps,
-                    [newStatus]: timestamp
-                }
-            };
+            if (!isService) {
+                const { data: existing } = await supabase.from(table).select('metadata').eq('id', job.id).single();
+                const currentTimestamps = existing?.metadata?.status_timestamps || {};
+                
+                updatePayload.metadata = {
+                    ...(existing?.metadata || {}),
+                    status_timestamps: {
+                        ...currentTimestamps,
+                        [newStatus]: timestamp
+                    }
+                };
+            }
 
-            const { error } = await supabase.from(table).update({ status: newStatus, metadata: newMeta }).eq('id', job.id);
+            const { error } = await supabase.from(table).update(updatePayload).eq('id', job.id);
             if (error) throw error;
+            
+            // Log to activity timeline
+            await supabase.from('activity_logs').insert({
+                household_id: customerId,
+                [isService ? 'service_call_id' : 'opportunity_id']: job.id,
+                activity_type: `Status Updated to ${newStatus} by ${TechName}`,
+                description: `Subcontractor marked job as ${newStatus}`
+            });
+            
             toast.success(`Status: ${newStatus}`);
-            onUpdate();
+            fetchActivities();
         } catch (err) {
+            console.error("Status Update Error:", err);
             toast.error("Failed to update status");
         } finally {
             setUpdating(false);
@@ -377,38 +391,7 @@ function JobCard({ job, index, onUpdate, crewId }) {
         }
     };
 
-    const submitForPayment = async () => {
-        setUpdating(true);
-        try {
-            const table = isService ? 'service_calls' : 'opportunities';
-            const timestamp = new Date().toISOString();
-            
-            const { data: existing } = await supabase.from(table).select('metadata').eq('id', job.id).single();
-            const currentTimestamps = existing?.metadata?.status_timestamps || {};
-            
-            const newMeta = {
-                ...(existing?.metadata || {}),
-                subcontractor_pay_app: {
-                    submitted: true,
-                    submitted_at: timestamp
-                },
-                status_timestamps: {
-                    ...currentTimestamps,
-                    ['Ready for Review']: timestamp
-                }
-            };
-
-            const { error: statError } = await supabase.from(table).update({ status: 'Ready for Review', metadata: newMeta }).eq('id', job.id);
-            
-            if (statError) throw statError;
-            toast.success("Job submitted for review & payment");
-            onUpdate();
-        } catch (err) {
-            toast.error("Failed to submit");
-        } finally {
-            setUpdating(false);
-        }
-    };
+    // submitForPayment removed as it is no longer needed
 
     const saveNote = async () => {
         if (!note.trim()) return;
@@ -757,12 +740,11 @@ function JobCard({ job, index, onUpdate, crewId }) {
                                             
                                             {isSubcontractor() ? (
                                                 <button 
-                                                    onClick={submitForPayment}
-                                                    disabled={updating || job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED'}
-                                                    className={`${(job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED') ? 'bg-slate-100 text-slate-400 border border-slate-200' : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-md active:scale-95'} font-bold text-xs uppercase tracking-wider py-3 rounded-xl transition-all flex justify-center items-center gap-2 disabled:opacity-50`}
+                                                    onClick={() => updateStatus('Completed')}
+                                                    disabled={updating}
+                                                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-sm uppercase tracking-widest active:scale-95 transition-all shadow-md flex justify-center items-center gap-2 disabled:opacity-50"
                                                 >
-                                                    <DollarSign size={16}/> 
-                                                    {(job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED') ? 'Submitted' : 'Submit App'}
+                                                    <Check size={16} /> Complete
                                                 </button>
                                             ) : (
                                                 <button 
