@@ -594,7 +594,17 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                 <select 
                                     className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/15 focus:bg-white hover:border-slate-300 p-2.5 rounded-xl text-sm font-bold text-slate-800 transition-all shadow-sm outline-none cursor-pointer"
                                     value={callData.urgency}
-                                    onChange={e => setCallData({...callData, urgency: e.target.value})}
+                                    onChange={async (e) => {
+                                        const newUrgency = e.target.value;
+                                        setCallData({...callData, urgency: newUrgency});
+                                        const { error } = await supabase.from('service_calls').update({ urgency: newUrgency, updated_at: new Date().toISOString() }).eq('id', callId);
+                                        if (error) {
+                                            toast.error("Failed to update urgency");
+                                        } else {
+                                            toast.success("Urgency updated");
+                                            if (onUpdate) onUpdate();
+                                        }
+                                    }}
                                 >
                                     <option value="LOW">Low</option>
                                     <option value="NORMAL">Normal</option>
