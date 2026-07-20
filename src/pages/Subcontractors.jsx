@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Users, Truck, Plus, Check, Search, MapPin, Edit2, X, Trash2, Save, Building2, UserCircle, Mail } from 'lucide-react';
+import { Users, Truck, Plus, Check, Search, MapPin, Edit2, X, Trash2, Save, Building2, UserCircle, Mail, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatPhoneNumber } from '../utils/formatters';
 
@@ -285,11 +285,43 @@ export default function Subcontractors() {
                         >
                             Job History
                         </button>
+                        <button 
+                            onClick={() => setActiveTab('timesheet')} 
+                            className={`px-5 py-2.5 text-sm font-black rounded-xl transition-all ${activeTab === 'timesheet' ? 'bg-white text-primary-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/50 border border-transparent'}`}
+                        >
+                            Timesheet
+                        </button>
                     </div>
                 </div>
 
                 <div className="flex-1 overflow-hidden flex flex-col bg-slate-50/30">
-                    {activeTab === 'profile' ? (
+                    {activeTab === 'timesheet' ? (
+                        <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
+                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <Clock size={14} /> Clock In/Out History
+                            </h3>
+                            {(!editingSub.metadata?.time_logs || editingSub.metadata.time_logs.length === 0) ? (
+                                <div className="text-center py-12 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                                    <Clock size={32} className="mx-auto text-slate-300 mb-3" />
+                                    <p className="text-sm font-bold text-slate-500">No time logs available.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm custom-scrollbar">
+                                    {[...(editingSub.metadata.time_logs)].reverse().map((log, i) => (
+                                        <div key={i} className="flex justify-between items-center p-4 rounded-xl border border-slate-100 bg-slate-50">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-2 h-2 rounded-full ${log.action === 'Clocked In' ? 'bg-emerald-400' : 'bg-amber-400'}`}></div>
+                                                <span className="font-bold text-slate-700 text-sm">{log.action}</span>
+                                            </div>
+                                            <span className="text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                                                {new Date(log.timestamp).toLocaleString()}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : activeTab === 'profile' ? (
                     <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
                             {/* Basic Info Form */}
