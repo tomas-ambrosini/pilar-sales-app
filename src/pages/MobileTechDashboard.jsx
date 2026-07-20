@@ -124,30 +124,24 @@ export default function MobileTechDashboard() {
     setClockInTime(newStatus ? time : null);
     
     try {
-      // 1. Log to activity_logs for Admin Timesheet view via edge function to bypass INSERT RLS
-      const { data: insertData, error: insertError } = await supabase.functions.invoke('admin-action', {
-          body: {
-              action: 'insertTimeLog',
-              payload: {
-                  targetUserId: user.id,
-                  activity_type: newStatus ? 'Clock In' : 'Clock Out',
-                  description: JSON.stringify({ event: newStatus ? 'Clocked In' : 'Clocked Out', timestamp: time.toISOString() })
-              }
-          }
-      });
-      if (insertError || insertData?.error) throw new Error(insertError?.message || insertData?.error || 'Failed to save time log');
-      
-      // 2. Update auth metadata for reliable mobile UI state (immune to RLS)
+      // 1. Fetch current auth metadata
       const { data: { user: authUser } } = await supabase.auth.getUser();
       const currentMeta = authUser?.user_metadata || {};
       
+      // 2. Append new log to history
+      const newLog = { action: newStatus ? 'Clock In' : 'Clock Out', timestamp: time.toISOString() };
+      const timeLogs = currentMeta.time_logs || [];
+      const updatedTimeLogs = [newLog, ...timeLogs].slice(0, 100); // Keep last 100 logs
+      
+      // 3. Update auth metadata for reliable mobile UI state AND admin timesheet
       const { error } = await supabase.auth.updateUser({
           data: {
               ...currentMeta,
               clock_status: {
                   is_clocked_in: newStatus,
                   last_clock_in: newStatus ? time.toISOString() : null
-              }
+              },
+              time_logs: updatedTimeLogs
           }
       });
       
@@ -155,7 +149,9 @@ export default function MobileTechDashboard() {
       
     } catch (err) {
       console.error("Failed to update clock status", err);
-      toast.error(err.message || 'Failed to update clock status');
+      // Fallback alert since toast is not imported
+      alert(err.message || 'Failed to update clock status');
+      
       // Revert on error
       setIsClockedIn(!newStatus);
       setClockInTime(oldClockInTime);

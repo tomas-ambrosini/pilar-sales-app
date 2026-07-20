@@ -139,13 +139,18 @@ serve(async (req) => {
 
     if (action === 'fetchTimeLogs') {
         const { targetUserId } = payload;
-        const { data, error } = await supabaseAdmin.from('activity_logs')
-            .select('*')
-            .eq('created_by', targetUserId)
-            .in('activity_type', ['Clock In', 'Clock Out'])
-            .order('created_at', { ascending: false });
+        const { data: userData, error } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
         
-        return new Response(JSON.stringify({ data, error }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+        const timeLogs = userData?.user?.user_metadata?.time_logs || [];
+        
+        // Format to match Subcontractors.jsx expected format (id, activity_type, created_at)
+        const formattedLogs = timeLogs.map((log, i) => ({
+            id: i.toString(),
+            activity_type: log.action,
+            created_at: log.timestamp
+        }));
+        
+        return new Response(JSON.stringify({ data: formattedLogs, error }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
 
     if (action === 'insertTimeLog') {
