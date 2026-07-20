@@ -264,7 +264,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
     const proposalDoneBy = proposedEvent ? extractNameFromAction(proposedEvent.description) : null;
     const dispatchedBy = (scheduledEvent ? extractNameFromAction(scheduledEvent.description) : null) || job.proposal_data?.dispatcher;
 
-    const baseAttachments = activities
+    const attachments = activities
         .filter(act => act.activity_type === 'Attachment')
         .map(act => {
             try { return JSON.parse(act.description); }
@@ -272,12 +272,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
         })
         .filter(Boolean);
 
-    const techPhotos = (job?.metadata?.photos || []).map(url => ({
-        url,
-        name: 'Tech Uploaded Photo'
-    }));
-
-    const attachments = [...baseAttachments, ...techPhotos];
+    const materialsLogged = activities.filter(act => act.activity_type === 'Materials Logged');
 
     return (
         <>
@@ -499,10 +494,17 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                             </div>
                         )}
 
-                        {job.metadata?.materials_used && (
+                        {materialsLogged.length > 0 && (
                             <div className="mb-4 bg-orange-50/50 border border-orange-100 rounded-xl p-4 shadow-inner">
-                                <div className="text-[10px] font-black text-orange-400 uppercase tracking-wider mb-2">Materials Used</div>
-                                <div className="text-sm font-medium text-orange-800 whitespace-pre-wrap">{job.metadata.materials_used}</div>
+                                <div className="text-[10px] font-black text-orange-400 uppercase tracking-wider mb-3">Materials Used Log</div>
+                                <div className="flex flex-col gap-2">
+                                    {materialsLogged.map(m => (
+                                        <div key={m.id} className="bg-white border border-orange-100 p-3 rounded-lg text-sm text-orange-900 font-medium">
+                                            {m.description}
+                                            <div className="text-[9px] font-bold text-orange-400/70 mt-1.5 uppercase tracking-wider">Logged on {new Date(m.created_at).toLocaleDateString()} at {new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
 

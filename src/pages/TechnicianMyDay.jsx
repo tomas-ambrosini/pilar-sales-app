@@ -236,8 +236,8 @@ function JobCard({ job, index, onUpdate, crewId }) {
     const [invoiceAmount, setInvoiceAmount] = useState('');
     const [paymentCollected, setPaymentCollected] = useState(false);
     
-    const [materials, setMaterials] = useState(job.metadata?.materials_used || '');
-    const [photos, setPhotos] = useState(job.metadata?.photos || []);
+    const [activities, setActivities] = useState([]);
+    const [materialsInput, setMaterialsInput] = useState('');
     const fileInputRef = useRef(null);
     const { isSubcontractor } = useRole();
 
@@ -255,6 +255,31 @@ function JobCard({ job, index, onUpdate, crewId }) {
     if (job.status === 'En Route') statusConfig = { bg: "bg-yellow-100", text: "text-yellow-700" };
     if (job.status === 'Working') statusConfig = { bg: "bg-blue-100", text: "text-blue-700" };
     if (job.status === 'Completed' || job.status === 'COMPLETED') statusConfig = { bg: "bg-emerald-100", text: "text-emerald-700" };
+
+    const customerId = job.customer_id || job.customers?.id || job.households?.id;
+
+    useEffect(() => {
+        fetchActivities();
+    }, [job.id]);
+
+    const fetchActivities = async () => {
+        const query = supabase.from('activity_logs').select('*');
+        if (isService) query.eq('service_call_id', job.id);
+        else query.eq('opportunity_id', job.id);
+        
+        const { data, error } = await query.order('created_at', { ascending: true });
+        if (!error && data) {
+            setActivities(data);
+        }
+    };
+
+    const loggedMaterials = activities.filter(a => a.activity_type === 'Materials Logged');
+    const uploadedPhotos = activities
+        .filter(a => a.activity_type === 'Attachment')
+        .map(a => {
+            try { return JSON.parse(a.description); } catch(e) { return null; }
+        })
+        .filter(Boolean);
 
     const updateStatus = async (newStatus) => {
         setUpdating(true);
@@ -413,14 +438,20 @@ function JobCard({ job, index, onUpdate, crewId }) {
     };
 
     const saveMaterials = async () => {
+        if (!materialsInput.trim()) return;
         setUpdating(true);
         try {
-            const table = isService ? 'service_calls' : 'opportunities';
-            const { data: existing } = await supabase.from(table).select('metadata').eq('id', job.id).single();
-            const newMeta = { ...(existing?.metadata || {}), materials_used: materials };
-            await supabase.from(table).update({ metadata: newMeta }).eq('id', job.id);
+            const { error } = await supabase.from('activity_logs').insert({
+                household_id: customerId,
+                [isService ? 'service_call_id' : 'opportunity_id']: job.id,
+                activity_type: 'Materials Logged',
+                description: materialsInput
+            });
+            if (error) throw error;
+            
             toast.success("Materials logged!");
-            onUpdate();
+            setMaterialsInput('');
+            fetchActivities();
         } catch (err) {
             toast.error("Failed to save materials");
         } finally {
@@ -432,6 +463,7 @@ function JobCard({ job, index, onUpdate, crewId }) {
         const file = e.target.files[0];
         if (!file) return;
 
+        setUpdating(true);
         const reader = new FileReader();
         reader.onload = (event) => {
             const img = new Image();
@@ -458,19 +490,37 @@ function JobCard({ job, index, onUpdate, crewId }) {
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
 
-                setUpdating(true);
                 try {
-                    const newPhotos = [...photos, dataUrl];
-                    const table = isService ? 'service_calls' : 'opportunities';
-                    const { data: existing } = await supabase.from(table).select('metadata').eq('id', job.id).single();
-                    const newMeta = { ...(existing?.metadata || {}), photos: newPhotos };
-                    await supabase.from(table).update({ metadata: newMeta }).eq('id', job.id);
-                    setPhotos(newPhotos);
+                    // Upload to bucket
+                    const blob = await (await fetch(dataUrl)).blob();
+                    const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.jpeg`;
+                    const filePath = `${customerId}/${isService ? 'service_calls' : 'opportunities'}/${job.id}/${fileName}`;
+                    
+                    const { error: uploadError } = await supabase.storage.from('unit_media').upload(filePath, blob);
+                    if (uploadError) throw uploadError;
+                    
+                    const { data } = supabase.storage.from('unit_media').getPublicUrl(filePath);
+                    
+                    const { error: logError } = await supabase.from('activity_logs').insert({
+                        household_id: customerId,
+                        [isService ? 'service_call_id' : 'opportunity_id']: job.id,
+                        activity_type: 'Attachment',
+                        description: JSON.stringify({
+                            name: 'Proof of Work Photo',
+                            url: data.publicUrl,
+                            type: 'image/jpeg',
+                            uploadedBy: TechName
+                        })
+                    });
+                    
+                    if (logError) throw logError;
+
                     toast.success("Photo attached to job!");
-                    onUpdate();
+                    fetchActivities();
                 } catch (err) {
+                    console.error("Photo Error:", err);
                     toast.error("Failed to upload photo");
                 } finally {
                     setUpdating(false);
@@ -575,18 +625,30 @@ function JobCard({ job, index, onUpdate, crewId }) {
                             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-inner flex flex-col gap-5">
                                 <div>
                                     <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Materials Used Log</h4>
+                                    
+                                    {loggedMaterials.length > 0 && (
+                                        <div className="flex flex-col gap-2 mb-3 max-h-32 overflow-y-auto custom-scrollbar">
+                                            {loggedMaterials.map(m => (
+                                                <div key={m.id} className="bg-slate-100/70 border border-slate-200 p-2.5 rounded-lg text-sm text-slate-600 font-medium">
+                                                    {m.description}
+                                                    <div className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">{new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     <textarea 
                                         className="w-full bg-white border border-slate-200 p-3 rounded-lg text-sm font-medium text-slate-900 outline-none focus:border-purple-400 transition-all shadow-sm resize-none h-[60px] mb-2"
-                                        placeholder="e.g. 1x Contactor, 2 lbs R410a"
-                                        value={materials}
-                                        onChange={e => setMaterials(e.target.value)}
+                                        placeholder="Add materials..."
+                                        value={materialsInput}
+                                        onChange={e => setMaterialsInput(e.target.value)}
                                     />
                                     <button 
                                         onClick={saveMaterials}
-                                        disabled={updating || materials === (job.metadata?.materials_used || '')}
+                                        disabled={updating || !materialsInput.trim()}
                                         className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs uppercase tracking-wider py-3 rounded-lg shadow-sm transition-all disabled:opacity-50 disabled:bg-slate-300 disabled:text-slate-500"
                                     >
-                                        {updating ? 'Saving...' : materials === (job.metadata?.materials_used || '') ? 'Saved' : 'Save Materials'}
+                                        {updating ? 'Saving...' : 'Save Materials'}
                                     </button>
                                 </div>
                                 
@@ -594,8 +656,8 @@ function JobCard({ job, index, onUpdate, crewId }) {
                                     <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Proof of Work Photos</h4>
                                     
                                     <div className="grid grid-cols-4 gap-2">
-                                        {photos.map((p, i) => (
-                                            <img key={i} src={p} alt="Proof" className="aspect-square w-full object-cover rounded-lg border border-slate-200 shadow-sm" />
+                                        {uploadedPhotos.map((p, i) => (
+                                            <img key={i} src={p.url} alt="Proof" className="aspect-square w-full object-cover rounded-lg border border-slate-200 shadow-sm" />
                                         ))}
                                         <button 
                                             onClick={() => fileInputRef.current?.click()}

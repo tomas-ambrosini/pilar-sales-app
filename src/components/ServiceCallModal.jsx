@@ -478,7 +478,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
             break;
     }
 
-    const baseAttachments = activities
+    const attachments = activities
         .filter(act => act.activity_type === 'Attachment')
         .map(act => {
             try { return JSON.parse(act.description); }
@@ -486,12 +486,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
         })
         .filter(Boolean);
 
-    const techPhotos = (callData?.metadata?.photos || []).map(url => ({
-        url,
-        name: 'Tech Uploaded Photo'
-    }));
-
-    const attachments = [...baseAttachments, ...techPhotos];
+    const materialsLogged = activities.filter(act => act.activity_type === 'Materials Logged');
 
     return (
         <Modal 
@@ -679,12 +674,21 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                 </span>
                             )}
                         </div>
-                        {callData.metadata?.materials_used && (
+                        
+                        {materialsLogged.length > 0 && (
                             <div className="w-full bg-orange-50/50 border border-orange-100 rounded-xl p-4 shadow-inner mb-2">
-                                <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest block mb-2">Materials Used</span>
-                                <div className="text-sm font-medium text-orange-800 whitespace-pre-wrap leading-relaxed">{callData.metadata.materials_used}</div>
+                                <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest block mb-3">Materials Used Log</span>
+                                <div className="flex flex-col gap-2">
+                                    {materialsLogged.map(m => (
+                                        <div key={m.id} className="bg-white border border-orange-100 p-3 rounded-lg text-sm text-orange-900 font-medium">
+                                            {m.description}
+                                            <div className="text-[9px] font-bold text-orange-400/70 mt-1.5 uppercase tracking-wider">Logged on {new Date(m.created_at).toLocaleDateString()} at {new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
+
                         <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-inner text-sm font-medium text-slate-700 whitespace-pre-wrap leading-relaxed">
                             {callData.issue_description || 'No dispatch instructions provided.'}
                         </div>
