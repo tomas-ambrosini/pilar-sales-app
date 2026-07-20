@@ -227,10 +227,10 @@ export default function DispatchHub() {
        setLoading(false);
    };
 
-   return (
-       <div className="page-container fade-in flex flex-col h-full bg-slate-50/50">
-           <header className="page-header pb-6 border-b border-slate-200">
-               <div>
+    return (
+        <div className="page-container fade-in flex flex-col h-[calc(100vh-4rem)] min-h-[600px] bg-slate-50/50 overflow-hidden">
+            <header className="page-header pb-6 border-b border-slate-200 shrink-0">
+                <div>
                    <h1 className="page-title text-3xl flex items-center gap-2"><Phone className="text-primary-600" /> Dispatch Hub</h1>
                    <p className="page-subtitle text-slate-500">Intake calls, log leads, and manage crew routing schedules.</p>
                </div>

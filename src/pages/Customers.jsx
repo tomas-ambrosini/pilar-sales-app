@@ -283,7 +283,7 @@ function CustomerList() {
                          <Search size={36} />
                        </div>
                        <h3 className="text-base font-bold text-slate-900 mb-1">No customers found</h3>
-                       <p className="text-sm font-medium text-slate-500 mb-6">We couldn't find any matching "{searchTerm}".</p>
+                       <p className="text-sm font-medium text-slate-500 mb-6">We couldn't find any matching "{searchQuery}".</p>
                        <button className="bg-primary-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm shadow-md hover:bg-primary-700 hover:shadow-lg transition-all focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 flex items-center gap-2" onClick={() => setIsAddCustomerOpen(true)}>
                          <Plus size={18} /> Add New Customer
                        </button>
