@@ -140,7 +140,14 @@ export default function MobileTechDashboard() {
         time_logs: [...existingLogs, newLog]
       };
       
-      await supabase.from('user_profiles').update({ metadata: newMeta }).eq('id', user.id);
+      const { data, error } = await supabase.functions.invoke('admin-action', {
+          body: { 
+              action: 'updateUser', 
+              payload: { targetUserId: user.id, metadata: newMeta } 
+          }
+      });
+      if (error || data?.error) throw new Error(error?.message || data?.error || 'Failed to update user profile');
+      
     } catch (err) {
       console.error("Failed to update clock status", err);
       // Revert on error
