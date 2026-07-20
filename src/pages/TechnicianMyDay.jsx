@@ -164,7 +164,7 @@ export default function TechnicianMyDay() {
     };
 
     return (
-        <div className="min-h-screen bg-[#fafafc] pb-24 font-sans selection:bg-primary-500/30">
+        <div className="min-h-screen bg-[#fafafc] pb-40 font-sans selection:bg-primary-500/30">
             {/* Crew Selection Area */}
             <div className="bg-white/70 backdrop-blur-xl px-5 pt-4 pb-4 border-b border-slate-100 sticky top-0 z-20">
                 <div className="flex items-center justify-between mb-3">
