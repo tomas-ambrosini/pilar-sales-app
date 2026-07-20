@@ -448,12 +448,14 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                                                     ${finalPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                                 </div>
                                             </div>
-                                            <div className="flex border-b border-slate-300 text-emerald-600">
-                                                <div className="flex-1 px-3 py-2 text-right uppercase text-[10px] tracking-wider font-bold">Deposits/Payments (-):</div>
-                                                <div className="w-32 px-3 py-2 text-right font-bold">
-                                                    ${(parseFloat(invoice.deposit_collected ?? 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                            {(parseFloat(invoice.deposit_collected ?? 0) > 0) && (
+                                                <div className="flex border-b border-slate-300 text-emerald-600">
+                                                    <div className="flex-1 px-3 py-2 text-right uppercase text-[10px] tracking-wider font-bold">Deposits/Payments (-):</div>
+                                                    <div className="w-32 px-3 py-2 text-right font-bold">
+                                                        ${(parseFloat(invoice.deposit_collected ?? 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            )}
                                             <div className="flex font-bold bg-[#e2e8f0]/40">
                                                 <div className="flex-1 px-3 py-3 text-right uppercase text-xs tracking-wider text-slate-800 flex items-center justify-end">Total Due:</div>
                                                 <div className="w-32 px-3 py-3 text-right font-black text-lg text-primary-700">
