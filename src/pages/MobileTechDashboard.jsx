@@ -115,21 +115,29 @@ export default function MobileTechDashboard() {
     setUpdatingClock(true);
     
     const newStatus = !isClockedIn;
-    const time = newStatus ? new Date() : null;
+    const time = new Date();
+    const oldClockInTime = clockInTime;
     
     // Optimistic UI update
     setIsClockedIn(newStatus);
-    setClockInTime(time);
+    setClockInTime(newStatus ? time : null);
     
     try {
       const { data: existing } = await supabase.from('user_profiles').select('metadata').eq('id', user.id).single();
       
+      const existingLogs = existing?.metadata?.time_logs || [];
+      const newLog = {
+        action: newStatus ? 'Clocked In' : 'Clocked Out',
+        timestamp: time.toISOString()
+      };
+
       const newMeta = {
         ...(existing?.metadata || {}),
         clock_status: {
           is_clocked_in: newStatus,
-          last_clock_in: time ? time.toISOString() : null
-        }
+          last_clock_in: newStatus ? time.toISOString() : null
+        },
+        time_logs: [...existingLogs, newLog]
       };
       
       await supabase.from('user_profiles').update({ metadata: newMeta }).eq('id', user.id);
@@ -137,7 +145,7 @@ export default function MobileTechDashboard() {
       console.error("Failed to update clock status", err);
       // Revert on error
       setIsClockedIn(!newStatus);
-      setClockInTime(clockInTime);
+      setClockInTime(oldClockInTime);
     } finally {
       setUpdatingClock(false);
     }
@@ -188,25 +196,41 @@ export default function MobileTechDashboard() {
         </div>
       </motion.button>
 
-      {/* Secondary Action: Company Chat */}
+      {/* Secondary Action: Clock In / Out */}
       <motion.button 
         whileTap={{ scale: 0.98 }}
-        // The drawer state is managed by the layout, so we could theoretically just fire an event
-        // But since we are inside an Outlet, navigating to a chat route or using a global state is best.
-        // For now, we will assume they use the bottom nav for chat, or we can use a custom event.
-        onClick={() => document.dispatchEvent(new CustomEvent('open-chat'))}
-        className="w-full bg-white rounded-3xl p-6 shadow-md shadow-slate-200/50 border border-slate-100 flex items-center justify-between"
+        onClick={handleClockToggle}
+        disabled={updatingClock}
+        className={`w-full rounded-3xl p-6 shadow-md shadow-slate-200/50 border flex items-center justify-between transition-all ${
+            isClockedIn 
+                ? 'bg-amber-50 border-amber-100' 
+                : 'bg-white border-slate-100'
+        }`}
       >
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-primary-50 rounded-2xl flex items-center justify-center text-primary-600">
-            <MessageSquare size={24} />
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+              isClockedIn 
+                  ? 'bg-amber-100 text-amber-600' 
+                  : 'bg-emerald-50 text-emerald-600'
+          }`}>
+            <Clock size={24} />
           </div>
           <div className="text-left">
-            <h3 className="text-xl font-bold text-slate-800">Company Chat</h3>
-            <p className="text-sm font-medium text-slate-500">Message Dispatch & Team</p>
+            <h3 className={`text-xl font-bold tracking-tight ${isClockedIn ? 'text-amber-900' : 'text-slate-800'}`}>
+                {isClockedIn ? 'Clock Out' : 'Clock In'}
+            </h3>
+            <p className={`text-sm font-medium mt-0.5 ${isClockedIn ? 'text-amber-700' : 'text-slate-500'}`}>
+                {isClockedIn && clockInTime 
+                    ? `Clocked in at ${formatTime(clockInTime)}`
+                    : 'Start your shift'}
+            </p>
           </div>
         </div>
-        <ChevronRight size={20} className="text-slate-300" />
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+            isClockedIn ? 'bg-amber-200/50' : 'bg-slate-50'
+        }`}>
+            <ChevronRight size={16} className={isClockedIn ? 'text-amber-600' : 'text-slate-400'} />
+        </div>
       </motion.button>
 
       <div className="grid grid-cols-2 gap-4 mt-2">
