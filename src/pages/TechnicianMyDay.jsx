@@ -530,18 +530,12 @@ function JobCard({ job, index, onUpdate, crewId }) {
                     >
                         <div className="p-4 space-y-5">
                             {/* Action Buttons: Maps & Call */}
-                            <div className="flex gap-3">
-                                <a href={`maps://?q=${address?.street_address}, ${address?.city}`} className="flex-1 group relative flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-blue-50 to-white hover:from-blue-100 py-4 rounded-2xl border border-blue-100 active:scale-95 transition-all shadow-sm">
-                                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-1 group-hover:scale-110 transition-transform">
-                                        <MapPin size={20} />
-                                    </div>
-                                    <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Navigate</span>
+                            <div className="flex gap-2">
+                                <a href={`maps://?q=${address?.street_address}, ${address?.city}`} className="flex-1 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[11px] uppercase tracking-wider py-3 rounded-xl border border-blue-200 active:scale-95 transition-all shadow-sm">
+                                    <MapPin size={16} /> Navigate
                                 </a>
-                                <a href={`tel:${phone}`} className="flex-1 group relative flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-emerald-50 to-white hover:from-emerald-100 py-4 rounded-2xl border border-emerald-100 active:scale-95 transition-all shadow-sm">
-                                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-1 group-hover:scale-110 transition-transform">
-                                        <Phone size={20} />
-                                    </div>
-                                    <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Call Client</span>
+                                <a href={`tel:${phone}`} className="flex-1 flex items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[11px] uppercase tracking-wider py-3 rounded-xl border border-emerald-200 active:scale-95 transition-all shadow-sm">
+                                    <Phone size={16} /> Call Client
                                 </a>
                             </div>
 
@@ -576,12 +570,12 @@ function JobCard({ job, index, onUpdate, crewId }) {
                             </div>
 
                             {/* Phase 1: Proof of Work & Materials Used */}
-                            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-6 group hover:border-slate-200 transition-colors">
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-inner flex flex-col gap-4">
                                 <div>
-                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Wrench size={14} className="text-orange-400"/> Materials Used Log</h4>
-                                    <div className="flex items-start">
+                                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Materials Used Log</h4>
+                                    <div className="flex items-end gap-2">
                                         <textarea 
-                                            className="flex-1 bg-slate-50/50 border-2 border-slate-100 p-4 rounded-xl text-sm font-semibold text-slate-800 outline-none focus:border-orange-300 focus:ring-4 focus:ring-orange-500/10 transition-all shadow-inner resize-none min-h-[80px] placeholder:text-slate-400"
+                                            className="flex-1 bg-white border border-slate-200 p-2.5 rounded-lg text-sm font-medium text-slate-900 outline-none focus:border-purple-400 transition-all shadow-sm resize-none h-[50px]"
                                             placeholder="e.g. 1x Contactor, 2 lbs R410a"
                                             value={materials}
                                             onChange={e => setMaterials(e.target.value)}
@@ -590,13 +584,13 @@ function JobCard({ job, index, onUpdate, crewId }) {
                                     </div>
                                 </div>
                                 
-                                <div className="pt-2 border-t border-slate-100">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">Proof of Work Photos</h4>
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Proof of Work Photos</h4>
                                         <button 
                                             onClick={() => fileInputRef.current?.click()}
                                             disabled={updating}
-                                            className="text-[10px] font-black uppercase tracking-wider bg-white border-2 border-slate-100 hover:border-slate-200 hover:bg-slate-50 text-slate-600 px-4 py-2 rounded-xl shadow-sm active:scale-95 transition-all"
+                                            className="text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg shadow-sm active:scale-95 transition-all"
                                         >
                                             + Add Photo
                                         </button>
@@ -609,14 +603,14 @@ function JobCard({ job, index, onUpdate, crewId }) {
                                             className="hidden" 
                                         />
                                     </div>
-                                    <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
+                                    <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
                                         {photos.length === 0 ? (
-                                            <div className="w-full h-24 border-2 border-dashed border-slate-200 bg-slate-50/50 rounded-xl flex items-center justify-center text-xs font-bold text-slate-400">
+                                            <div className="w-full h-16 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center text-xs font-bold text-slate-400">
                                                 No photos attached
                                             </div>
                                         ) : (
                                             photos.map((p, i) => (
-                                                <img key={i} src={p} alt="Proof" className="h-24 w-24 object-cover rounded-xl border border-slate-200 shadow-sm shrink-0 hover:scale-105 transition-transform" />
+                                                <img key={i} src={p} alt="Proof" className="h-16 w-16 object-cover rounded-lg border border-slate-200 shadow-sm shrink-0" />
                                             ))
                                         )}
                                     </div>
@@ -682,50 +676,39 @@ function JobCard({ job, index, onUpdate, crewId }) {
                                     </div>
                                 ) : (
                                     <>
-                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 mt-4 flex items-center gap-2"><CheckCircle size={14} className="text-emerald-400"/> Update Job Status</h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 mt-2">Update Job Status</h4>
+                                        <div className="flex flex-col gap-2">
                                             <button 
                                                 onClick={() => updateStatus('En Route')}
                                                 disabled={updating || job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED'}
-                                                className="bg-gradient-to-b from-yellow-50 to-white hover:from-yellow-100 text-yellow-700 border-2 border-yellow-100 font-black text-[11px] uppercase tracking-wider py-4 rounded-2xl shadow-sm active:scale-95 transition-all flex flex-col justify-center items-center gap-2 disabled:opacity-50"
+                                                className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 font-bold text-xs uppercase tracking-wider py-3 rounded-xl shadow-sm active:scale-95 transition-all flex justify-center items-center gap-2 disabled:opacity-50"
                                             >
-                                                <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 mb-1">
-                                                    <Truck size={20}/>
-                                                </div>
-                                                En Route
+                                                <Truck size={16}/> En Route
                                             </button>
                                             <button 
                                                 onClick={() => updateStatus('Working')}
                                                 disabled={updating || job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED'}
-                                                className="bg-gradient-to-b from-blue-50 to-white hover:from-blue-100 text-blue-700 border-2 border-blue-100 font-black text-[11px] uppercase tracking-wider py-4 rounded-2xl shadow-sm active:scale-95 transition-all flex flex-col justify-center items-center gap-2 disabled:opacity-50"
+                                                className="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold text-xs uppercase tracking-wider py-3 rounded-xl shadow-sm active:scale-95 transition-all flex justify-center items-center gap-2 disabled:opacity-50"
                                             >
-                                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-1">
-                                                    <Wrench size={20}/>
-                                                </div>
-                                                Working
+                                                <Wrench size={16}/> Working
                                             </button>
                                             
                                             {isSubcontractor() ? (
                                                 <button 
                                                     onClick={submitForPayment}
                                                     disabled={updating || job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED'}
-                                                    className={`${(job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED') ? 'bg-slate-100 text-slate-400 border-2 border-slate-200' : 'bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-2 border-emerald-500 shadow-md shadow-emerald-500/20 active:scale-95'} font-black text-[11px] uppercase tracking-wider py-4 rounded-2xl transition-all flex flex-col justify-center items-center gap-2 disabled:opacity-50`}
+                                                    className={`${(job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED') ? 'bg-slate-100 text-slate-400 border border-slate-200' : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-md active:scale-95'} font-bold text-xs uppercase tracking-wider py-3 rounded-xl transition-all flex justify-center items-center gap-2 disabled:opacity-50`}
                                                 >
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 ${job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED' ? 'bg-slate-200/50 text-slate-500' : 'bg-emerald-400/30 text-white'}`}>
-                                                        <DollarSign size={20}/> 
-                                                    </div>
+                                                    <DollarSign size={16}/> 
                                                     {(job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED') ? 'Submitted' : 'Submit App'}
                                                 </button>
                                             ) : (
                                                 <button 
                                                     onClick={() => setIsGeneratingInvoice(true)}
                                                     disabled={updating || job.status === 'Completed' || job.status === 'COMPLETED'}
-                                                    className="bg-gradient-to-b from-emerald-50 to-white hover:from-emerald-100 text-emerald-700 border-2 border-emerald-100 font-black text-[11px] uppercase tracking-wider py-4 rounded-2xl shadow-sm active:scale-95 transition-all flex flex-col justify-center items-center gap-2 disabled:opacity-50"
+                                                    className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs uppercase tracking-wider py-3 rounded-xl shadow-sm active:scale-95 transition-all flex justify-center items-center gap-2 disabled:opacity-50"
                                                 >
-                                                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-1">
-                                                        <CheckCircle size={20}/>
-                                                    </div>
-                                                    Finish
+                                                    <CheckCircle size={16}/> Finish
                                                 </button>
                                             )}
                                         </div>
