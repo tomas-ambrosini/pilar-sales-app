@@ -59,12 +59,8 @@ export default function Subcontractors() {
       try {
           toast.loading('Loading details...', { id: 'inspect_job' });
           if (type === 'SERVICE') {
-              const { data, error } = await supabase.from('service_calls')
-                  .select('*, households ( household_name, contacts ( primary_phone ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )')
-                  .eq('id', job.id).single();
-              if (error) throw error;
               toast.dismiss('inspect_job');
-              setSelectedServiceCall(data);
+              setSelectedServiceCall(job);
           } else {
               const { data, error } = await supabase.from('opportunities')
                   .select('*, households ( household_name, contacts ( primary_phone ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )')
@@ -459,9 +455,8 @@ export default function Subcontractors() {
       
       {selectedServiceCall && (
           <ServiceCallModal 
-              isOpen={!!selectedServiceCall} 
+              callId={selectedServiceCall.id} 
               onClose={() => setSelectedServiceCall(null)} 
-              serviceCall={selectedServiceCall} 
               onUpdate={() => {}} 
           />
       )}
