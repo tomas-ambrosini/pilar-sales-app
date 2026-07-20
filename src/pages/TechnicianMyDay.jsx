@@ -189,11 +189,7 @@ export default function TechnicianMyDay() {
                 )}
             </div>
             
-            {/* DIAGNOSTIC OVERLAY */}
-            <div className="fixed bottom-20 left-4 bg-black text-white text-[10px] p-2 rounded z-50 opacity-80 pointer-events-none">
-                CrewID: {selectedCrewId ? selectedCrewId.slice(0,8) : 'none'} | RawSvc: {rawCounts.svc} | RawOpp: {rawCounts.opp} | Today: {new Date().toDateString()}
-            </div>
-
+            {/* Removed Diagnostic Overlay */}
             {/* Content Area */}
             <div className="px-4 mt-6 relative z-10 space-y-4">
                 {!selectedCrewId ? (
@@ -487,21 +483,21 @@ function JobCard({ job, index, onUpdate, crewId }) {
         <motion.div 
             initial={{ opacity: 0, y: 10 }} 
             animate={{ opacity: 1, y: 0 }} 
-            className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md"
+            className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm transition-all duration-300 hover:shadow-lg hover:border-slate-300"
         >
             {/* Card Header (Always visible) */}
             <div 
                 className={`p-4 flex items-start justify-between cursor-pointer active:bg-slate-50 transition-colors ${expanded ? 'bg-slate-50/50' : ''}`}
                 onClick={() => setExpanded(!expanded)}
             >
-                <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center font-black text-slate-500 border border-slate-200">
+                <div className="flex items-start gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center font-black text-slate-400 border border-slate-200 shadow-inner">
                         {index}
                     </div>
-                    <div>
-                        <h3 className="font-black text-slate-900 text-base leading-tight tracking-tight">{customerName}</h3>
-                        <p className="text-[11px] font-medium text-slate-500 flex items-center gap-1.5 mt-1.5">
-                            <MapPin size={12} className="text-slate-400"/> <span className="truncate max-w-[180px]">{address ? address.city : 'No Address'}</span>
+                    <div className="flex flex-col justify-center py-1">
+                        <h3 className="font-black text-slate-900 text-[17px] leading-none tracking-tight mb-1.5">{customerName}</h3>
+                        <p className="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
+                            <MapPin size={12} className="text-slate-400"/> <span className="truncate max-w-[200px]">{address ? address.city : 'No Address'}</span>
                         </p>
                     </div>
                 </div>
@@ -534,21 +530,26 @@ function JobCard({ job, index, onUpdate, crewId }) {
                     >
                         <div className="p-4 space-y-5">
                             {/* Action Buttons: Maps & Call */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <a href={`maps://?q=${address?.street_address}, ${address?.city}`} className="group relative flex flex-col items-center gap-1.5 bg-white hover:bg-slate-50 p-3 rounded-xl border border-slate-200 active:scale-95 transition-all shadow-sm">
-                                    <MapPin size={18} className="text-blue-500" />
-                                    <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Navigate</span>
+                            <div className="flex gap-3">
+                                <a href={`maps://?q=${address?.street_address}, ${address?.city}`} className="flex-1 group relative flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-blue-50 to-white hover:from-blue-100 py-4 rounded-2xl border border-blue-100 active:scale-95 transition-all shadow-sm">
+                                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-1 group-hover:scale-110 transition-transform">
+                                        <MapPin size={20} />
+                                    </div>
+                                    <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Navigate</span>
                                 </a>
-                                <a href={`tel:${phone}`} className="group relative flex flex-col items-center gap-1.5 bg-white hover:bg-slate-50 p-3 rounded-xl border border-slate-200 active:scale-95 transition-all shadow-sm">
-                                    <Phone size={18} className="text-emerald-500" />
-                                    <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Call Client</span>
+                                <a href={`tel:${phone}`} className="flex-1 group relative flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-emerald-50 to-white hover:from-emerald-100 py-4 rounded-2xl border border-emerald-100 active:scale-95 transition-all shadow-sm">
+                                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-1 group-hover:scale-110 transition-transform">
+                                        <Phone size={20} />
+                                    </div>
+                                    <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Call Client</span>
                                 </a>
                             </div>
 
                             {/* Issue / Notes */}
-                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-                                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5"><MessageSquare size={14}/> Dispatch Notes</h4>
-                                <p className="text-sm font-medium text-slate-800 whitespace-pre-wrap leading-relaxed relative z-10">
+                            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group hover:border-slate-200 transition-colors">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-purple-400 to-blue-400"></div>
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2"><MessageSquare size={14} className="text-purple-400"/> Dispatch Notes</h4>
+                                <p className="text-sm font-semibold text-slate-700 whitespace-pre-wrap leading-relaxed relative z-10">
                                     {(() => {
                                         let rawNote = isService ? job.issue_description : (job.proposal_data?.dispatch_notes || job.issue_description);
                                         rawNote = rawNote ? rawNote.replace(/^[ |\n]+/, '').trim() : '';
@@ -558,9 +559,9 @@ function JobCard({ job, index, onUpdate, crewId }) {
                             </div>
 
                             {/* Add Field Note */}
-                            <div className="bg-white border border-slate-200 rounded-xl p-1.5 shadow-sm focus-within:border-purple-400 focus-within:ring-4 focus-within:ring-purple-500/10 transition-all flex items-end gap-2">
+                            <div className="bg-white border-2 border-slate-100 rounded-2xl p-2 shadow-sm focus-within:border-purple-300 focus-within:ring-4 focus-within:ring-purple-500/10 transition-all flex items-start gap-2">
                                 <textarea 
-                                    className="flex-1 bg-transparent p-2 text-sm font-medium text-slate-900 outline-none resize-none min-h-[50px] placeholder:text-slate-400"
+                                    className="flex-1 bg-transparent p-3 text-sm font-semibold text-slate-800 outline-none resize-none min-h-[60px] placeholder:text-slate-400"
                                     placeholder="Add field notes..."
                                     value={note}
                                     onChange={e => setNote(e.target.value)}
@@ -568,19 +569,19 @@ function JobCard({ job, index, onUpdate, crewId }) {
                                 <button 
                                     onClick={saveNote}
                                     disabled={updating || !note.trim()}
-                                    className="min-h-[50px] w-[50px] bg-slate-900 hover:bg-slate-800 text-white rounded-lg flex items-center justify-center disabled:opacity-50 transition-colors shadow-sm active:scale-95 shrink-0"
+                                    className="h-[60px] w-[60px] bg-slate-800 hover:bg-slate-900 text-white rounded-xl flex items-center justify-center disabled:opacity-50 transition-colors shadow-md active:scale-95 shrink-0"
                                 >
-                                    <CheckCircle size={18} />
+                                    <PenTool size={20} />
                                 </button>
                             </div>
 
                             {/* Phase 1: Proof of Work & Materials Used */}
-                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-inner flex flex-col gap-4">
+                            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-6 group hover:border-slate-200 transition-colors">
                                 <div>
-                                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Materials Used Log</h4>
-                                    <div className="flex items-end gap-2">
+                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Wrench size={14} className="text-orange-400"/> Materials Used Log</h4>
+                                    <div className="flex items-start">
                                         <textarea 
-                                            className="flex-1 bg-white border border-slate-200 p-3 rounded-lg text-sm font-medium text-slate-900 outline-none focus:border-purple-400 transition-all shadow-sm resize-none h-[60px]"
+                                            className="flex-1 bg-slate-50/50 border-2 border-slate-100 p-4 rounded-xl text-sm font-semibold text-slate-800 outline-none focus:border-orange-300 focus:ring-4 focus:ring-orange-500/10 transition-all shadow-inner resize-none min-h-[80px] placeholder:text-slate-400"
                                             placeholder="e.g. 1x Contactor, 2 lbs R410a"
                                             value={materials}
                                             onChange={e => setMaterials(e.target.value)}
@@ -589,13 +590,13 @@ function JobCard({ job, index, onUpdate, crewId }) {
                                     </div>
                                 </div>
                                 
-                                <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Proof of Work Photos</h4>
+                                <div className="pt-2 border-t border-slate-100">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">Proof of Work Photos</h4>
                                         <button 
                                             onClick={() => fileInputRef.current?.click()}
                                             disabled={updating}
-                                            className="text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg shadow-sm active:scale-95 transition-all"
+                                            className="text-[10px] font-black uppercase tracking-wider bg-white border-2 border-slate-100 hover:border-slate-200 hover:bg-slate-50 text-slate-600 px-4 py-2 rounded-xl shadow-sm active:scale-95 transition-all"
                                         >
                                             + Add Photo
                                         </button>
@@ -608,14 +609,14 @@ function JobCard({ job, index, onUpdate, crewId }) {
                                             className="hidden" 
                                         />
                                     </div>
-                                    <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                                    <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
                                         {photos.length === 0 ? (
-                                            <div className="w-full h-20 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center text-xs font-bold text-slate-400">
+                                            <div className="w-full h-24 border-2 border-dashed border-slate-200 bg-slate-50/50 rounded-xl flex items-center justify-center text-xs font-bold text-slate-400">
                                                 No photos attached
                                             </div>
                                         ) : (
                                             photos.map((p, i) => (
-                                                <img key={i} src={p} alt="Proof" className="h-20 w-20 object-cover rounded-lg border border-slate-200 shadow-sm shrink-0" />
+                                                <img key={i} src={p} alt="Proof" className="h-24 w-24 object-cover rounded-xl border border-slate-200 shadow-sm shrink-0 hover:scale-105 transition-transform" />
                                             ))
                                         )}
                                     </div>
@@ -681,39 +682,50 @@ function JobCard({ job, index, onUpdate, crewId }) {
                                     </div>
                                 ) : (
                                     <>
-                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 mt-2">Update Job Status</h4>
+                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 mt-4 flex items-center gap-2"><CheckCircle size={14} className="text-emerald-400"/> Update Job Status</h4>
                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                             <button 
                                                 onClick={() => updateStatus('En Route')}
                                                 disabled={updating || job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED'}
-                                                className="bg-yellow-50/80 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 font-black text-[11px] uppercase tracking-wider py-4 rounded-xl shadow-sm active:scale-95 transition-all flex flex-col justify-center items-center gap-2 disabled:opacity-50"
+                                                className="bg-gradient-to-b from-yellow-50 to-white hover:from-yellow-100 text-yellow-700 border-2 border-yellow-100 font-black text-[11px] uppercase tracking-wider py-4 rounded-2xl shadow-sm active:scale-95 transition-all flex flex-col justify-center items-center gap-2 disabled:opacity-50"
                                             >
-                                                <Truck size={18}/> En Route
+                                                <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 mb-1">
+                                                    <Truck size={20}/>
+                                                </div>
+                                                En Route
                                             </button>
                                             <button 
                                                 onClick={() => updateStatus('Working')}
                                                 disabled={updating || job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED'}
-                                                className="bg-blue-50/80 hover:bg-blue-100 text-blue-700 border border-blue-200 font-black text-[11px] uppercase tracking-wider py-4 rounded-xl shadow-sm active:scale-95 transition-all flex flex-col justify-center items-center gap-2 disabled:opacity-50"
+                                                className="bg-gradient-to-b from-blue-50 to-white hover:from-blue-100 text-blue-700 border-2 border-blue-100 font-black text-[11px] uppercase tracking-wider py-4 rounded-2xl shadow-sm active:scale-95 transition-all flex flex-col justify-center items-center gap-2 disabled:opacity-50"
                                             >
-                                                <Wrench size={18}/> Working
+                                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-1">
+                                                    <Wrench size={20}/>
+                                                </div>
+                                                Working
                                             </button>
                                             
                                             {isSubcontractor() ? (
                                                 <button 
                                                     onClick={submitForPayment}
                                                     disabled={updating || job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED'}
-                                                    className={`${(job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED') ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-500/20 active:scale-95'} font-black text-[11px] uppercase tracking-wider py-4 rounded-xl transition-all flex flex-col justify-center items-center gap-2 disabled:opacity-50`}
+                                                    className={`${(job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED') ? 'bg-slate-100 text-slate-400 border-2 border-slate-200' : 'bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-2 border-emerald-500 shadow-md shadow-emerald-500/20 active:scale-95'} font-black text-[11px] uppercase tracking-wider py-4 rounded-2xl transition-all flex flex-col justify-center items-center gap-2 disabled:opacity-50`}
                                                 >
-                                                    <DollarSign size={18}/> 
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 ${job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED' ? 'bg-slate-200/50 text-slate-500' : 'bg-emerald-400/30 text-white'}`}>
+                                                        <DollarSign size={20}/> 
+                                                    </div>
                                                     {(job.status === 'Ready for Review' || job.status === 'Completed' || job.status === 'COMPLETED') ? 'Submitted' : 'Submit App'}
                                                 </button>
                                             ) : (
                                                 <button 
                                                     onClick={() => setIsGeneratingInvoice(true)}
                                                     disabled={updating || job.status === 'Completed' || job.status === 'COMPLETED'}
-                                                    className="bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-black text-[11px] uppercase tracking-wider py-4 rounded-xl shadow-sm active:scale-95 transition-all flex flex-col justify-center items-center gap-2 disabled:opacity-50"
+                                                    className="bg-gradient-to-b from-emerald-50 to-white hover:from-emerald-100 text-emerald-700 border-2 border-emerald-100 font-black text-[11px] uppercase tracking-wider py-4 rounded-2xl shadow-sm active:scale-95 transition-all flex flex-col justify-center items-center gap-2 disabled:opacity-50"
                                                 >
-                                                    <CheckCircle size={18}/> Finish
+                                                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-1">
+                                                        <CheckCircle size={20}/>
+                                                    </div>
+                                                    Finish
                                                 </button>
                                             )}
                                         </div>
