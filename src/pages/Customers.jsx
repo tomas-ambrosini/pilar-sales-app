@@ -659,7 +659,7 @@ function CustomerDetail() {
   const customer = customers.find(c => c.id.toString() === id.toString());
   
   const primaryLocations = (customer?.locations || []).filter(loc => loc.is_primary_residence);
-  const managedLocations = (customer?.locations || []).filter(loc => !loc.is_primary_residence);
+  const managedLocations = (customer?.locations || []).filter(loc => !loc.is_primary_residence && loc.id !== customer?.billing_address_obj?.id);
   
   // Cross-pollinate data
   const custNameLower = customer?.name?.trim().toLowerCase();
