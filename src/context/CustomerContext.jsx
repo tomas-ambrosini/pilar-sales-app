@@ -490,22 +490,37 @@ export function CustomerProvider({ children }) {
             }
             
             // Sync Addresses if provided
-            if (updatedData.service_address_id && updatedData.address) {
+            if (updatedData.address && updatedData.service_address_id) {
                 await supabase.from('addresses').update({
-                    street: updatedData.address,
+                    street_address: updatedData.address,
                     city: updatedData.city,
                     state: updatedData.state,
                     zip: updatedData.zip
                 }).eq('id', updatedData.service_address_id);
             }
             
-            if (updatedData.billing_address_id && updatedData.billing_address) {
-                await supabase.from('addresses').update({
-                    street: updatedData.billing_address,
-                    city: updatedData.billing_city,
-                    state: updatedData.billing_state,
-                    zip: updatedData.billing_zip
-                }).eq('id', updatedData.billing_address_id);
+            if (updatedData.billing_address) {
+                if (updatedData.billing_address_id) {
+                    await supabase.from('addresses').update({
+                        street_address: updatedData.billing_address,
+                        city: updatedData.billing_city,
+                        state: updatedData.billing_state,
+                        zip: updatedData.billing_zip
+                    }).eq('id', updatedData.billing_address_id);
+                } else {
+                    const { data: billingData, error: billingError } = await supabase.from('addresses').insert({
+                        household_id: id,
+                        street_address: updatedData.billing_address,
+                        city: updatedData.billing_city || '',
+                        state: updatedData.billing_state || '',
+                        zip: updatedData.billing_zip || '',
+                        is_primary_residence: false
+                    }).select().single();
+                    
+                    if (!billingError && billingData) {
+                        await supabase.from('households').update({ billing_address_id: billingData.id }).eq('id', id);
+                    }
+                }
             }
 
             const contactUpdates = {};
