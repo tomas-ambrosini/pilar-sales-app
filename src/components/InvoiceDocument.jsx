@@ -402,6 +402,17 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                                 {(() => {
                                     const promoCode = invoice.proposals?.applied_promo_code || pData.applied_promo_code || pData.applied_promo?.code || '';
                                     const discountAmount = originalPrice - finalPrice;
+                                    
+                                    const serviceItems = invoice.metadata?.service_call_items || [];
+                                    const hasServiceDiscounts = serviceItems.some(item => parseFloat(item.unit_price || 0) < 0);
+                                    const serviceSubtotal = serviceItems.reduce((sum, item) => {
+                                        const price = parseFloat(item.unit_price || 0) * parseFloat(item.quantity || 0);
+                                        return price > 0 ? sum + price : sum;
+                                    }, 0);
+                                    const serviceDiscountAmount = serviceItems.reduce((sum, item) => {
+                                        const price = parseFloat(item.unit_price || 0) * parseFloat(item.quantity || 0);
+                                        return price < 0 ? sum + Math.abs(price) : sum;
+                                    }, 0);
 
                                 return (
                                     <>
@@ -423,23 +434,23 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                                         
                                         <div className="w-[300px] border border-slate-300 rounded overflow-hidden bg-[#f8fafc]">
                                             {/* Subtotal Row (if discount exists) */}
-                                            {discountPercent > 0 && (
+                                            {(discountPercent > 0 || hasServiceDiscounts) && (
                                                 <div className="flex border-b border-slate-200">
-                                                    <div className="flex-1 px-3 py-2 text-right uppercase text-[10px] tracking-wider text-slate-500 font-bold">System Subtotal:</div>
+                                                    <div className="flex-1 px-3 py-2 text-right uppercase text-[10px] tracking-wider text-slate-500 font-bold">Subtotal:</div>
                                                     <div className="w-32 px-3 py-2 text-right font-bold text-slate-600">
-                                                        ${originalPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                        ${(hasServiceDiscounts ? serviceSubtotal : originalPrice).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                                     </div>
                                                 </div>
                                             )}
                                             
                                             {/* Discount Row (if discount exists) */}
-                                            {discountPercent > 0 && (
+                                            {(discountPercent > 0 || hasServiceDiscounts) && (
                                                 <div className="flex border-b border-slate-200 bg-emerald-50/50">
                                                     <div className="flex-1 px-3 py-2 text-right uppercase text-[10px] tracking-wider text-emerald-700 font-bold">
-                                                        Discount {promoCode ? `(${promoCode} - ${discountPercent}%)` : `(${discountPercent}%)`}:
+                                                        {hasServiceDiscounts ? 'Discounts (-):' : `Discount ${promoCode ? `(${promoCode} - ${discountPercent}%)` : `(${discountPercent}%)`}:`}
                                                     </div>
                                                     <div className="w-32 px-3 py-2 text-right font-bold text-emerald-700">
-                                                        -${discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                        -${(hasServiceDiscounts ? serviceDiscountAmount : discountAmount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                                     </div>
                                                 </div>
                                             )}
