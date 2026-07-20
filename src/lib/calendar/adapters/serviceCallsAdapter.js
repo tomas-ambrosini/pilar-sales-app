@@ -4,7 +4,7 @@ import { normalizeCalendarEvent } from '../normalizeCalendarEvent';
 export const serviceCallsAdapter = async (dateStart, dateEnd) => {
   const { data, error } = await supabase
     .from('service_calls')
-    .select(`id, issue_description, urgency, assigned_techs, scheduled_start, scheduled_end, arrival_window_start, arrival_window_end, status, customer_id`)
+    .select(`id, issue_description, urgency, assigned_techs, scheduled_start, scheduled_end, arrival_window_start, arrival_window_end, status, customer_id, households(household_name)`)
     .gte('scheduled_start', dateStart)
     .lte('scheduled_start', dateEnd)
     .eq('is_active', true);
@@ -35,7 +35,8 @@ export const serviceCallsAdapter = async (dateStart, dateEnd) => {
       customer_id: call.customer_id,
       color_key: 'amber',
       route_target: 'service_call_modal',
-      metadata: {}
+      metadata: {},
+      customer_name: call.households?.household_name || ''
     });
   });
 };

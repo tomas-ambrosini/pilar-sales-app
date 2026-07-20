@@ -24,7 +24,7 @@ export default function CalendarEventChip({ eventInfo }) {
         {isBlocking && <Lock size={12} className="text-slate-400 shrink-0" />}
         {isUrgent && <Zap size={12} className="text-amber-500 shrink-0" />}
         {isFinancial && <DollarSign size={12} className="text-emerald-500 shrink-0" />}
-        <span className="font-bold truncate text-sm">{event.title}</span>
+        <span className="font-bold truncate text-sm">{event.title} {props.customer_name ? `- ${props.customer_name}` : ''}</span>
         <span className="text-xs text-slate-500 ml-auto shrink-0 font-medium">{props.status}</span>
       </div>
     );
@@ -91,7 +91,7 @@ export default function CalendarEventChip({ eventInfo }) {
       {/* Optional Sub-line */}
       {!event.allDay && timeText && (
         <div className="text-[9.5px] opacity-90 truncate flex items-center gap-1 mt-0.5 font-medium tracking-tight">
-          {timeText}
+          {timeText} {props.customer_name ? `- ${props.customer_name}` : ''}
         </div>
       )}
     </div>

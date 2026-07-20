@@ -29,7 +29,8 @@ export const opportunitiesAdapter = async (dateStart, dateEnd) => {
       status: opp.current_stage,
       color_key: 'blue',
       route_target: 'opportunity_overview',
-      metadata: { value: opp.total_value }
+      metadata: { value: opp.total_value },
+      customer_name: opp.lead_name?.replace(/ Account$/i, '').trim() || ''
     });
   });
 };
