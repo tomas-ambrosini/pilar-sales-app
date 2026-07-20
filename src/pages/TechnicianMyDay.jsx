@@ -99,14 +99,21 @@ export default function TechnicianMyDay() {
             d.setDate(d.getDate() + 4);
             const future = d.toISOString().split('T')[0];
 
-            // Fetch Jobs using Admin Edge Function to bypass RLS for Subcontractors
-            const { data: edgeData, error: edgeError } = await supabase.functions.invoke('admin-action', {
-                body: { action: 'fetchMyDayJobs', payload: { past, future } }
-            });
+            // Fetch Service Calls (Removed 'metadata' column which does not exist and was crashing the query)
+            const { data: svcData, error: svcError } = await supabase.from('service_calls').select(`
+                id, status, urgency, call_type, issue_description, scheduled_start, assigned_techs,
+                households ( household_name, contacts ( primary_phone ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
+            `).gte('scheduled_start', `${past}T00:00:00`).lte('scheduled_start', `${future}T23:59:59`);
 
-            if (edgeError) throw new Error(edgeError.message);
+            if (svcError) console.error("Service Calls Query Error:", svcError);
 
-            const { svcData, oppData } = edgeData || { svcData: [], oppData: [] };
+            // Fetch Installs/Opportunities
+            const { data: oppData, error: oppError } = await supabase.from('opportunities').select(`
+                id, status, urgency_level, issue_description, scheduled_date, scheduled_time_block, proposal_data, assigned_crew_id,
+                households ( household_name, contacts ( primary_phone ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence ) )
+            `).gte('scheduled_date', past).lte('scheduled_date', future);
+
+            if (oppError) console.error("Opportunities Query Error:", oppError);
 
             const combined = [
                 ...(svcData || []).map(s => ({ ...s, __type: 'SERVICE' })),
