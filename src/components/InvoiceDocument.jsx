@@ -240,23 +240,25 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                                     <div className="w-32 px-3 py-1.5 text-right">Ext Price</div>
                                 </div>
                                 <div className="flex flex-col bg-[#f8fafc]">
-                                    {invoice.metadata.service_call_items.map((item, idx) => (
-                                        <div key={idx} className="flex border-b border-slate-200">
+                                    {invoice.metadata.service_call_items.map((item, idx) => {
+                                        const isDiscount = item.is_waive_discount || parseFloat(item.unit_price || 0) < 0;
+                                        return (
+                                        <div key={idx} className={`flex border-b border-slate-200 ${isDiscount ? 'bg-emerald-50' : ''}`}>
                                             <div className="flex-1 px-3 py-2 border-r border-slate-200 flex flex-col justify-center">
-                                                <span className="text-slate-800 font-bold">{item.title || 'Custom Item'}</span>
-                                                {item.description && <span className="text-slate-500 text-xs mt-0.5">{item.description}</span>}
+                                                <span className={isDiscount ? 'text-emerald-700 font-black' : 'text-slate-800 font-bold'}>{item.title || 'Custom Item'}</span>
+                                                {item.description && <span className={`${isDiscount ? 'text-emerald-600 font-medium' : 'text-slate-500'} text-xs mt-0.5`}>{item.description}</span>}
                                             </div>
-                                            <div className="w-20 px-3 py-2 border-r border-slate-200 text-center text-slate-600">
+                                            <div className={`w-20 px-3 py-2 border-r border-slate-200 text-center ${isDiscount ? 'text-emerald-600 font-bold' : 'text-slate-600'}`}>
                                                 {item.quantity}
                                             </div>
-                                            <div className="w-32 px-3 py-2 border-r border-slate-200 text-right text-slate-600">
+                                            <div className={`w-32 px-3 py-2 border-r border-slate-200 text-right ${isDiscount ? 'text-emerald-600 font-bold' : 'text-slate-600'}`}>
                                                 ${parseFloat(item.unit_price || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                             </div>
-                                            <div className="w-32 px-3 py-2 text-right font-bold text-slate-800">
+                                            <div className={`w-32 px-3 py-2 text-right font-black ${isDiscount ? 'text-emerald-700' : 'text-slate-800'}`}>
                                                 ${(parseFloat(item.quantity || 0) * parseFloat(item.unit_price || 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                             </div>
                                         </div>
-                                    ))}
+                                    )})}
                                 </div>
                             </div>
                         ) : (resolvedSystemsList && resolvedSystemsList.length > 0) ? (
