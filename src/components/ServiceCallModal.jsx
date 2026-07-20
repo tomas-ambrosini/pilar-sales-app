@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { X, Wrench, Clock, MapPin, Phone, Save, Calendar as CalendarIcon, UserCheck, AlertCircle, Check, Mail, Navigation, Info, MessageSquare, Activity, Send, History, Paperclip, Upload, FileText, Image as ImageIcon, Download, ExternalLink, Calculator, DollarSign, PlusCircle, Trash2 } from 'lucide-react';
+import { X, Wrench, Clock, MapPin, Phone, Save, Calendar as CalendarIcon, UserCheck, AlertCircle, Check, Mail, Navigation, Info, MessageSquare, Activity, Send, History, Paperclip, Upload, FileText, Image as ImageIcon, Download, ExternalLink, Calculator, DollarSign, PlusCircle, Trash2, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
@@ -41,6 +41,15 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                     setQuoteItems(qd.items);
                 }
             } catch(e) {}
+        } else if (callData && callData.id) {
+            setQuoteItems([{
+                id: 'sys-fee-' + Date.now(),
+                title: 'Service Call Dispatch Fee',
+                description: 'Standard dispatch and diagnostic fee. Waived with authorized repair.',
+                quantity: 1,
+                unit_price: 99.95,
+                is_dispatch_fee: true
+            }]);
         }
     }, [callData]);
 
@@ -339,6 +348,20 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
     const handleAddQuoteItem = () => {
         if (!callData.customer_id) return toast.error("Must have a customer profile to quote.");
         setQuoteItems([...quoteItems, { id: Date.now(), title: '', description: '', quantity: 1, unit_price: 0 }]);
+    };
+
+    const handleWaiveDispatchFee = () => {
+        const feeItem = quoteItems.find(i => i.is_dispatch_fee);
+        if (feeItem && feeItem.unit_price > 0 && !quoteItems.some(i => i.is_waive_discount)) {
+            setQuoteItems([...quoteItems, {
+                id: 'sys-waive-' + Date.now(),
+                title: 'Discount (Waived Dispatch Fee)',
+                description: 'Sales promotion: Dispatch fee waived with authorized repair.',
+                quantity: 1,
+                unit_price: -feeItem.unit_price,
+                is_waive_discount: true
+            }]);
+        }
     };
 
     const handleUpdateQuoteItem = (id, field, value) => {
@@ -905,7 +928,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                                                     <span className="absolute left-2 top-1.5 text-slate-400 text-sm font-bold">$</span>
                                                                     <input 
                                                                         type="number" 
-                                                                        min="0" step="0.01"
+                                                                        step="0.01"
                                                                         value={item.unit_price} 
                                                                         onChange={(e) => handleUpdateQuoteItem(item.id, 'unit_price', e.target.value)}
                                                                         className="w-full bg-white border border-slate-200 rounded-lg pl-6 pr-2 py-1.5 text-right text-sm font-bold text-slate-700 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
@@ -933,13 +956,21 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="px-4 py-3 bg-white border-t border-slate-100 shrink-0">
+                                    <div className="px-4 py-3 bg-white border-t border-slate-100 shrink-0 flex items-center gap-4">
                                         <button 
                                             onClick={handleAddQuoteItem}
                                             className="text-sm font-bold text-primary-600 hover:text-primary-700 flex items-center gap-2 transition-colors py-1"
                                         >
                                             <PlusCircle size={16} /> Add line item
                                         </button>
+                                        {quoteItems.some(i => i.is_dispatch_fee) && !quoteItems.some(i => i.is_waive_discount) && (
+                                            <button 
+                                                onClick={handleWaiveDispatchFee}
+                                                className="text-sm font-bold text-amber-600 hover:text-amber-700 flex items-center gap-2 transition-colors py-1"
+                                            >
+                                                <Tag size={16} /> Waive Dispatch Fee
+                                            </button>
+                                        )}
                                     </div>
                                     <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col gap-2 shrink-0">
                                         <div className="flex justify-between items-center text-sm font-bold text-slate-600">
