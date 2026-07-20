@@ -984,24 +984,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm shrink-0">
-                                    <h4 className="font-black text-slate-800 mb-3 flex items-center gap-2">
-                                        <DollarSign size={16} className="text-emerald-600" /> Invoice Payment
-                                    </h4>
-                                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={paymentCollected}
-                                            onChange={(e) => setPaymentCollected(e.target.checked)}
-                                            className="w-5 h-5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
-                                        />
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-bold text-slate-800">Mark as Paid in Full</span>
-                                            <span className="text-xs font-medium text-slate-500">Select this if the subcontractor collected payment on-site.</span>
-                                        </div>
-                                    </label>
-                                </div>
+
                             </div>
                             <div className="p-4 border-t border-slate-200 bg-white shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)] shrink-0 flex justify-end gap-3">
                                 <button 
