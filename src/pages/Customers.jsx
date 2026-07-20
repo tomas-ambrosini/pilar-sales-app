@@ -788,7 +788,14 @@ function CustomerDetail() {
                           name: customer?.name || '',
                           email: customer?.email || '',
                           phone: customer?.phone || '',
-                          address: customer?.address || '',
+                          address: customer?.primary_address_obj?.street_address || customer?.address || '',
+                          city: customer?.primary_address_obj?.city || '',
+                          state: customer?.primary_address_obj?.state || '',
+                          zip: customer?.primary_address_obj?.zip || '',
+                          billing_address: customer?.billing_address_obj?.street_address || '',
+                          billing_city: customer?.billing_address_obj?.city || '',
+                          billing_state: customer?.billing_address_obj?.state || '',
+                          billing_zip: customer?.billing_address_obj?.zip || '',
                           tags: customer?.tags ? customer.tags.join(', ') : ''
                       });
                       setIsEditModalOpen(true);
