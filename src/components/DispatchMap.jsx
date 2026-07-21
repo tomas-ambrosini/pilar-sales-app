@@ -201,7 +201,6 @@ export default function DispatchMap() {
 
             // Precise Javascript filtering for Scheduled/Completed jobs
             const filterJobByDate = (job, dateField) => {
-                if (job.status === 'En Route' || job.status === 'Working') return true;
                 if (!job[dateField]) return false;
                 
                 let dateStr = job[dateField];
