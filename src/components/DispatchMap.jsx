@@ -189,15 +189,13 @@ export default function DispatchMap() {
                 id, created_at, status, urgency_level, scheduled_date, scheduled_time_block, assigned_crew_id, issue_description, household_id, proposal_data,
                 households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence, property_details ) )
             `).in('status', ['Scheduled', 'En Route', 'Working', 'Completed', 'Complete'])
-              .eq('is_active', true)
-              .or(`status.in.("En Route","Working"),and(scheduled_date.gte."${fetchStartStr}",scheduled_date.lte."${fetchEndStr}")`);
+              .eq('is_active', true);
 
             // Fetch Service Calls (Service)
             const { data: svc } = await supabase.from('service_calls').select(`
                 id, created_at, status, urgency, call_type, tags, issue_description, customer_id, assigned_techs, scheduled_start, scheduled_end,
                 households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence, property_details ) )
-            `).in('status', ['Pending', 'Scheduled', 'Dispatched', 'En Route', 'Working', 'Completed', 'Complete'])
-              .or(`status.in.("En Route","Working"),and(scheduled_start.gte."${fetchStartStr}",scheduled_start.lte."${fetchEndStr}")`);
+            `).in('status', ['Pending', 'Scheduled', 'Dispatched', 'En Route', 'Working', 'Completed', 'Complete']);
 
             // Precise Javascript filtering for Scheduled/Completed jobs
             const filterJobByDate = (job, dateField) => {

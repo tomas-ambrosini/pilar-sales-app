@@ -1,18 +1,18 @@
-const { createClient } = require('@supabase/supabase-js');
-const fs = require('fs');
-const env = fs.readFileSync('.env', 'utf8').split('\n');
-let url = '', key = '';
-for (const line of env) {
-  if (line.startsWith('VITE_SUPABASE_URL=')) url = line.split('=')[1];
-  if (line.startsWith('VITE_SUPABASE_ANON_KEY=')) key = line.split('=')[1];
-}
-const supabase = createClient(url, key);
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+dotenv.config();
 
-async function test() {
-  console.log("Checking schema...");
-  const { data: opps, error: e1 } = await supabase.from('opportunities').select('id, assigned_crew_id, households(household_name, addresses(city))').limit(1);
-  console.log("Opps schema check:", opps, e1);
-  const { data: calls, error: e2 } = await supabase.from('service_calls').select('id, assigned_techs, households(household_name, addresses(city))').limit(1);
-  console.log("Calls schema check:", calls, e2);
+const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
+async function run() {
+  const fetchStartStr = "2026-07-18T00:00:00.000Z";
+  const fetchEndStr = "2026-07-28T00:00:00.000Z";
+  
+  const { data, error } = await supabase.from('service_calls').select('id, status, scheduled_start')
+    .in('status', ['Pending', 'Scheduled', 'Dispatched', 'En Route', 'Working', 'Completed', 'Complete'])
+    .or(`status.in.("En Route","Working"),and(scheduled_start.gte."${fetchStartStr}",scheduled_start.lte."${fetchEndStr}")`);
+    
+  console.log("Error:", error);
+  console.log("Data count:", data?.length);
+  console.log("Data:", data);
 }
-test();
+run();
