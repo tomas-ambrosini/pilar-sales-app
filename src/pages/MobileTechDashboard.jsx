@@ -36,9 +36,13 @@ export default function MobileTechDashboard() {
         }
 
         let myCrews = crews.filter(c => {
-            const cName = c.crew_name.toLowerCase().trim();
             const cEmail = (c.tech_email || '').toLowerCase().trim();
-            if (cEmail && email && cEmail === email) return true;
+            if (cEmail && email && cEmail === email) return true; // Employee Match
+            
+            if (c.subcontractor_id === user.id) return true; // Robust Subcontractor match
+            
+            // Fallback
+            const cName = c.crew_name.toLowerCase().trim();
             if (!userName && !companyName) return false;
             return (userName && cName.includes(userName)) || 
                    (companyName && cName.includes(companyName)) ||
@@ -49,7 +53,7 @@ export default function MobileTechDashboard() {
             setJobCount(0); setLoadingJobs(false); return;
         }
 
-        const crewId = myCrews[0].id;
+        const crewIds = myCrews.map(c => c.id);
         
         const d = new Date();
         d.setDate(d.getDate() - 2);
@@ -71,9 +75,9 @@ export default function MobileTechDashboard() {
             let belongsToCrew = false;
             if (job.__type === 'SERVICE') {
                 let techsStr = typeof job.assigned_techs === 'string' ? job.assigned_techs : JSON.stringify(job.assigned_techs || []);
-                belongsToCrew = techsStr.includes(crewId);
+                belongsToCrew = crewIds.some(cId => techsStr.includes(cId));
             } else {
-                belongsToCrew = job.assigned_crew_id === crewId;
+                belongsToCrew = crewIds.includes(job.assigned_crew_id);
             }
             if (!belongsToCrew) return false;
 

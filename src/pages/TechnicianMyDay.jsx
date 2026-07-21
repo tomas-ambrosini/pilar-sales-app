@@ -61,12 +61,14 @@ export default function TechnicianMyDay() {
                 
                 // Strict filter so techs/subs only see their own crews
                 availableCrews = data.filter(c => {
-                    const cName = c.crew_name.toLowerCase().trim();
                     const cEmail = (c.tech_email || '').toLowerCase().trim();
+                    if (cEmail && email && cEmail === email) return true; // Employee Tech match
                     
-                    if (cEmail && email && cEmail === email) return true;
+                    if (c.subcontractor_id === user.id) return true; // Robust Subcontractor match
+                    
+                    // Fallback to legacy string matching just in case
+                    const cName = c.crew_name.toLowerCase().trim();
                     if (!userName && !companyName) return false;
-                    
                     return (userName && cName.includes(userName)) || 
                            (companyName && cName.includes(companyName)) ||
                            (userName && userName.includes(cName));
