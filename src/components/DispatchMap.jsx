@@ -65,8 +65,8 @@ const createStatusIcon = (status, type, urgency) => {
 const getTechIcon = () => {
     const html = `
         <div class="relative flex items-center justify-center">
-            <div class="absolute inset-0 bg-blue-500/30 rounded-full animate-ping" style="width: 40px; height: 40px; left: -5px; top: -5px;"></div>
-            <div class="relative bg-blue-600 text-white rounded-full flex items-center justify-center border-2 border-white shadow-lg" style="width: 30px; height: 30px;">
+            <div class="absolute inset-0 bg-purple-500/40 rounded-full animate-ping" style="width: 40px; height: 40px; left: -5px; top: -5px;"></div>
+            <div class="relative bg-purple-600 text-white rounded-full flex items-center justify-center border-2 border-white shadow-lg" style="width: 30px; height: 30px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/><path d="M14 9h4l4 4v4c0 .6-.4 1-1 1h-2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
             </div>
         </div>
@@ -328,7 +328,7 @@ export default function DispatchMap() {
                                     <div className="p-2 text-center min-w-[120px]">
                                         <div className="font-bold text-slate-900 mb-1">Tech Vehicle</div>
                                         <div className="text-xs text-slate-500">Target: {job.customerName}</div>
-                                        <div className="text-xs font-bold text-blue-600 mt-1">{job.status}</div>
+                                        <div className="text-xs font-bold text-purple-600 mt-1">{job.status}</div>
                                     </div>
                                 </Popup>
                             </Marker>
