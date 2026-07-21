@@ -121,17 +121,18 @@ export default function DispatchMap() {
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [liveTechLocations, setLiveTechLocations] = useState({});
+    const [timeFilter, setTimeFilter] = useState('day');
 
     useEffect(() => {
-        fetchTodayJobs();
+        fetchJobs(timeFilter);
         
         // Setup realtime listeners
         const oppChannel = supabase.channel('realtime_map_opps')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'opportunities' }, () => fetchTodayJobs())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'opportunities' }, () => fetchJobs(timeFilter))
             .subscribe();
             
         const svcChannel = supabase.channel('realtime_map_svc')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'service_calls' }, () => fetchTodayJobs())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'service_calls' }, () => fetchJobs(timeFilter))
             .subscribe();
 
         const techLocationChannel = supabase.channel('dispatch-tech-locations')
@@ -148,25 +149,50 @@ export default function DispatchMap() {
             supabase.removeChannel(svcChannel);
             supabase.removeChannel(techLocationChannel);
         };
-    }, []);
+    }, [timeFilter]);
 
-    const fetchTodayJobs = async () => {
+    const fetchJobs = async (filterVal) => {
         try {
-            // Get today's date string YYYY-MM-DD
-            // For the demo, we'll just fetch ALL scheduled jobs so the map looks populated, 
-            // since we might not have jobs exactly scheduled for "today" in the DB.
+            setLoading(true);
+            const now = new Date();
+            let start = new Date(now);
+            let end = new Date(now);
+            
+            if (filterVal === 'day') {
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
+            } else if (filterVal === 'week') {
+                const day = start.getDay();
+                const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+                start.setDate(diff);
+                start.setHours(0, 0, 0, 0);
+                end = new Date(start);
+                end.setDate(end.getDate() + 6);
+                end.setHours(23, 59, 59, 999);
+            } else if (filterVal === 'month') {
+                start = new Date(now.getFullYear(), now.getMonth(), 1);
+                end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+            }
+
+            const startDateStr = start.toISOString();
+            const endDateStr = end.toISOString();
             
             // Fetch Opportunities (Sales)
             const { data: opps } = await supabase.from('opportunities').select(`
                 id, created_at, status, urgency_level, scheduled_date, scheduled_time_block, assigned_crew_id, issue_description, household_id, proposal_data,
                 households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence, property_details ) )
-            `).in('status', [PIPELINE_STATES.SCHEDULED, 'En Route', 'Working', 'Completed', 'Complete']).eq('is_active', true);
+            `).in('status', ['Scheduled', 'En Route', 'Working', 'Completed', 'Complete'])
+              .eq('is_active', true)
+              .gte('scheduled_date', startDateStr)
+              .lte('scheduled_date', endDateStr);
 
             // Fetch Service Calls (Service)
             const { data: svc } = await supabase.from('service_calls').select(`
                 id, created_at, status, urgency, call_type, tags, issue_description, customer_id, assigned_techs, scheduled_start, scheduled_end,
                 households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence, property_details ) )
-            `).in('status', ['Scheduled', 'En Route', 'Working', 'Completed', 'Complete']);
+            `).in('status', ['Scheduled', 'En Route', 'Working', 'Completed', 'Complete'])
+              .gte('scheduled_start', startDateStr)
+              .lte('scheduled_start', endDateStr);
 
             const normalizedOpps = (opps || []).map(o => {
             let targetAddress = null;
@@ -357,7 +383,28 @@ export default function DispatchMap() {
                     <div className="flex items-center gap-2 mt-1">
                         <div className="w-3 h-3 rounded-full border-2 border-red-500 bg-transparent"></div> Emergency
                     </div>
+                    <div className="flex items-center gap-2 mt-1 border-t border-slate-100 pt-2">
+                        <div className="w-4 h-4 rounded-full bg-purple-600 flex items-center justify-center text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/><path d="M14 9h4l4 4v4c0 .6-.4 1-1 1h-2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+                        </div> 
+                        Tech Vehicle
+                    </div>
                 </div>
+            </div>
+
+            {/* Filter Toggle */}
+            <div className="absolute top-4 right-4 z-20 bg-white/90 backdrop-blur p-1 rounded-lg border border-slate-200 shadow-sm flex items-center gap-1">
+                {['day', 'week', 'month'].map(t => (
+                    <button
+                        key={t}
+                        onClick={() => setTimeFilter(t)}
+                        className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-colors ${
+                            timeFilter === t ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                        }`}
+                    >
+                        {t}
+                    </button>
+                ))}
             </div>
             
             {/* Global Styles for Leaflet Popups to match Pilar theme */}
