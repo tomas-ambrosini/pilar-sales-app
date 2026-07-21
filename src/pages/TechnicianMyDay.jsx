@@ -248,7 +248,7 @@ function JobCard({ job, index, onUpdate, crewId }) {
         ? job.households?.contacts?.[0]?.primary_phone
         : job.households?.contacts?.[0]?.primary_phone;
 
-    const isEnRoute = job.status === 'En Route';
+    const isEnRoute = job.status === 'En Route' || job.status === 'Working';
     const { isBroadcasting } = useLocationTracking(crewId, job.id, isEnRoute);
 
     let statusConfig = { bg: "bg-slate-100", text: "text-slate-700" };
