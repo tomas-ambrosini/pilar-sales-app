@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { PIPELINE_STATES, PipelineController } from '../utils/pipelineControls';
 import { AlertTriangle, Clock, ArrowRight, DollarSign, Calendar, Zap, AlertCircle, MapPin, UserCircle2, X, Wrench, Trash2 } from 'lucide-react';
@@ -534,18 +535,37 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                             className={`group relative cursor-pointer bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-l-[5px] ${urgencyBorder} p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}
                                         >
                                             {isSLA_Violated && (
-                                                <div 
-                                                    className="absolute inset-0 pointer-events-none z-0 transition-all duration-1000 rounded-xl"
-                                                    style={{
-                                                        background: `linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(239, 68, 68, 0.1) ${infectionPercentage}%, transparent ${Math.min(100, infectionPercentage + 20)}%)`
+                                                <motion.div 
+                                                    className="absolute inset-0 rounded-xl pointer-events-none z-0"
+                                                    animate={{
+                                                        background: [
+                                                            `radial-gradient(circle at top right, rgba(239, 68, 68, ${0.05 + (infectionPercentage * 0.0015)}) 0%, rgba(239, 68, 68, ${0.02 + (infectionPercentage * 0.001)}) ${infectionPercentage}%, transparent ${Math.min(100, infectionPercentage + 20)}%)`,
+                                                            `radial-gradient(circle at top right, rgba(239, 68, 68, ${0.1 + (infectionPercentage * 0.0025)}) 0%, rgba(239, 68, 68, ${0.05 + (infectionPercentage * 0.002)}) ${Math.min(100, infectionPercentage + 15)}%, transparent ${Math.min(100, infectionPercentage + 40)}%)`,
+                                                            `radial-gradient(circle at top right, rgba(239, 68, 68, ${0.05 + (infectionPercentage * 0.0015)}) 0%, rgba(239, 68, 68, ${0.02 + (infectionPercentage * 0.001)}) ${infectionPercentage}%, transparent ${Math.min(100, infectionPercentage + 20)}%)`
+                                                        ]
+                                                    }}
+                                                    transition={{
+                                                        duration: Math.max(0.8, 3.5 - (infectionPercentage / 30)),
+                                                        repeat: Infinity,
+                                                        ease: "easeInOut"
                                                     }}
                                                 />
                                             )}
                                             
-                                            <div className={`absolute -top-3 -right-3 text-[10px] font-black px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 uppercase tracking-wider z-20 ${isSLA_Violated ? 'bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-[0_4px_12px_rgba(239,68,68,0.3)]' : 'bg-white border border-slate-200 text-slate-500'}`}>
+                                            <motion.div 
+                                                animate={isSLA_Violated ? { 
+                                                    scale: [1, 1.05, 1], 
+                                                    boxShadow: ['0 4px 12px rgba(239,68,68,0.3)', '0 8px 24px rgba(239,68,68,0.6)', '0 4px 12px rgba(239,68,68,0.3)'] 
+                                                } : {}}
+                                                transition={isSLA_Violated ? { 
+                                                    duration: Math.max(0.8, 3.5 - (infectionPercentage / 30)), 
+                                                    repeat: Infinity,
+                                                    ease: "easeInOut"
+                                                } : {}}
+                                                className={`absolute -top-3 -right-3 text-[10px] font-black px-3 py-1.5 rounded-full flex items-center gap-1.5 uppercase tracking-wider z-20 ${isSLA_Violated ? 'bg-gradient-to-br from-red-500 to-rose-600 text-white' : 'bg-white border border-slate-200 text-slate-500 shadow-md'}`}>
                                                 {isSLA_Violated ? <AlertTriangle size={12} strokeWidth={3} /> : <Clock size={12} strokeWidth={3} />}
                                                 {hoursInStage >= 72 ? `${Math.floor(hoursInStage / 24)} Days` : `${Math.floor(hoursInStage)}h`} {isSLA_Violated ? 'Overdue' : 'In Stage'}
-                                            </div>
+                                            </motion.div>
                                             {job.proposal_data?.type === 'MAINTENANCE' && (
                                                 <div className="absolute -top-3 left-4 bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1.5 uppercase tracking-wider z-10">
                                                     <Wrench size={10} strokeWidth={3} /> Maintenance
