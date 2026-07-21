@@ -717,9 +717,23 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                                                     {new Date(act.created_at).toLocaleDateString()}
                                                 </span>
                                             </div>
-                                            <div className="text-sm text-slate-600 font-medium whitespace-pre-wrap leading-relaxed">
-                                                {act.description}
-                                            </div>
+                                            {act.activity_type === 'Attachment' ? (
+                                                <div className="text-sm text-slate-500 font-medium italic">
+                                                    Uploaded a new document/photo. Check the Documents section.
+                                                    {(() => {
+                                                        try {
+                                                            const meta = JSON.parse(act.description);
+                                                            return meta?.uploadedBy ? ` (Action taken by: ${meta.uploadedBy})` : '';
+                                                        } catch {
+                                                            return '';
+                                                        }
+                                                    })()}
+                                                </div>
+                                            ) : (
+                                                <div className="text-sm text-slate-600 font-medium whitespace-pre-wrap leading-relaxed">
+                                                    {act.description}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
