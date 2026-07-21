@@ -147,6 +147,14 @@ export default function MobileTechDashboard() {
       
       if (error) throw error;
       
+      // 4. If clocking out, wipe their location off the map
+      if (!newStatus) {
+          const crewId = currentMeta.crew_id;
+          if (crewId) {
+              await supabase.from('technician_locations').delete().eq('technician_id', crewId);
+          }
+      }
+      
     } catch (err) {
       console.error("Failed to update clock status", err);
       // Fallback alert since toast is not imported

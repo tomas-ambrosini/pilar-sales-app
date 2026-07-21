@@ -120,6 +120,7 @@ function MapResizer() {
 export default function DispatchMap() {
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [floatingTechs, setFloatingTechs] = useState({});
     const [liveTechLocations, setLiveTechLocations] = useState({});
     const [timeFilter, setTimeFilter] = useState('day');
 
@@ -252,16 +253,22 @@ export default function DispatchMap() {
             
             // Fetch initial live tech locations from DB
             const { data: locs } = await supabase.from('technician_locations')
-                .select('service_call_id, lat, lng, updated_at')
+                .select('id, technician_id, service_call_id, lat, lng, updated_at')
                 .order('updated_at', { ascending: false });
 
             const latestLocs = {};
+            const floatingTechLocs = {}; // techs clocked in but not actively viewing a job
+            
             (locs || []).forEach(loc => {
                 if (loc.service_call_id && !latestLocs[loc.service_call_id]) {
                     latestLocs[loc.service_call_id] = [loc.lat, loc.lng];
+                } else if (!loc.service_call_id && loc.technician_id && !floatingTechLocs[loc.technician_id]) {
+                    floatingTechLocs[loc.technician_id] = [loc.lat, loc.lng];
                 }
             });
             setLiveTechLocations(prev => ({ ...prev, ...latestLocs }));
+            // Store floating techs in a separate state or just append to existing
+            setFloatingTechs(floatingTechLocs);
 
             // Map coordinates: Use live location if available, else property_details coords, else mock
             const jobsWithCoords = allJobs.map(job => {
@@ -384,6 +391,25 @@ export default function DispatchMap() {
                     }
                     return null;
                 })}
+
+                {/* Floating Tech Markers (Clocked In, No Active Job) */}
+                {Object.entries(floatingTechs).map(([techId, coords]) => {
+                    return (
+                        <Marker
+                            key={`floating-tech-${techId}`}
+                            position={coords}
+                            icon={getTechIcon()}
+                        >
+                            <Popup className="custom-popup" maxWidth={200}>
+                                <div className="p-2 text-center min-w-[120px]">
+                                    <div className="font-bold text-slate-900 mb-1">Tech Vehicle</div>
+                                    <div className="text-xs text-slate-500">Available / Clocked In</div>
+                                </div>
+                            </Popup>
+                        </Marker>
+                    );
+                })}
+
             </MapContainer>
 
             {/* Legend overlay */}
