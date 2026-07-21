@@ -8,7 +8,7 @@ import { MapPin, Navigation, Clock, User, Phone, Zap } from 'lucide-react';
 
 // Custom icons based on status
 const createStatusIcon = (status, type, urgency) => {
-    let bgColor = '#94a3b8'; // gray default
+    let bgColor = '#cbd5e1'; // slate-300 default
     let ringColor = 'transparent';
 
     if (status === 'En Route') {
@@ -17,7 +17,7 @@ const createStatusIcon = (status, type, urgency) => {
         bgColor = '#3b82f6'; // blue
     } else if (status === 'Complete' || status === 'Completed') {
         bgColor = '#10b981'; // emerald
-    } else if (status === PIPELINE_STATES.SCHEDULED || status === 'Scheduled') {
+    } else if (status === PIPELINE_STATES.SCHEDULED || status === 'Scheduled' || status === 'Pending' || status === 'Dispatched') {
         bgColor = '#64748b'; // slate
     }
 
@@ -196,7 +196,7 @@ export default function DispatchMap() {
             const { data: svc } = await supabase.from('service_calls').select(`
                 id, created_at, status, urgency, call_type, tags, issue_description, customer_id, assigned_techs, scheduled_start, scheduled_end,
                 households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence, property_details ) )
-            `).in('status', ['Scheduled', 'En Route', 'Working', 'Completed', 'Complete'])
+            `).in('status', ['Pending', 'Scheduled', 'Dispatched', 'En Route', 'Working', 'Completed', 'Complete'])
               .or(`status.in.("En Route","Working"),and(scheduled_start.gte."${fetchStartStr}",scheduled_start.lte."${fetchEndStr}")`);
 
             // Precise Javascript filtering for Scheduled/Completed jobs
@@ -393,7 +393,7 @@ export default function DispatchMap() {
                 <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-2">Status Legend</h4>
                 <div className="flex flex-col gap-2 text-xs font-medium text-slate-600">
                     <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-slate-500 ring-2 ring-white shadow-sm"></div> Scheduled
+                        <div className="w-3 h-3 rounded-full bg-slate-500 ring-2 ring-white shadow-sm"></div> Scheduled / Dispatched
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full bg-yellow-500 ring-2 ring-white shadow-sm"></div> En Route
