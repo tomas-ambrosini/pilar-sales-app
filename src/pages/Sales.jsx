@@ -531,11 +531,11 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
 
                                     return (
                                         <div key={job.id} onClick={() => setInspectingJob(job)} 
-                                            className={`group relative cursor-pointer bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-l-[5px] ${urgencyBorder} p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)] overflow-hidden' : 'border-slate-200/80 hover:border-slate-300'}`}
+                                            className={`group relative cursor-pointer bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-l-[5px] ${urgencyBorder} p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isSLA_Violated ? 'border-red-300/60 shadow-[0_4px_20px_rgba(239,68,68,0.15)]' : 'border-slate-200/80 hover:border-slate-300'}`}
                                         >
                                             {isSLA_Violated && (
                                                 <div 
-                                                    className="absolute inset-0 pointer-events-none z-0 transition-all duration-1000"
+                                                    className="absolute inset-0 pointer-events-none z-0 transition-all duration-1000 rounded-xl"
                                                     style={{
                                                         background: `linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(239, 68, 68, 0.1) ${infectionPercentage}%, transparent ${Math.min(100, infectionPercentage + 20)}%)`
                                                     }}
