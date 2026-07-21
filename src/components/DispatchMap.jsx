@@ -174,8 +174,15 @@ export default function DispatchMap() {
                 end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
             }
 
-            const startDateStr = start.toISOString();
-            const endDateStr = end.toISOString();
+            // To avoid timezone edge cases with Supabase dates vs timestamps,
+            // we widen the DB fetch window by 1 day, then filter precisely in memory.
+            let fetchStart = new Date(start);
+            fetchStart.setDate(fetchStart.getDate() - 2);
+            let fetchEnd = new Date(end);
+            fetchEnd.setDate(fetchEnd.getDate() + 2);
+            
+            const fetchStartStr = fetchStart.toISOString();
+            const fetchEndStr = fetchEnd.toISOString();
             
             // Fetch Opportunities (Sales)
             const { data: opps } = await supabase.from('opportunities').select(`
@@ -183,34 +190,47 @@ export default function DispatchMap() {
                 households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence, property_details ) )
             `).in('status', ['Scheduled', 'En Route', 'Working', 'Completed', 'Complete'])
               .eq('is_active', true)
-              .gte('scheduled_date', startDateStr)
-              .lte('scheduled_date', endDateStr);
+              .or(`status.in.("En Route","Working"),and(scheduled_date.gte."${fetchStartStr}",scheduled_date.lte."${fetchEndStr}")`);
 
             // Fetch Service Calls (Service)
             const { data: svc } = await supabase.from('service_calls').select(`
                 id, created_at, status, urgency, call_type, tags, issue_description, customer_id, assigned_techs, scheduled_start, scheduled_end,
                 households ( household_name, contacts ( primary_phone, email ), addresses!addresses_household_id_fkey ( id, street_address, city, is_primary_residence, property_details ) )
             `).in('status', ['Scheduled', 'En Route', 'Working', 'Completed', 'Complete'])
-              .gte('scheduled_start', startDateStr)
-              .lte('scheduled_start', endDateStr);
+              .or(`status.in.("En Route","Working"),and(scheduled_start.gte."${fetchStartStr}",scheduled_start.lte."${fetchEndStr}")`);
 
-            const normalizedOpps = (opps || []).map(o => {
-            let targetAddress = null;
-            if (Array.isArray(o.households?.addresses) && o.households.addresses.length > 0) {
-                if (o.service_address_id) targetAddress = o.households.addresses.find(a => a.id === o.service_address_id);
-                if (!targetAddress) targetAddress = o.households.addresses.find(a => a.is_primary_residence) || o.households.addresses[0];
-            }
-            return {
-                ...o,
-                __type: 'SALES',
-                address: targetAddress || {},
-                customerName: o.households?.household_name || 'Unknown'
+            // Precise Javascript filtering for Scheduled/Completed jobs
+            const filterJobByDate = (job, dateField) => {
+                if (job.status === 'En Route' || job.status === 'Working') return true;
+                if (!job[dateField]) return false;
+                
+                let dateStr = job[dateField];
+                // If it's a date-only string (YYYY-MM-DD), parse it as local time (noon) to avoid UTC shift
+                if (typeof dateStr === 'string' && dateStr.length === 10) {
+                    dateStr += 'T12:00:00';
+                }
+                const d = new Date(dateStr);
+                return d >= start && d <= end;
             };
-        });
+
+            const normalizedOpps = (opps || []).filter(o => filterJobByDate(o, 'scheduled_date')).map(o => {
+                let targetAddress = null;
+                if (Array.isArray(o.households?.addresses) && o.households.addresses.length > 0) {
+                    if (o.service_address_id) targetAddress = o.households.addresses.find(a => a.id === o.service_address_id);
+                    if (!targetAddress) targetAddress = o.households.addresses.find(a => a.is_primary_residence) || o.households.addresses[0];
+                }
+                return {
+                    ...o,
+                    __type: 'SALES',
+                    address: targetAddress || {},
+                    customerName: o.households?.household_name || 'Unknown'
+                };
+            });
             
-            const normalizedSvc = (svc || []).map(s => {
+            const normalizedSvc = (svc || []).filter(s => filterJobByDate(s, 'scheduled_start')).map(s => {
                 const propertyTag = s.tags?.find(t => t.startsWith('PROPERTY:'));
                 const propertyId = propertyTag ? propertyTag.replace('PROPERTY:', '') : null;
+                
                 let targetAddress = null;
                 if (Array.isArray(s.households?.addresses) && s.households.addresses.length > 0) {
                     if (propertyId) targetAddress = s.households.addresses.find(a => a.id === propertyId);
@@ -226,7 +246,12 @@ export default function DispatchMap() {
                 };
             });
 
-            const allJobs = [...normalizedOpps, ...normalizedSvc];
+            const allJobs = [...normalizedOpps, ...normalizedSvc]
+                .sort((a, b) => {
+                    const dateA = new Date(a.scheduled_date || a.scheduled_start || 0);
+                    const dateB = new Date(b.scheduled_date || b.scheduled_start || 0);
+                    return dateA - dateB;
+                });
             
             // Fetch initial live tech locations from DB
             const { data: locs } = await supabase.from('technician_locations')
