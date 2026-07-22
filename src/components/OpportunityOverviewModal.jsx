@@ -237,7 +237,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
     } else if (job.status === 'QUOTING') {
         actionText = 'Resume Quote';
         actionColor = 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-600/20';
-    } else if (job.status === 'PROPOSAL_SENT') {
+    } else if (job.status === 'SENT' || job.status === 'PROPOSAL_SENT') {
         actionText = 'View Proposal';
         actionColor = 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20';
     } else if (job.status === 'APPROVED' || job.status === 'NEEDS_SCHEDULING') {
@@ -301,8 +301,8 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
             <div className="w-full bg-white border-b border-slate-200 p-4 shrink-0 shadow-sm z-10">
                 <div className="flex items-center justify-between max-w-4xl mx-auto">
                     {[
-                        { label: 'Lead', match: ['NEW_LEAD', 'QUOTING', 'PROPOSAL_SENT', 'APPROVED', 'NEEDS_SCHEDULING', 'SCHEDULED', 'Working', 'En Route', 'COMPLETED', 'CLOSED_WON'] },
-                        { label: 'Quoted', match: ['PROPOSAL_SENT', 'APPROVED', 'NEEDS_SCHEDULING', 'SCHEDULED', 'Working', 'En Route', 'COMPLETED', 'CLOSED_WON'] },
+                        { label: 'Lead', match: ['NEW_LEAD', 'QUOTING', 'SENT', 'PROPOSAL_SENT', 'APPROVED', 'NEEDS_SCHEDULING', 'SCHEDULED', 'Working', 'En Route', 'COMPLETED', 'CLOSED_WON'] },
+                        { label: 'Quoted', match: ['SENT', 'PROPOSAL_SENT', 'APPROVED', 'NEEDS_SCHEDULING', 'SCHEDULED', 'Working', 'En Route', 'COMPLETED', 'CLOSED_WON'] },
                         { label: 'Approved', match: ['APPROVED', 'NEEDS_SCHEDULING', 'SCHEDULED', 'Working', 'En Route', 'COMPLETED', 'CLOSED_WON'] },
                         { label: 'Scheduled', match: ['SCHEDULED', 'Working', 'En Route', 'COMPLETED', 'CLOSED_WON'] },
                         { label: 'Complete', match: ['COMPLETED', 'CLOSED_WON'] }

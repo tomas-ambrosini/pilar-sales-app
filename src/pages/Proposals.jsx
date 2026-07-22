@@ -5,12 +5,13 @@ import { supabase } from '../supabaseClient';
 import { useProposals } from '../context/ProposalContext';
 import { useCustomers } from '../context/CustomerContext';
 import { useRole } from '../context/RoleContext';
-import { Search, Plus, Calendar, Settings, ShieldCheck, Mail, Printer, AlertTriangle, FileText, Share, Clock, Home, PenTool, CheckCircle, Smartphone, Edit2, Trash2, ArrowRight, CalendarClock, Lock, Link, Copy, ThumbsDown, RotateCcw, LayoutGrid, List as ListIcon, Ban, Check, X } from 'lucide-react';
+import { Search, Plus, Calendar, Settings, ShieldCheck, Mail, Printer, AlertTriangle, FileText, Share, Clock, Home, PenTool, CheckCircle, Smartphone, Edit2, Trash2, ArrowRight, CalendarClock, Lock, Link, Copy, ThumbsDown, RotateCcw, LayoutGrid, List as ListIcon, Ban, Check, X, Shield, Layers } from 'lucide-react';
 import Modal from '../components/Modal';
 import toast from 'react-hot-toast';
 import './Proposals.css';
 import { PIPELINE_STATES, PipelineController } from '../utils/pipelineControls';
 import ProposalWizard from '../components/ProposalWizard';
+import MaintenanceWizard from '../components/MaintenanceWizard';
 import ProposalDetailsModal from '../components/ProposalDetailsModal';
 import ProposalViewerModal from '../components/ProposalViewerModal';
 import ContractDocumentModal from '../components/ContractDocumentModal';
@@ -68,6 +69,8 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
   const { customers, addUnitToAddress } = useCustomers();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showWizard, setShowWizard] = useState(false);
+  const [showWizardTypeModal, setShowWizardTypeModal] = useState(false);
+  const [wizardType, setWizardType] = useState('SYSTEM');
   const [wizardConfig, setWizardConfig] = useState(null);
   const [inspectingProposal, setInspectingProposal] = useState(null);
   const deepLinkHandled = useRef('');
@@ -78,7 +81,8 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
      if (searchString && deepLinkHandled.current === searchString) return;
 
      if (searchParams.get('action') === 'new') {
-         setShowWizard(true);
+         setWizardType('SYSTEM');
+         setShowWizardTypeModal(true);
          setWizardConfig(true);
          deepLinkHandled.current = searchString;
          setSearchParams({}, { replace: true });
@@ -99,6 +103,7 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
                      return;
                  }
                  setWizardConfig({ id: targetProposal.id, ...targetProposal });
+                 setWizardType(targetProposal.proposal_data?.type === 'MAINTENANCE' ? 'MAINTENANCE' : 'SYSTEM');
                  setShowWizard(true);
                  deepLinkHandled.current = searchString;
              }
@@ -122,6 +127,7 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
                      return;
                  }
                  setWizardConfig({ id: targetProposal.id, step: targetProposal.proposal_data?.wizard_state?.step || 2, isDraft: true, ...targetProposal });
+                 setWizardType(targetProposal.proposal_data?.type === 'MAINTENANCE' ? 'MAINTENANCE' : 'SYSTEM');
                  setShowWizard(true);
                  deepLinkHandled.current = searchString;
              } else {
@@ -187,7 +193,12 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
       setInspectingProposal(proposal);
   };
 
-  if (showWizard) return <ProposalWizard onComplete={() => { setShowWizard(false); setWizardConfig(null); }} addProposal={addProposal} updateProposal={updateProposal} editModeData={wizardConfig} />;
+  if (showWizard) {
+      if (wizardType === 'MAINTENANCE') {
+          return <MaintenanceWizard onComplete={() => { setShowWizard(false); setWizardConfig(null); }} addProposal={addProposal} updateProposal={updateProposal} editModeData={wizardConfig} />;
+      }
+      return <ProposalWizard onComplete={() => { setShowWizard(false); setWizardConfig(null); }} addProposal={addProposal} updateProposal={updateProposal} editModeData={wizardConfig} />;
+  }
 
 
   const handleDeleteOpen = (proposal) => {
@@ -383,17 +394,29 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
      if (!signingContract) return;
      const { tierName, tierData, proposal, extractedSystems, appliedPromo } = signingContract;
 
+     const isMaintenance = proposal?.proposal_data?.type === 'MAINTENANCE';
+
      // 1. Array check to handle multi-system configuration payloads vs legacy single-tier selections
      const isMulti = Array.isArray(tierData) || (tierData && Array.isArray(tierData.systemsList));
      const systemsPayload = Array.isArray(tierData) ? tierData : (tierData?.systemsList ? tierData.systemsList : [{ systemName: 'Standard System', selectedTierData: tierData, tierName: tierName }]);
 
      // 2. Build Multi-System Scalable Work Order Notes
-     const equipmentNotes = systemsPayload.map(sys => `
-[${sys.systemName} - ${sys.tierName.toUpperCase()} TIER]
+     let equipmentNotes = '';
+     if (isMaintenance) {
+         equipmentNotes = `
+[MAINTENANCE PROGRAM]
+Frequency: ${proposal?.proposal_data?.frequency}
+Units Covered: ${proposal?.proposal_data?.units_covered}
+Investment: $${proposal?.proposal_data?.total_price}
+`.trim();
+     } else {
+         equipmentNotes = systemsPayload.map(sys => `
+[${sys.systemName} - ${(sys.tierName && typeof sys.tierName === 'string') ? sys.tierName.toUpperCase() : 'SELECTED'} TIER]
 Equipment: ${sys.selectedTierData?.brand} ${sys.selectedTierData?.series} (${sys.selectedTierData?.tons} Ton)
 Included Features:
 ${(sys.selectedTierData?.features || []).map(f => `- ${f}`).join('\n')}
 `).join('\n');
+     }
 
      const workOrderNotes = `
 **FIELD WORK ORDER**
@@ -611,11 +634,43 @@ ${equipmentNotes}
      }
      // ----------------------------------------------------------------------
 
-     // Move to the Deposit Collection state
+     // Move to the Deposit Collection state OR Bypass for Maintenance
      const finalContractData = { ...signingContract };
      finalContractData.proposal.proposal_data = { ...(finalContractData.proposal.proposal_data || {}), signature_data: signatureData };
      setSigningContract(null);
-     setCollectingDeposit(finalContractData);
+     
+     if (isMaintenance) {
+         try {
+             // Generate the recurring invoice automatically since there is no deposit
+             const invoiceData = {
+                 proposal_id: proposal.id,
+                 customer_id: proposal.customer_id || proposal.proposal_data?.customer_id || null,
+                 invoice_type: 'Recurring Maintenance',
+                 total_contract_amount: proposal.proposal_data?.total_price || 0,
+                 deposit_collected: 0,
+                 balance_due: proposal.proposal_data?.total_price || 0,
+                 status: 'Pending',
+                 due_date: new Date().toISOString()
+             };
+
+             const { error: invoiceError } = await supabase.from('invoices').insert([invoiceData]);
+             if (invoiceError) throw invoiceError;
+
+             // Advance opportunity to Dispatch Calendar queue
+             const oppId = proposal.associated_opportunity_id || proposal.proposal_data?.associated_opportunity_id;
+             if (oppId) {
+                 await supabase.from('opportunities').update({ status: 'NEEDS_SCHEDULING' }).eq('id', oppId);
+             }
+
+             toast.success("Maintenance Program executed successfully!");
+             fetchProposals();
+         } catch(e) {
+             console.error("Failed to setup maintenance invoicing:", e);
+             toast.error("Failed to generate maintenance invoice.");
+         }
+     } else {
+         setCollectingDeposit(finalContractData);
+     }
   };
 
   const handleDeleteConfirm = () => {
@@ -636,7 +691,7 @@ ${equipmentNotes}
           <p className="text-slate-500 font-medium">Track and generate equipment replacement quotes.</p>
         </div>
         <button 
-          onClick={() => { setWizardConfig(null); setShowWizard(true); }}
+          onClick={() => { setWizardConfig(null); setShowWizardTypeModal(true); }}
           className="bg-gradient-to-tr from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm hover:shadow-md active:scale-95 border border-slate-700"
         >
           <Plus size={18} /> Generate Quote
@@ -660,7 +715,7 @@ ${equipmentNotes}
              <div className="flex gap-2 shrink-0 items-center overflow-x-auto hide-scrollbar pb-1 md:pb-0">
                  {embedded && (
                      <button 
-                         onClick={() => { setWizardConfig(null); setShowWizard(true); }}
+                         onClick={() => { setWizardConfig(null); setShowWizardTypeModal(true); }}
                          className="bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm border border-primary-700"
                      >
                          <Plus size={14} strokeWidth={3} /> New Quote
@@ -734,7 +789,7 @@ ${equipmentNotes}
                        <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-4"><FileText size={32} /></div>
                        <p className="text-slate-500 font-semibold mb-6">No proposals found {filterMode !== 'All' ? `for ${filterMode}` : 'yet'}.</p>
                        {filterMode === 'All' && (
-                         <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg flex items-center gap-2 transition-all hover:scale-105" onClick={() => setShowWizard(true)}>
+                         <button className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg flex items-center gap-2 transition-all hover:scale-105" onClick={() => setShowWizardTypeModal(true)}>
                            <Plus size={18} /> Build First Quote
                          </button>
                        )}
@@ -857,6 +912,7 @@ ${equipmentNotes}
                                                                return;
                                                            }
                                                            setWizardConfig({ id: proposal.id, ...proposal });
+                                                           setWizardType(inspectingProposal.proposal_data?.type === 'MAINTENANCE' ? 'MAINTENANCE' : 'SYSTEM');
                                                            setShowWizard(true);
                                                         } else if (proposal.status === 'Pending Void') {
                                                             if (['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase())) {
@@ -876,6 +932,7 @@ ${equipmentNotes}
                                                             } else {
                                                                 setWizardConfig({ id: proposal.id, ...proposal, isDraft: true, step: proposal.proposal_data?.wizard_state?.step || 2 });
                                                             }
+                                                            setWizardType(inspectingProposal.proposal_data?.type === 'MAINTENANCE' ? 'MAINTENANCE' : 'SYSTEM');
                                                             setShowWizard(true);
                                                         } else {
                                                            setViewingProposal(['Lost', 'Voided'].includes(proposal.status) ? { ...proposal, isReadOnly: true } : proposal);
@@ -1110,13 +1167,15 @@ ${equipmentNotes}
                                    }`}
                                    onClick={() => {
                                        if (proposal.status === 'Approved') {
-                                          const matchedTierName = proposal.proposal_data?.accepted_tier_name || ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers?.[t]?.salesPrice === proposal.amount) || 'good';
+                                          const isMaintenance = proposal.proposal_data?.type === 'MAINTENANCE';
+                                          const matchedTierName = isMaintenance ? 'MAINTENANCE PROGRAM' : (proposal.proposal_data?.accepted_tier_name || ['good', 'better', 'best'].find(t => proposal.proposal_data?.tiers?.[t]?.salesPrice === proposal.amount) || 'good');
                                           const matchedTierData = proposal.proposal_data?.accepted_tier_data || proposal.proposal_data?.tiers?.[matchedTierName];
+                                          const safeTierName = (matchedTierName && typeof matchedTierName === 'string') ? matchedTierName.toUpperCase() : 'SELECTED PACKAGE';
                                           
-                                          if (!proposal.proposal_data?.deposit_collected) {
-                                              setCollectingDeposit({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
+                                          if (!isMaintenance && !proposal.proposal_data?.deposit_collected) {
+                                              setCollectingDeposit({ proposal, tierName: safeTierName, tierData: matchedTierData, date: proposal.date });
                                           } else {
-                                              setViewingContract({ proposal, tierName: matchedTierName.toUpperCase(), tierData: matchedTierData, date: proposal.date });
+                                              setViewingContract({ proposal, tierName: safeTierName, tierData: matchedTierData, date: proposal.date });
                                           }
                                        } else if (proposal.status === 'Draft' || proposal.status === 'Lead') {
                                           if (proposal.created_by && proposal.created_by !== user?.id) {
@@ -1126,6 +1185,7 @@ ${equipmentNotes}
                                           
                                           // Ensure it launches as a native editable draft
                                           setWizardConfig({ id: proposal.id, ...proposal, isDraft: true });
+                                          setWizardType(proposal.proposal_data?.type === 'MAINTENANCE' ? 'MAINTENANCE' : 'SYSTEM');
                                           setShowWizard(true);
                                        } else if (proposal.status === 'Pending Void') {
                                            if (['super_admin', 'admin', 'manager'].includes((user?.role || '').toLowerCase())) {
@@ -1158,6 +1218,39 @@ ${equipmentNotes}
        </div>
        </div>
 
+
+       {/* Wizard Type Selection Modal */}
+       <Modal isOpen={showWizardTypeModal} onClose={() => setShowWizardTypeModal(false)} title="Select Proposal Type">
+         <div className="p-4 space-y-4">
+            <p className="text-sm text-slate-600 mb-6 text-center">What type of proposal would you like to build?</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button 
+                    onClick={() => { setWizardType('SYSTEM'); setShowWizardTypeModal(false); setShowWizard(true); }}
+                    className="p-6 rounded-xl border-2 border-slate-200 hover:border-primary-500 hover:bg-primary-50 transition-all flex flex-col items-center gap-3 text-slate-700 hover:text-primary-700 group"
+                >
+                    <div className="bg-slate-100 p-4 rounded-full group-hover:bg-primary-100 transition-colors">
+                        <Layers size={32} />
+                    </div>
+                    <div className="text-center">
+                        <div className="font-bold text-lg mb-1">System Replacement</div>
+                        <div className="text-xs opacity-80">Full HVAC system install/replacement proposal</div>
+                    </div>
+                </button>
+                <button 
+                    onClick={() => { setWizardType('MAINTENANCE'); setShowWizardTypeModal(false); setShowWizard(true); }}
+                    className="p-6 rounded-xl border-2 border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 transition-all flex flex-col items-center gap-3 text-slate-700 hover:text-emerald-700 group"
+                >
+                    <div className="bg-slate-100 p-4 rounded-full group-hover:bg-emerald-100 transition-colors">
+                        <Shield size={32} />
+                    </div>
+                    <div className="text-center">
+                        <div className="font-bold text-lg mb-1">Maintenance Program</div>
+                        <div className="text-xs opacity-80">Recurring residential service agreement</div>
+                    </div>
+                </button>
+            </div>
+         </div>
+       </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal isOpen={!!deletingProposal} onClose={() => setDeletingProposal(null)} title="Delete Proposal">

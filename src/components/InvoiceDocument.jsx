@@ -310,6 +310,37 @@ export default function InvoiceDocument({ isOpen, onClose, invoice }) {
                                     </div>
                                 </div>
                             ))
+                        ) : pData.type === 'MAINTENANCE' ? (
+                            <div className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
+                                <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
+                                    <div className="w-32 px-3 py-1.5 border-r border-slate-300">Quote / PO#</div>
+                                    <div className="flex-1 px-3 py-1.5 border-r border-slate-300">Maintenance Program Details</div>
+                                    <div className="w-32 px-3 py-1.5 text-center">Price</div>
+                                </div>
+                                <div className="flex bg-[#f8fafc]">
+                                    <div className="w-32 px-3 py-3 border-r border-slate-300 text-slate-700 font-bold font-mono">
+                                        {formatQuoteId(proposal)}
+                                    </div>
+                                    <div className="flex-1 p-3 flex border-r border-slate-300">
+                                        <div className="flex-1 flex flex-col justify-center">
+                                            <div className="flex border-b border-slate-200 pb-2 mb-2">
+                                                <span className="w-24 text-slate-500">Program:</span> <span className="font-bold text-slate-800 uppercase">{pData.frequency || 'Annual'} Maintenance</span>
+                                            </div>
+                                            <div className="flex border-b border-slate-200 pb-2 mb-2">
+                                                <span className="w-24 text-slate-500">Coverage:</span> <span className="text-slate-600">{pData.units_covered || 1} System(s) Included</span>
+                                            </div>
+                                            <div className="flex">
+                                                <span className="w-24 text-slate-500">Billing:</span> <span className="text-slate-600">Recurring Subscription</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="w-32 flex flex-col justify-end pb-3 text-center bg-[#f8fafc]">
+                                        <div className="px-3 flex items-center justify-end text-slate-800 gap-1 font-black text-lg">
+                                            $ <span>{originalPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         ) : (
                             <div className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
                                 <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">

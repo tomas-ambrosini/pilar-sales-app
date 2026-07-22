@@ -37,7 +37,7 @@ export function ProposalProvider({ children }) {
             const { data: leadData, error: leadErr } = await supabase
                 .from('opportunities')
                 .select(`id, urgency_level, issue_description, created_at, proposal_data, household_id, assigned_salesperson_id, households(id, household_name)`)
-                .in('status', [PIPELINE_STATES.NEW_LEAD, PIPELINE_STATES.QUOTING])
+                .in('status', [PIPELINE_STATES.NEW_LEAD, PIPELINE_STATES.QUOTING, 'Lead', 'LEAD', 'NEW LEAD'])
                 .eq('is_active', true);
 
             if (leadErr) console.warn("Failed to fetch leads for proposals: ", leadErr.message);
@@ -278,6 +278,13 @@ export function ProposalProvider({ children }) {
             console.error('Failed to update proposal:', error);
             fetchProposals();
             return;
+        }
+
+        // Auto-sync household_id to the opportunity if the wizard attached it later
+        if (oppId && updatedData.proposal_data?.wizard_state?.selectedCustomerId) {
+            await supabase.from('opportunities').update({
+                household_id: updatedData.proposal_data.wizard_state.selectedCustomerId
+            }).eq('id', oppId).is('household_id', null);
         }
         
         // Auto-sync status to Pipeline Opportunity strictly through Execution controls

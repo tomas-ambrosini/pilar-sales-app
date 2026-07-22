@@ -297,11 +297,11 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                    <Printer size={16} />
                    <span>Export PDF</span>
                 </button>
-                {!proposal?.isReadOnly && (
-                    <button onClick={() => setShowPromoInput(!showPromoInput)} className={`p-2 rounded-full border transition-colors print-hidden ${showPromoInput || appliedPromo ? 'bg-primary-50 text-primary-600 border-primary-200' : 'text-slate-400 hover:text-slate-800 bg-white border-slate-200'}`} title="Apply Promo Code">
-                       <Tag size={20} />
-                    </button>
-                )}
+                 {!proposal?.isReadOnly && proposal_data?.type !== 'MAINTENANCE' && (
+                     <button onClick={() => setShowPromoInput(!showPromoInput)} className={`p-2 rounded-full border transition-colors print-hidden ${showPromoInput || appliedPromo ? 'bg-primary-50 text-primary-600 border-primary-200' : 'text-slate-400 hover:text-slate-800 bg-white border-slate-200'}`} title="Apply Promo Code">
+                        <Tag size={20} />
+                     </button>
+                 )}
                 {onBack && (
                    <button onClick={onBack} className="p-2 text-slate-400 hover:text-slate-800 bg-white rounded-full border border-slate-200 transition-colors print-hidden" title="Back to Details">
                       <ArrowLeft size={20} />
@@ -373,6 +373,53 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                    <h3 className="text-xl font-bold text-slate-800 mb-2">Legacy Quote Detected</h3>
                    <p className="text-slate-500 max-w-md">This proposal was generated before the digital matrix engine was implemented. The system only cataloged the total gross amount: <strong>${(proposal.amount || 0).toLocaleString()}</strong>. To view digital tiers, please generate a new quote for this customer.</p>
                 </div>
+             ) : proposal_data.type === 'MAINTENANCE' ? (
+                 <div className="max-w-md mx-auto pt-4 pb-4">
+                    <div className="relative flex flex-col p-8 rounded-[24px] transition-all duration-300 border border-slate-200 bg-white border-t-4 border-t-emerald-500 shadow-2xl hover:shadow-3xl print-break-inside-avoid">
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[11px] font-black uppercase tracking-widest px-5 py-2 rounded-full shadow-lg ring-4 ring-white flex items-center gap-2">
+                            <Shield size={14} strokeWidth={3} /> Maintenance Plan
+                        </div>
+                        
+                        <div className="flex flex-col gap-2 mb-6 mt-2 text-center">
+                            <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">Residential<br/>Service Agreement</h3>
+                            <div className="flex flex-wrap justify-center gap-2 mt-2">
+                                <span className="font-mono text-[10px] bg-slate-100 text-slate-600 font-black px-3 py-1.5 rounded-md tracking-wide">
+                                    {proposal_data.frequency === 'monthly' ? 'MONTHLY' : proposal_data.frequency === 'bi-monthly' ? 'EVERY OTHER MONTH' : 'QUARTERLY'}
+                                </span>
+                                <span className="font-mono text-[10px] bg-slate-100 text-slate-600 font-black px-3 py-1.5 rounded-md tracking-wide">
+                                    {proposal_data.units_covered} UNIT{proposal_data.units_covered !== 1 ? 'S' : ''}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="my-2 pb-6 border-b border-slate-100 flex flex-col items-center justify-center">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Total Investment</p>
+                            <div className="flex items-baseline">
+                                <span className="text-xl font-bold text-slate-400 mr-1 translate-y-[-0.25rem]">$</span>
+                                <span className="text-[3rem] font-black tracking-tighter leading-none text-slate-900">
+                                    {proposal_data.total_price}
+                                </span>
+                            </div>
+                            <p className="text-emerald-600 font-bold mt-2 text-[10px] uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-md">Per Year</p>
+                        </div>
+                        
+                        <div className="flex-grow space-y-4 mb-2 mt-4">
+                             <div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 text-center">Included Program Benefits</p>
+                                <ul className="space-y-3">
+                                   {(proposal_data.benefits || []).map((b, i) => (
+                                      <li key={i} className="flex items-start gap-3 text-xs text-slate-700 font-bold leading-relaxed">
+                                         <div className="mt-0.5 shrink-0">
+                                            <CheckCircle size={14} className="text-emerald-500" strokeWidth={2.5}/>
+                                         </div>
+                                         <span>{b}</span>
+                                      </li>
+                                   ))}
+                                </ul>
+                             </div>
+                        </div>
+                    </div>
+                 </div>
              ) : proposal_data.systemTiers && proposal_data.systemTiers.length > 0 ? (
                 <div className="space-y-16 max-w-5xl mx-auto pt-4 pb-12">
                    {proposal_data.systemTiers.map(sys => (
@@ -562,15 +609,33 @@ export default function ProposalViewerModal({ isOpen, onClose, onBack, proposal,
                  </div>
              );
           })() : (
-             <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 items-center print-hidden">
+             <div className="p-4 border-t border-slate-100 bg-slate-50 flex flex-wrap justify-between gap-3 items-center print-hidden w-full">
                 {proposal?.isReadOnly && (
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded mr-auto">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded">
                         <AlertTriangle size={14}/> Preview Only Mode
                     </div>
                 )}
-                <div className="flex flex-wrap justify-end gap-2">
+                
+                <div className="flex flex-wrap items-center gap-2 ml-auto">
                    {onBack && <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2" onClick={onBack}><ArrowLeft size={16}/> Back to Details</button>}
                    <button className="px-4 py-2 font-bold text-slate-500 hover:text-slate-800 transition-colors" onClick={onClose}>Close Viewer</button>
+                   
+                   {proposal_data?.type === 'MAINTENANCE' && !proposal?.isReadOnly && proposal?.status !== 'Approved' && (
+                        <button 
+                            onClick={() => {
+                                setLocalSelections({ MAIN: 'Accepted' });
+                                if (onAccept) onAccept('Maintenance Program', proposal_data, proposal, [], appliedPromo);
+                            }}
+                            className="py-2.5 px-6 rounded-lg font-black transition-all flex items-center justify-center gap-2 text-sm shadow-sm border-2 border-emerald-600 bg-emerald-600 hover:bg-emerald-700 text-white hover:shadow-lg hover:-translate-y-px"
+                        >
+                            <Check size={16} strokeWidth={3} /> ACCEPT PROGRAM
+                        </button>
+                    )}
+                    {proposal_data?.type === 'MAINTENANCE' && proposal?.status === 'Approved' && (
+                        <div className="py-2.5 px-6 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg font-bold text-sm flex items-center justify-center gap-2">
+                            <CheckCircle size={16} /> Program Accepted
+                        </div>
+                    )}
                 </div>
              </div>
           )}

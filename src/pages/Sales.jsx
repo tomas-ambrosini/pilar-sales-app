@@ -166,6 +166,30 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
      return next;
   }, [pipeline, proposals]);
 
+  const handleAssignSalesperson = async (e, jobId, salespersonId) => {
+      if (e) e.stopPropagation();
+      const salespersonName = salespersonId ? teamMembers.find(m => m.id === salespersonId)?.full_name : null;
+      
+      // Find householdId from the job
+      let householdId = null;
+      for (const col of Object.values(pipeline)) {
+          const job = col.find(j => j.id === jobId);
+          if (job) {
+              householdId = job.household_id;
+              break;
+          }
+      }
+
+      try {
+          await PipelineController.assignDeal(jobId, salespersonId, householdId, salespersonName);
+          toast.success(salespersonId ? `Assigned to ${salespersonName}` : 'Deal unassigned');
+          setActiveAssignMenu(null);
+      } catch (err) {
+          console.error("Failed to assign:", err);
+          toast.error("Failed to assign salesperson");
+      }
+  };
+
   const fetchSingleOpportunity = async (id) => {
       const { data, error } = await supabase
         .from('opportunities')
@@ -728,7 +752,7 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                   } catch (e) { toast.error('Failed to transition lead.'); }
               } else if (job.status === 'QUOTING') {
                   navigate(`/proposals?action=resume_opp&opp_id=${job.id}`);
-              } else if (job.status === 'PROPOSAL_SENT') {
+              } else if (job.status === 'SENT' || job.status === 'PROPOSAL_SENT') {
                   navigate(`/proposals?action=view_proposal&opp_id=${job.id}`);
               } else if (job.status === 'APPROVED' || job.status === 'NEEDS_SCHEDULING') {
                   toast.success('Navigating to Dispatch Hub to route job...');

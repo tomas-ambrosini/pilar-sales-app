@@ -66,6 +66,8 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
        c.name === proposal?.customer
    ) || {};
 
+   const isMaintenance = proposal?.proposal_data?.type === 'MAINTENANCE';
+
    // Resolve multi-system contracts dynamically for standard accepted packages
    let resolvedSystemsList = tierData?.systemsList;
    if ((!resolvedSystemsList || resolvedSystemsList.length === 0) && proposal?.proposal_data?.systemTiers && proposal.proposal_data.systemTiers.length > 0) {
@@ -227,7 +229,34 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                 </div>
 
                 {/* Unit Info Box */}
-                {(resolvedSystemsList && resolvedSystemsList.length > 0) ? (
+                {isMaintenance ? (
+                    <div className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
+                        <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
+                            <div className="flex-1 px-3 py-1.5 border-r border-slate-300">Maintenance Program Details</div>
+                            <div className="w-32 px-3 py-1.5 text-center">Price</div>
+                        </div>
+                        <div className="flex bg-[#f8fafc]">
+                            <div className="flex-1 p-3 flex">
+                                <div className="flex-1 flex flex-col justify-between pr-4">
+                                    <div className="flex border-b border-slate-200 pb-1">
+                                        <span className="w-24 text-slate-500">Service Plan:</span> <span className="font-bold text-slate-800">Residential Service Agreement</span>
+                                    </div>
+                                    <div className="flex border-b border-slate-200 pb-1">
+                                        <span className="w-24 text-slate-500">Frequency:</span> <span className="text-slate-600 font-bold">{proposal.proposal_data.frequency === 'monthly' ? 'Monthly' : proposal.proposal_data.frequency === 'bi-monthly' ? 'Every Other Month' : 'Quarterly'}</span>
+                                    </div>
+                                    <div className="flex pb-1">
+                                        <span className="w-24 text-slate-500">Units Covered:</span> <span className="text-slate-600">{proposal.proposal_data.units_covered} Unit{proposal.proposal_data.units_covered !== 1 ? 's' : ''}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="w-32 border-l border-slate-300 flex flex-col justify-end pb-3 text-center bg-[#f8fafc]">
+                                <div className="px-3 flex items-center justify-end text-slate-800 gap-1 font-black text-lg">
+                                    $ <span>{(proposal.proposal_data.total_price || 0).toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : (resolvedSystemsList && resolvedSystemsList.length > 0) ? (
                     resolvedSystemsList.map((sys, idx) => {
                         const sysData = sys.tierData || sys.selectedTierData || {};
                         return (
@@ -321,14 +350,41 @@ export default function ContractDocumentModal({ isOpen, onClose, contractData })
                     </div>
                 )}
 
-                {/* Materials & Labor */}
+                {/* Materials & Labor / Benefits */}
                 <div className="border border-slate-300 rounded overflow-hidden mb-4 print-safe-block">
                      <div className="flex bg-[#e2e8f0] text-slate-700 font-bold border-b border-slate-300">
-                        <div className="flex-1 px-3 py-1.5">Materials & Labor / Subs needed</div>
+                        <div className="flex-1 px-3 py-1.5">{isMaintenance ? 'Included Program Benefits' : 'Materials & Labor / Subs needed'}</div>
                     </div>
                     <div className="flex flex-col bg-[#f8fafc]">
                          {(() => {
-                             // Extract only custom addons and default materials, removing bulky system features.
+                             if (isMaintenance) {
+                                 const allBenefits = proposal.proposal_data.benefits || [];
+                                 const totalPrice = proposal.proposal_data.total_price || 0;
+                                 return (
+                                     <>
+                                         {allBenefits.length > 0 ? (
+                                             allBenefits.map((b, i) => (
+                                                 <div key={i} className="flex border-b border-slate-200 group transition-colors hover:bg-slate-50/50">
+                                                      <div className="flex-1 px-3 py-2 flex items-center gap-2 text-slate-700 font-medium">
+                                                          <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full shrink-0"></div>
+                                                          <span className="w-full">{b}</span>
+                                                      </div>
+                                                 </div>
+                                             ))
+                                         ) : (
+                                             <div className="p-4 text-center text-slate-500 italic text-sm">No benefits specified</div>
+                                         )}
+                                         <div className="flex font-bold text-slate-800 bg-[#e2e8f0]/40 border-t-2 border-slate-300">
+                                              <div className="flex-1 px-3 py-3 border-r border-slate-300 text-right uppercase text-xs tracking-wider text-slate-800 flex items-center justify-end">Total Contract Price:</div>
+                                              <div className="w-32 px-3 py-3 flex items-center justify-end gap-1 text-primary-700 font-black text-lg border-t-2 border-slate-300">
+                                                  $ <span>{totalPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                              </div>
+                                         </div>
+                                     </>
+                                 );
+                             }
+
+                             // System Replacement block
                              const extractedAddons = resolvedSystemsList && resolvedSystemsList.length > 0
                                  ? resolvedSystemsList.flatMap(sys => (sys.tierData?.features || []).filter(f => f.includes('Includes:')).map(f => `[${sys.systemName}] ${f.replace('Includes:', '').trim()}`))
                                  : (tierData?.features || []).filter(f => f.includes('Includes:')).map(f => f.replace('Includes:', '').trim());

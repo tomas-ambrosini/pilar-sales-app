@@ -4,7 +4,7 @@ import ProposalComments from './ProposalComments';
 import { formatQuoteId } from '../utils/formatters';
 import { useCustomers } from '../context/CustomerContext';
 import { createPortal } from 'react-dom';
-import { User, FileText, Calendar, Activity, Mail, Phone, MapPin, Grid, Camera, ThermometerSun, AlertCircle, CheckCircle, PackageCheck, X, Download } from 'lucide-react';
+import { User, FileText, Calendar, Activity, Mail, Phone, MapPin, Grid, Camera, ThermometerSun, AlertCircle, CheckCircle, PackageCheck, X, Download, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const MEASUREMENTS = {
@@ -375,6 +375,54 @@ export default function ProposalDetailsModal({ proposal, onClose, onLaunchViewer
                                     </div>
                                 );
                             })}
+                        </div>
+                    ) : data?.type === 'MAINTENANCE' ? (
+                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div className="bg-slate-800 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                <h3 className="text-white font-black text-xl flex items-center gap-2">
+                                    <ShieldCheck className="text-emerald-400" />
+                                    Maintenance Program Specs
+                                </h3>
+                                <span className="text-xs font-bold uppercase tracking-widest bg-emerald-900/50 text-emerald-300 border border-emerald-700 px-4 py-1.5 rounded-full w-max">
+                                    {data.frequency || 'Annual'} Plan
+                                </span>
+                            </div>
+                            <div className="p-6 md:p-8 space-y-10">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+                                        <h4 className="font-black text-slate-800 text-sm tracking-wide uppercase">Program Configuration</h4>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-8 gap-x-6">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Service Frequency</span>
+                                            <span className="text-sm font-bold text-slate-800 uppercase">{data.frequency === 'monthly' ? 'Monthly' : data.frequency === 'bi-monthly' ? 'Every Other Month' : data.frequency || 'Quarterly'}</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Units Covered</span>
+                                            <span className="text-sm font-bold text-slate-800">{data.units_covered || 1} System{data.units_covered !== 1 ? 's' : ''}</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Investment</span>
+                                            <span className="text-sm font-bold text-slate-800">${(data.total_price || 0).toLocaleString()} / year</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {data.benefits && data.benefits.length > 0 && (
+                                <div>
+                                    <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+                                        <h4 className="font-black text-slate-800 text-sm tracking-wide uppercase">Included Benefits</h4>
+                                    </div>
+                                    <ul className="space-y-2">
+                                        {data.benefits.map((b, i) => (
+                                            <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full shrink-0 mt-1.5"></div>
+                                                {b}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                )}
+                            </div>
                         </div>
                     ) : (
                         <div className="bg-slate-100 border border-slate-200 rounded-xl p-12 text-center flex flex-col items-center justify-center">

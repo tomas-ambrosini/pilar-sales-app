@@ -147,17 +147,20 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
     }
   };
 
-  useEffect(() => {
-    if (selectedCustomerId !== '' && dbReady) {
-      if (syncTimer.current) clearTimeout(syncTimer.current);
+   const activeOppIdRef = useRef(editModeData?.associated_opportunity_id || editModeData?.proposal_data?.associated_opportunity_id || null);
 
-      syncTimer.current = setTimeout(async () => {
-         const draftPayload = {
-            wizard_state: { step, selectedCustomerId, selectedLocationId, systems },
-            associated_opportunity_id: editModeData?.associated_opportunity_id || editModeData?.proposal_data?.associated_opportunity_id || null
-         };
-         
-         // Failsafe: Do not auto-save over a finalized proposal
+   // Unified Auto-Save specific to UI state
+   useEffect(() => {
+     if (selectedCustomerId !== '' && dbReady) {
+       if (syncTimer.current) clearTimeout(syncTimer.current);
+
+       syncTimer.current = setTimeout(async () => {
+          const draftPayload = {
+             wizard_state: { step, selectedCustomerId, selectedLocationId, systems },
+             associated_opportunity_id: activeOppIdRef.current
+          };
+          
+          // Failsafe: Do not auto-save over a finalized proposal
          const currentStatus = editModeData?.status || 'Lead';
          if (['Sent', 'Completed', 'Lost'].includes(currentStatus)) return;
          
@@ -178,13 +181,19 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                 });
                 if (newDraft && newDraft.id) {
                     setDraftServerId(newDraft.id);
+                    if (newDraft.associated_opportunity_id) {
+                        activeOppIdRef.current = newDraft.associated_opportunity_id;
+                    }
                 } else {
                     isInitializingDraft.current = false;
                 }
              } catch (err) {
                  isInitializingDraft.current = false;
              }
-         } else {
+         } else if (updateProposal) {
+             if (activeOppIdRef.current) {
+                 draftPayload.associated_opportunity_id = activeOppIdRef.current;
+             }
              const currentStatus = editModeData?.status || 'Lead';
              const updatedStatus = ['Lead', 'Draft'].includes(currentStatus) ? 'Draft' : currentStatus;
              await updateProposal(draftServerId, {
@@ -195,7 +204,7 @@ export default function ProposalWizard({ onComplete, addProposal, updateProposal
                  updated_at: new Date().toISOString()
              });
          }
-      }, 1500);
+      }, 1000);
     }
     
     return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
