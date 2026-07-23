@@ -157,7 +157,7 @@ export function ProposalProvider({ children }) {
                 urgency_level: 'Low',
                 issue_description: 'Auto-generated Opportunity from Proposal Wizard',
                 assigned_salesperson_id: user?.id,
-                proposal_data: { type: 'SALES' },
+                proposal_data: { type: draftData.proposal_data?.type || 'SALES' },
                 is_active: true
             }]).select('id').single();
             
@@ -285,6 +285,13 @@ export function ProposalProvider({ children }) {
             await supabase.from('opportunities').update({
                 household_id: updatedData.proposal_data.wizard_state.selectedCustomerId
             }).eq('id', oppId).is('household_id', null);
+        }
+        
+        // Auto-sync proposal_data to the opportunity so Pipeline views stay updated (Maintenance vs System badges, etc)
+        if (oppId && updatedData.proposal_data) {
+            await supabase.from('opportunities').update({
+                proposal_data: updatedData.proposal_data
+            }).eq('id', oppId);
         }
         
         // Auto-sync status to Pipeline Opportunity strictly through Execution controls
