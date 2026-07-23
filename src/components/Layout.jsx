@@ -36,6 +36,7 @@ export default function Layout() {
         { path: '/', label: 'Dashboard', icon: LayoutDashboard, isVisible: !isSubcontractor() },
         { path: '/customers', label: 'Customers', icon: Users, isVisible: !isSubcontractor() },
         { path: '/sales', label: 'Sales Hub', icon: ClipboardList, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES].includes(activeRole) },
+        { path: '/maintenance', label: 'Maintenance Hub', icon: ShieldAlert, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER, ROLES.SALES].includes(activeRole) },
         { path: '/dispatch', label: 'Dispatch Hub', icon: Truck, isVisible: [ROLES.ADMIN, ROLES.MANAGER, ROLES.DISPATCHER].includes(activeRole) }
       ]
     },

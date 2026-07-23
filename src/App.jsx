@@ -12,6 +12,7 @@ import PromoCodes from './pages/PromoCodes';
 import AccountManagement from './pages/AccountManagement';
 import Subcontractors from './pages/Subcontractors';
 import MaintenanceWizard from './pages/MaintenanceWizard';
+import MaintenanceHub from './pages/MaintenanceHub';
 import TemplateDashboard from './pages/TemplateDashboard';
 import FinancialSettings from './pages/FinancialSettings';
 import FinanceDashboard from './pages/FinanceDashboard';
@@ -127,6 +128,7 @@ function MainRouter() {
           
           {/* WILDCARDS / DEFAULTS */}
           <Route path="maintenance-wizard" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'COORDINATOR']} allowedDepartments={['DISPATCH', 'SERVICE', 'SALES']}><MaintenanceWizard /></RoleRoute>} />
+          <Route path="maintenance" element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'COORDINATOR', 'SALES']} allowedDepartments={['DISPATCH', 'SERVICE', 'SALES']}><MaintenanceHub /></RoleRoute>} />
           <Route path="proposals/*" element={<ProposalsRedirect />} />
           <Route path="unauthorized" element={<Unauthorized />} />
           <Route index element={<RoleRoute><Dashboard /></RoleRoute>} />
