@@ -311,6 +311,7 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
 
             const updatedTags = [...(callData.tags || []), 'CONVERTED_TO_SALES'];
             const { error: svcError } = await supabase.from('service_calls').update({
+                status: 'Canceled',
                 tags: updatedTags,
                 issue_description: callData.issue_description + `\n\n[Converted to Sales Lead]`
             }).eq('id', callId);
@@ -1030,13 +1031,25 @@ export default function ServiceCallModal({ callId, onClose, onUpdate }) {
                                     <Navigation size={16} /> Track Tech
                                 </button>
                             )}
-                            {!callData.tags?.includes('CONVERTED_TO_SALES') && (
+                            {!callData.tags?.includes('CONVERTED_TO_SALES') ? (
                                 <button 
                                     onClick={handleConvertToSales} 
                                     disabled={converting}
                                     className="w-full sm:w-auto justify-center px-4 py-2.5 text-xs font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 rounded-xl transition-all flex items-center gap-2"
                                 >
                                     {converting ? 'Converting...' : 'Convert to Sales Lead'}
+                                </button>
+                            ) : (
+                                <button 
+                                    onClick={async () => {
+                                        if(!window.confirm("Dismiss this converted call from the Service Board?")) return;
+                                        await supabase.from('service_calls').update({ status: 'Canceled' }).eq('id', callData.id);
+                                        if(onUpdate) onUpdate();
+                                        onClose();
+                                    }}
+                                    className="w-full sm:w-auto justify-center px-4 py-2.5 text-xs font-black uppercase tracking-widest text-slate-700 bg-slate-100 border border-slate-200 hover:bg-slate-200 hover:border-slate-300 rounded-xl transition-all flex items-center gap-2"
+                                >
+                                    Dismiss Call
                                 </button>
                             )}
                         </div>

@@ -83,9 +83,8 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
      if (searchParams.get('action') === 'new') {
          setWizardType('SYSTEM');
          setShowWizardTypeModal(true);
-         setWizardConfig(true);
+         setWizardConfig(null);
          deepLinkHandled.current = searchString;
-         setSearchParams({}, { replace: true });
      } else if (searchParams.get('action') === 'resume' && searchParams.get('id')) {
          const checkResume = async () => {
              const id = searchParams.get('id');
@@ -99,7 +98,7 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
              if (targetProposal && ['Lead', 'Draft', 'Sent', 'Opened'].includes(targetProposal.status)) {
                  if (['Lead', 'Draft'].includes(targetProposal.status) && targetProposal.created_by && targetProposal.created_by !== user?.id) {
                      toast.error('Access Denied: This draft is locked by its creator.');
-                     setSearchParams({}, { replace: true });
+                     setSearchParams({ tab: 'proposals' }, { replace: true });
                      return;
                  }
                  setWizardConfig({ id: targetProposal.id, ...targetProposal });
@@ -107,7 +106,7 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
                  setShowWizard(true);
                  deepLinkHandled.current = searchString;
              }
-             setSearchParams({}, { replace: true });
+             setSearchParams({ tab: 'proposals' }, { replace: true });
          };
          checkResume();
      } else if (searchParams.get('action') === 'resume_opp' && searchParams.get('opp_id')) {
@@ -123,7 +122,7 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
              if (targetProposal) {
                  if (['Lead', 'Draft'].includes(targetProposal.status) && targetProposal.created_by && targetProposal.created_by !== user?.id) {
                      toast.error('Access Denied: This draft is locked by its creator.');
-                     setSearchParams({}, { replace: true });
+                     setSearchParams({ tab: 'proposals' }, { replace: true });
                      return;
                  }
                  setWizardConfig({ id: targetProposal.id, step: targetProposal.proposal_data?.wizard_state?.step || 2, isDraft: true, ...targetProposal });
@@ -138,7 +137,7 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
              // This guarantees the modal state batch is NOT aborted.
              setTimeout(() => {
                  localStorage.removeItem('pilar_draft_customer');
-                 setSearchParams({}, { replace: true });
+                 setSearchParams({ tab: 'proposals' }, { replace: true });
              }, 50);
          };
          checkOpp();
@@ -151,7 +150,7 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
          } else {
              toast.error('Proposal not found or still generating.');
          }
-         setSearchParams({}, { replace: true });
+         setSearchParams({ tab: 'proposals' }, { replace: true });
      } else if (searchParams.get('action') === 'view_contract' && searchParams.get('opp_id')) {
          const oppId = searchParams.get('opp_id');
          const targetProposal = proposals.find(p => p.proposal_data?.associated_opportunity_id === oppId || p.associated_opportunity_id === oppId);
@@ -169,7 +168,7 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
          } else {
              toast.error('Contract not found. Deal might not be signed yet.');
          }
-         setSearchParams({}, { replace: true });
+         setSearchParams({ tab: 'proposals' }, { replace: true });
      }
   }, [searchParams, proposals, user, loading]);
 
