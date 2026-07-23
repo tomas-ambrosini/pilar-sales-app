@@ -82,19 +82,19 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
      if (searchParams.get('action') === 'new') {
          deepLinkHandled.current = searchString;
          
-         // Safely clear the URL parameter first
-         setSearchParams(prev => {
-             const next = new URLSearchParams(prev);
-             next.delete('action');
-             return next;
-         }, { replace: true });
+         // Show modal instantly
+         setWizardType('SYSTEM');
+         setWizardConfig(null);
+         setShowWizardTypeModal(true);
 
-         // Add a tiny delay before showing the modal to prevent double-click/event propagation glitches from the dashboard tile
+         // Delay URL cleanup to prevent React Router navigation race conditions that cause unmounting/flashing
          setTimeout(() => {
-             setWizardType('SYSTEM');
-             setWizardConfig(null);
-             setShowWizardTypeModal(true);
-         }, 50);
+             setSearchParams(prev => {
+                 const next = new URLSearchParams(prev);
+                 next.delete('action');
+                 return next;
+             }, { replace: true });
+         }, 300);
 
          return; // Processed new action
      }
