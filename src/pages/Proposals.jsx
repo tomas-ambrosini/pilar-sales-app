@@ -85,7 +85,8 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
          setShowWizardTypeModal(true);
          setWizardConfig(null);
          deepLinkHandled.current = searchString;
-         window.history.replaceState(null, '', '/sales?tab=proposals');
+         searchParams.delete('action');
+         setSearchParams(searchParams, { replace: true });
      } else if (searchParams.get('action') === 'resume' && searchParams.get('id')) {
          const checkResume = async () => {
              const id = searchParams.get('id');
@@ -99,7 +100,9 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
              if (targetProposal && ['Lead', 'Draft', 'Sent', 'Opened'].includes(targetProposal.status)) {
                  if (['Lead', 'Draft'].includes(targetProposal.status) && targetProposal.created_by && targetProposal.created_by !== user?.id) {
                      toast.error('Access Denied: This draft is locked by its creator.');
-                     window.history.replaceState(null, '', '/sales?tab=proposals');
+                     searchParams.delete('action');
+                     searchParams.delete('id');
+                     setSearchParams(searchParams, { replace: true });
                      return;
                  }
                  setWizardConfig({ id: targetProposal.id, ...targetProposal });
@@ -107,13 +110,18 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
                  setShowWizard(true);
                  deepLinkHandled.current = searchString;
              }
-             window.history.replaceState(null, '', '/sales?tab=proposals');
+             searchParams.delete('action');
+             searchParams.delete('id');
+             setSearchParams(searchParams, { replace: true });
          };
          checkResume();
      } else if (searchParams.get('action') === 'resume_opp' && searchParams.get('opp_id')) {
          const checkOpp = async () => {
              const oppId = searchParams.get('opp_id');
-             let targetProposal = proposals.find(p => p.proposal_data?.associated_opportunity_id === oppId || p.associated_opportunity_id === oppId);
+              // proposals is generally sorted by created_at desc, but to be absolutely sure we get the newest draft:
+              let targetProposal = proposals
+                  .filter(p => p.proposal_data?.associated_opportunity_id === oppId || p.associated_opportunity_id === oppId)
+                  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
              
              if (!targetProposal) {
                  const { data } = await supabase.from('proposals').select('*').eq('associated_opportunity_id', oppId).order('created_at', { ascending: false }).limit(1).maybeSingle();
@@ -136,7 +144,9 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
 
                  if (['Lead', 'Draft'].includes(targetProposal.status) && targetProposal.created_by && targetProposal.created_by !== user?.id) {
                      toast.error('Access Denied: This draft is locked by its creator.');
-                     window.history.replaceState(null, '', '/sales?tab=proposals');
+                     searchParams.delete('action');
+                     searchParams.delete('opp_id');
+                     setSearchParams(searchParams, { replace: true });
                      return;
                  }
                  setWizardConfig({ id: targetProposal.id, step: targetProposal.proposal_data?.wizard_state?.step || 2, isDraft: true, ...targetProposal });
@@ -147,11 +157,11 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
                  toast.error(`Could not find an active quoting draft for opportunity: ${oppId}`);
              }
 
-             // Use native history API to strip URL params without triggering a React Router re-render cycle
-             // This guarantees the modal state batch is NOT aborted.
              setTimeout(() => {
                  localStorage.removeItem('pilar_draft_customer');
-                 window.history.replaceState(null, '', '/sales?tab=proposals');
+                 searchParams.delete('action');
+                 searchParams.delete('opp_id');
+                 setSearchParams(searchParams, { replace: true });
              }, 50);
          };
          checkOpp();
@@ -164,7 +174,9 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
          } else {
              toast.error('Proposal not found or still generating.');
          }
-         window.history.replaceState(null, '', '/sales?tab=proposals');
+         searchParams.delete('action');
+         searchParams.delete('opp_id');
+         setSearchParams(searchParams, { replace: true });
      } else if (searchParams.get('action') === 'view_contract' && searchParams.get('opp_id')) {
          const oppId = searchParams.get('opp_id');
          const targetProposal = proposals.find(p => p.proposal_data?.associated_opportunity_id === oppId || p.associated_opportunity_id === oppId);
@@ -182,9 +194,11 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
          } else {
              toast.error('Contract not found. Deal might not be signed yet.');
          }
-         window.history.replaceState(null, '', '/sales?tab=proposals');
+         searchParams.delete('action');
+         searchParams.delete('id');
+         setSearchParams(searchParams, { replace: true });
      }
-  }, [searchParams, proposals, user, loading]);
+  }, [searchParams, proposals, user, loading, setSearchParams]);
 
   const [viewingProposal, setViewingProposal] = useState(null);
   const [viewingContract, setViewingContract] = useState(null);
