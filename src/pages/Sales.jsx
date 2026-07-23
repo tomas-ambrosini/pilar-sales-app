@@ -423,14 +423,16 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                 <div className="flex flex-col sm:flex-row gap-2 w-full">
                     <div className="flex bg-slate-200/50 p-1 rounded-xl w-full sm:w-fit border border-slate-200/80">
                         <button 
-                            onClick={() => setActiveTab('pipeline')} 
-                            className={`flex-1 sm:flex-none px-5 py-2 sm:py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'pipeline' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-                            Pipeline
+                            className={`flex-1 py-2 px-4 rounded-lg font-bold text-sm tracking-widest transition-all duration-300 ${activeTab === 'pipeline' ? 'bg-slate-800 text-white shadow-lg scale-105' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'}`}
+                            onClick={() => setSearchParams({ tab: 'pipeline' })} 
+                        >
+                            PIPELINE
                         </button>
                         <button 
-                            onClick={() => setActiveTab('proposals')} 
-                            className={`flex-1 sm:flex-none px-5 py-2 sm:py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'proposals' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-                            Proposals
+                            className={`flex-1 py-2 px-4 rounded-lg font-bold text-sm tracking-widest transition-all duration-300 ${activeTab === 'proposals' ? 'bg-slate-800 text-white shadow-lg scale-105' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'}`}
+                            onClick={() => setSearchParams({ tab: 'proposals' })} 
+                        >
+                            PROPOSALS
                         </button>
                     </div>
                     
