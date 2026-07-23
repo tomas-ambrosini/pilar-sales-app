@@ -704,7 +704,6 @@ ${equipmentNotes}
              }
 
              toast.success("Maintenance Program executed successfully!");
-             fetchProposals();
          } catch(e) {
              console.error("Failed to setup maintenance invoicing:", e);
              toast.error("Failed to generate maintenance invoice: " + (e.message || JSON.stringify(e)));
