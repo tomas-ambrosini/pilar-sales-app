@@ -347,13 +347,20 @@ export default function DispatchCalendar({ isSubView = false }) {
               tagColor = 'bg-purple-50 text-purple-700 border-purple-200';
           }
       } else {
-          if (associatedProposal?.proposal_data?.systemTiers && associatedProposal.proposal_data.systemTiers.length > 0) {
+          const isMaint = job.proposal_data?.type === 'MAINTENANCE' || associatedProposal?.proposal_data?.type === 'MAINTENANCE';
+          if (isMaint) {
+              systemSummary = 'Maintenance';
+              tagColor = 'bg-blue-50 text-blue-700 border-blue-200';
+          } else if (associatedProposal?.proposal_data?.systemTiers && associatedProposal.proposal_data.systemTiers.length > 0) {
               const numSystems = associatedProposal.proposal_data.systemTiers.length;
               systemSummary = `${numSystems} System Install`;
-              tagColor = 'bg-blue-50 text-blue-700 border-blue-200';
+              tagColor = 'bg-indigo-50 text-indigo-700 border-indigo-200';
           } else if (associatedProposal?.proposal_data?.accepted_tier_data) {
               const tData = associatedProposal.proposal_data.accepted_tier_data;
               systemSummary = `${tData.brand || 'Equipment'} Install ${tData.tons ? `(${tData.tons}T)` : ''}`.trim();
+              tagColor = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+          } else {
+              systemSummary = 'Equipment Install';
               tagColor = 'bg-indigo-50 text-indigo-700 border-indigo-200';
           }
       }
