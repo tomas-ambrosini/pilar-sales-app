@@ -734,6 +734,7 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                           amount: 0,
                           associated_opportunity_id: job.id,
                           proposal_data: {
+                              ...(job.proposal_data || {}),
                               associated_opportunity_id: job.id,
                               wizard_state: {
                                   step: 2,
@@ -744,7 +745,6 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                       });
 
                       if (newDraft && newDraft.id) {
-                          await PipelineController.startProposal(job.id, job.status);
                           navigate(`/proposals?action=resume&id=${newDraft.id}`);
                       } else {
                           toast.error('Failed to create draft.');

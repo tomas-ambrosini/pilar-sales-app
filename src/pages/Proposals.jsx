@@ -121,6 +121,19 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
              }
 
              if (targetProposal) {
+                 // AUTO-HEAL: If the opportunity is MAINTENANCE but the draft lost its type, fix it.
+                 try {
+                     const { data: oppData } = await supabase.from('opportunities').select('proposal_data').eq('id', oppId).single();
+                     if (oppData && oppData.proposal_data && oppData.proposal_data.type === 'MAINTENANCE') {
+                         if (!targetProposal.proposal_data || targetProposal.proposal_data.type !== 'MAINTENANCE') {
+                             targetProposal.proposal_data = { ...(targetProposal.proposal_data || {}), type: 'MAINTENANCE' };
+                             await supabase.from('proposals').update({ proposal_data: targetProposal.proposal_data }).eq('id', targetProposal.id);
+                         }
+                     }
+                 } catch (e) {
+                     console.error("Auto-heal failed:", e);
+                 }
+
                  if (['Lead', 'Draft'].includes(targetProposal.status) && targetProposal.created_by && targetProposal.created_by !== user?.id) {
                      toast.error('Access Denied: This draft is locked by its creator.');
                      setSearchParams({ tab: 'proposals' }, { replace: true });
