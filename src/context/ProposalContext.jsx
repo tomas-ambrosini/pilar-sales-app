@@ -110,6 +110,7 @@ export function ProposalProvider({ children }) {
                     associated_opportunity_id: opp.id,
                     user_profiles: userMap[opp.assigned_salesperson_id] || null,
                     proposal_data: {
+                        ...(typeof opp.proposal_data === 'object' ? opp.proposal_data : {}),
                         urgency: opp.urgency_level,
                         notes: opp.issue_description,
                         household_id: opp.household_id || opp.households?.id
