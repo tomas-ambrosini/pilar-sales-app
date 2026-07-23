@@ -81,7 +81,6 @@ export default function MaintenanceWizard({ onComplete, addProposal, updatePropo
                         await PipelineController.sendProposal(oppId, currentStatus, {
                             proposal_data: finalData
                         });
-                        await PipelineController.logActivity(oppId, 'Maintenance Proposal Finalized & Sent', user?.id, user?.full_name);
                     } else {
                         await supabase.from('opportunities').update({
                             proposal_data: finalData
