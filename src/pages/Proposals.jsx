@@ -76,18 +76,32 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
   const deepLinkHandled = useRef('');
 
   useEffect(() => {
-     if (loading) return;
      const searchString = searchParams.toString();
      if (searchString && deepLinkHandled.current === searchString) return;
 
      if (searchParams.get('action') === 'new') {
-         setWizardType('SYSTEM');
-         setShowWizardTypeModal(true);
-         setWizardConfig(null);
          deepLinkHandled.current = searchString;
-         searchParams.delete('action');
-         setSearchParams(searchParams, { replace: true });
-     } else if (searchParams.get('action') === 'resume' && searchParams.get('id')) {
+         
+         // Safely clear the URL parameter first
+         setSearchParams(prev => {
+             const next = new URLSearchParams(prev);
+             next.delete('action');
+             return next;
+         }, { replace: true });
+
+         // Add a tiny delay before showing the modal to prevent double-click/event propagation glitches from the dashboard tile
+         setTimeout(() => {
+             setWizardType('SYSTEM');
+             setWizardConfig(null);
+             setShowWizardTypeModal(true);
+         }, 50);
+
+         return; // Processed new action
+     }
+
+     if (loading) return;
+
+     if (searchParams.get('action') === 'resume' && searchParams.get('id')) {
          const checkResume = async () => {
              const id = searchParams.get('id');
              let targetProposal = proposals.find(p => p.id === id);
