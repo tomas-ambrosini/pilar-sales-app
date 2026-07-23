@@ -707,7 +707,7 @@ ${equipmentNotes}
              fetchProposals();
          } catch(e) {
              console.error("Failed to setup maintenance invoicing:", e);
-             toast.error("Failed to generate maintenance invoice.");
+             toast.error("Failed to generate maintenance invoice: " + (e.message || JSON.stringify(e)));
          }
      } else {
          setCollectingDeposit(finalContractData);
