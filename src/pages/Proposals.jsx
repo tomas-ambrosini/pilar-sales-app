@@ -695,7 +695,10 @@ ${equipmentNotes}
              };
 
              const { error: invoiceError } = await supabase.from('invoices').insert([invoiceData]);
-             if (invoiceError) throw invoiceError;
+             if (invoiceError) {
+                 console.error("Failed to insert invoice, but continuing:", invoiceError);
+                 toast.error("Warning: Failed to generate maintenance invoice (" + invoiceError.message + "). Deal advanced anyway.");
+             }
 
              // Advance opportunity to Dispatch Calendar queue
              const oppId = proposal.associated_opportunity_id || proposal.proposal_data?.associated_opportunity_id;

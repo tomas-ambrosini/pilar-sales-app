@@ -102,12 +102,7 @@ async function executeTransition(jobId, currentState, targetState, additionalPay
           
           // ROLLBACK if the transaction fails partially
           if (logError) {
-              console.error("Failed to insert activity log. Rolling back status to", currentState);
-              await supabase.from('opportunities').update({ 
-                  status: currentState,
-                  ...Object.fromEntries(Object.keys(additionalPayload).map(k => [k, opp[k] || null])) // Very simple pseudo-rollback for payload
-              }).eq('id', jobId);
-              throw new Error("Failed to log activity. Pipeline transition rolled back.");
+              console.error("Failed to insert activity log, but continuing pipeline transition:", logError.message);
           }
       }
   }
