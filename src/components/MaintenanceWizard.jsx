@@ -50,7 +50,7 @@ export default function MaintenanceWizard({ onComplete, addProposal, updatePropo
         const customer = customers.find(c => c.id.toString() === selectedCustomerId.toString());
         if (!customer) return;
         
-        const oppId = editModeData?.associated_opportunity_id || editModeData?.proposal_data?.associated_opportunity_id;
+        const oppId = activeOppIdRef.current || editModeData?.associated_opportunity_id || editModeData?.proposal_data?.associated_opportunity_id;
         
         const finalData = {
             type: 'MAINTENANCE',

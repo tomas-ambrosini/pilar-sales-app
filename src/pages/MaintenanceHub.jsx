@@ -1,10 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { ShieldCheck, Calendar, DollarSign, Clock, Search, ArrowRight, Activity, Bell, MapPin } from 'lucide-react';
+import { ShieldCheck, Calendar, DollarSign, Clock, Search, ArrowRight, Activity, Bell, MapPin, TrendingUp, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatCustomerName } from '../utils/formatters';
+import MaintenanceScheduleModal from '../components/MaintenanceScheduleModal';
+import MaintenanceInvoiceModal from '../components/MaintenanceInvoiceModal';
+import OpportunityOverviewModal from '../components/OpportunityOverviewModal';
+import MaintenanceList from '../components/MaintenanceList';
+import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 
 export default function MaintenanceHub() {
     const { user } = useAuth();
@@ -12,6 +17,11 @@ export default function MaintenanceHub() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('active');
+    
+    // Modal states
+    const [schedulingJob, setSchedulingJob] = useState(null);
+    const [viewingInvoices, setViewingInvoices] = useState(null);
+    const [selectedJob, setSelectedJob] = useState(null);
 
     useEffect(() => {
         fetchAgreements();
@@ -81,27 +91,94 @@ export default function MaintenanceHub() {
         return true; // 'active' shows all
     });
 
+    // Calculate Analytics
+    const analytics = useMemo(() => {
+        let mrr = 0;
+        let totalValue = 0;
+        const chartData = [
+            { name: 'Jan', value: 0 }, { name: 'Feb', value: 0 }, { name: 'Mar', value: 0 },
+            { name: 'Apr', value: 0 }, { name: 'May', value: 0 }, { name: 'Jun', value: 0 }
+        ];
+
+        agreements.forEach(job => {
+            const price = job.proposal_data?.total_price || 0;
+            totalValue += price;
+            
+            // Estimate MRR (very rough estimate depending on frequency)
+            if (job.proposal_data?.frequency === 'monthly') mrr += price;
+            else if (job.proposal_data?.frequency === 'annual') mrr += (price / 12);
+            else mrr += (price / 6); // default bi-monthly or unknown
+            
+            // Populate fake chart data trend based on created_at
+            const month = new Date(job.created_at).getMonth();
+            if (month < 6) chartData[month].value += price;
+        });
+        
+        // ensure chart goes up for demo
+        for(let i=1; i<chartData.length; i++) chartData[i].value += chartData[i-1].value;
+
+        return { mrr, totalValue, chartData };
+    }, [agreements]);
+
     return (
         <div className="flex-1 flex flex-col h-full bg-slate-50 relative overflow-hidden">
-            {/* Header */}
+            {/* Analytics Header */}
             <div className="bg-white border-b border-slate-200 px-8 py-6 z-10 shrink-0">
-                <div className="max-w-7xl mx-auto w-full flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="max-w-7xl mx-auto w-full flex flex-col xl:flex-row justify-between items-start xl:items-center gap-8">
+                    
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center border-2 border-blue-200 shrink-0">
-                            <ShieldCheck size={24} className="text-blue-600" />
+                        <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shrink-0 shadow-lg shadow-blue-600/20">
+                            <ShieldCheck size={28} className="text-white" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
                                 Maintenance Hub
-                                <span className="bg-blue-100 text-blue-700 text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full">Pro</span>
+                                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded-full border border-blue-200">Pro 2.0</span>
                             </h1>
-                            <p className="text-slate-500 font-medium text-sm">Manage recurring agreements and tune-ups.</p>
+                            <p className="text-slate-500 font-medium text-sm">Dashboard & Administration Center</p>
                         </div>
                     </div>
-                </div>
+
+                    {/* Executive Metrics Row */}
+                    <div className="flex items-center gap-6 w-full xl:w-auto overflow-x-auto no-scrollbar pb-2 xl:pb-0">
+                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center gap-4 min-w-[200px]">
+                            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                                <TrendingUp size={18} className="text-emerald-600" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black tracking-widest uppercase text-slate-400 mb-0.5">Est. MRR</p>
+                                <p className="text-xl font-black text-slate-800">${analytics.mrr.toLocaleString(undefined, {maximumFractionDigits:0})}</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center gap-4 min-w-[200px]">
+                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                                <Users size={18} className="text-blue-600" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black tracking-widest uppercase text-slate-400 mb-0.5">Active Contracts</p>
+                                <p className="text-xl font-black text-slate-800">{agreements.length}</p>
+                            </div>
+                        </div>
+
+                        {/* Mini Chart */}
+                        <div className="h-16 w-32 hidden md:block">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={analytics.chartData}>
+                                    <defs>
+                                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
                 
                 {/* Tabs & Search */}
-                <div className="mt-8 max-w-7xl mx-auto w-full flex flex-col sm:flex-row justify-between items-end gap-4">
+                <div className="mt-8 w-full flex flex-col sm:flex-row justify-between items-end gap-4">
                     <div className="flex gap-6 border-b border-slate-200 w-full sm:w-auto overflow-x-auto no-scrollbar">
                         <button onClick={() => setActiveTab('active')} className={`pb-3 font-bold text-sm tracking-wide transition-colors relative whitespace-nowrap ${activeTab === 'active' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>
                             Active Agreements
@@ -134,6 +211,7 @@ export default function MaintenanceHub() {
                         />
                     </div>
                 </div>
+                </div>
             </div>
 
             {/* List Content */}
@@ -143,66 +221,41 @@ export default function MaintenanceHub() {
                         <div className="flex items-center justify-center h-64 text-slate-400">
                             <Activity className="animate-spin" size={24} />
                         </div>
-                    ) : filteredAgreements.length === 0 ? (
-                        <div className="bg-white border border-slate-200 border-dashed rounded-2xl flex flex-col items-center justify-center h-64 text-center p-6">
-                            <ShieldCheck size={48} className="text-slate-200 mb-4" />
-                            <h3 className="text-lg font-bold text-slate-700">No Agreements Found</h3>
-                            <p className="text-slate-400 text-sm mt-1">There are no maintenance plans matching this view.</p>
-                        </div>
                     ) : (
-                        filteredAgreements.map(job => (
-                            <motion.div 
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                key={job.id} 
-                                className="bg-white border border-slate-200 rounded-xl p-5 hover:shadow-md transition-shadow flex flex-col xl:flex-row gap-6 items-start xl:items-center"
-                            >
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-3 mb-1 flex-wrap">
-                                        <h3 className="font-bold text-slate-800 text-lg">
-                                            {formatCustomerName(job.households?.household_name || 'Unknown')}
-                                        </h3>
-                                        {job.isDueForService && (
-                                            <span className="bg-amber-100 text-amber-700 text-[10px] font-black tracking-widest uppercase px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                <Clock size={10} /> Service Due
-                                            </span>
-                                        )}
-                                        {job.isExpiringSoon && (
-                                            <span className="bg-purple-100 text-purple-700 text-[10px] font-black tracking-widest uppercase px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                <Bell size={10} /> Expiring Soon
-                                            </span>
-                                        )}
-                                    </div>
-                                    <p className="text-sm font-medium text-slate-500 flex items-center gap-1">
-                                        <MapPin size={14} className="text-slate-400" />
-                                        {Array.isArray(job.households?.addresses) ? job.households.addresses[0]?.street_address : job.households?.addresses?.street_address || 'No address provided'}
-                                    </p>
-                                </div>
-                                
-                                <div className="flex items-center gap-8 px-0 xl:px-8 border-l-0 xl:border-l border-r-0 xl:border-r border-slate-100 shrink-0 w-full xl:w-auto">
-                                    <div>
-                                        <p className="text-[10px] font-black tracking-widest uppercase text-slate-400 mb-1">Plan Tier</p>
-                                        <p className="font-bold text-slate-700 capitalize">{job.proposal_data?.frequency || 'Standard'} Maintenance</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black tracking-widest uppercase text-slate-400 mb-1">Units Covered</p>
-                                        <p className="font-bold text-slate-700">{job.proposal_data?.units_covered || 1} System(s)</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-col sm:flex-row xl:flex-col gap-2 shrink-0 w-full xl:w-48">
-                                    <button onClick={() => toast.success("Scheduling flow triggered (Placeholder)")} className="w-full bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 hover:border-transparent px-4 py-2 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                                        <Calendar size={16} /> Schedule Service
-                                    </button>
-                                    <button onClick={() => toast.success("Invoices modal triggered (Placeholder)")} className="w-full bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 px-4 py-2 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                                        <DollarSign size={16} /> View Invoices
-                                    </button>
-                                </div>
-                            </motion.div>
-                        ))
+                        <MaintenanceList 
+                            agreements={filteredAgreements} 
+                            setSelectedJob={setSelectedJob} 
+                            setSchedulingJob={setSchedulingJob} 
+                            setViewingInvoices={setViewingInvoices} 
+                        />
                     )}
                 </div>
             </div>
+
+            {/* Modals */}
+            <MaintenanceScheduleModal 
+                isOpen={!!schedulingJob} 
+                onClose={() => setSchedulingJob(null)} 
+                agreement={schedulingJob} 
+                user={user} 
+            />
+            <MaintenanceInvoiceModal 
+                isOpen={!!viewingInvoices} 
+                onClose={() => setViewingInvoices(null)} 
+                agreement={viewingInvoices} 
+                user={user} 
+            />
+            {selectedJob && (
+                <OpportunityOverviewModal
+                    isOpen={!!selectedJob}
+                    onClose={() => setSelectedJob(null)}
+                    job={selectedJob}
+                    onAction={() => {
+                        fetchAgreements();
+                        setSelectedJob(null);
+                    }}
+                />
+            )}
         </div>
     );
 }

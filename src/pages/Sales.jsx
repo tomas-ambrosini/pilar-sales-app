@@ -149,7 +149,6 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
          else if (normalizedStatus === 'APPROVED' || normalizedStatus === 'ACCEPTED') normalizedStatus = PIPELINE_STATES.NEEDS_SCHEDULING;
          else if (normalizedStatus === 'DRAFT') normalizedStatus = PIPELINE_STATES.QUOTING; // Forces Draft into Quoting
          else if (normalizedStatus === 'SENT') normalizedStatus = PIPELINE_STATES.SENT;
-         
          if (next[normalizedStatus]) {
              if (!next[normalizedStatus].some(opp => opp.id === fakeOpp.id)) {
                  next[normalizedStatus].push(fakeOpp);
@@ -310,6 +309,8 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
             normalizedStatus = PIPELINE_STATES.NEEDS_SCHEDULING;
         } else if (normalizedStatus === 'DRAFT') {
             normalizedStatus = PIPELINE_STATES.QUOTING;
+        } else if (normalizedStatus === 'SENT') {
+            normalizedStatus = PIPELINE_STATES.SENT;
         }
 
         if (grouped[normalizedStatus]) {
