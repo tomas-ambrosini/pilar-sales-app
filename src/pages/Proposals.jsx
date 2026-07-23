@@ -85,6 +85,7 @@ export default function Proposals({ embedded = false, pipelineFilter = 'All Deal
          setShowWizardTypeModal(true);
          setWizardConfig(null);
          deepLinkHandled.current = searchString;
+         setSearchParams({ tab: 'proposals' }, { replace: true });
      } else if (searchParams.get('action') === 'resume' && searchParams.get('id')) {
          const checkResume = async () => {
              const id = searchParams.get('id');
