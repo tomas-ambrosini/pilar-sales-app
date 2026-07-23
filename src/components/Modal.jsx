@@ -5,6 +5,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import './Modal.css';
 
 export default function Modal({ isOpen, onClose, title, children, width = "max-w-lg", bodyClassName = "p-5 overflow-y-auto flex-1" }) {
+  const [canClose, setCanClose] = React.useState(false);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setCanClose(false);
+      const timer = setTimeout(() => setCanClose(true), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
   return createPortal(
     <AnimatePresence>
       {isOpen && (
@@ -15,7 +25,9 @@ export default function Modal({ isOpen, onClose, title, children, width = "max-w
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             className="absolute -inset-10 bg-slate-900/40 backdrop-blur-sm" 
-            onClick={onClose}
+            onClick={() => {
+                if (canClose && onClose) onClose();
+            }}
           />
           <motion.div 
             initial={{ opacity: 0, scale: 0.95, y: -10 }}
