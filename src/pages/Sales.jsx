@@ -592,12 +592,15 @@ export default function Sales({ isEmbedded = false, isViewOnly = false }) {
                                                 {isSLA_Violated ? <AlertTriangle size={12} strokeWidth={3} /> : <Clock size={12} strokeWidth={3} />}
                                                 {hoursInStage >= 72 ? `${Math.floor(hoursInStage / 24)} Days` : `${Math.floor(hoursInStage)}h`} {isSLA_Violated ? 'Overdue' : 'In Stage'}
                                             </motion.div>
-                                            {job.proposal_data?.type === 'MAINTENANCE' && (
+                                            {job.proposal_data?.type === 'MAINTENANCE' ? (
                                                 <div className="absolute -top-3 left-4 bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1.5 uppercase tracking-wider z-10">
                                                     <Wrench size={10} strokeWidth={3} /> Maintenance
                                                 </div>
+                                            ) : (
+                                                <div className="absolute -top-3 left-4 bg-gradient-to-br from-slate-700 to-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1.5 uppercase tracking-wider z-10">
+                                                    <Layers size={10} strokeWidth={3} /> System
+                                                </div>
                                             )}
-
                                             <div className="flex justify-between items-start mb-2">
                                                 <div className="flex flex-col pr-4">
                                                     <h4 className="font-black text-slate-900 text-base tracking-tight leading-tight truncate group-hover:text-primary-600 transition-colors">{formatCustomerName(job.households?.household_name, 'Unknown Client')}</h4>

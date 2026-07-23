@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient';
 import { useProposals } from '../context/ProposalContext';
 import { useCustomers } from '../context/CustomerContext';
 import { useRole } from '../context/RoleContext';
-import { Search, Plus, Calendar, Settings, ShieldCheck, Mail, Printer, AlertTriangle, FileText, Share, Clock, Home, PenTool, CheckCircle, Smartphone, Edit2, Trash2, ArrowRight, CalendarClock, Lock, Link, Copy, ThumbsDown, RotateCcw, LayoutGrid, List as ListIcon, Ban, Check, X, Shield, Layers } from 'lucide-react';
+import { Search, Plus, Calendar, Settings, ShieldCheck, Mail, Printer, AlertTriangle, FileText, Share, Clock, Home, PenTool, CheckCircle, Smartphone, Edit2, Trash2, ArrowRight, CalendarClock, Lock, Link, Copy, ThumbsDown, RotateCcw, LayoutGrid, List as ListIcon, Ban, Check, X, Shield, Layers, Wrench } from 'lucide-react';
 import Modal from '../components/Modal';
 import toast from 'react-hot-toast';
 import './Proposals.css';
@@ -868,7 +868,14 @@ ${equipmentNotes}
                                            <div key={proposal.id} onClick={() => handleRowClick(proposal)} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-slate-400 transition-all cursor-pointer group flex flex-col relative h-[220px] shrink-0">
                                               <div className="flex justify-between items-start mb-3">
                                                  <div>
-                                                    <h3 className="font-black text-slate-800 text-sm truncate max-w-[180px]">{proposal.customer?.replace(/ Account$/i, '').trim()}</h3>
+                                                    <h3 className="font-black text-slate-800 text-sm truncate leading-tight flex items-center gap-2">
+                                                       <span className="truncate max-w-[120px]">{proposal.customer?.replace(/ Account$/i, '').trim()}</span>
+                                                       {proposal.proposal_data?.type === 'MAINTENANCE' ? (
+                                                           <span className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm flex items-center gap-1 shrink-0"><Wrench size={8} strokeWidth={3} /> Maint</span>
+                                                       ) : (
+                                                           <span className="bg-gradient-to-br from-slate-700 to-slate-900 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm flex items-center gap-1 shrink-0"><Layers size={8} strokeWidth={3} /> System</span>
+                                                       )}
+                                                    </h3>
                                                     <span className="font-mono text-[9px] uppercase tracking-widest text-slate-400">{formatQuoteId(proposal)}</span>
                                                  </div>
                                                  <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center shrink-0 border border-slate-200">
@@ -1084,7 +1091,14 @@ ${equipmentNotes}
                                     {proposal.customer?.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'C'}
                                  </div>
                                  <div className="flex flex-col min-w-0 pr-4">
-                                    <h3 className="text-[15px] font-black text-slate-900 truncate leading-tight mb-0.5">{proposal.customer?.replace(/ Account$/i, '').trim()}</h3>
+                                    <h3 className="text-[15px] font-black text-slate-900 truncate leading-tight mb-0.5 flex items-center gap-2">
+                                        <span className="truncate max-w-[160px]">{proposal.customer?.replace(/ Account$/i, '').trim()}</span>
+                                        {proposal.proposal_data?.type === 'MAINTENANCE' ? (
+                                            <span className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1 shrink-0"><Wrench size={8} strokeWidth={3} /> Maint</span>
+                                        ) : (
+                                            <span className="bg-gradient-to-br from-slate-700 to-slate-900 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1 shrink-0"><Layers size={8} strokeWidth={3} /> System</span>
+                                        )}
+                                    </h3>
                                     <p className="text-xs font-semibold text-slate-500 flex items-center flex-wrap">
                                        <span className="whitespace-nowrap">{new Date(proposal.updated_at || proposal.created_at).toLocaleDateString()}</span> 
                                        <span className="text-slate-300 mx-1.5 whitespace-nowrap">•</span> 
