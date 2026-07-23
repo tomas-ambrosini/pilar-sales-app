@@ -24,7 +24,16 @@ export default function MaintenanceHub() {
             // For now, any Maintenance deal that reached NEEDS_SCHEDULING, SCHEDULED, or COMPLETED is considered an "Active Agreement".
             const { data, error } = await supabase
                 .from('opportunities')
-                .select('*, households(*, addresses(*))')
+                .select(`
+                    *,
+                    households (
+                        household_name,
+                        addresses!addresses_household_id_fkey (
+                            street_address,
+                            city
+                        )
+                    )
+                `)
                 .in('status', ['NEEDS_SCHEDULING', 'SCHEDULED', 'COMPLETED'])
                 .order('created_at', { ascending: false });
 
@@ -166,7 +175,7 @@ export default function MaintenanceHub() {
                                     </div>
                                     <p className="text-sm font-medium text-slate-500 flex items-center gap-1">
                                         <MapPin size={14} className="text-slate-400" />
-                                        {Array.isArray(job.households?.addresses) ? job.households.addresses[0]?.street : job.households?.addresses?.street || 'No address provided'}
+                                        {Array.isArray(job.households?.addresses) ? job.households.addresses[0]?.street_address : job.households?.addresses?.street_address || 'No address provided'}
                                     </p>
                                 </div>
                                 
