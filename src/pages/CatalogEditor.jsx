@@ -75,7 +75,7 @@ export default function CatalogEditor() {
       brand: activeEquip.brand,
       series: activeEquip.series,
       tons: parseFloat(activeEquip.tons),
-      seer: parseFloat(activeEquip.seer),
+      seer: activeEquip.seer, // Removed parseFloat to allow text
       condenser_model: activeEquip.condenser_model,
       ahu_model: activeEquip.ahu_model,
       system_cost: cost,
