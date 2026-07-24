@@ -2,13 +2,16 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { ShieldCheck, Calendar, DollarSign, Clock, Search, ArrowRight, Activity, Bell, MapPin, TrendingUp, Users } from 'lucide-react';
+import { ShieldCheck, Calendar, DollarSign, Clock, Search, ArrowRight, Activity, Bell, MapPin, TrendingUp, Users, LayoutList, Kanban, Calendar as CalendarIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatCustomerName } from '../utils/formatters';
 import MaintenanceScheduleModal from '../components/MaintenanceScheduleModal';
 import MaintenanceInvoiceModal from '../components/MaintenanceInvoiceModal';
 import OpportunityOverviewModal from '../components/OpportunityOverviewModal';
 import MaintenanceList from '../components/MaintenanceList';
+import MaintenanceBoard from '../components/MaintenanceBoard';
+import MaintenanceCalendar from '../components/MaintenanceCalendar';
+import MaintenanceAlerts from '../components/MaintenanceAlerts';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 
 export default function MaintenanceHub() {
@@ -17,6 +20,7 @@ export default function MaintenanceHub() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('active');
+    const [viewMode, setViewMode] = useState('list');
     
     // Modal states
     const [schedulingJob, setSchedulingJob] = useState(null);
@@ -133,7 +137,7 @@ export default function MaintenanceHub() {
                         <div>
                             <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
                                 Maintenance Hub
-                                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded-full border border-blue-200">Pro 2.0</span>
+                                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded-full border border-blue-200 whitespace-nowrap">Pro 2.0</span>
                             </h1>
                             <p className="text-slate-500 font-medium text-sm">Dashboard & Administration Center</p>
                         </div>
@@ -162,23 +166,26 @@ export default function MaintenanceHub() {
                         </div>
 
                         {/* Mini Chart */}
-                        <div className="h-16 w-32 hidden md:block">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={analytics.chartData}>
-                                    <defs>
-                                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                                        </linearGradient>
-                                    </defs>
-                                    <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
+                        {agreements.length > 0 && (
+                            <div className="h-16 w-32 hidden md:block">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={analytics.chartData}>
+                                        <defs>
+                                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        )}
                     </div>
+                </div>
                 
                 {/* Tabs & Search */}
-                <div className="mt-8 w-full flex flex-col sm:flex-row justify-between items-end gap-4">
+                <div className="max-w-7xl mx-auto mt-8 w-full flex flex-col sm:flex-row justify-between items-end gap-4">
                     <div className="flex gap-6 border-b border-slate-200 w-full sm:w-auto overflow-x-auto no-scrollbar">
                         <button onClick={() => setActiveTab('active')} className={`pb-3 font-bold text-sm tracking-wide transition-colors relative whitespace-nowrap ${activeTab === 'active' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>
                             Active Agreements
@@ -200,35 +207,87 @@ export default function MaintenanceHub() {
                         </button>
                     </div>
 
-                    <div className="relative w-full sm:w-64 shrink-0">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input 
-                            type="text" 
-                            placeholder="Search customers..." 
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                        />
+                    <div className="flex items-center gap-4 w-full sm:w-auto mt-4 sm:mt-0">
+                        <div className="flex items-center bg-slate-100 p-1 rounded-lg shrink-0">
+                            <button 
+                                onClick={() => setViewMode('list')}
+                                className={`flex items-center justify-center w-10 h-8 rounded-md transition-all ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'}`}
+                                title="List View"
+                            >
+                                <LayoutList size={16} />
+                            </button>
+                            <button 
+                                onClick={() => setViewMode('board')}
+                                className={`flex items-center justify-center w-10 h-8 rounded-md transition-all ${viewMode === 'board' ? 'bg-white text-blue-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'}`}
+                                title="Kanban Board"
+                            >
+                                <Kanban size={16} />
+                            </button>
+                            <button 
+                                onClick={() => setViewMode('calendar')}
+                                className={`flex items-center justify-center w-10 h-8 rounded-md transition-all ${viewMode === 'calendar' ? 'bg-white text-blue-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'}`}
+                                title="Calendar View"
+                            >
+                                <CalendarIcon size={16} />
+                            </button>
+                        </div>
+
+                        <div className="relative w-full sm:w-64 shrink-0">
+                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input 
+                                type="text" 
+                                placeholder="Search customers..." 
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            />
+                        </div>
                     </div>
-                </div>
                 </div>
             </div>
 
             {/* List Content */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-8">
-                <div className="max-w-7xl mx-auto space-y-4">
-                    {loading ? (
-                        <div className="flex items-center justify-center h-64 text-slate-400">
-                            <Activity className="animate-spin" size={24} />
-                        </div>
-                    ) : (
-                        <MaintenanceList 
-                            agreements={filteredAgreements} 
+                <div className="max-w-[1600px] mx-auto flex flex-col xl:flex-row gap-6">
+                    <div className="flex-1 min-w-0 space-y-4">
+                        {loading ? (
+                            <div className="flex items-center justify-center h-64 text-slate-400">
+                                <Activity className="animate-spin" size={24} />
+                            </div>
+                        ) : (
+                            <>
+                                {viewMode === 'list' && (
+                                    <MaintenanceList 
+                                        agreements={filteredAgreements} 
+                                        setSelectedJob={setSelectedJob} 
+                                        setSchedulingJob={setSchedulingJob} 
+                                        setViewingInvoices={setViewingInvoices} 
+                                    />
+                                )}
+                                {viewMode === 'board' && (
+                                    <MaintenanceBoard 
+                                        agreements={filteredAgreements} 
+                                        setSelectedJob={setSelectedJob} 
+                                        setSchedulingJob={setSchedulingJob} 
+                                        setViewingInvoices={setViewingInvoices} 
+                                    />
+                                )}
+                                {viewMode === 'calendar' && (
+                                    <MaintenanceCalendar 
+                                        agreements={filteredAgreements} 
+                                        setSelectedJob={setSelectedJob} 
+                                    />
+                                )}
+                            </>
+                        )}
+                    </div>
+                    
+                    <div className="w-full shrink-0" style={{ maxWidth: '384px' }}>
+                        <MaintenanceAlerts 
+                            agreements={agreements} 
                             setSelectedJob={setSelectedJob} 
-                            setSchedulingJob={setSchedulingJob} 
-                            setViewingInvoices={setViewingInvoices} 
                         />
-                    )}
+                    </div>
                 </div>
             </div>
 
