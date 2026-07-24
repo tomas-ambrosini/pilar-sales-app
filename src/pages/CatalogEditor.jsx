@@ -547,7 +547,7 @@ export default function CatalogEditor() {
                   </div>
                   <div className="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">SEER2 Specs</label>
-                     <input type="number" step="0.5" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 font-mono text-slate-800 font-bold focus:ring-2 ring-primary-500 outline-none transition-all shadow-inner" value={activeEquip.seer || ''} onChange={e => setActiveEquip({...activeEquip, seer: e.target.value})} required placeholder="14.0"/>
+                     <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 font-mono text-slate-800 font-bold focus:ring-2 ring-primary-500 outline-none transition-all shadow-inner" value={activeEquip.seer || ''} onChange={e => setActiveEquip({...activeEquip, seer: e.target.value})} required placeholder="14.0"/>
                   </div>
                </div>
 
