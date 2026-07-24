@@ -126,57 +126,60 @@ export default function MaintenanceHub() {
 
     return (
         <div className="flex-1 flex flex-col h-full bg-slate-50 relative overflow-hidden">
-            {/* Analytics Header */}
-            <div className="bg-white border-b border-slate-200 px-8 py-6 z-10 shrink-0">
-                <div className="max-w-7xl mx-auto w-full flex flex-col xl:flex-row justify-between items-start xl:items-center gap-8">
+            {/* Premium Header */}
+            <div className="bg-white relative z-10 shrink-0 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border-b border-slate-200/50">
+                {/* Subtle Background Accent */}
+                <div className="absolute inset-0 bg-gradient-to-b from-blue-50/30 to-transparent pointer-events-none" />
+                
+                <div className="relative max-w-7xl mx-auto w-full px-4 sm:px-8 pt-8 pb-4 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-8">
                     
-                    <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shrink-0 shadow-lg shadow-blue-600/20">
-                            <ShieldCheck size={28} className="text-white" />
+                    <div className="flex items-center gap-5">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shrink-0 shadow-[0_8px_16px_rgba(37,99,235,0.25)] border border-blue-500/20">
+                            <ShieldCheck size={32} className="text-white drop-shadow-md" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                            <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
                                 Maintenance Hub
-                                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded-full border border-blue-200 whitespace-nowrap">Pro 2.0</span>
+                                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text text-[10px] uppercase font-black tracking-widest px-2.5 py-1 rounded-lg border border-blue-100 shadow-sm whitespace-nowrap bg-white">Pro 2.0</span>
                             </h1>
-                            <p className="text-slate-500 font-medium text-sm">Dashboard & Administration Center</p>
+                            <p className="text-slate-500 font-medium text-sm mt-1">Dashboard & Administration Center</p>
                         </div>
                     </div>
 
                     {/* Executive Metrics Row */}
-                    <div className="flex items-center gap-6 w-full xl:w-auto overflow-x-auto no-scrollbar pb-2 xl:pb-0">
-                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center gap-4 min-w-[200px]">
-                            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                                <TrendingUp size={18} className="text-emerald-600" />
+                    <div className="flex items-center gap-4 w-full xl:w-auto overflow-x-auto no-scrollbar pb-2 xl:pb-0">
+                        <div className="bg-white border border-slate-200/60 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-2xl p-4 flex items-center gap-4 min-w-[200px] hover:shadow-[0_4px_15px_rgba(0,0,0,0.05)] transition-all group">
+                            <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                <TrendingUp size={22} className="text-emerald-600" />
                             </div>
                             <div>
                                 <p className="text-[10px] font-black tracking-widest uppercase text-slate-400 mb-0.5">Est. MRR</p>
-                                <p className="text-xl font-black text-slate-800">${analytics.mrr.toLocaleString(undefined, {maximumFractionDigits:0})}</p>
+                                <p className="text-2xl font-black text-slate-800 tracking-tight">${analytics.mrr.toLocaleString(undefined, {maximumFractionDigits:0})}</p>
                             </div>
                         </div>
 
-                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center gap-4 min-w-[200px]">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                                <Users size={18} className="text-blue-600" />
+                        <div className="bg-white border border-slate-200/60 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-2xl p-4 flex items-center gap-4 min-w-[200px] hover:shadow-[0_4px_15px_rgba(0,0,0,0.05)] transition-all group">
+                            <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                <Users size={22} className="text-blue-600" />
                             </div>
                             <div>
                                 <p className="text-[10px] font-black tracking-widest uppercase text-slate-400 mb-0.5">Active Contracts</p>
-                                <p className="text-xl font-black text-slate-800">{agreements.length}</p>
+                                <p className="text-2xl font-black text-slate-800 tracking-tight">{agreements.length}</p>
                             </div>
                         </div>
 
                         {/* Mini Chart */}
                         {agreements.length > 0 && (
-                            <div className="h-16 w-32 hidden md:block">
+                            <div className="h-16 w-36 hidden md:block opacity-80 hover:opacity-100 transition-opacity ml-4">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={analytics.chartData}>
                                         <defs>
                                             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                                <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.4}/>
+                                                <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
                                             </linearGradient>
                                         </defs>
-                                        <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
+                                        <Area type="monotone" dataKey="value" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>
@@ -186,24 +189,24 @@ export default function MaintenanceHub() {
                 
                 {/* Tabs & Search */}
                 <div className="max-w-7xl mx-auto mt-8 w-full flex flex-col sm:flex-row justify-between items-end gap-4">
-                    <div className="flex gap-6 border-b border-slate-200 w-full sm:w-auto overflow-x-auto no-scrollbar">
-                        <button onClick={() => setActiveTab('active')} className={`pb-3 font-bold text-sm tracking-wide transition-colors relative whitespace-nowrap ${activeTab === 'active' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                    <div className="flex gap-8 border-b border-slate-200/60 w-full sm:w-auto overflow-x-auto no-scrollbar pb-0">
+                        <button onClick={() => setActiveTab('active')} className={`pb-4 font-bold text-sm tracking-wide transition-colors relative whitespace-nowrap ${activeTab === 'active' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>
                             Active Agreements
-                            {activeTab === 'active' && <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />}
+                            {activeTab === 'active' && <motion.div layoutId="maint-tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t-full shadow-[0_-2px_10px_rgba(37,99,235,0.4)]" />}
                         </button>
-                        <button onClick={() => setActiveTab('due')} className={`pb-3 font-bold text-sm tracking-wide transition-colors relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'due' ? 'text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                        <button onClick={() => setActiveTab('due')} className={`pb-4 font-bold text-sm tracking-wide transition-colors relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'due' ? 'text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>
                             Due for Service
                             {agreements.filter(a => a.isDueForService).length > 0 && (
-                                <span className="bg-amber-100 text-amber-700 px-1.5 rounded-md text-xs">{agreements.filter(a => a.isDueForService).length}</span>
+                                <span className="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md text-[10px] uppercase font-black">{agreements.filter(a => a.isDueForService).length}</span>
                             )}
-                            {activeTab === 'due' && <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-600" />}
+                            {activeTab === 'due' && <motion.div layoutId="maint-tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500 rounded-t-full shadow-[0_-2px_10px_rgba(245,158,11,0.4)]" />}
                         </button>
-                        <button onClick={() => setActiveTab('renewals')} className={`pb-3 font-bold text-sm tracking-wide transition-colors relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'renewals' ? 'text-purple-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                        <button onClick={() => setActiveTab('renewals')} className={`pb-4 font-bold text-sm tracking-wide transition-colors relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'renewals' ? 'text-purple-600' : 'text-slate-400 hover:text-slate-600'}`}>
                             Upcoming Renewals
                             {agreements.filter(a => a.isExpiringSoon).length > 0 && (
-                                <span className="bg-purple-100 text-purple-700 px-1.5 rounded-md text-xs">{agreements.filter(a => a.isExpiringSoon).length}</span>
+                                <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-md text-[10px] uppercase font-black">{agreements.filter(a => a.isExpiringSoon).length}</span>
                             )}
-                            {activeTab === 'renewals' && <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-600" />}
+                            {activeTab === 'renewals' && <motion.div layoutId="maint-tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500 rounded-t-full shadow-[0_-2px_10px_rgba(168,85,247,0.4)]" />}
                         </button>
                     </div>
 
