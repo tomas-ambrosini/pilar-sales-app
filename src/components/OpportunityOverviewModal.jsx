@@ -714,7 +714,7 @@ export default function OpportunityOverviewModal({ isOpen, onClose, job, onActio
                                             <div className="flex items-center justify-between mb-2">
                                                 <span className="font-black text-slate-800 text-sm">{act.activity_type}</span>
                                                 <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">
-                                                    {new Date(act.created_at).toLocaleDateString()}
+                                                    {new Date(act.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                                                 </span>
                                             </div>
                                             {act.activity_type === 'Attachment' ? (

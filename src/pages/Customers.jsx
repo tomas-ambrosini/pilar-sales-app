@@ -1845,7 +1845,7 @@ function UnitDrawerContent({ customerId, addressId, unitId, customer, address, u
                                       {event.photos && event.photos.length > 0 && (
                                          <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded flex items-center gap-1"><Box size={10}/> {event.photos.length}</span>
                                       )}
-                                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{new Date(event.date).toLocaleDateString()}</span>
+                                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{new Date(event.date).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
                                   </div>
                                   <div className="flex items-center gap-4">
                                       {event.cost && <span className="font-black text-slate-700 bg-slate-100 px-2 py-1 rounded text-sm">{canViewFinancials() ? `$${parseFloat(event.cost).toLocaleString('en-US', {minimumFractionDigits: 2})}` : '***'}</span>}
