@@ -25,12 +25,12 @@ export default function MaintenanceList({ agreements, setSelectedJob, setSchedul
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
                     key={job.id} 
-                    className="group bg-white border border-slate-200/60 rounded-2xl p-5 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 hover:border-blue-200 transition-all duration-300 flex flex-col xl:flex-row flex-wrap 2xl:flex-nowrap gap-6 items-start xl:items-center cursor-pointer overflow-hidden relative"
+                    className="group bg-white border border-slate-200/60 rounded-2xl p-5 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 hover:border-blue-200 transition-all duration-300 flex flex-col lg:flex-row gap-6 items-start lg:items-center cursor-pointer overflow-hidden relative"
                 >
                     {/* Subtle hover gradient background */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/10 to-blue-50/30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
-                    <div className="flex-1 min-w-[240px] relative z-10">
+                    <div className="flex-1 min-w-[240px] relative z-10 w-full lg:w-auto">
                         <div className="flex items-center gap-3 mb-1.5 flex-wrap">
                             <h3 className="font-black text-slate-800 text-xl tracking-tight group-hover:text-blue-600 transition-colors">
                                 {formatCustomerName(job.households?.household_name || 'Unknown')}
@@ -52,22 +52,22 @@ export default function MaintenanceList({ agreements, setSelectedJob, setSchedul
                         </p>
                     </div>
                     
-                    <div className="flex items-center gap-4 sm:gap-6 px-0 xl:px-8 border-l-0 xl:border-l border-r-0 xl:border-r border-slate-100 shrink-0 w-full md:w-auto relative z-10">
-                        <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3 flex-1 md:min-w-[130px]">
+                    <div className="flex items-center gap-4 sm:gap-6 px-0 lg:px-8 border-l-0 lg:border-l border-r-0 lg:border-r border-slate-100 shrink-0 w-full lg:w-auto relative z-10">
+                        <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3 flex-1 lg:min-w-[130px]">
                             <p className="text-[10px] font-black tracking-widest uppercase text-slate-400 mb-1 flex items-center gap-1"><Settings size={10} /> Plan Tier</p>
                             <p className="font-bold text-slate-700 capitalize text-sm">{job.proposal_data?.frequency || 'Standard'}</p>
                         </div>
-                        <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3 flex-1 md:min-w-[130px]">
+                        <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3 flex-1 lg:min-w-[130px]">
                             <p className="text-[10px] font-black tracking-widest uppercase text-slate-400 mb-1">Units Covered</p>
                             <p className="font-bold text-slate-700 text-sm">{job.proposal_data?.units_covered || 1} System(s)</p>
                         </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row xl:flex-col gap-2.5 shrink-0 w-full xl:w-48 relative z-10">
-                        <button onClick={(e) => { e.stopPropagation(); setSchedulingJob(job); }} className="w-full bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-[0_2px_10px_rgba(37,99,235,0.2)] hover:shadow-[0_4px_15px_rgba(37,99,235,0.3)] border border-blue-600 px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2">
-                            <Calendar size={16} /> Schedule Job
+                    <div className="flex flex-row lg:flex-col gap-2.5 shrink-0 w-full lg:w-40 relative z-10">
+                        <button onClick={(e) => { e.stopPropagation(); setSchedulingJob(job); }} className="flex-1 bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-[0_2px_10px_rgba(37,99,235,0.2)] hover:shadow-[0_4px_15px_rgba(37,99,235,0.3)] border border-blue-600 px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2">
+                            <Calendar size={16} /> Schedule
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); setViewingInvoices(job); }} className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-slate-300 px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2">
+                        <button onClick={(e) => { e.stopPropagation(); setViewingInvoices(job); }} className="flex-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-slate-300 px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2">
                             <DollarSign size={16} /> Invoice
                         </button>
                     </div>
