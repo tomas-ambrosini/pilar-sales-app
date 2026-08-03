@@ -26,7 +26,7 @@ const TEAM_META = {
     
     // Asia & Oceania
     'Japan': { colorOverride: '#D81B60', continent: 'Asia & Oceania', flag: '🇯🇵', rank: 1, code: 'JPN', bgStyle: `url('/japan.png') calc(50% + 15px) top / 85% auto repeat-y`, opacity: 0.3, mixBlendMode: 'multiply' },
-    'South Korea': { colorOverride: '#FF99CC', continent: 'Asia & Oceania', flag: '🇰🇷', rank: 2, code: 'KOR', bgStyle: `url('/south_korea.png') calc(50% + 15px) top / 85% auto repeat-y`, opacity: 0.3, mixBlendMode: 'multiply' },
+    'South Korea': { colorOverride: '#FF99CC', continent: 'Asia & Oceania', flag: '🇰🇷', rank: 2, code: 'KOR', bgStyle: `url('/south_korea.png') calc(50% + 15px) top / 75% auto repeat-y`, opacity: 0.3, mixBlendMode: 'multiply' },
     'Australia': { colorOverride: '#800080', continent: 'Asia & Oceania', flag: '🇦🇺', rank: 3, code: 'AUS', bgStyle: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23800080'/%3E%3Ctext x='50' y='30' fill='%23FFCD00' font-size='20'%3E★%3C/text%3E%3Ctext x='75' y='55' fill='%23FFCD00' font-size='16'%3E★%3C/text%3E%3Ctext x='30' y='65' fill='%23FFCD00' font-size='24'%3E★%3C/text%3E%3Ctext x='55' y='80' fill='%23FFCD00' font-size='18'%3E★%3C/text%3E%3C/svg%3E")` },
     'New Zealand': { colorOverride: '#CDA4DB', continent: 'Asia & Oceania', flag: '🇳🇿', rank: 4, code: 'NZL', bgStyle: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23Cda4db'/%3E%3Cpath d='M50,90 Q80,50 40,10 Q60,40 50,90 Z' fill='%23FFFFFF' opacity='0.9'/%3E%3Cpath d='M50,90 Q20,50 60,10 Q40,40 50,90 Z' fill='%23000000' opacity='0.9'/%3E%3C/svg%3E")` },
 
