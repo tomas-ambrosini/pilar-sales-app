@@ -180,7 +180,9 @@ const enrichedTeams = teams.filter(team => TEAM_META[team.name]).map(team => ({
         cups: TEAM_META[team.name]?.cups || 0,
         topBlockStyle: TEAM_META[team.name]?.topBlockStyle || null,
         dividerClass: TEAM_META[team.name]?.dividerClass || '',
-        topBlockClass: TEAM_META[team.name]?.topBlockClass || ''
+        topBlockClass: TEAM_META[team.name]?.topBlockClass || '',
+        opacity: TEAM_META[team.name]?.opacity,
+        mixBlendMode: TEAM_META[team.name]?.mixBlendMode
     }));
 
     // Group by continent and sort inside group by historical rank
